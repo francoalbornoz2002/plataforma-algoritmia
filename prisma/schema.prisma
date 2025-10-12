@@ -29,6 +29,8 @@ model User {
   password  String
   isActive  Boolean   @default(true)
   role      Role
+
+  @@map("users")
 }
 
 
