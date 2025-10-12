@@ -26,6 +26,7 @@ export class UsersService {
       data: updateUserDto});
   }
 
+  //TODO: IMPLEMENTAR BORRADO LÓGICO
   remove(id: string) {
     return `This action removes a #${id} user`;
   }
