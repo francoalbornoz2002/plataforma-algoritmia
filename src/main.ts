@@ -3,9 +3,15 @@ import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { ConfigService } from '@nestjs/config';
+import morgan from 'morgan';
+import { CORS } from './constants';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Usamos la libería morgan para poder auditar las instrucciones o peticiones ejecutadas
+  app.use(morgan('dev'));
 
   // Configuración de Swagger para la documentación de la API.
   const config = new DocumentBuilder()
@@ -23,17 +29,27 @@ async function bootstrap() {
     .addSecurityRequirements('bearer')
     .build();
 
+  // Creación del documento Swagger para la documentación de la API
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  
+  // Obtención de la variable de entorno PORT
+  const configService = app.get(ConfigService);
+  const PORT = configService.get('PORT');
 
+  // Para usar todas las validaciones definidas de manera global.
   app.useGlobalPipes(new ValidationPipe());
 
+  // Para que el Guard de JWT se utilice de manera global.
   const jwtAuthGuard = app.get(JwtAuthGuard);
-
   app.useGlobalGuards(jwtAuthGuard);
 
-  await app.listen(process.env.PORT ?? 3000);
+  // Defino un prefijo global para todas las rutas.
+  app.setGlobalPrefix('api');
+
+  // Habilitamos CORS
+  app.enableCors(CORS);
+
+  await app.listen(PORT);
 }
 bootstrap();
