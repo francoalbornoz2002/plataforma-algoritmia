@@ -5,33 +5,33 @@ const prisma = new PrismaClient();
 
 async function main() {
   const [franco, yessi, admin] = await prisma.$transaction(async (prisma) => {
-    const franco = await prisma.user.create({
+    const franco = await prisma.usuario.create({
       data: {
         email: 'franco@mail.com',
-        firstName: 'Franco',
-        lastName: 'Albornoz',
+        nombre: 'Franco',
+        apellido: 'Albornoz',
         password: await bcrypt.hash('franco123', 10),
-        role: 'ALUMNO',
+        rol: 'ALUMNO',
       },
     });
 
-    const yessi = await prisma.user.create({
+    const yessi = await prisma.usuario.create({
       data: {
         email: 'yessica@mail.com',
-        firstName: 'Yessica',
-        lastName: 'Barbosa',
+        nombre: 'Yessica',
+        apellido: 'Barbosa',
         password: await bcrypt.hash('yessica20', 10),
-        role: 'DOCENTE',
+        rol: 'DOCENTE',
       },
     });
 
-    const admin = await prisma.user.create({
+    const admin = await prisma.usuario.create({
       data: {
         email: 'admin@mail.com',
-        firstName: 'Admin',
-        lastName: 'Admin',
+        nombre: 'Admin',
+        apellido: 'Admin',
         password: await bcrypt.hash('admin123', 10),
-        role: 'ADMIN',
+        rol: 'ADMINISTRADOR',
       },
     });
 

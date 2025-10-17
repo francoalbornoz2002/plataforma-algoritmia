@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,22 +7,93 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  ADMIN
+enum Rol {
+  ADMIN //Pendiente de migración
   DOCENTE
   ALUMNO
 }
 
-model User {
-  id        String    @id @default(uuid())
-  email     String    @unique
-  password  String
-  firstName String
-  lastName  String
-  role      Role
+enum Modalidad {
+  PRESENCIAL
+  VIRTUAL
+}
+
+enum DiaDeSemana {
+  LUNES
+  MARTES
+  MIERCOLES
+  JUEVES
+  VIERNES
+  SABADO
+}
+
+model Usuario {
+  id       String @id @default(uuid())
+  email    String @unique
+  password String
+  nombre   String
+  apellido String
+  rol      Rol
+
+  cursosDictados   DocenteCurso[] @relation("DocenteCursos")
+  cursosInscriptos AlumnoCurso[]  @relation("AlumnoCursos")
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  @@map("users")
+  @@map("usuarios") // El nombre de la tabla en la BD
+}
+
+model Curso {
+  id          String @id @default(uuid())
+  nombre      String
+  descripcion String
+  claveAcceso String
+
+  docentes  DocenteCurso[]
+  alumnos   AlumnoCurso[]
+  diasClase DiaClase[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@map("cursos")
+}
+
+model DiaClase {
+  id         String      @id @default(uuid())
+  dia        DiaDeSemana
+  horaInicio String
+  horaFin    String
+  modalidad  Modalidad
+
+  curso   Curso  @relation(fields: [cursoId], references: [id], onDelete: Cascade)
+  cursoId String
+
+  @@index([cursoId])
+  @@map("dias_clase") //Pendiente de migración
+}
+
+model DocenteCurso {
+  curso     Curso   @relation(fields: [cursoId], references: [id])
+  cursoId   String
+  docente   Usuario @relation("DocenteCursos", fields: [docenteId], references: [id])
+  docenteId String
+
+  @@id([cursoId, docenteId])
+  @@index([docenteId])
+  @@map("docentes_cursos")
+}
+
+model AlumnoCurso {
+  curso    Curso   @relation(fields: [cursoId], references: [id])
+  cursoId  String
+  alumno   Usuario @relation("AlumnoCursos", fields: [alumnoId], references: [id])
+  alumnoId String
+
+  @@id([cursoId, alumnoId])
+  @@index([alumnoId])
+  @@map("alumnos_cursos")
 }
