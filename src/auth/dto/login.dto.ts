@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+// Importa TransformFnParams para un tipado correcto
+import { Transform, TransformFnParams } from 'class-transformer';
 import { IsEmail, IsString, MinLength } from 'class-validator';
 
 export class LoginDto {
@@ -8,8 +9,13 @@ export class LoginDto {
   email: string;
 
   @ApiProperty({ required: true })
-  @Transform(({ value }) => value.trim())
-  @IsString()
+  @Transform(({ value }: TransformFnParams) => {
+    // Si el valor es null, undefined, etc., devuelve un string vacío.
+    // Si no, convierte el valor a string y luego aplica trim().
+    // Esto garantiza que siempre retornes un string.
+    return value ? String(value).trim() : '';
+  })
   @MinLength(6)
+  @IsString()
   password: string;
 }

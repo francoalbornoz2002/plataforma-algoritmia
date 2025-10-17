@@ -38,14 +38,17 @@ async function bootstrap() {
   const PORT = configService.get('PORT');
 
   // Para usar todas las validaciones definidas de manera global.
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    }),
+  );
 
   // Para que el Guard de JWT se utilice de manera global.
   const jwtAuthGuard = app.get(JwtAuthGuard);
   app.useGlobalGuards(jwtAuthGuard);
-
-  // Defino un prefijo global para todas las rutas.
-  app.setGlobalPrefix('api');
 
   // Habilitamos CORS
   app.enableCors(CORS);
