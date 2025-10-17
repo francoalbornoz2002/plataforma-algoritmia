@@ -29,10 +29,10 @@ enum DiaDeSemana {
 
 model Usuario {
   id       String @id @default(uuid())
-  email    String @unique
-  password String
-  nombre   String
-  apellido String
+  nombre   String //Pendiente de migración
+  apellido String //Pendiente de migración
+  email    String @unique //Pendiente de migración
+  password String //Pendiente de migración
   rol      Rol
 
   cursosDictados   DocenteCurso[] @relation("DocenteCursos")

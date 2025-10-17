@@ -13,7 +13,7 @@ export class AuthService {
 
   async validateUser({ email, password }: LoginDto) {
     // Busca el usuario por email
-    const foundUser = await this.prisma.user.findUnique({
+    const foundUser = await this.prisma.usuario.findUnique({
       where: { email },
     });
 
@@ -34,7 +34,7 @@ export class AuthService {
     return this.jwtService.sign({
       id: foundUser.id,
       email: foundUser.email,
-      role: foundUser.role,
+      role: foundUser.rol,
     });
   }
 }
