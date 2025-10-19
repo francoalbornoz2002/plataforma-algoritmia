@@ -31,7 +31,7 @@ async function bootstrap() {
 
   // Creación del documento Swagger para la documentación de la API
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('api/api', app, document);
 
   // Obtención de la variable de entorno PORT
   const configService = app.get(ConfigService);

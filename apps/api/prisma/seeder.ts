@@ -31,7 +31,7 @@ async function main() {
         nombre: 'Admin',
         apellido: 'Admin',
         password: await bcrypt.hash('admin123', 10),
-        rol: 'ADMINISTRADOR',
+        rol: 'ADMIN',
       },
     });
 
