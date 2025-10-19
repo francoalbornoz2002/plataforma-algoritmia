@@ -53,6 +53,9 @@ async function bootstrap() {
   // Habilitamos CORS
   app.enableCors(CORS);
 
+  // Prefijo global para toda la api
+  app.setGlobalPrefix('api');
+
   await app.listen(PORT);
 }
 bootstrap();
