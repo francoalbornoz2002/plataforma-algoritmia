@@ -10,6 +10,9 @@ import { CORS } from './constants';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Prefijo global para toda la api
+  app.setGlobalPrefix('api');
+
   // Usamos la libería morgan para poder auditar las instrucciones o peticiones ejecutadas
   app.use(morgan('dev'));
 
@@ -34,8 +37,7 @@ async function bootstrap() {
   SwaggerModule.setup('api/api', app, document);
 
   // Obtención de la variable de entorno PORT
-  const configService = app.get(ConfigService);
-  const PORT = configService.get('PORT');
+  const PORT = process.env.PORT;
 
   // Para usar todas las validaciones definidas de manera global.
   app.useGlobalPipes(
@@ -53,8 +55,7 @@ async function bootstrap() {
   // Habilitamos CORS
   app.enableCors(CORS);
 
-  // Prefijo global para toda la api
-  app.setGlobalPrefix('api');
+  
 
   await app.listen(PORT);
 }

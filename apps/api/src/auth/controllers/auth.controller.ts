@@ -16,7 +16,7 @@ export class AuthController {
   @Post('login')
   @Public()
   async login(@Body() data: LoginDto) {
-    const userToken = await this.authService.validateUser(data);
+    const userToken = await this.authService.login(data);
 
     if (!userToken)
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);

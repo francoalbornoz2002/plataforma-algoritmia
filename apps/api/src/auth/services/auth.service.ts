@@ -11,30 +11,26 @@ export class AuthService {
     private prisma: PrismaService,
   ) {}
 
-  async validateUser({ email, password }: LoginDto) {
+  async login({ email, password }: LoginDto): Promise<{ accessToken: string }> {
     // Busca el usuario por email
     const foundUser = await this.prisma.usuario.findUnique({
-      where: { email },
+      where: { email, deletedAt: null }, // Verifica que deletedAt sea null y controlar que no sea inactivo
     });
 
-    // Si no encuentra el usuario, se ejecuta un error
-    if (!foundUser) {
-      throw new UnauthorizedException('El email es incorrecto.');
+    // Si no se encuentra o la contraseña es incorrecta, lanza error
+    if (!foundUser || !(await bcrypt.compare(password, foundUser.password))) {
+      throw new UnauthorizedException('Credenciales inválidas.');
     }
 
-    // Si el usuario existe, compara la contraseña ingresada a la almacenada con el hash
-    const isPasswordValid = await bcrypt.compare(password, foundUser.password);
-
-    // Si las contraseñas no son iguales, se ejecuta un error
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('La contraseña es incorrecta.');
-    }
+    // Generamos el payload
+    const payload = {
+      id: foundUser.id,
+      rol: foundUser.rol,
+    };
 
     // Si el email y contraseña son válidos, retorna el token
-    return this.jwtService.sign({
-      id: foundUser.id,
-      email: foundUser.email,
-      role: foundUser.rol,
-    });
+    return {
+      accessToken: this.jwtService.sign(payload),
+    };
   }
 }

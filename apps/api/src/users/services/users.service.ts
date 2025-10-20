@@ -23,13 +23,15 @@ export class UsersService {
     }
 
     // 2. Hashea la contraseña antes de guardarla
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+    createUserDto.password = await bcrypt.hash(
+      createUserDto.password,
+      +process.env.HASH_SALT,
+    );
 
     // 3. Crea el usuario con la contraseña hasheada
-    return this.prisma.usuario.create({
+    return await this.prisma.usuario.create({
       data: {
         ...createUserDto,
-        password: hashedPassword,
       },
     });
   }
@@ -66,7 +68,7 @@ export class UsersService {
     });
   }
 
-  async remove(id: string) {
+  async delete(id: string) {
     // Verificamos que el usuario exista para no intentar borrar algo que no está.
     const usuario = await this.prisma.usuario.findUnique({
       where: { id },

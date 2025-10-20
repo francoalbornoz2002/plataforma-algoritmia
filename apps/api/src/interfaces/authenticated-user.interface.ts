@@ -4,7 +4,6 @@ import { Request } from 'express';
 export interface AuthenticationRequest extends Request {
   user: {
     id: string;
-    email: string;
-    role: Rol;
+    rol: Rol;
   };
 }
