@@ -7,11 +7,8 @@ import {
 } from "@mui/material/styles";
 import MuiDrawer from "@mui/material/Drawer";
 import Box from "@mui/material/Box";
-import List from "@mui/material/List";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
-import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Avatar from "@mui/material/Avatar";
@@ -26,14 +23,12 @@ import MuiAppBar, {
 // Iconos
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import SchoolIcon from "@mui/icons-material/School";
-import SettingsIcon from "@mui/icons-material/Settings";
 import LogoutIcon from "@mui/icons-material/Logout";
 import MenuIcon from "@mui/icons-material/Menu";
 
-import { useLocation } from "react-router";
+import { Link, useLocation } from "react-router";
 import SideBarList from "./SidebarList";
+import { AccountCircle } from "@mui/icons-material";
 
 const drawerWidth = 240;
 const closedDrawerWidth = (theme: Theme) => `calc(${theme.spacing(7)} + 1px)`;
@@ -137,17 +132,6 @@ export interface SidebarLayoutProps {
   children: React.ReactNode; // Para renderizar el contenido de la página
 }
 
-const itemsDocente = [
-  { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
-  { text: "Mis Cursos", icon: <SchoolIcon />, path: "/dashboard/my-courses" },
-  // Añade aquí otros items específicos para DOCENTE si los tienes
-  {
-    text: "Configuración",
-    icon: <SettingsIcon />,
-    path: "/dashboard/settings",
-  }, // Ejemplo
-];
-
 // Componente principal Sidebar
 export default function Sidebar({
   menuItems,
@@ -242,9 +226,13 @@ export default function Sidebar({
               open={Boolean(anchorElUser)}
               onClose={handleCloseUserMenu}
             >
-              <MenuItem onClick={handleCloseUserMenu}>
+              <MenuItem
+                onClick={handleCloseUserMenu}
+                component={Link}
+                to="/dashboard/account"
+              >
                 <ListItemIcon>
-                  <SettingsIcon fontSize="small" />
+                  <AccountCircle fontSize="small" />
                 </ListItemIcon>
                 <ListItemText>Mi cuenta</ListItemText>
               </MenuItem>
