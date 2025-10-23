@@ -13,8 +13,10 @@ import { BrowserRouter } from "react-router";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <ThemeConfig>
-      <App />
-    </ThemeConfig>
+    <BrowserRouter>
+      <ThemeConfig>
+        <App />
+      </ThemeConfig>
+    </BrowserRouter>
   </StrictMode>
 );

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   styled,
   useTheme,
@@ -18,26 +18,22 @@ import Avatar from "@mui/material/Avatar";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Tooltip from "@mui/material/Tooltip";
+import { Toolbar, Typography } from "@mui/material";
 import MuiAppBar, {
   type AppBarProps as MuiAppBarProps,
 } from "@mui/material/AppBar";
 
-// Importa los iconos
+// Iconos
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import DashboardIcon from "@mui/icons-material/Dashboard";
-import PeopleIcon from "@mui/icons-material/People";
 import SchoolIcon from "@mui/icons-material/School";
-import BarChartIcon from "@mui/icons-material/BarChart";
-import AssessmentIcon from "@mui/icons-material/Assessment";
-import VpnKeyIcon from "@mui/icons-material/VpnKey";
 import SettingsIcon from "@mui/icons-material/Settings";
 import LogoutIcon from "@mui/icons-material/Logout";
 import MenuIcon from "@mui/icons-material/Menu";
 
-// Importa Link y useLocation de react-router-dom
-import { Link } from "react-router";
-import { Toolbar, Typography } from "@mui/material";
+import { useLocation } from "react-router";
+import SideBarList from "./SidebarList";
 
 const drawerWidth = 240;
 const closedDrawerWidth = (theme: Theme) => `calc(${theme.spacing(7)} + 1px)`;
@@ -128,11 +124,60 @@ const Drawer = styled(MuiDrawer, {
   ],
 }));
 
+// --- INTERFACES PARA PROPS ---
+export interface MenuItemType {
+  text: string;
+  icon: React.ReactElement; // El icono será un elemento JSX
+  path: string;
+}
+
+export interface SidebarLayoutProps {
+  menuItems: MenuItemType[]; // Array de elementos del menú
+  userInitial?: string; // Inicial del usuario (opcional)
+  children: React.ReactNode; // Para renderizar el contenido de la página
+}
+
+const itemsDocente = [
+  { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
+  { text: "Mis Cursos", icon: <SchoolIcon />, path: "/dashboard/my-courses" },
+  // Añade aquí otros items específicos para DOCENTE si los tienes
+  {
+    text: "Configuración",
+    icon: <SettingsIcon />,
+    path: "/dashboard/settings",
+  }, // Ejemplo
+];
+
 // Componente principal Sidebar
-export default function Sidebar() {
+export default function Sidebar({
+  menuItems,
+  userInitial = "U",
+  children,
+}: SidebarLayoutProps) {
   const [open, setOpen] = useState(false);
   const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
   const theme = useTheme();
+  const location = useLocation();
+
+  // --- Lógica para obtener el título actual ---
+  const currentPageTitle = useMemo(() => {
+    // Busca el item del menú cuya ruta coincida exactamente o sea el prefijo más largo
+    let bestMatch = menuItems.find((item) => item.path === location.pathname);
+    if (!bestMatch) {
+      // Si no hay coincidencia exacta, busca el prefijo más específico
+      const matchingItems = menuItems.filter((item) =>
+        location.pathname.startsWith(
+          item.path + (item.path === "/dashboard" ? "" : "/")
+        )
+      );
+      // Ordena por longitud de path descendente para encontrar el más específico
+      bestMatch = matchingItems.sort(
+        (a, b) => b.path.length - a.path.length
+      )[0];
+    }
+    return bestMatch ? bestMatch.text : "Plataforma Algoritmia"; // Fallback al título original
+  }, [location.pathname, menuItems]);
+  // --- Fin Lógica Título ---
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -156,21 +201,6 @@ export default function Sidebar() {
     handleCloseUserMenu();
   };
 
-  // Items del sidebar
-  const menuItems = [
-    { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
-    { text: "Usuarios", icon: <PeopleIcon />, path: "/dashboard/users" },
-    { text: "Cursos", icon: <SchoolIcon />, path: "/dashboard/courses" },
-    { text: "Estadísticas", icon: <BarChartIcon />, path: "/dashboard/stats" },
-    { text: "Reportes", icon: <AssessmentIcon />, path: "/dashboard/reports" },
-    { text: "Auditoría", icon: <VpnKeyIcon />, path: "/dashboard/audit" },
-    {
-      text: "Configuración",
-      icon: <SettingsIcon />,
-      path: "/dashboard/settings",
-    },
-  ];
-
   return (
     <Box sx={{ display: "flex" }}>
       <AppBar position="fixed" open={open}>
@@ -192,13 +222,13 @@ export default function Sidebar() {
           </IconButton>
           {/* Avatar del usuario y menú desplegable */}
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Plataforma Algoritmia
+            {currentPageTitle}
           </Typography>
           {/* Avatar del usuario */}
           <Box sx={{ flexShrink: 0 }}>
             <Tooltip title="Opciones de Usuario">
               <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar sx={{ width: 32, height: 32 }}>A</Avatar>
+                <Avatar sx={{ width: 32, height: 32 }}>{userInitial}</Avatar>
               </IconButton>
             </Tooltip>
             {/* Menú desplegable del usuario */}
@@ -240,68 +270,12 @@ export default function Sidebar() {
           </IconButton>
         </DrawerHeader>
         <Divider />
-
-        {/* Lista de Navegación en el SideBar */}
-        <List sx={{ flexGrow: 1 }}>
-          {menuItems.map((item) => (
-            <ListItem key={item.text} disablePadding sx={{ display: "block" }}>
-              <Tooltip title={open ? "" : item.text} placement="right">
-                <ListItemButton
-                  component={Link}
-                  to={item.path}
-                  sx={[
-                    {
-                      minHeight: 48,
-                      px: 2.5,
-                    },
-                    open
-                      ? {
-                          justifyContent: "initial",
-                        }
-                      : {
-                          justifyContent: "center",
-                        },
-                  ]}
-                >
-                  <ListItemIcon
-                    sx={[
-                      {
-                        minWidth: 0,
-                        justifyContent: "center",
-                      },
-                      open
-                        ? {
-                            mr: 3,
-                          }
-                        : {
-                            mr: "auto",
-                          },
-                    ]}
-                  >
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={item.text}
-                    sx={[
-                      open
-                        ? {
-                            opacity: 1,
-                          }
-                        : {
-                            opacity: 0,
-                          },
-                    ]}
-                  />
-                </ListItemButton>
-              </Tooltip>
-            </ListItem>
-          ))}
-        </List>
+        <SideBarList menuItems={menuItems} open={open}></SideBarList>
         <Divider />
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <DrawerHeader />
-        <Typography sx={{ marginBottom: 2 }}> Hola Mundo! </Typography>
+        {children}
       </Box>
     </Box>
   );
