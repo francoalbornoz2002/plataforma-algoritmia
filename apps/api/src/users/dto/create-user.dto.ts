@@ -2,7 +2,15 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Rol } from '@prisma/client';
 
 import { Transform, TransformFnParams } from 'class-transformer';
-import { IsEmail, IsEnum, IsString, MinLength } from 'class-validator';
+import {
+  IsDateString,
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class CreateUserDto {
   @ApiProperty({ required: true })
@@ -14,6 +22,17 @@ export class CreateUserDto {
   @IsString()
   @MinLength(1)
   apellido: string;
+
+  @ApiProperty({ required: true })
+  @IsString()
+  @MinLength(8)
+  @MaxLength(9)
+  dni: string;
+
+  @ApiProperty({ required: true })
+  @IsDateString()
+  @IsNotEmpty()
+  fechaNacimiento: Date;
 
   @ApiProperty({ required: true })
   @IsEmail()
