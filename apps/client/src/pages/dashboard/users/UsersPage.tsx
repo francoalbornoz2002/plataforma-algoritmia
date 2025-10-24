@@ -1,5 +1,7 @@
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
+import { DataGrid } from "@mui/x-data-grid";
+import type { GridRowsProp, GridColDef } from "@mui/x-data-grid";
 
 export default function UsersPage() {
   return (
