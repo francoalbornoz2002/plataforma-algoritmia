@@ -1,8 +1,12 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateCourseDto } from '../dto/create-course.dto';
 import { UpdateCourseDto } from '../dto/update-course.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Rol } from '@prisma/client';
+import { Curso, Rol } from '@prisma/client';
 
 @Injectable()
 export class CoursesService {
@@ -47,7 +51,6 @@ export class CoursesService {
           // Crea los registros de dias de clase y los asocia a este curso
           diasClase: {
             createMany: {
-              // CAMBIO: Se mapea desde 'diasClase' del DTO
               data: diasClase.map((dia) => ({
                 dia: dia.dia,
                 horaInicio: dia.horaInicio,
@@ -71,19 +74,45 @@ export class CoursesService {
     }
   }
 
-  findAll() {
-    return `This action returns all courses`;
+  async findAll(): Promise<Curso[]> {
+    // Devuelve solo los usuarios que no han sido borrados lógicamente
+    const cursos = await this.prisma.curso.findMany({
+      where: { deletedAt: null },
+    });
+    return cursos;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} course`;
+  async findOne(id: string): Promise<Curso> {
+    // Busca un usuario por ID que no haya sido borrado
+    const curso = await this.prisma.curso.findUnique({
+      where: { id, deletedAt: null },
+    });
+
+    if (!curso) {
+      throw new NotFoundException(`Curso con ID '${id}' no encontrado.`);
+    }
+
+    return curso;
   }
 
-  update(id: number, updateCourseDto: UpdateCourseDto) {
-    return `This action updates a #${id} course`;
-  }
+  async update(id: string, updateCourseDto: UpdateCourseDto) {}
 
-  remove(id: number) {
-    return `This action removes a #${id} course`;
+  async delete(id: string) {
+    // Verifica si el curso existe y no está ya borrado
+    const curso = await this.prisma.curso.findUnique({
+      where: { id, deletedAt: null },
+    });
+
+    if (!curso) {
+      throw new NotFoundException(
+        `Curso con ID '${id}' no encontrado o ya ha sido eliminado.`,
+      );
+    }
+
+    // Actualiza el campo deletedAt
+    return this.prisma.curso.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
   }
 }
