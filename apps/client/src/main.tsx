@@ -10,13 +10,16 @@ import "./index.css";
 import App from "./App.tsx";
 import { ThemeConfig } from "./config/theme.config.tsx";
 import { BrowserRouter } from "react-router";
+import { AuthProvider } from "./auth/AuthProvider.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
-      <ThemeConfig>
-        <App />
-      </ThemeConfig>
+      <AuthProvider>
+        <ThemeConfig>
+          <App />
+        </ThemeConfig>
+      </AuthProvider>
     </BrowserRouter>
   </StrictMode>
 );
