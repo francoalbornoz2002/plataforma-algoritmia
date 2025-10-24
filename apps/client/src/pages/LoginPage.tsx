@@ -17,7 +17,8 @@ import DialogActions from "@mui/material/DialogActions";
 import { useForm, type SubmitHandler, Controller } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router";
 import { useAuth } from "../auth/AuthProvider";
-import { Alert, CircularProgress } from "@mui/material";
+import { Alert, AlertTitle, CircularProgress, Snackbar } from "@mui/material";
+import { useSnackbar } from "notistack";
 
 // Defino el tipo de dato para los datos del formulario
 interface LoginFormInputs {
@@ -31,11 +32,17 @@ export default function LoginPage() {
   const [openDialog, setOpenDialog] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth(); // Obtiene la función login del contexto
 
   const from = location.state?.from?.pathname || "/dashboard";
+
+  if (loginError) {
+    enqueueSnackbar(loginError, { variant: "error" });
+    setLoginError(null);
+  }
 
   // Inicializa react-hook-form
   const {
@@ -113,12 +120,6 @@ export default function LoginPage() {
           >
             Iniciar sesión
           </Typography>
-
-          {loginError && (
-            <Alert severity="error" sx={{ width: "100%" }}>
-              {loginError}
-            </Alert>
-          )}
 
           {/* Campo Email con react-hook-form */}
           <TextField

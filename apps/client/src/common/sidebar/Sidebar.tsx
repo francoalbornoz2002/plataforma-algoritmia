@@ -29,6 +29,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { Link, useLocation } from "react-router";
 import SideBarList from "./SidebarList";
 import { AccountCircle } from "@mui/icons-material";
+import { useAuth } from "../../auth/AuthProvider";
 
 const drawerWidth = 240;
 const closedDrawerWidth = (theme: Theme) => `calc(${theme.spacing(7)} + 1px)`;
@@ -142,6 +143,7 @@ export default function Sidebar({
   const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
   const theme = useTheme();
   const location = useLocation();
+  const { logout } = useAuth();
 
   // --- Lógica para obtener el título actual ---
   const currentPageTitle = useMemo(() => {
@@ -180,8 +182,7 @@ export default function Sidebar({
   };
 
   const handleLogout = () => {
-    console.log("Cerrar sesión");
-    // Lógica para cerrar sesión
+    logout();
     handleCloseUserMenu();
   };
 

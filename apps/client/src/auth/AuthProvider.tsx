@@ -10,11 +10,12 @@ import {
 import apiClient from "../lib/axios"; // Importa la instancia configurada
 import { useNavigate } from "react-router";
 import { jwtDecode } from "jwt-decode";
+import type { Rol } from "../types/roles";
 
 // Defino la interfaz User
-interface User {
+export interface User {
   userId: string;
-  rol: "ADMINISTRADOR" | "DOCENTE" | "ALUMNO";
+  rol: Rol;
 }
 
 interface AuthContextType {
@@ -28,18 +29,29 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Tipado del payload decodificado (ajusta si tu token tiene otros campos)
+interface JwtPayload {
+  id: string;
+  rol: Rol;
+  exp: number;
+}
+
 const getUserFromToken = (token: string | null): User | null => {
   if (!token) return null;
   try {
-    const decoded: {
-      id: string;
-      rol: User["rol"];
-      exp: number;
-    } = jwtDecode(token);
+    const decoded: JwtPayload = jwtDecode(token);
     if (decoded.exp * 1000 < Date.now()) {
       localStorage.removeItem("accessToken");
       return null;
     }
+
+    // Asegura que el rol decodificado sea uno de los válidos
+    if (!["ADMIN", "DOCENTE", "ALUMNO"].includes(decoded.rol)) {
+      console.error("Rol inválido en el token:", decoded.rol);
+      localStorage.removeItem("accessToken");
+      return null;
+    }
+
     return { userId: decoded.id, rol: decoded.rol || "" };
   } catch (error) {
     console.error("Error decodificando token:", error);
@@ -100,11 +112,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem("accessToken");
-    setToken(null);
-    setUser(null);
-    // El interceptor dejará de añadir el token automáticamente
-    navigate("/login");
+    localStorage.removeItem("accessToken"); // Limpia el token
+    setToken(null); // Limpia el estado del token
+    setUser(null); // Limpia el estado del usuario
+    // El interceptor de Axios dejará de añadir el token
+    navigate("/login"); // Redirige al login
   }, [navigate]);
 
   if (isLoading) {
