@@ -10,13 +10,19 @@ import "./index.css";
 import App from "./App.tsx";
 import { ThemeConfig } from "./config/theme.config.tsx";
 import { BrowserRouter } from "react-router";
+import { AuthProvider } from "./auth/AuthProvider.tsx";
+import { SnackbarProvider } from "notistack";
 
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <BrowserRouter>
-      <ThemeConfig>
-        <App />
-      </ThemeConfig>
-    </BrowserRouter>
-  </StrictMode>
+  //<StrictMode>
+  <BrowserRouter>
+    <AuthProvider>
+      <SnackbarProvider maxSnack={3} autoHideDuration={3000}>
+        <ThemeConfig>
+          <App />
+        </ThemeConfig>
+      </SnackbarProvider>
+    </AuthProvider>
+  </BrowserRouter>
+  //</StrictMode>
 );

@@ -15,6 +15,10 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
 import { useForm, type SubmitHandler, Controller } from "react-hook-form";
+import { useLocation, useNavigate } from "react-router";
+import { useAuth } from "../auth/AuthProvider";
+import { Alert, AlertTitle, CircularProgress, Snackbar } from "@mui/material";
+import { useSnackbar } from "notistack";
 
 // Defino el tipo de dato para los datos del formulario
 interface LoginFormInputs {
@@ -26,6 +30,19 @@ interface LoginFormInputs {
 export default function LoginPage() {
   // Estado para controlar la visibilidad del modal o dialog
   const [openDialog, setOpenDialog] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const { enqueueSnackbar } = useSnackbar();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth(); // Obtiene la función login del contexto
+
+  const from = location.state?.from?.pathname || "/dashboard";
+
+  if (loginError) {
+    enqueueSnackbar(loginError, { variant: "error" });
+    setLoginError(null);
+  }
 
   // Inicializa react-hook-form
   const {
@@ -48,9 +65,25 @@ export default function LoginPage() {
   const handleCloseDialog = () => setOpenDialog(false);
 
   // Defino la función manejadora del envío
-  const onSubmit: SubmitHandler<LoginFormInputs> = (data) => {
-    console.log(data); // Los datos del formulario están disponibles aquí
-    //TODO Añadir la lógica de login aquí, llamda a la API, etc.
+  const onSubmit: SubmitHandler<LoginFormInputs> = async (data) => {
+    setIsLoading(true);
+    setLoginError(null);
+    try {
+      // Llama a la función login del AuthProvider
+      await login(data.email, data.password);
+      navigate(from, { replace: true });
+    } catch (error: any) {
+      console.error("Error en LoginPage onSubmit:", error);
+      // Muestra el error (AuthProvider ya lo formateó o es un error genérico)
+      // Ajusta para acceder al mensaje de error específico de Axios si está disponible
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Error al iniciar sesión.";
+      setLoginError(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -153,6 +186,7 @@ export default function LoginPage() {
                       {...field}
                       checked={field.value}
                       color="primary"
+                      disabled={isLoading}
                     />
                   }
                   label="Recordar contraseña"
@@ -166,7 +200,11 @@ export default function LoginPage() {
 
           {/* 6. Botoón de login */}
           <Button type="submit" fullWidth variant="contained" sx={{ mt: 1 }}>
-            Ingresar
+            {isLoading ? (
+              <CircularProgress size={24} color="inherit" />
+            ) : (
+              "Ingresar"
+            )}
           </Button>
 
           {/* 7. Divider */}

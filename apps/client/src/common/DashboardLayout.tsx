@@ -14,8 +14,17 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline"; // Icono ejemplo para "Inscribirse"
 import Sidebar from "./sidebar/Sidebar";
 import { Outlet } from "react-router";
+import { useAuth, type User } from "../auth/AuthProvider";
+import {
+  Class,
+  QueryStats,
+  QuestionAnswer,
+  SwitchAccessShortcutAdd,
+} from "@mui/icons-material";
 
 export default function DashboardLayout() {
+  const { user } = useAuth() as { user: User | null };
+
   const itemsAdmin: MenuItemType[] = [
     { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
     { text: "Usuarios", icon: <PeopleIcon />, path: "/dashboard/users" },
@@ -31,30 +40,70 @@ export default function DashboardLayout() {
   ];
   const itemsDocente = [
     { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
-    { text: "Mis Cursos", icon: <SchoolIcon />, path: "/dashboard/my-courses" },
-    // Añade aquí otros items específicos para DOCENTE si los tienes
+    { text: "Progreso", icon: <BarChartIcon />, path: "/dashboard/progress" },
     {
-      text: "Configuración",
+      text: "Dificultades",
+      icon: <QueryStats />,
+      path: "/dashboard/difficultities",
+    },
+    {
+      text: "Sesiones de refuerzo",
+      icon: <SwitchAccessShortcutAdd />,
+      path: "/dashboard/sessions",
+    },
+    {
+      text: "Consultas",
+      icon: <QuestionAnswer />,
+      path: "/dashboard/consults",
+    },
+    {
+      text: "Clases de consulta",
+      icon: <Class />,
+      path: "/dashboard/consults-classes",
+    },
+    {
+      text: "Configuración de curso",
       icon: <SettingsIcon />,
-      path: "/dashboard/settings",
+      path: "/dashboard/settings-course",
     }, // Ejemplo
   ];
-
   const itemsAlumno = [
     { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
-    { text: "Mis Cursos", icon: <SchoolIcon />, path: "/dashboard/my-courses" },
     {
-      text: "Inscribirse a Curso",
-      icon: <AddCircleOutlineIcon />,
-      path: "/dashboard/enroll",
+      text: "Mi progreso",
+      icon: <BarChartIcon />,
+      path: "/dashboard/my/progress",
     },
-    // Añade aquí otros items específicos para ALUMNO si los tienes
-    { text: "Mi Cuenta", icon: <SettingsIcon />, path: "/dashboard/account" }, // Ejemplo
+    {
+      text: "Mis dificultades",
+      icon: <QueryStats />,
+      path: "/dashboard/my/difficultities",
+    },
+    {
+      text: "Sesiones de refuerzo",
+      icon: <SwitchAccessShortcutAdd />,
+      path: "/dashboard/my/sessions",
+    },
+    {
+      text: "Consultas",
+      icon: <QuestionAnswer />,
+      path: "/dashboard/my/consults",
+    },
   ];
+
+  // Selecciona el array de items correcto basado en el rol del usuario
+  let sidebarItems: MenuItemType[] = [];
+  if (user?.rol === "ADMIN") {
+    sidebarItems = itemsAdmin;
+  } else if (user?.rol === "DOCENTE") {
+    sidebarItems = itemsDocente;
+  } else if (user?.rol === "ALUMNO") {
+    sidebarItems = itemsAlumno;
+  }
 
   return (
     <>
-      <Sidebar menuItems={itemsAdmin} userInitial={"A"}>
+      <Sidebar menuItems={sidebarItems} userInitial={"U"}>
         {/* El contenido de la página específica (ej. UsersPage, CoursesPage) */}
         {/* se renderizará aquí gracias a la prop 'children' */}
         <Outlet />
