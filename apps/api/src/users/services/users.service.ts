@@ -38,9 +38,7 @@ export class UsersService {
 
   async findAll(): Promise<Usuario[]> {
     // Devuelve solo los usuarios que no han sido borrados lógicamente
-    const users = await this.prisma.usuario.findMany({
-      where: { deletedAt: null },
-    });
+    const users = await this.prisma.usuario.findMany();
     return users;
   }
 

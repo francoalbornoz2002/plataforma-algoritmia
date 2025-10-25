@@ -1,6 +1,3 @@
-// src/components/layout/DashboardLayout.tsx
-import React from "react";
-// Importa el layout modularizado y su tipo de item
 import { type MenuItemType } from "./sidebar/Sidebar";
 
 // Importa TODOS los iconos que necesitarás para CUALQUIER rol
@@ -11,7 +8,6 @@ import BarChartIcon from "@mui/icons-material/BarChart";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import VpnKeyIcon from "@mui/icons-material/VpnKey";
 import SettingsIcon from "@mui/icons-material/Settings";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline"; // Icono ejemplo para "Inscribirse"
 import Sidebar from "./sidebar/Sidebar";
 import { Outlet } from "react-router";
 import { useAuth, type User } from "../auth/AuthProvider";

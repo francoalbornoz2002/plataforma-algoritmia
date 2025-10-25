@@ -13,14 +13,14 @@ import { jwtDecode } from "jwt-decode";
 import type { Rol } from "../types/roles";
 
 // Defino la interfaz User
-export interface User {
+export interface UserToken {
   userId: string;
   rol: Rol;
 }
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  user: User | null;
+  user: UserToken | null;
   token: string | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -36,7 +36,7 @@ interface JwtPayload {
   exp: number;
 }
 
-const getUserFromToken = (token: string | null): User | null => {
+const getUserFromToken = (token: string | null): UserToken | null => {
   if (!token) return null;
   try {
     const decoded: JwtPayload = jwtDecode(token);
@@ -64,7 +64,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(() =>
     localStorage.getItem("accessToken")
   ); // Lee token inicial
-  const [user, setUser] = useState<User | null>(() => getUserFromToken(token)); // Calcula user inicial
+  const [user, setUser] = useState<UserToken | null>(() =>
+    getUserFromToken(token)
+  ); // Calcula user inicial
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 

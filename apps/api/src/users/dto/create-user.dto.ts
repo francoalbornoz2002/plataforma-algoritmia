@@ -3,7 +3,7 @@ import { Rol } from '@prisma/client';
 
 import { Transform, TransformFnParams } from 'class-transformer';
 import {
-  IsDateString,
+  IsDate,
   IsEmail,
   IsEnum,
   IsNotEmpty,
@@ -30,7 +30,7 @@ export class CreateUserDto {
   dni: string;
 
   @ApiProperty({ required: true })
-  @IsDateString()
+  @IsDate()
   @IsNotEmpty()
   fechaNacimiento: Date;
 

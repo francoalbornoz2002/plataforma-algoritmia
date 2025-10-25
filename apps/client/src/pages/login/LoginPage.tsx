@@ -17,7 +17,7 @@ import DialogActions from "@mui/material/DialogActions";
 import { useForm, type SubmitHandler, Controller } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router";
 import { useAuth } from "../../auth/AuthProvider";
-import { Alert, AlertTitle, CircularProgress, Snackbar } from "@mui/material";
+import { CircularProgress } from "@mui/material";
 import { useSnackbar } from "notistack";
 
 // Defino el tipo de dato para los datos del formulario

@@ -14,8 +14,12 @@ export class AuthService {
   async login({ email, password }: LoginDto): Promise<{ accessToken: string }> {
     // Busca el usuario por email
     const foundUser = await this.prisma.usuario.findUnique({
-      where: { email, deletedAt: null }, // Verifica que deletedAt sea null y controlar que no sea inactivo
+      where: { email }, // Verifica que deletedAt sea null y controlar que no sea inactivo
     });
+
+    if (foundUser?.deletedAt) {
+      throw new UnauthorizedException('Este usuario está inactivo.');
+    }
 
     // Si no se encuentra o la contraseña es incorrecta, lanza error
     if (!foundUser || !(await bcrypt.compare(password, foundUser.password))) {
