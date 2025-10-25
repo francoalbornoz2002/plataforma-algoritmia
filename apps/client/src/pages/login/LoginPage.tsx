@@ -140,7 +140,11 @@ export default function LoginPage() {
             // Muestra los errores
             error={!!errors.email}
             helperText={errors.email ? errors.email.message : " "}
-            FormHelperTextProps={{ style: { minHeight: "1.25em" } }}
+            slotProps={{
+              formHelperText: {
+                style: { minHeight: "1.25em" },
+              },
+            }}
             sx={{ mb: 1.5 }}
           />
 
@@ -164,7 +168,11 @@ export default function LoginPage() {
             // Muestra los errores
             error={!!errors.password}
             helperText={errors.password ? errors.password.message : " "}
-            FormHelperTextProps={{ style: { minHeight: "1.25em" } }}
+            slotProps={{
+              formHelperText: {
+                style: { minHeight: "1.25em" },
+              },
+            }}
             sx={{ mb: 0.5 }}
           />
 

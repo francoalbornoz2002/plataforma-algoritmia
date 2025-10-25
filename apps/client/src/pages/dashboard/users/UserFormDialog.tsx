@@ -147,6 +147,11 @@ export default function UserFormDialog({
     }
   };
 
+  if (submitError) {
+    enqueueSnackbar(submitError, { variant: "error" });
+    setSubmitError(null);
+  }
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>
@@ -158,8 +163,6 @@ export default function UserFormDialog({
           <Stack spacing={2} sx={{ pt: 1 }}>
             {" "}
             {/* Añade padding top */}
-            {/* Muestra error general del submit */}
-            {submitError && <Alert severity="error">{submitError}</Alert>}
             <TextField
               label="Nombre"
               fullWidth
@@ -167,7 +170,11 @@ export default function UserFormDialog({
               {...register("nombre")}
               error={!!errors.nombre}
               helperText={errors.nombre?.message || " "}
-              FormHelperTextProps={{ style: { minHeight: "1.25em" } }}
+              slotProps={{
+                formHelperText: {
+                  style: { minHeight: "1.25em" },
+                },
+              }}
               disabled={isSubmitting}
             />
             <TextField
@@ -177,7 +184,11 @@ export default function UserFormDialog({
               {...register("apellido")}
               error={!!errors.apellido}
               helperText={errors.apellido?.message || " "}
-              FormHelperTextProps={{ style: { minHeight: "1.25em" } }}
+              slotProps={{
+                formHelperText: {
+                  style: { minHeight: "1.25em" },
+                },
+              }}
               disabled={isSubmitting}
             />
             <TextField
@@ -187,13 +198,17 @@ export default function UserFormDialog({
               type="email"
               // Email deshabilitado en modo edición
               disabled={isEditMode || isSubmitting}
-              InputProps={{
-                readOnly: isEditMode, // Mejor UX que disabled
+              slotProps={{
+                input: {
+                  readOnly: isEditMode,
+                },
+                formHelperText: {
+                  style: { minHeight: "1.25em" },
+                },
               }}
               {...register("email")}
               error={!!errors.email}
               helperText={errors.email?.message || " "}
-              FormHelperTextProps={{ style: { minHeight: "1.25em" } }}
             />
             {/* Campo Password (solo al crear) */}
             {!isEditMode && (
@@ -205,7 +220,11 @@ export default function UserFormDialog({
                 {...register("password")}
                 error={!!errors.password}
                 helperText={errors.password?.message || " "}
-                FormHelperTextProps={{ style: { minHeight: "1.25em" } }}
+                slotProps={{
+                  formHelperText: {
+                    style: { minHeight: "1.25em" },
+                  },
+                }}
                 disabled={isSubmitting}
               />
             )}
@@ -220,7 +239,11 @@ export default function UserFormDialog({
                 helperText={
                   errors.password?.message || "Dejar vacío para no cambiar"
                 }
-                FormHelperTextProps={{ style: { minHeight: "1.25em" } }}
+                slotProps={{
+                  formHelperText: {
+                    style: { minHeight: "1.25em" },
+                  },
+                }}
                 disabled={isSubmitting}
               />
             )}
@@ -252,12 +275,17 @@ export default function UserFormDialog({
               )}
             />
             <TextField
-              label="DNI (opcional)"
+              label="DNI"
               fullWidth
+              required
               {...register("dni")}
               error={!!errors.dni}
               helperText={errors.dni?.message || " "}
-              FormHelperTextProps={{ style: { minHeight: "1.25em" } }}
+              slotProps={{
+                formHelperText: {
+                  style: { minHeight: "1.25em" },
+                },
+              }}
               disabled={isSubmitting}
             />
             {/* DatePicker para Fecha de Nacimiento */}

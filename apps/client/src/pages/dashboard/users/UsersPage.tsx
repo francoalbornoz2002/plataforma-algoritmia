@@ -307,12 +307,11 @@ export default function UsersPage() {
           columns={columns}
           loading={isLoading}
           initialState={{
-            pagination: { paginationModel: { page: 0, pageSize: 5 } },
+            pagination: { paginationModel: { page: 0, pageSize: 6 } },
           }}
           pageSizeOptions={[5]}
           disableRowSelectionOnClick
           disableColumnResize={true}
-          autoHeight={true}
           // Necesario si tus IDs no se llaman 'id' o para asegurar unicidad
           getRowId={(row) => row.id}
         />

@@ -8,11 +8,14 @@ const userBaseSchema = z.object({
   nombre: z.string().min(2, "El nombre es obligatorio"),
   apellido: z.string().min(2, "El apellido es obligatorio"),
   dni: z.string().regex(/^\d{8,9}$/, "El DNI debe tener 8 u 9 dígitos"),
-  fechaNacimiento: z.date(),
+  fechaNacimiento: z
+    .date("Formato de fecha inválido")
+    .min(new Date(1930, 1, 1), { error: "Muy viejo!" })
+    .max(new Date().getFullYear() - 18, "El usuario debe ser mayor de 18 años"),
   email: z
     .email("Formato de correo inválido")
     .min(1, "El email es obligatorio"),
-  rol: z.enum(rolValues),
+  rol: z.enum(rolValues, "Debe ingresar un rol"),
 });
 
 // Esquema para CREAR (extiende el base y añade password)
