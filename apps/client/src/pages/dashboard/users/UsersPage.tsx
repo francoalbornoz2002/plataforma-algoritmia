@@ -1,4 +1,3 @@
-// src/pages/UsersPage.tsx
 import { useCallback, useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
@@ -16,24 +15,28 @@ import {
 } from "@mui/x-data-grid";
 import { format, parseISO } from "date-fns"; // Para formatear fecha
 import { es } from "date-fns/locale/es"; // Para formato español
-import type { User, CreateUserData, UpdateUserData } from "../../../types";
+import type { User } from "../../../types";
 
 // --- Servicios ---
-import {
-  getAllUsers,
-  deleteUser,
-  createUser,
-  updateUser,
-} from "../../../services/user.service";
+import { getAllUsers, deleteUser } from "../../../services/user.service";
 import {
   Alert,
+  Checkbox,
   CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
+  FormControl,
+  InputLabel,
+  ListItemText,
+  MenuItem,
+  OutlinedInput,
+  Select,
+  Stack,
   TextField,
+  type SelectChangeEvent,
 } from "@mui/material";
 import UserFormDialog from "./UserFormDialog";
 import { enqueueSnackbar } from "notistack";
@@ -220,7 +223,7 @@ export default function UsersPage() {
       renderCell: (params) => (
         <Box>
           <Tooltip title="Editar Usuario">
-            {/* Disable edit button if user is inactive */}
+            {/* Desabilita el botón de edición si está inactivo */}
             <span>
               <IconButton
                 onClick={() => handleEditClick(params.row)}
@@ -248,13 +251,26 @@ export default function UsersPage() {
     },
   ];
 
+  const rolesDisponibles = ["ADMIN", "DOCENTE", "ALUMNO"];
+
+  const [rolName, serRolName] = useState<string[]>([]);
+
+  const handleRolChange = (event: SelectChangeEvent<typeof rolName>) => {
+    const {
+      target: { value },
+    } = event;
+    serRolName(
+      // On autofill we get a stringified value.
+      typeof value === "string" ? value.split(",") : value
+    );
+  };
+
   return (
     <Box
       sx={{
         width: "100%",
         display: "flex",
         flexDirection: "column",
-        height: "calc(100vh - 64px - 48px)",
       }}
     >
       <Typography variant="h4" gutterBottom>
@@ -265,30 +281,62 @@ export default function UsersPage() {
       <Box
         sx={{
           mb: 2,
-          display: "flex",
           gap: 2,
           flexWrap: "wrap",
           alignItems: "center",
+          flexGrow: 1,
         }}
       >
-        <Typography variant="body2" sx={{ mr: 1 }}>
-          Filtros:
-        </Typography>
-        <TextField
-          size="small"
-          label="Buscar..."
-          variant="outlined"
-          sx={{ maxWidth: 200 }}
-        />
-        <Box sx={{ flexGrow: 1 }} />
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleAddUserClick}
-          disabled={isLoading}
-        >
-          Añadir Usuario
-        </Button>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <TextField
+            size="small"
+            label="Buscar usuario..."
+            variant="outlined"
+          />
+          <FormControl size="small" sx={{ m: 1, width: 300 }}>
+            <InputLabel id="demo-multiple-checkbox-label">Rol</InputLabel>
+            <Select
+              labelId="demo-multiple-checkbox-label"
+              id="demo-multiple-checkbox"
+              multiple
+              value={rolName}
+              onChange={handleRolChange}
+              input={<OutlinedInput label="Tag" />}
+              renderValue={(selected) => selected.join(", ")}
+              //MenuProps={MenuProps}
+            >
+              {rolesDisponibles.map((rol) => (
+                <MenuItem key={rol} value={rol}>
+                  <Checkbox checked={rolName.includes(rol)} />
+                  <ListItemText primary={rol} />
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Estado</InputLabel>
+            <Select
+              //value={estado}
+              //onChange={(e) => setEstado(e.target.value)}
+              label="Estado"
+            >
+              <MenuItem value="">
+                <em>Todos</em>
+              </MenuItem>
+              <MenuItem value="true">Activo</MenuItem>
+              <MenuItem value="false">Inactivo</MenuItem>
+            </Select>
+          </FormControl>
+          <Box sx={{ flexGrow: 1 }} />
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleAddUserClick}
+            disabled={isLoading}
+          >
+            Añadir Usuario
+          </Button>
+        </Stack>
       </Box>
 
       {/* Muestra un error si falló la carga */}

@@ -15,7 +15,7 @@ import Avatar from "@mui/material/Avatar";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Tooltip from "@mui/material/Tooltip";
-import { Toolbar, Typography } from "@mui/material";
+import { Container, Toolbar, Typography } from "@mui/material";
 import MuiAppBar, {
   type AppBarProps as MuiAppBarProps,
 } from "@mui/material/AppBar";
@@ -262,10 +262,18 @@ export default function Sidebar({
         <SideBarList menuItems={menuItems} open={open}></SideBarList>
         <Divider />
       </Drawer>
-      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+      <Container
+        component="main"
+        maxWidth="xl" // O "xl", "md" según prefieras el ancho máximo
+        sx={{
+          flexGrow: 1,
+          pt: 3, // 'Container' ya maneja el padding izquierdo/derecho
+          pb: 3, // Mantenemos el padding vertical
+        }}
+      >
         <DrawerHeader />
         {children}
-      </Box>
+      </Container>
     </Box>
   );
 }
