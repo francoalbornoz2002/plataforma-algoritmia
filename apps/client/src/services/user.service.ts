@@ -2,18 +2,57 @@
 import apiClient from "../lib/axios";
 import type { CreateUserData, UpdateUserData, User } from "../types";
 
+//Interfaz para la respuesta paginada
+export interface PaginatedUsersResponse {
+  data: User[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+//Interfaz para los parámetros de búsqueda
+export interface FindUsersParams {
+  page: number;
+  limit: number;
+  sort: string;
+  order: "asc" | "desc";
+  search?: string;
+  roles?: string[];
+  estado?: string;
+}
+
 // --- Función para obtener todos los usuarios ---
 // TODO: Añadir parámetros de filtro
-export const getAllUsers = async (): Promise<User[]> => {
+//export const getAllUsers = async (): Promise<User[]> => {
+//  try {
+//    // Llama al endpoint GET /usuarios (asumiendo prefijo /api en apiClient)
+//    const response = await apiClient.get<User[]>("/users/all");
+//    // Devuelve solo los datos de la respuesta
+//    return response.data;
+//  } catch (error) {
+//    console.error("Error al obtener usuarios:", error);
+//    // Relanza el error para que el componente que llama lo maneje
+//    throw error;
+//  }
+//};
+
+export const findUsers = async (
+  params: FindUsersParams
+): Promise<PaginatedUsersResponse> => {
   try {
-    // Llama al endpoint GET /usuarios (asumiendo prefijo /api en apiClient)
-    const response = await apiClient.get<User[]>("/users/all");
-    // Devuelve solo los datos de la respuesta
+    const response = await apiClient.get("/users/all", {
+      // Axios convierte esto en query parameters:
+      // /usuarios?page=1&limit=6&search=juan&roles[]=DOCENTE&roles[]=ADMIN...
+      params: params,
+      // Importante para que axios maneje arrays correctamente
+      paramsSerializer: {
+        indexes: null, // Formato: roles[]=DOCENTE&roles[]=ADMIN
+      },
+    });
     return response.data;
-  } catch (error) {
-    console.error("Error al obtener usuarios:", error);
-    // Relanza el error para que el componente que llama lo maneje
-    throw error;
+  } catch (err: any) {
+    // Re-lanza el error para que el 'useEffect' en la página lo atrape
+    throw err.response || err;
   }
 };
 

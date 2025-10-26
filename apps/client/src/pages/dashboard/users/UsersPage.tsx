@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
@@ -12,13 +12,14 @@ import {
   DataGrid,
   type GridColDef,
   type GridRenderCellParams,
+  type GridSortModel,
 } from "@mui/x-data-grid";
 import { format, parseISO } from "date-fns"; // Para formatear fecha
 import { es } from "date-fns/locale/es"; // Para formato español
 import type { User } from "../../../types";
 
 // --- Servicios ---
-import { getAllUsers, deleteUser } from "../../../services/user.service";
+import { deleteUser, findUsers } from "../../../services/user.service";
 import {
   Alert,
   Checkbox,
@@ -40,10 +41,40 @@ import {
 } from "@mui/material";
 import UserFormDialog from "./UserFormDialog";
 import { enqueueSnackbar } from "notistack";
+import { useDebounce } from "../../../hooks/useDebounce";
 
 export default function UsersPage() {
-  // Para setear los usuarios en la tabla principal.
-  const [users, setUsers] = useState<User[]>([]);
+  // --- 1. ESTADOS PARA LOS FILTROS ---
+
+  // Para el buscador (ej: "Juan")
+  const [searchTerm, setSearchTerm] = useState("");
+  // Este valor solo se actualizará 500ms después de que el usuario deje de teclear
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  const [rolName, serRolName] = useState<string[]>([]);
+  // Para el Select de Estado (ej: "true", "false", o "")
+  const [estadoSeleccionado, setEstadoSeleccionado] = useState("");
+
+  // --- 2. ESTADOS PARA PAGINACIÓN Y ORDEN ---
+
+  // Para la paginación del DataGrid
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0, // DataGrid empieza en página 0
+    pageSize: 6, // El 'pageSize' del <DataGrid>
+  });
+
+  // Para el ordenamiento del DataGrid
+  const [sortModel, setSortModel] = useState<GridSortModel>([
+    { field: "apellido", sort: "asc" }, // Tu orden por defecto
+  ]);
+
+  // --- 3. ESTADO PARA LOS DATOS ---
+
+  // 'users' ya no es suficiente, necesitas el conteo total
+  const [data, setData] = useState<{ rows: User[]; total: number }>({
+    rows: [],
+    total: 0,
+  });
 
   //Para saber si está cargando los usuarios.
   const [isLoading, setIsLoading] = useState(true);
@@ -64,28 +95,59 @@ export default function UsersPage() {
   //Estado de carga si se está eliminando
   const [isDeleting, setIsDeleting] = useState(false); // Loading state for delete
 
-  const fetchUsers = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await getAllUsers();
-      setUsers(data);
-    } catch (err: any) {
-      console.error("Error fetching users:", err);
-      setError(
-        err?.response?.data?.message ||
-          err.message ||
-          "Error al cargar los usuarios."
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // Obtiene los usuarios cuando el componente se renderiza
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    // 1. Definimos la función de fetching DENTRO del hook
+    const fetchUsersConFiltros = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      // 2. Prepara los parámetros para el backend
+      const params = {
+        // Paginación (DataGrid usa 0-index, API usa 1-index)
+        page: paginationModel.page + 1,
+        limit: paginationModel.pageSize,
+
+        // Ordenamiento
+        sort: sortModel[0]?.field || "apellido",
+        order: sortModel[0]?.sort || "asc",
+
+        // Filtros
+        search: debouncedSearchTerm, // ¡Usa el valor retrasado!
+        roles: rolName, // Tu estado de roles
+        estado: estadoSeleccionado,
+      };
+
+      try {
+        // 3. Llama al NUEVO servicio (que crearemos en el Paso 4)
+        // Esta línea dará error temporalmente, es normal.
+        const response = await findUsers(params);
+        setData({
+          rows: response.data,
+          total: response.total,
+        });
+      } catch (err: any) {
+        console.error("Error fetching users:", err);
+        setError(
+          err?.response?.data?.message ||
+            err.message ||
+            "Error al cargar los usuarios."
+        );
+        setData({ rows: [], total: 0 }); // Limpia los datos en caso de error
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUsersConFiltros(); // Llama a la función de fetch
+  }, [
+    // 5. ¡Array de Dependencias!
+    // Este hook se re-ejecutará CADA VEZ que uno de estos valores cambie
+    debouncedSearchTerm,
+    rolName,
+    estadoSeleccionado,
+    paginationModel,
+    sortModel,
+  ]);
 
   // --- Handlers ---
   const handleAddUserClick = () => {
@@ -119,7 +181,7 @@ export default function UsersPage() {
         variant: "success",
         autoHideDuration: 3000,
       });
-      await fetchUsers();
+      setPaginationModel((prev) => ({ ...prev, page: 0 }));
     } catch (err: any) {
       console.error("Error deleting user:", err);
       setError(
@@ -143,7 +205,7 @@ export default function UsersPage() {
     setError(null); // Limpia errores previos
     try {
       handleCloseModal(); // Cierra el modal si tiene éxito
-      await fetchUsers(); // Refresca la lista de usuarios
+      setPaginationModel((prev) => ({ ...prev, page: 0 }));
       // Opcional: Mostrar Snackbar de éxito
     } catch (err: any) {
       console.error("Error saving user:", err);
@@ -253,8 +315,6 @@ export default function UsersPage() {
 
   const rolesDisponibles = ["ADMIN", "DOCENTE", "ALUMNO"];
 
-  const [rolName, serRolName] = useState<string[]>([]);
-
   const handleRolChange = (event: SelectChangeEvent<typeof rolName>) => {
     const {
       target: { value },
@@ -277,7 +337,7 @@ export default function UsersPage() {
         Gestión de Usuarios
       </Typography>
 
-      {/* --- Sección de Filtros y Botón --- */}
+      {/* --- Sección de Filtros y Botón de crear usuario --- */}
       <Box
         sx={{
           mb: 2,
@@ -291,19 +351,21 @@ export default function UsersPage() {
           <TextField
             size="small"
             label="Buscar usuario..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{ minWidth: 300 }}
             variant="outlined"
           />
           <FormControl size="small" sx={{ m: 1, width: 300 }}>
-            <InputLabel id="demo-multiple-checkbox-label">Rol</InputLabel>
+            <InputLabel id="multiple-checkbox-label">Rol</InputLabel>
             <Select
-              labelId="demo-multiple-checkbox-label"
+              labelId="multiple-checkbox-label"
               id="demo-multiple-checkbox"
               multiple
               value={rolName}
               onChange={handleRolChange}
               input={<OutlinedInput label="Tag" />}
               renderValue={(selected) => selected.join(", ")}
-              //MenuProps={MenuProps}
             >
               {rolesDisponibles.map((rol) => (
                 <MenuItem key={rol} value={rol}>
@@ -316,8 +378,8 @@ export default function UsersPage() {
           <FormControl size="small" sx={{ minWidth: 150 }}>
             <InputLabel>Estado</InputLabel>
             <Select
-              //value={estado}
-              //onChange={(e) => setEstado(e.target.value)}
+              value={estadoSeleccionado}
+              onChange={(e) => setEstadoSeleccionado(e.target.value)}
               label="Estado"
             >
               <MenuItem value="">
@@ -351,17 +413,25 @@ export default function UsersPage() {
       {/* --- Tabla de Datos --- */}
       <Box sx={{ flexGrow: 1, width: "100%" }}>
         <DataGrid
-          rows={users}
+          rows={data.rows}
           columns={columns}
           loading={isLoading}
-          initialState={{
-            pagination: { paginationModel: { page: 0, pageSize: 6 } },
-          }}
-          pageSizeOptions={[5]}
+          getRowId={(row) => row.id}
+          // --- 1. CONEXIÓN CON EL SERVIDOR ---
+          rowCount={data.total} // <-- ¡Muy importante! El total de filas en la BD
+          paginationMode="server" // <-- Le dice que la paginación es en el backend
+          sortingMode="server" // <-- Le dice que el orden es en el backend
+          // --- 2. CONEXIÓN CON EL ESTADO DE PAGINACIÓN ---
+          // (Tu 'initialState' tenía 6, pero 'pageSizeOptions' [5]. Los unificamos)
+          pageSizeOptions={[6, 10, 20]}
+          paginationModel={paginationModel} // <-- Lee el estado
+          onPaginationModelChange={setPaginationModel} // <-- Actualiza el estado
+          // --- 3. CONEXIÓN CON EL ESTADO DE ORDENAMIENTO ---
+          sortModel={sortModel} // <-- Lee el estado
+          onSortModelChange={setSortModel} // <-- ¡Esta es la línea que querías!
+          // --- Tus otras props ---
           disableRowSelectionOnClick
           disableColumnResize={true}
-          // Necesario si tus IDs no se llaman 'id' o para asegurar unicidad
-          getRowId={(row) => row.id}
         />
       </Box>
       {/* --- Dialog/Modal para Crear/Editar Usuario --- */}
