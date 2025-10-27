@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { Rol } from "../types/roles";
 
 const rolValues: [Rol, ...Rol[]] = ["ADMIN", "DOCENTE", "ALUMNO"];
+// const fechaLimite = new Date();
 
 // Esquema base sin password (útil para actualización y datos generales)
 const userBaseSchema = z.object({
@@ -10,8 +11,11 @@ const userBaseSchema = z.object({
   dni: z.string().regex(/^\d{8,9}$/, "El DNI debe tener 8 u 9 dígitos"),
   fechaNacimiento: z
     .date("Formato de fecha inválido")
-    .min(new Date(1930, 1, 1), { error: "Muy viejo!" })
-    .max(new Date().getFullYear() - 18, "El usuario debe ser mayor de 18 años"),
+    .min(new Date(1930, 1, 1), { error: "Muy viejo!" }),
+  //.max(
+  //  fechaLimite.setFullYear(fechaLimite.getFullYear() - 18),
+  //  "El usuario debe tener al menos 18 años."
+  //)
   email: z
     .email("Formato de correo inválido")
     .min(1, "El email es obligatorio"),
