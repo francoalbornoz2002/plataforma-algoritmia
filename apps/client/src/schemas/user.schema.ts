@@ -4,7 +4,7 @@ import type { Genero } from "../types";
 
 export const roles: [Rol, ...Rol[]] = ["Administrador", "Docente", "Alumno"];
 export const generos: [Genero, ...Genero[]] = ["Masculino", "Femenino", "Otro"];
-// const fechaLimite = new Date();
+const fechaLimite = new Date();
 
 // Esquema base sin password
 const userBaseSchema = z.object({
@@ -13,11 +13,11 @@ const userBaseSchema = z.object({
   dni: z.string().regex(/^\d{7,9}$/, "El DNI debe entre 7 y 9 dígitos"),
   fechaNacimiento: z
     .date("Formato de fecha inválido")
-    .min(new Date(1930, 1, 1), { error: "Muy viejo!" }),
-  //.max(
-  //  fechaLimite.setFullYear(fechaLimite.getFullYear() - 18),
-  //  "El usuario debe tener al menos 18 años."
-  //)
+    .min(new Date(1930, 1, 1), { error: "Muy viejo!" })
+    .max(
+      fechaLimite.setFullYear(fechaLimite.getFullYear() - 18),
+      "El usuario debe tener al menos 18 años."
+    ),
   genero: z.enum(generos, "Debe seleccionar un género"),
   email: z
     .email("Formato de correo inválido")
