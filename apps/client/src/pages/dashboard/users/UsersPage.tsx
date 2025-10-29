@@ -42,6 +42,7 @@ import {
 import UserFormDialog from "./UserFormDialog";
 import { enqueueSnackbar } from "notistack";
 import { useDebounce } from "../../../hooks/useDebounce";
+import { roles } from "../../../schemas/user.schema";
 
 export default function UsersPage() {
   // --- 1. ESTADOS PARA LOS FILTROS ---
@@ -246,6 +247,7 @@ export default function UsersPage() {
         }
       },
     },
+    { field: "genero", headerName: "Género", width: 100 },
     {
       field: "email",
       headerName: "Email",
@@ -313,8 +315,6 @@ export default function UsersPage() {
     },
   ];
 
-  const rolesDisponibles = ["ADMIN", "DOCENTE", "ALUMNO"];
-
   const handleRolChange = (event: SelectChangeEvent<typeof rolName>) => {
     const {
       target: { value },
@@ -367,7 +367,7 @@ export default function UsersPage() {
               input={<OutlinedInput label="Tag" />}
               renderValue={(selected) => selected.join(", ")}
             >
-              {rolesDisponibles.map((rol) => (
+              {roles.map((rol) => (
                 <MenuItem key={rol} value={rol}>
                   <Checkbox checked={rolName.includes(rol)} />
                   <ListItemText primary={rol} />
@@ -418,18 +418,16 @@ export default function UsersPage() {
           loading={isLoading}
           getRowId={(row) => row.id}
           // --- 1. CONEXIÓN CON EL SERVIDOR ---
-          rowCount={data.total} // <-- ¡Muy importante! El total de filas en la BD
-          paginationMode="server" // <-- Le dice que la paginación es en el backend
-          sortingMode="server" // <-- Le dice que el orden es en el backend
+          rowCount={data.total} // El total de filas en la BD
+          paginationMode="server" // Le dice que la paginación es en el backend
+          sortingMode="server" // Le dice que el orden es en el backend
           // --- 2. CONEXIÓN CON EL ESTADO DE PAGINACIÓN ---
-          // (Tu 'initialState' tenía 6, pero 'pageSizeOptions' [5]. Los unificamos)
           pageSizeOptions={[6, 10, 20]}
           paginationModel={paginationModel} // <-- Lee el estado
           onPaginationModelChange={setPaginationModel} // <-- Actualiza el estado
           // --- 3. CONEXIÓN CON EL ESTADO DE ORDENAMIENTO ---
           sortModel={sortModel} // <-- Lee el estado
-          onSortModelChange={setSortModel} // <-- ¡Esta es la línea que querías!
-          // --- Tus otras props ---
+          onSortModelChange={setSortModel} // <-- Lee el modelo de ordenamiento
           disableRowSelectionOnClick
           disableColumnResize={true}
         />

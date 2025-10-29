@@ -21,32 +21,17 @@ export interface FindUsersParams {
   estado?: string;
 }
 
-// --- Función para obtener todos los usuarios ---
-// TODO: Añadir parámetros de filtro
-//export const getAllUsers = async (): Promise<User[]> => {
-//  try {
-//    // Llama al endpoint GET /usuarios (asumiendo prefijo /api en apiClient)
-//    const response = await apiClient.get<User[]>("/users/all");
-//    // Devuelve solo los datos de la respuesta
-//    return response.data;
-//  } catch (error) {
-//    console.error("Error al obtener usuarios:", error);
-//    // Relanza el error para que el componente que llama lo maneje
-//    throw error;
-//  }
-//};
-
 export const findUsers = async (
   params: FindUsersParams
 ): Promise<PaginatedUsersResponse> => {
   try {
     const response = await apiClient.get("/users/all", {
       // Axios convierte esto en query parameters:
-      // /usuarios?page=1&limit=6&search=juan&roles[]=DOCENTE&roles[]=ADMIN...
+      // /users/all?page=1&limit=6&search=juan&roles[]=Docente&roles[]=Administrador...
       params: params,
       // Importante para que axios maneje arrays correctamente
       paramsSerializer: {
-        indexes: null, // Formato: roles[]=DOCENTE&roles[]=ADMIN
+        indexes: null, // Formato: roles[]=Docente&roles[]=Administrador
       },
     });
     return response.data;
@@ -59,7 +44,7 @@ export const findUsers = async (
 // --- Función para crear un nuevo usuario ---
 export const createUser = async (userData: CreateUserData): Promise<User> => {
   try {
-    // Llama al endpoint POST /usuarios
+    // Llama al endpoint POST /users/create
     const response = await apiClient.post<User>("/users/create", userData);
     return response.data;
   } catch (error) {
@@ -74,7 +59,7 @@ export const updateUser = async (
   userData: UpdateUserData
 ): Promise<User> => {
   try {
-    // Llama al endpoint PATCH /usuarios/:id
+    // Llama al endpoint PATCH /users/edit:id
     const response = await apiClient.patch<User>(
       `/users/edit/${userId}`,
       userData
@@ -90,7 +75,7 @@ export const updateUser = async (
 export const deleteUser = async (userId: string): Promise<void> => {
   // No suele devolver datos
   try {
-    // Llama al endpoint DELETE /usuarios/:id
+    // Llama al endpoint DELETE /users/delete:id
     await apiClient.delete(`/users/delete/${userId}`);
     // No devuelve nada si tiene éxito
   } catch (error) {
@@ -99,7 +84,7 @@ export const deleteUser = async (userId: string): Promise<void> => {
   }
 };
 
-// Puedes añadir más funciones aquí si es necesario (ej. getUserById)
+// --- Función para obtener un usuario por id ---
 export const getUserById = async (userId: string): Promise<User> => {
   try {
     const response = await apiClient.get<User>(`/users/${userId}`);

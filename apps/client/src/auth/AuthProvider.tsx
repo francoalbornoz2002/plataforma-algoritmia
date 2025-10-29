@@ -46,7 +46,7 @@ const getUserFromToken = (token: string | null): UserToken | null => {
     }
 
     // Asegura que el rol decodificado sea uno de los válidos
-    if (!["ADMIN", "DOCENTE", "ALUMNO"].includes(decoded.rol)) {
+    if (!["Administrador", "Docente", "Alumno"].includes(decoded.rol)) {
       console.error("Rol inválido en el token:", decoded.rol);
       localStorage.removeItem("accessToken");
       return null;
@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Efecto para verificar token inicial y configurar interceptor (si no lo hiciste globalmente)
+  // Efecto para verificar token inicial y configurar interceptor
   useEffect(() => {
     const initialToken = localStorage.getItem("accessToken");
     const validUser = getUserFromToken(initialToken);
@@ -90,7 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       // Usa apiClient para la petición
       const response = await apiClient.post<{ accessToken: string }>(
-        "/auth/login", // Ruta relativa gracias a baseURL en apiClient
+        "/auth/login",
         { email, password }
       );
       const new_token = response.data.accessToken;

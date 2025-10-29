@@ -1,6 +1,6 @@
-// src/types/index.ts
-
 import type { Rol } from "./roles";
+
+export type Genero = "Masculino" | "Femenino" | "Otro";
 
 // Defino el tipo Usuario de la respuesta de la API
 export interface User {
@@ -9,6 +9,7 @@ export interface User {
   apellido: string;
   dni: string;
   fechaNacimiento: Date;
+  genero: Genero;
   email: string;
   rol: Rol;
   createdAt: string | Date;

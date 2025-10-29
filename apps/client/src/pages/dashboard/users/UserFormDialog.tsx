@@ -21,18 +21,19 @@ import { es } from "date-fns/locale/es";
 
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 
-// Importa los esquemas, tipos y el tipo User base
+// Esquemas de validación, tipos y el tipo User base
 import {
   createUserSchema,
+  generos,
+  roles,
   updateUserSchema,
   type CreateUserFormValues,
   type UpdateUserFormValues,
 } from "../../../schemas/user.schema";
-import { type User } from "../../../types"; // Ajusta la ruta
-import { Roles } from "../../../types/roles"; // Importa el TIPO Rol y el OBJETO Roles
+import { type User } from "../../../types";
 
-// Importa los servicios
-import { createUser, updateUser } from "../../../services/user.service"; // Ajusta la ruta
+// Servicios
+import { createUser, updateUser } from "../../../services/user.service";
 import { Box } from "@mui/material";
 
 import { useSnackbar } from "notistack";
@@ -71,11 +72,12 @@ export default function UserFormDialog({
       // Valores por defecto (importante para reset)
       nombre: "",
       apellido: "",
-      email: "",
-      rol: undefined, // O un valor por defecto válido
       dni: "",
-      fechaNacimiento: undefined, // DatePicker usualmente maneja null
-      password: "", // Se limpia al resetear
+      fechaNacimiento: undefined,
+      genero: "Masculino",
+      email: "",
+      rol: undefined,
+      password: "",
     },
   });
 
@@ -87,12 +89,13 @@ export default function UserFormDialog({
         reset({
           nombre: userToEdit.nombre || "",
           apellido: userToEdit.apellido || "",
-          email: userToEdit.email || "", // Email no se edita, pero lo mostramos
-          rol: userToEdit.rol,
           dni: userToEdit.dni || "",
           fechaNacimiento: userToEdit.fechaNacimiento
             ? new Date(userToEdit.fechaNacimiento)
             : undefined,
+          genero: userToEdit.genero || "Otro",
+          email: userToEdit.email || "", // Email no se edita, pero lo mostramos
+          rol: userToEdit.rol,
           password: "", // Limpia password en modo edición
         });
       } else {
@@ -100,10 +103,11 @@ export default function UserFormDialog({
         reset({
           nombre: "",
           apellido: "",
-          email: "",
-          rol: undefined,
           dni: "",
-          fechaNacimiento: undefined,
+          fechaNacimiento: new Date(),
+          genero: "Masculino",
+          email: "",
+          rol: "Alumno",
           password: "",
         });
       }
@@ -191,6 +195,73 @@ export default function UserFormDialog({
               disabled={isSubmitting}
             />
             <TextField
+              label="DNI"
+              fullWidth
+              required
+              {...register("dni")}
+              error={!!errors.dni}
+              helperText={errors.dni?.message || " "}
+              slotProps={{
+                formHelperText: {
+                  style: { minHeight: "1.25em" },
+                },
+              }}
+              disabled={isSubmitting}
+            />
+            {/* DatePicker para Fecha de Nacimiento */}
+            <Controller
+              name="fechaNacimiento"
+              control={control}
+              render={({ field, fieldState: { error } }) => (
+                <LocalizationProvider
+                  dateAdapter={AdapterDateFns}
+                  adapterLocale={es}
+                >
+                  <DatePicker
+                    label="Fecha de Nacimiento *" // Asterisco si es requerido
+                    format="dd/MM/yyyy"
+                    value={field.value || null}
+                    onChange={(date) => field.onChange(date)}
+                    disabled={isSubmitting}
+                    disableFuture
+                    slotProps={{
+                      textField: {
+                        required: true, // Indica visualmente que es requerido
+                        fullWidth: true,
+                        error: !!error,
+                        helperText: error?.message || " ",
+                      },
+                    }}
+                  />
+                </LocalizationProvider>
+              )}
+            />
+            {/* Selector de Género */}
+            <Controller
+              name="genero"
+              control={control}
+              render={({ field, fieldState: { error } }) => (
+                <FormControl fullWidth required error={!!error}>
+                  <InputLabel id="genero-select-label">Género</InputLabel>
+                  <Select
+                    labelId="genero-select-label"
+                    label="Género"
+                    disabled={isSubmitting}
+                    {...field}
+                  >
+                    {/* Mapea los valores del TIPO Género */}
+                    {generos.map((genero) => (
+                      <MenuItem key={genero} value={genero}>
+                        {/* Puedes poner nombres más amigables aquí si quieres */}
+                        {genero}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {error && <FormHelperText>{error.message}</FormHelperText>}
+                </FormControl>
+              )}
+            />
+            <TextField
               label="Email"
               fullWidth
               required
@@ -260,59 +331,15 @@ export default function UserFormDialog({
                     {...field}
                   >
                     {/* Mapea los valores del TIPO Rol */}
-                    {(Object.keys(Roles) as Array<keyof typeof Roles>).map(
-                      (key) => (
-                        <MenuItem key={Roles[key]} value={Roles[key]}>
-                          {/* Puedes poner nombres más amigables aquí si quieres */}
-                          {Roles[key]}
-                        </MenuItem>
-                      )
-                    )}
+                    {roles.map((rol) => (
+                      <MenuItem key={rol} value={rol}>
+                        {/* Puedes poner nombres más amigables aquí si quieres */}
+                        {rol}
+                      </MenuItem>
+                    ))}
                   </Select>
                   {error && <FormHelperText>{error.message}</FormHelperText>}
                 </FormControl>
-              )}
-            />
-            <TextField
-              label="DNI"
-              fullWidth
-              required
-              {...register("dni")}
-              error={!!errors.dni}
-              helperText={errors.dni?.message || " "}
-              slotProps={{
-                formHelperText: {
-                  style: { minHeight: "1.25em" },
-                },
-              }}
-              disabled={isSubmitting}
-            />
-            {/* DatePicker para Fecha de Nacimiento */}
-            <Controller
-              name="fechaNacimiento"
-              control={control}
-              render={({ field, fieldState: { error } }) => (
-                <LocalizationProvider
-                  dateAdapter={AdapterDateFns}
-                  adapterLocale={es}
-                >
-                  <DatePicker
-                    label="Fecha de Nacimiento *" // Asterisco si es requerido
-                    format="dd/MM/yyyy"
-                    value={field.value || null}
-                    onChange={(date) => field.onChange(date)}
-                    disabled={isSubmitting}
-                    disableFuture
-                    slotProps={{
-                      textField: {
-                        required: true, // Indica visualmente que es requerido
-                        fullWidth: true,
-                        error: !!error,
-                        helperText: error?.message || " ",
-                      },
-                    }}
-                  />
-                </LocalizationProvider>
               )}
             />
           </Stack>

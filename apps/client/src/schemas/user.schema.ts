@@ -1,7 +1,9 @@
 import { z } from "zod";
 import type { Rol } from "../types/roles";
+import type { Genero } from "../types";
 
-const rolValues: [Rol, ...Rol[]] = ["ADMIN", "DOCENTE", "ALUMNO"];
+export const roles: [Rol, ...Rol[]] = ["Administrador", "Docente", "Alumno"];
+export const generos: [Genero, ...Genero[]] = ["Masculino", "Femenino", "Otro"];
 // const fechaLimite = new Date();
 
 // Esquema base sin password
@@ -16,10 +18,11 @@ const userBaseSchema = z.object({
   //  fechaLimite.setFullYear(fechaLimite.getFullYear() - 18),
   //  "El usuario debe tener al menos 18 años."
   //)
+  genero: z.enum(generos, "Debe seleccionar un género"),
   email: z
     .email("Formato de correo inválido")
     .min(1, "El email es obligatorio"),
-  rol: z.enum(rolValues, "Debe ingresar un rol"),
+  rol: z.enum(roles, "Debe seleccionar un rol"),
 });
 
 // Esquema para CREAR (extiende el base y añade password)

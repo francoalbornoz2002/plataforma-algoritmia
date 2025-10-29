@@ -10,13 +10,14 @@ import VpnKeyIcon from "@mui/icons-material/VpnKey";
 import SettingsIcon from "@mui/icons-material/Settings";
 import Sidebar from "./sidebar/Sidebar";
 import { Outlet } from "react-router";
-import { useAuth, type User } from "../auth/AuthProvider";
+import { useAuth } from "../auth/AuthProvider";
 import {
   Class,
   QueryStats,
   QuestionAnswer,
   SwitchAccessShortcutAdd,
 } from "@mui/icons-material";
+import type { User } from "../types";
 
 export default function DashboardLayout() {
   const { user } = useAuth() as { user: User | null };
@@ -89,19 +90,18 @@ export default function DashboardLayout() {
 
   // Selecciona el array de items correcto basado en el rol del usuario
   let sidebarItems: MenuItemType[] = [];
-  if (user?.rol === "ADMIN") {
+  if (user?.rol === "Administrador") {
     sidebarItems = itemsAdmin;
-  } else if (user?.rol === "DOCENTE") {
+  } else if (user?.rol === "Docente") {
     sidebarItems = itemsDocente;
-  } else if (user?.rol === "ALUMNO") {
+  } else if (user?.rol === "Alumno") {
     sidebarItems = itemsAlumno;
   }
 
   return (
     <>
       <Sidebar menuItems={sidebarItems} userInitial={"U"}>
-        {/* El contenido de la página específica (ej. UsersPage, CoursesPage) */}
-        {/* se renderizará aquí gracias a la prop 'children' */}
+        {/* Se renderizará contenido de la página específica */}
         <Outlet />
       </Sidebar>
     </>

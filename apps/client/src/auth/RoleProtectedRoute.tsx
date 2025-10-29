@@ -20,6 +20,6 @@ export default function RoleProtectedRoute({
     console.warn(
       `Acceso denegado a ${location.pathname} para el rol ${user?.rol}`
     );
-    return <Navigate to="/dashboard" state={{ from: location }} replace />;
+    return <Navigate to="/" state={{ from: location }} replace />;
   }
 }

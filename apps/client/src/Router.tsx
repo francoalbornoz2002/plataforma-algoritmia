@@ -25,7 +25,11 @@ export const AppRouter: React.FC<{}> = () => {
           <Route index element={<DashboardPage />} />
           {/* 2.1 Grupo de Rutas SOLO para ADMIN (dentro de /dashboard) */}
           {/* RoleProtectedRoute verifica si el rol es ADMIN */}
-          <Route element={<RoleProtectedRoute allowedRoles={[Roles.ADMIN]} />}>
+          <Route
+            element={
+              <RoleProtectedRoute allowedRoles={[Roles.Administrador]} />
+            }
+          >
             {/* Todas las rutas anidadas aquí requieren ADMIN y usan DashboardLayout */}
             <Route path="users" element={<UsersPage />} />
             <Route path="courses" element={<CoursesPage />} />

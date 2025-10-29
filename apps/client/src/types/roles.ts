@@ -1,6 +1,6 @@
-export type Rol = "ADMIN" | "DOCENTE" | "ALUMNO";
+export type Rol = "Administrador" | "Docente" | "Alumno";
 export const Roles = {
-  ADMIN: "ADMIN",
-  DOCENTE: "DOCENTE",
-  ALUMNO: "ALUMNO",
+  Administrador: "Administrador",
+  Docente: "Docente",
+  Alumno: "Alumno",
 } as const;
