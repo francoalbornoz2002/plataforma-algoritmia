@@ -1,7 +1,7 @@
 // src/courses/dto/create-course.dto.ts
 
 import { ApiProperty } from '@nestjs/swagger';
-import { DiaDeSemana, Modalidad } from '@prisma/client';
+import { dias_semana, modalidad } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -19,8 +19,8 @@ const HORA_REGEX = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
 // DTO anidado para validar cada objeto de dia de clase
 class DiaClaseDto {
   @ApiProperty()
-  @IsEnum(DiaDeSemana)
-  dia: DiaDeSemana;
+  @IsEnum(dias_semana)
+  dia: dias_semana;
 
   @ApiProperty({ example: '10:00' })
   @Matches(HORA_REGEX, {
@@ -38,8 +38,8 @@ class DiaClaseDto {
   horaFin: string;
 
   @ApiProperty()
-  @IsEnum(Modalidad)
-  modalidad: Modalidad;
+  @IsEnum(modalidad)
+  modalidad: modalidad;
 }
 
 // DTO principal para la creación del curso
@@ -56,7 +56,7 @@ export class CreateCourseDto {
   @ApiProperty()
   @IsString()
   @MinLength(6)
-  claveAcceso: string;
+  contrasenaAcceso: string;
 
   @ApiProperty({ type: [String] })
   @IsArray()

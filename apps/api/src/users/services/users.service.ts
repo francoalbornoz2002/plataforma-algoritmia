@@ -27,14 +27,18 @@ export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   async create(createUserDto: CreateUserDto): Promise<Usuario> {
-    // 1. Verifica si el email ya existe
-    const existingUser = await this.prisma.usuario.findUnique({
-      where: { email: createUserDto.email, dni: createUserDto.dni },
+    // 1. Verifica si el email o dni ya existen en los usuarios registrados
+    const existingUser = await this.prisma.usuario.findFirst({
+      where: {
+        OR: [{ email: createUserDto.email }, { dni: createUserDto.dni }],
+      },
     });
     if (existingUser) {
-      throw new ConflictException(
-        'El correo electrónico o dni ya está en uso.',
-      );
+      if (existingUser.email === createUserDto.email) {
+        throw new ConflictException('El correo electrónico ya está en uso.');
+      } else {
+        throw new ConflictException('El DNI ya está registrado.');
+      }
     }
 
     // 2. Hashea la contraseña antes de guardarla

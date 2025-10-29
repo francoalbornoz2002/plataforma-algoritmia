@@ -22,7 +22,7 @@ async function main() {
       data: {
         nombre: 'Yessica',
         apellido: 'Barbosa',
-        dni: '44540659',
+        dni: '44540658',
         fechaNacimiento: new Date(2004, 10, 26),
         genero: 'Femenino',
         email: 'yessica@mail.com',
@@ -35,7 +35,7 @@ async function main() {
       data: {
         nombre: 'Admin',
         apellido: 'Admin',
-        dni: '44540659',
+        dni: '44540657',
         fechaNacimiento: new Date(2002, 11, 23),
         genero: 'Masculino',
         email: 'admin@mail.com',
