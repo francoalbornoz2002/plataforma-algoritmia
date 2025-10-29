@@ -35,8 +35,8 @@ model ClaseConsulta {
   modalidad          modalidad
   estadoClase        estado_clase_consulta @map("estado_clase")
   estadoRevision     estado_revision       @map("estado_revision")
-  createdAt          DateTime              @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime              @map("updated_at") @db.Timestamptz(6)
+  createdAt          DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt          DateTime?             @map("deleted_at") @db.Timestamptz(6)
   curso              Curso                 @relation("ClasesConsultaCurso", fields: [idCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
   docenteResponsable Usuario               @relation("ClasesACargo", fields: [idDocente], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -96,8 +96,8 @@ model Curso {
   descripcion           String             @db.VarChar(255)
   contrasenaAcceso      String             @map("contraseña_acceso") @db.VarChar(255)
   modalidadPreferencial modalidad          @default(Presencial) @map("modalidad_preferencial")
-  createdAt             DateTime           @map("created_at") @db.Timestamptz(6)
-  updatedAt             DateTime           @map("updated_at") @db.Timestamptz(6)
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt             DateTime?          @map("deleted_at") @db.Timestamptz(6)
   alumnos               AlumnoCurso[]      @relation("AlumnosEnCurso")
   clasesConsulta        ClaseConsulta[]    @relation("ClasesConsultaCurso")
@@ -286,8 +286,8 @@ model Pregunta {
   gradoDificultad   grado_dificultad  @map("grado_dificultad")
   enunciado         String            @db.VarChar(255)
   idDocente         String?           @map("id_docente") @db.Uuid
-  createdAt         DateTime          @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime          @map("updated_at") @db.Timestamptz(6)
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt         DateTime?         @map("deleted_at") @db.Timestamptz(6)
   opcionesRespuesta OpcionRespuesta[]
   dificultad        Dificultad        @relation(fields: [idDificultad], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -410,7 +410,7 @@ model SesionRefuerzo {
   tiempoLimite    Int              @map("tiempo_limite") @db.SmallInt
   estado          estado_sesion
   createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime         @map("updated_at") @db.Timestamptz(6)
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt       DateTime?        @map("deleted_at") @db.Timestamptz(6)
   preguntas       PreguntaSesion[]
   resultadoSesion ResultadoSesion?
@@ -435,8 +435,8 @@ model Usuario {
   email               String              @unique @db.VarChar(255)
   password            String              @db.VarChar(255)
   rol                 roles
-  createdAt           DateTime            @map("created_at") @db.Timestamptz(6)
-  updatedAt           DateTime            @map("updated_at") @db.Timestamptz(6)
+  createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt           DateTime?           @map("deleted_at") @db.Timestamptz(6)
   cursosDelAlumno     AlumnoCurso[]       @relation("CursosDelAlumno")
   clasesACargo        ClaseConsulta[]     @relation("ClasesACargo")
