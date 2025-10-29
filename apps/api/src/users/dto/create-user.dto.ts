@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Rol } from '@prisma/client';
+import { generos, roles } from '@prisma/client';
 
 import { Transform, TransformFnParams } from 'class-transformer';
 import {
@@ -25,7 +25,7 @@ export class CreateUserDto {
 
   @ApiProperty({ required: true })
   @IsString()
-  @MinLength(8)
+  @MinLength(7)
   @MaxLength(9)
   dni: string;
 
@@ -33,6 +33,11 @@ export class CreateUserDto {
   @IsDate()
   @IsNotEmpty()
   fechaNacimiento: Date;
+
+  @ApiProperty({ required: true })
+  @IsEnum(generos)
+  @IsNotEmpty()
+  genero: generos;
 
   @ApiProperty({ required: true })
   @IsEmail()
@@ -50,6 +55,6 @@ export class CreateUserDto {
   password: string;
 
   @ApiProperty({ required: true })
-  @IsEnum(Rol)
-  rol: Rol;
+  @IsEnum(roles)
+  rol: roles;
 }

@@ -8,7 +8,7 @@ import {
   Min,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
-import { Rol } from '@prisma/client'; // Importa tu enum Rol
+import { roles } from '@prisma/client'; // Importa tu enum Rol
 
 // Enum para el orden
 enum SortOrder {
@@ -50,12 +50,13 @@ export class FindAllUsersDto {
     if (typeof value === 'string') {
       return [value]; // Si es un string "ADMIN", conviértelo a ["ADMIN"]
     }
-    return value; // Si ya es un array, o undefined, déjalo como está
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return value;
   })
   @IsArray()
-  @IsEnum(Rol, { each: true }) // Valida que cada item del array sea un Rol
+  @IsEnum(roles, { each: true }) // Valida que cada item del array sea un Rol
   @Type(() => String) // Ayuda a Nest a parsear el array
-  roles?: Rol[]; // NestJS lo parsea de roles[]=DOCENTE&roles[]=ADMIN
+  roles?: roles[]; // NestJS lo parsea de roles[]=DOCENTE&roles[]=ADMIN
 
   @IsOptional()
   @IsString() // Recibimos "true", "false", o ""

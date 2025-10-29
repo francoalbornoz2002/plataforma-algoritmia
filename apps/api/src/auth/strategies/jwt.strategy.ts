@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Rol } from '@prisma/client';
+import { roles } from '@prisma/client';
 import { Strategy, ExtractJwt } from 'passport-jwt';
 
 @Injectable()
@@ -13,10 +13,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { id: string; rol: Rol }) {
-    console.log('VALIDATE CALLED! Payload:', payload); // <--- Añade esto
+  async validate(payload: { id: string; rol: roles }) {
     if (!payload || !payload.id || !payload.rol) {
-      console.error('Payload inválido o incompleto en validate!');
       throw new UnauthorizedException('Token inválido');
     }
 

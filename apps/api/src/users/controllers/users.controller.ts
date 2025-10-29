@@ -16,7 +16,7 @@ import { ApiCreatedResponse, ApiTags } from '@nestjs/swagger';
 import { UserEntity } from '../entities/user.entity';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
-import { Rol } from '@prisma/client';
+import { roles } from '@prisma/client';
 import { FindAllUsersDto } from '../dto/find-all-users.dto';
 
 @Controller('users')
@@ -30,7 +30,7 @@ export class UsersController {
   }
 
   @UseGuards(RolesGuard)
-  @Roles(Rol.ADMIN)
+  @Roles(roles.Administrador)
   @Get('all')
   @ApiCreatedResponse({ type: UserEntity, isArray: true })
   findAll(@Query() query: FindAllUsersDto) {

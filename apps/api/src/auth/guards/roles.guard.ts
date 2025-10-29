@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Rol } from '@prisma/client';
+import { roles } from '@prisma/client';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 
 @Injectable()
@@ -14,7 +14,7 @@ export class RolesGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     // Obtiene los roles requeridos desde el decorador @Roles
-    const requiredRoles = this.reflector.getAllAndOverride<Rol[]>(ROLES_KEY, [
+    const requiredRoles = this.reflector.getAllAndOverride<roles[]>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);

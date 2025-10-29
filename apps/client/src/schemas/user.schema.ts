@@ -4,11 +4,11 @@ import type { Rol } from "../types/roles";
 const rolValues: [Rol, ...Rol[]] = ["ADMIN", "DOCENTE", "ALUMNO"];
 // const fechaLimite = new Date();
 
-// Esquema base sin password (útil para actualización y datos generales)
+// Esquema base sin password
 const userBaseSchema = z.object({
   nombre: z.string().min(2, "El nombre es obligatorio"),
   apellido: z.string().min(2, "El apellido es obligatorio"),
-  dni: z.string().regex(/^\d{8,9}$/, "El DNI debe tener 8 u 9 dígitos"),
+  dni: z.string().regex(/^\d{7,9}$/, "El DNI debe entre 7 y 9 dígitos"),
   fechaNacimiento: z
     .date("Formato de fecha inválido")
     .min(new Date(1930, 1, 1), { error: "Muy viejo!" }),

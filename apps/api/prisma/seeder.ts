@@ -11,9 +11,10 @@ async function main() {
         apellido: 'Albornoz',
         dni: '44540659',
         fechaNacimiento: new Date(2002, 11, 23),
+        genero: 'Masculino',
         email: 'franco@mail.com',
         password: await bcrypt.hash('franco123', 10),
-        rol: 'ALUMNO',
+        rol: 'Alumno',
       },
     });
 
@@ -23,9 +24,10 @@ async function main() {
         apellido: 'Barbosa',
         dni: '44540659',
         fechaNacimiento: new Date(2004, 10, 26),
+        genero: 'Femenino',
         email: 'yessica@mail.com',
         password: await bcrypt.hash('yessica20', 10),
-        rol: 'DOCENTE',
+        rol: 'Docente',
       },
     });
 
@@ -35,9 +37,10 @@ async function main() {
         apellido: 'Admin',
         dni: '44540659',
         fechaNacimiento: new Date(2002, 11, 23),
+        genero: 'Masculino',
         email: 'admin@mail.com',
         password: await bcrypt.hash('admin123', 10),
-        rol: 'ADMIN',
+        rol: 'Administrador',
       },
     });
 

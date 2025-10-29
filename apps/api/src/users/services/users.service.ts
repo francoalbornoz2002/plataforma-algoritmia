@@ -29,10 +29,12 @@ export class UsersService {
   async create(createUserDto: CreateUserDto): Promise<Usuario> {
     // 1. Verifica si el email ya existe
     const existingUser = await this.prisma.usuario.findUnique({
-      where: { email: createUserDto.email },
+      where: { email: createUserDto.email, dni: createUserDto.dni },
     });
     if (existingUser) {
-      throw new ConflictException('El correo electrónico ya está en uso.');
+      throw new ConflictException(
+        'El correo electrónico o dni ya está en uso.',
+      );
     }
 
     // 2. Hashea la contraseña antes de guardarla
@@ -82,7 +84,7 @@ export class UsersService {
 
     // Filtro de Roles (Múltiple)
     if (roles && roles.length > 0) {
-      // El DTO ya validó que 'roles' es un array de Enum Rol
+      // El DTO ya validó que 'roles' es un array de Enum roles
       where.rol = { in: roles };
     }
 
@@ -119,7 +121,7 @@ export class UsersService {
           skip,
           take,
           orderBy,
-          // ¡Importante! No devuelvas la contraseña
+          // No devolvemos la contraseña
           select: {
             id: true,
             email: true,
@@ -127,6 +129,7 @@ export class UsersService {
             apellido: true,
             dni: true,
             fechaNacimiento: true,
+            genero: true,
             rol: true,
             createdAt: true,
             updatedAt: true,
@@ -147,7 +150,7 @@ export class UsersService {
         totalPages: Math.ceil(total / limit),
       };
     } catch (e) {
-      // Manejar errores de Prisma (ej: si 'sort' no es un campo válido)
+      // Manejar errores de Prisma
       if (e instanceof Prisma.PrismaClientKnownRequestError) {
         throw new BadRequestException(`Error en la consulta: ${e.message}`);
       }
@@ -188,7 +191,7 @@ export class UsersService {
     if (!usuario || usuario.deletedAt) {
       // Si no se encuentra o ya está borrado, lanzamos un error.
       throw new NotFoundException(
-        `Usuario con ID '${id}' no encontrado o ya ha sido eliminado.`,
+        `Usuario con ID '${id}' no encontrado o ya ha sido dado de baja.`,
       );
     }
 

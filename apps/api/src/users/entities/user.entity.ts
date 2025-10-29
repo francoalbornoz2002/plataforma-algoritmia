@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Rol } from '@prisma/client';
+import { roles } from '@prisma/client';
 export class UserEntity {
   @ApiProperty()
   id: string;
@@ -11,13 +11,22 @@ export class UserEntity {
   apellido: string;
 
   @ApiProperty()
+  dni: string;
+
+  @ApiProperty()
+  fechaNacimiento: Date;
+
+  @ApiProperty()
+  genero: string;
+
+  @ApiProperty()
   email: string;
 
   @ApiProperty()
   password: string;
 
   @ApiProperty()
-  rol: Rol;
+  rol: roles;
 
   @ApiProperty()
   createdAt: Date;
@@ -26,5 +35,5 @@ export class UserEntity {
   updatedAt: Date;
 
   @ApiProperty()
-  deletedAt: Date;
+  deletedAt?: Date;
 }
