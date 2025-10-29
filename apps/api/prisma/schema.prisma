@@ -7,95 +7,537 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Rol {
-  ADMIN //Pendiente de migración
-  DOCENTE
-  ALUMNO
+model AlumnoCurso {
+  idAlumno       String         @map("id_alumno") @db.Uuid
+  idCurso        String         @map("id_curso") @db.Uuid
+  idProgreso     String         @unique @map("id_progreso") @db.Uuid
+  estado         estado_simple
+  alumno         Usuario        @relation("CursosDelAlumno", fields: [idAlumno], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  curso          Curso          @relation("AlumnosEnCurso", fields: [idCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  progresoAlumno ProgresoAlumno @relation(fields: [idProgreso], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([idAlumno, idCurso])
+  @@index([estado], map: "idx_alumno_curso_estado")
+  @@index([idAlumno, idCurso], map: "idx_alumno_curso_pks")
+  @@index([idProgreso], map: "idx_alumno_curso_progreso")
+  @@map("alumno_curso")
 }
 
-enum Modalidad {
-  PRESENCIAL
-  VIRTUAL
+model ClaseConsulta {
+  id                 String                @id @default(uuid()) @db.Uuid
+  idDocente          String                @map("id_docente") @db.Uuid
+  idCurso            String                @map("id_curso") @db.Uuid
+  nombre             String                @db.VarChar(255)
+  descripcion        String                @db.VarChar(255)
+  fechaClase         DateTime              @map("fecha_clase") @db.Date
+  horaInicio         DateTime              @map("hora_inicio") @db.Time(6)
+  horaFin            DateTime              @map("hora_fin") @db.Time(6)
+  modalidad          modalidad
+  estadoClase        estado_clase_consulta @map("estado_clase")
+  estadoRevision     estado_revision       @map("estado_revision")
+  createdAt          DateTime              @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime              @map("updated_at") @db.Timestamptz(6)
+  deletedAt          DateTime?             @map("deleted_at") @db.Timestamptz(6)
+  curso              Curso                 @relation("ClasesConsultaCurso", fields: [idCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  docenteResponsable Usuario               @relation("ClasesACargo", fields: [idDocente], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  consultasEnClase   ConsultaClase[]       @relation("ClaseDeConsultas")
+
+  @@index([idCurso], map: "idx_clases_consulta_curso")
+  @@index([idDocente], map: "idx_clases_consulta_docente")
+  @@index([estadoClase], map: "idx_clases_consulta_estadoc")
+  @@index([estadoRevision], map: "idx_clases_consulta_estador")
+  @@index([fechaClase], map: "idx_clases_consulta_fecha")
+  @@map("clases_consulta")
 }
 
-enum DiaDeSemana {
-  LUNES
-  MARTES
-  MIERCOLES
-  JUEVES
-  VIERNES
-  SABADO
+model Consulta {
+  id                   String             @id @default(uuid()) @db.Uuid
+  idAlumno             String             @map("id_alumno") @db.Uuid
+  idCurso              String             @map("id_curso") @db.Uuid
+  titulo               String             @db.VarChar(255)
+  tema                 temas
+  descripcion          String             @db.VarChar(255)
+  fechaConsulta        DateTime           @map("fecha_consulta") @db.Date
+  estado               estado_consulta
+  valoracionAlumno     Int?               @map("valoracion_alumno") @db.SmallInt
+  comentarioValoracion String?            @map("comentario_valoracion") @db.VarChar(255)
+  alumno               Usuario            @relation("ConsultasAlumno", fields: [idAlumno], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  curso                Curso              @relation("ConsultasCurso", fields: [idCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  valoracion           Valoracion?        @relation(fields: [valoracionAlumno], references: [valor], onDelete: NoAction, onUpdate: NoAction)
+  clasesDondeSeTrata   ConsultaClase[]    @relation("ConsultasEnClase")
+  respuestaConsulta    RespuestaConsulta? @relation("RespuestaDeConsulta")
+
+  @@index([idAlumno], map: "idx_consultas_alumno")
+  @@index([idCurso], map: "idx_consultas_curso")
+  @@index([estado], map: "idx_consultas_estado")
+  @@index([fechaConsulta], map: "idx_consultas_fecha")
+  @@index([tema], map: "idx_consultas_tema")
+  @@index([valoracionAlumno], map: "idx_consultas_valoracion")
+  @@map("consultas")
 }
 
-model Usuario {
-  id              String   @id @default(uuid())
-  nombre          String //Pendiente de migración
-  apellido        String //Pendiente de migración
-  dni             String
-  fechaNacimiento DateTime
-  email           String   @unique //Pendiente de migración
-  password        String //Pendiente de migración
-  rol             Rol
+model ConsultaClase {
+  idConsulta      String        @map("id_consulta") @db.Uuid
+  idClaseConsulta String        @map("id_clase_consulta") @db.Uuid
+  revisadaEnClase Boolean       @default(false) @map("revisada_en_clase")
+  claseConsulta   ClaseConsulta @relation("ClaseDeConsultas", fields: [idClaseConsulta], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  consulta        Consulta      @relation("ConsultasEnClase", fields: [idConsulta], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  cursosDictados   DocenteCurso[] @relation("DocenteCursos")
-  cursosInscriptos AlumnoCurso[]  @relation("AlumnoCursos")
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
-  @@map("usuarios") // El nombre de la tabla en la BD
+  @@id([idConsulta, idClaseConsulta])
+  @@index([idConsulta, idClaseConsulta], map: "idx_consultas_clase_consclase")
+  @@map("consultas_clase")
 }
 
 model Curso {
-  id          String @id @default(uuid())
-  nombre      String
-  descripcion String
-  claveAcceso String
+  id                    String             @id @default(uuid()) @db.Uuid
+  idProgreso            String             @map("id_progreso") @db.Uuid
+  idDificultadesCurso   String             @map("id_dificultades_curso") @db.Uuid
+  nombre                String             @db.VarChar(255)
+  descripcion           String             @db.VarChar(255)
+  contrasenaAcceso      String             @map("contraseña_acceso") @db.VarChar(255)
+  modalidadPreferencial modalidad          @default(Presencial) @map("modalidad_preferencial")
+  createdAt             DateTime           @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime           @map("updated_at") @db.Timestamptz(6)
+  deletedAt             DateTime?          @map("deleted_at") @db.Timestamptz(6)
+  alumnos               AlumnoCurso[]      @relation("AlumnosEnCurso")
+  clasesConsulta        ClaseConsulta[]    @relation("ClasesConsultaCurso")
+  consultas             Consulta[]         @relation("ConsultasCurso")
+  dificultadesCurso     DificultadesCurso  @relation(fields: [idDificultadesCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  progresoCurso         ProgresoCurso      @relation(fields: [idProgreso], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  diasClase             DiaClase[]
+  dificultadesAlumnos   DificultadAlumno[]
+  docentes              DocenteCurso[]     @relation("DocentesEnCurso")
+  sesionesRefuerzo      SesionRefuerzo[]
 
-  docentes  DocenteCurso[]
-  alumnos   AlumnoCurso[]
-  diasClase DiaClase[]
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-
+  @@index([deletedAt], map: "idx_cursos_activo")
+  @@index([idDificultadesCurso], map: "idx_cursos_dificultad")
+  @@index([nombre], map: "idx_cursos_nombre")
+  @@index([idProgreso], map: "idx_cursos_progreso")
   @@map("cursos")
 }
 
 model DiaClase {
-  id         String      @id @default(uuid())
-  dia        DiaDeSemana
-  horaInicio String
-  horaFin    String
-  modalidad  Modalidad
+  id         String      @id @default(uuid()) @db.Uuid
+  idCurso    String      @map("id_curso") @db.Uuid
+  dia        dias_semana
+  horaInicio DateTime    @map("hora_inicio") @db.Time(6)
+  horaFin    DateTime    @map("hora_fin") @db.Time(6)
+  modalidad  modalidad
+  curso      Curso       @relation(fields: [idCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  curso   Curso  @relation(fields: [cursoId], references: [id], onDelete: Cascade)
-  cursoId String
+  @@index([idCurso], map: "idx_dias_clase_curso")
+  @@map("dias_clase")
+}
 
-  @@index([cursoId])
-  @@map("dias_clase") //Pendiente de migración
+model DificultadAlumno {
+  idAlumno     String           @map("id_alumno") @db.Uuid
+  idCurso      String           @map("id_curso") @db.Uuid
+  idDificultad String           @map("id_dificultad") @db.Uuid
+  grado        grado_dificultad @default(Ninguno)
+  alumno       Usuario          @relation("DificultadesAlumno", fields: [idAlumno], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  curso        Curso            @relation(fields: [idCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dificultad   Dificultad       @relation(fields: [idDificultad], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([idAlumno, idCurso, idDificultad])
+  @@index([idCurso, idDificultad], map: "idx_dificultad_alumno_c_d")
+  @@index([idCurso, idDificultad, grado], map: "idx_dificultad_alumno_c_d_g")
+  @@index([idDificultad, grado], map: "idx_dificultad_alumno_difgrado")
+  @@index([grado], map: "idx_dificultad_alumno_grado")
+  @@index([idAlumno, idCurso, idDificultad], map: "idx_dificultad_alumno_pks")
+  @@map("dificultad_alumno")
+}
+
+model Dificultad {
+  id                 String              @id @default(uuid()) @db.Uuid
+  nombre             String              @db.VarChar(255)
+  descripcion        String              @db.VarChar(255)
+  tema               temas
+  dificultadesAlumno DificultadAlumno[]
+  dificultadesCursos DificultadesCurso[]
+  preguntas          Pregunta[]
+
+  @@index([tema], map: "idx_dificultades_tema")
+  @@map("dificultades")
+}
+
+model DificultadesCurso {
+  id               String           @id @default(uuid()) @db.Uuid
+  temaModa         temas            @default(Ninguno) @map("tema_moda")
+  idDificultadModa String?          @map("dificultad_moda") @db.Uuid
+  promDificultades Decimal          @default(0.0) @map("prom_dificultades") @db.Decimal(3, 1)
+  promGrado        grado_dificultad @default(Ninguno) @map("prom_grado")
+  estado           estado_simple    @default(Activo)
+  cursos           Curso[]
+  dificultadModa   Dificultad?      @relation(fields: [idDificultadModa], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([idDificultadModa], map: "idx_dificultades_curso_moda")
+  @@map("dificultades_curso")
 }
 
 model DocenteCurso {
-  curso     Curso   @relation(fields: [cursoId], references: [id])
-  cursoId   String
-  docente   Usuario @relation("DocenteCursos", fields: [docenteId], references: [id])
-  docenteId String
+  idDocente String        @map("id_docente") @db.Uuid
+  idCurso   String        @map("id_curso") @db.Uuid
+  estado    estado_simple
+  curso     Curso         @relation("DocentesEnCurso", fields: [idCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  docente   Usuario       @relation("CursosDocente", fields: [idDocente], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@id([cursoId, docenteId])
-  @@index([docenteId])
-  @@map("docentes_cursos")
+  @@id([idDocente, idCurso])
+  @@index([estado], map: "idx_docente_curso_estado")
+  @@index([idDocente, idCurso], map: "idx_docente_curso_pks")
+  @@map("docente_curso")
 }
 
-model AlumnoCurso {
-  curso    Curso   @relation(fields: [cursoId], references: [id])
-  cursoId  String
-  alumno   Usuario @relation("AlumnoCursos", fields: [alumnoId], references: [id])
-  alumnoId String
+model Institucion {
+  id          String    @id @default(uuid()) @db.Uuid
+  nombre      String    @db.VarChar(255)
+  direccion   String    @db.VarChar(255)
+  email       String    @db.VarChar(255)
+  telefono    String    @db.VarChar(255)
+  idLocalidad Int       @map("id_localidad")
+  localidad   Localidad @relation(fields: [idLocalidad], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@id([cursoId, alumnoId])
-  @@index([alumnoId])
-  @@map("alumnos_cursos")
+  @@index([idLocalidad], map: "idx_institucion_localidad")
+  @@map("institucion")
+}
+
+model Localidad {
+  id          Int           @id @default(autoincrement())
+  idProvincia Int           @map("id_provincia")
+  localidad   String        @db.VarChar(255)
+  institucion Institucion[]
+  provincia   Provincia     @relation(fields: [idProvincia], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([idProvincia], map: "idx_localidad_provincia")
+  @@map("localidades")
+}
+
+model LogAuditoria {
+  id                BigInt   @id @default(autoincrement())
+  tablaAfectada     String   @map("tabla_afectada") @db.VarChar(255)
+  idFilaAfectada    String   @map("id_fila_afectada") @db.VarChar(255)
+  operacion         String   @db.VarChar(255)
+  idUsuarioModifico String?  @map("id_usuario_modifico") @db.Uuid
+  fechaHora         DateTime @map("fecha_hora") @db.Timestamptz(6)
+  valoresAnteriores Json?    @map("valores_anteriores")
+  valoresNuevos     Json?    @map("valores_nuevos")
+  usuarioModifico   Usuario? @relation(fields: [idUsuarioModifico], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([fechaHora], map: "idx_log_auditoria_fecha")
+  @@index([tablaAfectada, idFilaAfectada, fechaHora], map: "idx_log_auditoria_registro_historial")
+  @@index([tablaAfectada, operacion, fechaHora], map: "idx_log_auditoria_tabla_op_fecha")
+  @@map("log_auditoria")
+}
+
+model MisionEspecialCompletada {
+  id              String         @id @default(uuid()) @db.Uuid
+  idProgreso      String         @map("id_progreso") @db.Uuid
+  estrellas       Int            @db.SmallInt
+  exp             Int            @db.SmallInt
+  intentos        Int            @db.SmallInt
+  fechaCompletado DateTime       @map("fecha_completado") @db.Timestamptz(6)
+  progresoAlumno  ProgresoAlumno @relation(fields: [idProgreso], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([fechaCompletado], map: "idx_mision_especial_fecha")
+  @@index([idProgreso], map: "idx_misiones_especiales_progreso")
+  @@map("mision_especial_completada")
+}
+
+model Mision {
+  id                  String             @id @default(uuid()) @db.Uuid
+  nombre              String             @db.VarChar(255)
+  descripcion         String             @db.VarChar(255)
+  dificultadMision    dificultad_mision  @map("dificultad_mision")
+  misionesCompletadas MisionCompletada[]
+
+  @@map("misiones")
+}
+
+model MisionCompletada {
+  idMision        String         @map("id_mision") @db.Uuid
+  idProgreso      String         @map("id_progreso") @db.Uuid
+  estrellas       Int            @db.SmallInt
+  exp             Int            @db.SmallInt
+  intentos        Int            @db.SmallInt
+  fechaCompletado DateTime?      @map("fecha_completado") @db.Timestamptz(6)
+  mision          Mision         @relation(fields: [idMision], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  progresoAlumno  ProgresoAlumno @relation(fields: [idProgreso], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([idMision, idProgreso])
+  @@index([fechaCompletado], map: "idx_misiones_completadas_fecha")
+  @@index([idMision, idProgreso], map: "idx_misiones_completadas_pks")
+  @@map("misiones_completadas")
+}
+
+model OpcionRespuesta {
+  id                String            @id @default(uuid()) @db.Uuid
+  idPregunta        String            @map("id_pregunta") @db.Uuid
+  textoOpcion       String            @map("texto_opcion") @db.VarChar(255)
+  esCorrecta        Boolean           @default(false) @map("es_correcta")
+  pregunta          Pregunta          @relation(fields: [idPregunta], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  respuestasAlumnos RespuestaAlumno[]
+
+  @@index([idPregunta], map: "idx_opciones_respuesta_pregunta")
+  @@map("opciones_respuesta")
+}
+
+model Pregunta {
+  id                String            @id @default(uuid()) @db.Uuid
+  idDificultad      String            @map("id_dificultad") @db.Uuid
+  gradoDificultad   grado_dificultad  @map("grado_dificultad")
+  enunciado         String            @db.VarChar(255)
+  idDocente         String?           @map("id_docente") @db.Uuid
+  createdAt         DateTime          @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime          @map("updated_at") @db.Timestamptz(6)
+  deletedAt         DateTime?         @map("deleted_at") @db.Timestamptz(6)
+  opcionesRespuesta OpcionRespuesta[]
+  dificultad        Dificultad        @relation(fields: [idDificultad], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  docenteCreador    Usuario?          @relation("PreguntasCreadas", fields: [idDocente], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sesiones          PreguntaSesion[]
+  respuestasAlumnos RespuestaAlumno[]
+
+  @@index([idDificultad], map: "idx_preguntas_dificultad")
+  @@index([idDocente], map: "idx_preguntas_docente")
+  @@index([deletedAt], map: "idx_preguntas_estado")
+  @@index([gradoDificultad], map: "idx_preguntas_grado")
+  @@map("preguntas")
+}
+
+model PreguntaSesion {
+  idSesion       String         @map("id_sesion") @db.Uuid
+  idPregunta     String         @map("id_pregunta") @db.Uuid
+  pregunta       Pregunta       @relation(fields: [idPregunta], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sesionRefuerzo SesionRefuerzo @relation(fields: [idSesion], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([idSesion, idPregunta])
+  @@map("preguntas_sesion")
+}
+
+model ProgresoAlumno {
+  id                      String                     @id @default(uuid()) @db.Uuid
+  cantMisionesCompletadas Int                        @default(0) @map("cant_misiones_completadas")
+  totalEstrellas          Int                        @default(0) @map("total_estrellas")
+  totalExp                Int                        @default(0) @map("total_exp")
+  totalIntentos           Int                        @default(0) @map("total_intentos")
+  pctMisionesCompletadas  Decimal                    @default(0.00) @map("pct_misiones_completadas") @db.Decimal(5, 2)
+  promEstrellas           Decimal                    @default(0.0) @map("prom_estrellas") @db.Decimal(2, 1)
+  promIntentos            Decimal                    @default(0.0) @map("prom_intentos") @db.Decimal(3, 1)
+  ultimaActividad         DateTime?                  @map("ultima_actividad") @db.Timestamptz(6)
+  estado                  estado_simple              @default(Activo)
+  alumnoCurso             AlumnoCurso?
+  misionesEspeciales      MisionEspecialCompletada[]
+  misionesCompletadas     MisionCompletada[]
+
+  @@index([ultimaActividad], map: "idx_progreso_alumno_actividad")
+  @@index([estado], map: "idx_progreso_alumno_estado")
+  @@index([promEstrellas], map: "idx_progreso_alumno_estrellas")
+  @@index([promIntentos], map: "idx_progreso_alumno_intentos")
+  @@index([pctMisionesCompletadas], map: "idx_progreso_alumno_pct")
+  @@map("progreso_alumno")
+}
+
+model ProgresoCurso {
+  id                     String        @id @default(uuid()) @db.Uuid
+  misionesCompletadas    Int           @default(0) @map("misiones_completadas")
+  totalEstrellas         Int           @default(0) @map("total_estrellas")
+  totalExp               Int           @default(0) @map("total_exp")
+  totalIntentos          Int           @default(0) @map("total_intentos")
+  pctMisionesCompletadas Decimal       @default(0.00) @map("pct_misiones_completadas") @db.Decimal(5, 2)
+  promEstrellas          Decimal       @default(0.0) @map("prom_estrellas") @db.Decimal(2, 1)
+  promIntentos           Decimal       @default(0.0) @map("prom_intentos") @db.Decimal(3, 1)
+  estado                 estado_simple @default(Activo)
+  cursos                 Curso[]
+
+  @@index([estado], map: "idx_progreso_curso_estado")
+  @@map("progreso_curso")
+}
+
+model Provincia {
+  id          Int         @id @default(autoincrement())
+  provincia   String      @db.VarChar(255)
+  localidades Localidad[]
+
+  @@map("provincias")
+}
+
+model RespuestaAlumno {
+  idSesion        String          @map("id_sesion") @db.Uuid
+  idPregunta      String          @map("id_pregunta") @db.Uuid
+  idOpcionElegida String          @map("id_opcion_elegida") @db.Uuid
+  opcionElegida   OpcionRespuesta @relation(fields: [idOpcionElegida], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  pregunta        Pregunta        @relation(fields: [idPregunta], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  resultadoSesion ResultadoSesion @relation(fields: [idSesion], references: [idSesion], onDelete: NoAction, onUpdate: NoAction)
+
+  @@id([idSesion, idPregunta])
+  @@index([idOpcionElegida], map: "idx_respuestas_alumno_opcion")
+  @@index([idSesion, idPregunta], map: "idx_respuestas_alumno_pks")
+  @@map("respuestas_alumno")
+}
+
+model RespuestaConsulta {
+  id             String   @id @default(uuid()) @db.Uuid
+  idDocente      String   @map("id_docente") @db.Uuid
+  idConsulta     String   @unique @map("id_consulta") @db.Uuid
+  descripcion    String   @db.VarChar(255)
+  fechaRespuesta DateTime @map("fecha_respuesta") @db.Date
+  consulta       Consulta @relation("RespuestaDeConsulta", fields: [idConsulta], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  docente        Usuario  @relation("RespuestasDocente", fields: [idDocente], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([idDocente], map: "idx_respuesta_consulta_docente")
+  @@index([idConsulta], map: "idx_respuesta_consulta_consulta")
+  @@index([fechaRespuesta], map: "idx_respuesta_consulta_fecha")
+  @@map("respuestas_consulta")
+}
+
+model ResultadoSesion {
+  idSesion         String            @id @map("id_sesion") @db.Uuid
+  cantCorrectas    Int               @map("cant_correctas") @db.SmallInt
+  cantIncorrectas  Int               @map("cant_incorrectas") @db.SmallInt
+  pctAciertos      Decimal           @map("pct_aciertos") @db.Decimal(5, 2) // Added precision
+  fechaCompletado  DateTime          @map("fecha_completado") @db.Timestamptz(6)
+  respuestasAlumno RespuestaAlumno[]
+  sesionRefuerzo   SesionRefuerzo    @relation(fields: [idSesion], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([fechaCompletado], map: "idx_resultados_sesion_fecha")
+  @@index([pctAciertos], map: "idx_resultados_sesion_pct_aciertos")
+  @@map("resultados_sesion")
+}
+
+model SesionRefuerzo {
+  id              String           @id @default(uuid()) @db.Uuid
+  idCurso         String           @map("id_curso") @db.Uuid
+  idAlumno        String           @map("id_alumno") @db.Uuid
+  fechaHoraLimite DateTime         @map("fecha_hora_limite") @db.Timestamptz(6)
+  tiempoLimite    Int              @map("tiempo_limite") @db.SmallInt
+  estado          estado_sesion
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime         @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime?        @map("deleted_at") @db.Timestamptz(6)
+  preguntas       PreguntaSesion[]
+  resultadoSesion ResultadoSesion?
+  alumno          Usuario          @relation("SesionesAlumno", fields: [idAlumno], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  curso           Curso            @relation(fields: [idCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([idAlumno], map: "idx_sesion_alumno")
+  @@index([createdAt], map: "idx_sesion_creado")
+  @@index([idCurso], map: "idx_sesion_curso")
+  @@index([estado], map: "idx_sesion_estado")
+  @@index([fechaHoraLimite], map: "idx_sesion_fecha_hora_limite")
+  @@map("sesiones_refuerzo")
+}
+
+model Usuario {
+  id                  String              @id @default(uuid()) @db.Uuid
+  nombre              String              @db.VarChar(255)
+  apellido            String              @db.VarChar(255)
+  dni                 String              @unique @db.VarChar(9)
+  fechaNacimiento     DateTime            @map("fecha_nacimiento") @db.Date
+  genero              generos
+  email               String              @unique @db.VarChar(255)
+  password            String              @db.VarChar(255)
+  rol                 roles
+  createdAt           DateTime            @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime            @map("updated_at") @db.Timestamptz(6)
+  deletedAt           DateTime?           @map("deleted_at") @db.Timestamptz(6)
+  cursosDelAlumno     AlumnoCurso[]       @relation("CursosDelAlumno")
+  clasesACargo        ClaseConsulta[]     @relation("ClasesACargo")
+  consultas           Consulta[]          @relation("ConsultasAlumno")
+  dificultades        DificultadAlumno[]  @relation("DificultadesAlumno")
+  cursosDocente       DocenteCurso[]      @relation("CursosDocente")
+  logsAuditoria       LogAuditoria[]
+  preguntasCreadas    Pregunta[]          @relation("PreguntasCreadas")
+  respuestasConsultas RespuestaConsulta[] @relation("RespuestasDocente")
+  sesionesRefuerzo    SesionRefuerzo[]    @relation("SesionesAlumno")
+
+  @@index([deletedAt], map: "idx_usuario_activo")
+  @@index([apellido], map: "idx_usuario_apellido")
+  @@index([nombre], map: "idx_usuario_nombre")
+  @@index([rol], map: "idx_usuario_rol")
+  @@map("usuarios")
+}
+
+model Valoracion {
+  valor       Int        @id @db.SmallInt
+  descripcion String     @db.VarChar(255)
+  consultas   Consulta[]
+
+  @@map("valoraciones")
+}
+
+enum dias_semana {
+  Lunes
+  Martes
+  Miercoles
+  Jueves
+  Viernes
+  Sabado
+}
+
+enum dificultad_mision {
+  Facil
+  Medio
+  Dificil
+}
+
+enum estado_clase_consulta {
+  Programada
+  Realizada
+  No_realizada @map("No realizada")
+  Cancelada
+}
+
+enum estado_consulta {
+  Pendiente
+  A_revisar @map("A revisar")
+  Revisada
+  Resuelta
+}
+
+enum estado_revision {
+  Pendiente
+  Revisadas
+}
+
+enum estado_sesion {
+  Pendiente
+  Completada
+  Incompleta
+  No_realizada @map("No realizada")
+}
+
+enum estado_simple {
+  Activo
+  Inactivo
+}
+
+enum generos {
+  Masculino
+  Femenino
+  Otro
+}
+
+enum grado_dificultad {
+  Ninguno
+  Bajo
+  Medio
+  Alto
+}
+
+enum modalidad {
+  Presencial
+  Virtual
+}
+
+enum roles {
+  Administrador
+  Docente
+  Alumno
+}
+
+enum temas {
+  Secuencia
+  Logica
+  Estructuras
+  Variables
+  Procedimientos
+  Ninguno
 }
