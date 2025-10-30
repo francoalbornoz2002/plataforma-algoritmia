@@ -58,6 +58,10 @@ export class CreateCourseDto {
   @MinLength(6)
   contrasenaAcceso: string;
 
+  @ApiProperty()
+  @IsEnum(modalidad)
+  modalidadPreferencial: modalidad;
+
   @ApiProperty({ type: [String] })
   @IsArray()
   @IsUUID('4', {

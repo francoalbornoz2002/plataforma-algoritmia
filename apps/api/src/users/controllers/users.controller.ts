@@ -24,6 +24,8 @@ import { FindAllUsersDto } from '../dto/find-all-users.dto';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @UseGuards(RolesGuard)
+  @Roles(roles.Administrador)
   @Post('create')
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
@@ -48,6 +50,8 @@ export class UsersController {
     return this.usersService.update(id, updateUserDto);
   }
 
+  @UseGuards(RolesGuard)
+  @Roles(roles.Administrador)
   @Delete('delete/:id')
   delete(@Param('id') id: string) {
     return this.usersService.delete(id);
