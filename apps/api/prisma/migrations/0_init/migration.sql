@@ -57,7 +57,7 @@ CREATE TABLE "clases_consulta" (
     "modalidad" "modalidad" NOT NULL,
     "estado_clase" "estado_clase_consulta" NOT NULL,
     "estado_revision" "estado_revision" NOT NULL,
-    "created_at" TIMESTAMPTZ(6) NOT NULL,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(6) NOT NULL,
     "deleted_at" TIMESTAMPTZ(6),
 
@@ -96,9 +96,10 @@ CREATE TABLE "cursos" (
     "id_dificultades_curso" UUID NOT NULL,
     "nombre" VARCHAR(255) NOT NULL,
     "descripcion" VARCHAR(255) NOT NULL,
+    "imagen_url" TEXT,
     "contraseña_acceso" VARCHAR(255) NOT NULL,
     "modalidad_preferencial" "modalidad" NOT NULL DEFAULT 'Presencial',
-    "created_at" TIMESTAMPTZ(6) NOT NULL,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(6) NOT NULL,
     "deleted_at" TIMESTAMPTZ(6),
 
@@ -244,7 +245,7 @@ CREATE TABLE "preguntas" (
     "grado_dificultad" "grado_dificultad" NOT NULL,
     "enunciado" VARCHAR(255) NOT NULL,
     "id_docente" UUID,
-    "created_at" TIMESTAMPTZ(6) NOT NULL,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(6) NOT NULL,
     "deleted_at" TIMESTAMPTZ(6),
 
@@ -355,7 +356,7 @@ CREATE TABLE "usuarios" (
     "email" VARCHAR(255) NOT NULL,
     "password" VARCHAR(255) NOT NULL,
     "rol" "roles" NOT NULL,
-    "created_at" TIMESTAMPTZ(6) NOT NULL,
+    "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ(6) NOT NULL,
     "deleted_at" TIMESTAMPTZ(6),
 

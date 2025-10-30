@@ -94,6 +94,7 @@ model Curso {
   idDificultadesCurso   String             @map("id_dificultades_curso") @db.Uuid
   nombre                String             @db.VarChar(255)
   descripcion           String             @db.VarChar(255)
+  imagenUrl             String?            @map("imagen_url")
   contrasenaAcceso      String             @map("contraseña_acceso") @db.VarChar(255)
   modalidadPreferencial modalidad          @default(Presencial) @map("modalidad_preferencial")
   createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)

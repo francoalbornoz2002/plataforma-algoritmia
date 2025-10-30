@@ -9,6 +9,7 @@ import { UpdateCourseDto } from '../dto/update-course.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Curso, estado_simple, Prisma, roles } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { FindAllCoursesDto } from '../dto/find-all-courses.dto';
 
 @Injectable()
 export class CoursesService {
@@ -138,12 +139,100 @@ export class CoursesService {
     }
   }
 
-  async findAll(): Promise<Curso[]> {
-    // Devuelve solo los usuarios que no han sido borrados lógicamente
-    const cursos = await this.prisma.curso.findMany({
-      where: { deletedAt: null },
-    });
-    return cursos;
+  async findAll(query: FindAllCoursesDto) {
+    // Destructure with defaults from the DTO
+    const {
+      page = 1,
+      limit = 10,
+      sort = 'nombre',
+      order = 'asc',
+      search,
+    } = query;
+
+    const skip = (page - 1) * limit;
+    const take = limit;
+
+    // Build the WHERE clause dynamically
+    const where: Prisma.CursoWhereInput = {
+      deletedAt: null, // Only fetch active courses by default
+    };
+
+    if (search) {
+      where.nombre = {
+        contains: search,
+        mode: 'insensitive', // Case-insensitive search
+      };
+    }
+
+    // Add more filters based on query params here if needed
+    // if (query.teacherId) {
+    //   where.docentes = {
+    //     some: { idDocente: query.teacherId, estado: estado_simple.Activo }
+    //   };
+    // }
+
+    const allowedSortFields = ['nombre', 'createdAt', 'updatedAt'];
+    const safeSort = allowedSortFields.includes(sort) ? sort : 'nombre';
+    const orderBy = { [safeSort]: order }; // <-- Definido aquí
+
+    console.log(
+      "DEBUG: Objeto 'where' enviado a Prisma:",
+      JSON.stringify(where, null, 2),
+    );
+    console.log(
+      "DEBUG: Objeto 'orderBy' enviado a Prisma:",
+      JSON.stringify(orderBy, null, 2),
+    );
+
+    try {
+      // Use transaction to get data and total count consistently
+      const [cursos, total] = await this.prisma.$transaction([
+        // Query 1: Fetch the courses for the current page
+        this.prisma.curso.findMany({
+          where,
+          skip,
+          take,
+          orderBy,
+          // Include related data needed for the frontend Card
+          include: {
+            // Include active teachers and select only their name/lastname
+            docentes: {
+              where: { estado: estado_simple.Activo },
+              include: {
+                docente: {
+                  select: {
+                    nombre: true,
+                    apellido: true,
+                  },
+                },
+              },
+            },
+            // Count active students associated with the course
+            _count: {
+              select: {
+                alumnos: {
+                  // Must match the relation field name in schema.prisma
+                  where: { estado: estado_simple.Activo },
+                },
+              },
+            },
+          },
+        }),
+        // Query 2: Get the total count of courses matching the filters
+        this.prisma.curso.count({ where }),
+      ]);
+
+      // Return the paginated response structure expected by the frontend
+      return {
+        data: cursos,
+        total: total,
+        page: page,
+        totalPages: Math.ceil(total / limit),
+      };
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+      throw new BadRequestException('Error al buscar los cursos.');
+    }
   }
 
   async findOne(id: string): Promise<Curso> {
@@ -205,7 +294,7 @@ export class CoursesService {
 
         // --- 3.2. Actualizar 'diasClase' (Admin y Docente pueden) ---
         if (diasClase) {
-          // El método más simple "sync": borrar todos los existentes y crear los nuevos
+          // El método más simple "sync": borrar todos los y crear los nuevos
           await tx.diaClase.deleteMany({
             where: { idCurso: id },
           });
@@ -299,7 +388,6 @@ export class CoursesService {
   }
 
   async delete(id: string) {
-    // Verifica si el curso existe y no está ya borrado
     const curso = await this.prisma.curso.findUnique({
       where: { id, deletedAt: null },
     });

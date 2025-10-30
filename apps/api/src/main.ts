@@ -41,9 +41,9 @@ async function bootstrap() {
   // Para usar todas las validaciones definidas de manera global.
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // Opcional, pero recomendado
-      forbidNonWhitelisted: true, // Opcional, pero recomendado
-      transform: true, // <-- ¡ESTE ES EL IMPORTANTE!
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
       transformOptions: {
         enableImplicitConversion: true, // Ayuda a la transformación
       },

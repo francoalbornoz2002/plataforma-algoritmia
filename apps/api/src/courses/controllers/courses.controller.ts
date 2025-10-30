@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Req,
+  Query,
 } from '@nestjs/common';
 
 import { CreateCourseDto } from '../dto/create-course.dto';
@@ -17,6 +18,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { roles } from '@prisma/client';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import type { AuthenticationRequest } from 'src/interfaces/authenticated-user.interface';
+import { FindAllCoursesDto } from '../dto/find-all-courses.dto';
 
 @Controller('courses')
 export class CoursesController {
@@ -30,8 +32,9 @@ export class CoursesController {
   }
 
   @Get('all')
-  findAll() {
-    return this.coursesService.findAll();
+  findAll(@Query() query: FindAllCoursesDto) {
+    // The global ValidationPipe (in main.ts) automatically validates 'query'
+    return this.coursesService.findAll(query);
   }
 
   @Get(':id')
