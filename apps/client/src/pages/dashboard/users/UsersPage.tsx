@@ -16,10 +16,14 @@ import {
 } from "@mui/x-data-grid";
 import { format, parseISO } from "date-fns"; // Para formatear fecha
 import { es } from "date-fns/locale/es"; // Para formato español
-import type { User } from "../../../types";
+import type { estado_simple, UserData } from "../../../types";
 
 // --- Servicios ---
-import { deleteUser, findUsers } from "../../../services/user.service";
+import {
+  deleteUser,
+  findUsers,
+  type FindUsersParams,
+} from "../../../services/user.service";
 import {
   Alert,
   Checkbox,
@@ -42,68 +46,68 @@ import {
 import UserFormDialog from "./UserFormDialog";
 import { enqueueSnackbar } from "notistack";
 import { useDebounce } from "../../../hooks/useDebounce";
-import { roles } from "../../../schemas/user.schema";
 
 export default function UsersPage() {
-  // --- 1. ESTADOS PARA LOS FILTROS ---
-
-  // Para el buscador (ej: "Juan")
-  const [searchTerm, setSearchTerm] = useState("");
-  // Este valor solo se actualizará 500ms después de que el usuario deje de teclear
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
-
-  const [rolName, serRolName] = useState<string[]>([]);
-  // Para el Select de Estado (ej: "true", "false", o "")
-  const [estadoSeleccionado, setEstadoSeleccionado] = useState("");
-
-  // --- 2. ESTADOS PARA PAGINACIÓN Y ORDEN ---
-
-  // Para la paginación del DataGrid
-  const [paginationModel, setPaginationModel] = useState({
-    page: 0, // DataGrid empieza en página 0
-    pageSize: 6, // El 'pageSize' del <DataGrid>
-  });
-
-  // Para el ordenamiento del DataGrid
-  const [sortModel, setSortModel] = useState<GridSortModel>([
-    { field: "apellido", sort: "asc" }, // Tu orden por defecto
-  ]);
-
-  // --- 3. ESTADO PARA LOS DATOS ---
-
-  // 'users' ya no es suficiente, necesitas el conteo total
-  const [data, setData] = useState<{ rows: User[]; total: number }>({
+  /* ---------------------- ESTADOS ---------------------- */
+  // ----- ESTADO PARA LOS DATOS ----- //
+  const [data, setData] = useState<{ rows: UserData[]; total: number }>({
     rows: [],
     total: 0,
   });
+  const [isLoading, setIsLoading] = useState(true); // Para saber si está cargando los usuarios.
+  const [error, setError] = useState<string | null>(null); // Para setear errores.
 
-  //Para saber si está cargando los usuarios.
-  const [isLoading, setIsLoading] = useState(true);
+  // ----- ESTADOS PARA LOS FILTROS ----- //
+  // Filtro de búsqueda por texto
+  const [searchTerm, setSearchTerm] = useState(""); // Búsqueda por nombre, apellido, dni o email
+  const debouncedSearchTerm = useDebounce(searchTerm, 500); // Custom hook para esperar 500 ms al teclear para realizar la búsqueda
 
-  //Para setear errores.
-  const [error, setError] = useState<string | null>(null);
+  // Filtro por rol(es): Administrador, Docente o Alumno
+  const [roles, setRoles] = useState<string[]>([]);
 
-  // Estado para la creación o edición
+  // Filtro por estado: Activo, Inactivo o Todos ("")
+  const [estado, setEstado] = useState<estado_simple | "">(""); // "" para "Todos"
+
+  // ----- ESTADO PARA PAGINACIÓN ----- //
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0, // Número de página del DataGrid
+    pageSize: 6, // Limite de filas por página en el DataGrid
+  });
+
+  // ----- ESTADO PARA ORDENAMIENTO ----- //
+  const [sortModel, setSortModel] = useState<GridSortModel>([
+    { field: "apellido", sort: "asc" }, // Campo a filtrar, por defecto apellido.
+  ]);
+
+  // ----- ESTADOs PARA LOS MODALES (para crear, editar y eliminar) ----- //
+
+  // Estado para el modal de creación o edición
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null); // null for create, User object for edit
 
-  // Estado para abrir y cerrar el dialog de delete.
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  // Estado para settear el curso a editar
+  // Este estado se le pasa como prop al Modal (UserData para editar, null para crear).
+  const [editingUser, setEditingUser] = useState<UserData | null>(null);
 
-  //Estado para setear el usuario a eliminar
+  // Estado para settear el usuario a dar de baja
   const [userToDeleteId, setUserToDeleteId] = useState<string | null>(null);
 
-  //Estado de carga si se está eliminando
-  const [isDeleting, setIsDeleting] = useState(false); // Loading state for delete
+  // Estado del modal para confirmar la baja
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
+  //Estado de carga si se está eliminando
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  /* ---------------------- EFFECTS ---------------------- */
+
+  // ----- EFFECT PARA FETCHING DE USUARIOS ----- //
   useEffect(() => {
-    // 1. Definimos la función de fetching DENTRO del hook
+    // Definición de la función de fetching
     const fetchUsersConFiltros = async () => {
       setIsLoading(true);
       setError(null);
 
-      // 2. Prepara los parámetros para el backend
-      const params = {
+      // Parámetros para el backend
+      const params: FindUsersParams = {
         // Paginación (DataGrid usa 0-index, API usa 1-index)
         page: paginationModel.page + 1,
         limit: paginationModel.pageSize,
@@ -113,14 +117,13 @@ export default function UsersPage() {
         order: sortModel[0]?.sort || "asc",
 
         // Filtros
-        search: debouncedSearchTerm, // ¡Usa el valor retrasado!
-        roles: rolName, // Tu estado de roles
-        estado: estadoSeleccionado,
+        search: debouncedSearchTerm,
+        roles: roles,
+        estado: estado,
       };
 
       try {
-        // 3. Llama al NUEVO servicio (que crearemos en el Paso 4)
-        // Esta línea dará error temporalmente, es normal.
+        // Llamada al servicio
         const response = await findUsers(params);
         setData({
           rows: response.data,
@@ -141,22 +144,22 @@ export default function UsersPage() {
 
     fetchUsersConFiltros(); // Llama a la función de fetch
   }, [
-    // 5. ¡Array de Dependencias!
-    // Este hook se re-ejecutará CADA VEZ que uno de estos valores cambie
+    // Array de Dependencias
+    // Este hook se re-ejecutará cada vez que uno de estos valores cambie
     debouncedSearchTerm,
-    rolName,
-    estadoSeleccionado,
+    roles,
+    estado,
     paginationModel,
     sortModel,
   ]);
 
-  // --- Handlers ---
+  /* ---------------------- HANDLERS ---------------------- */
   const handleAddUserClick = () => {
     setEditingUser(null); // Clear editing state for creation
     setIsModalOpen(true);
   };
 
-  const handleEditClick = (user: User) => {
+  const handleEditClick = (user: UserData) => {
     setEditingUser(user); // Set the user to edit
     setIsModalOpen(true);
   };
@@ -221,8 +224,12 @@ export default function UsersPage() {
     }
   };
 
+  const handleEstadoChange = (event: SelectChangeEvent<string>) => {
+    setEstado(event.target.value as estado_simple | "");
+  };
+
   // --- Definición de Columnas para DataGrid ---
-  const columns: GridColDef<User>[] = [
+  const columns: GridColDef<UserData>[] = [
     // ID (generalmente se oculta o se usa para lógica interna)
     // { field: 'id', headerName: 'ID', width: 90 },
     { field: "nombre", headerName: "Nombre", width: 150, editable: false }, // Editable: false si no usas edición inline
@@ -260,12 +267,12 @@ export default function UsersPage() {
       headerName: "Estado",
       width: 100,
       // Determina el valor basado en deletedAt
-      valueGetter: (value: any, row: User): "Activo" | "Inactivo" => {
+      valueGetter: (value: any, row: UserData): "Activo" | "Inactivo" => {
         return row.deletedAt ? "Inactivo" : "Activo";
       },
       // Renderiza un Chip de color según el estado
       renderCell: (
-        params: GridRenderCellParams<User, "Activo" | "Inactivo">
+        params: GridRenderCellParams<UserData, "Activo" | "Inactivo">
       ) => (
         <Chip
           label={params.value}
@@ -315,11 +322,11 @@ export default function UsersPage() {
     },
   ];
 
-  const handleRolChange = (event: SelectChangeEvent<typeof rolName>) => {
+  const handleRolChange = (event: SelectChangeEvent<typeof roles>) => {
     const {
       target: { value },
     } = event;
-    serRolName(
+    setRoles(
       // On autofill we get a stringified value.
       typeof value === "string" ? value.split(",") : value
     );
@@ -362,14 +369,14 @@ export default function UsersPage() {
               labelId="multiple-checkbox-label"
               id="demo-multiple-checkbox"
               multiple
-              value={rolName}
+              value={roles}
               onChange={handleRolChange}
               input={<OutlinedInput label="Tag" />}
               renderValue={(selected) => selected.join(", ")}
             >
               {roles.map((rol) => (
                 <MenuItem key={rol} value={rol}>
-                  <Checkbox checked={rolName.includes(rol)} />
+                  <Checkbox checked={roles.includes(rol)} />
                   <ListItemText primary={rol} />
                 </MenuItem>
               ))}
@@ -377,11 +384,7 @@ export default function UsersPage() {
           </FormControl>
           <FormControl size="small" sx={{ minWidth: 150 }}>
             <InputLabel>Estado</InputLabel>
-            <Select
-              value={estadoSeleccionado}
-              onChange={(e) => setEstadoSeleccionado(e.target.value)}
-              label="Estado"
-            >
+            <Select value={estado} onChange={handleEstadoChange} label="Estado">
               <MenuItem value="">
                 <em>Todos</em>
               </MenuItem>

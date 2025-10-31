@@ -30,7 +30,7 @@ import {
   type CreateUserFormValues,
   type UpdateUserFormValues,
 } from "../../../schemas/user.schema";
-import { type User } from "../../../types";
+import { type UserData } from "../../../types";
 
 // Servicios
 import { createUser, updateUser } from "../../../services/user.service";
@@ -41,7 +41,7 @@ import { useSnackbar } from "notistack";
 interface UserFormDialogProps {
   open: boolean;
   onClose: () => void;
-  userToEdit: User | null; // null si es creación
+  userToEdit: UserData | null; // null si es creación
   onSave: () => Promise<void>;
 }
 

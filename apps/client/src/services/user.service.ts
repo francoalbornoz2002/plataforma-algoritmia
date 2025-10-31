@@ -1,25 +1,23 @@
 // src/services/user.service.ts
 import apiClient from "../lib/axios";
-import type { CreateUserData, UpdateUserData, User } from "../types";
+import type {
+  BaseFilterParams,
+  CreateUserData,
+  estado_simple,
+  PaginatedResponse,
+  UpdateUserData,
+  UserData,
+} from "../types";
 
-//Interfaz para la respuesta paginada
-export interface PaginatedUsersResponse {
-  data: User[];
-  total: number;
-  page: number;
-  totalPages: number;
-}
-
-//Interfaz para los parámetros de búsqueda
-export interface FindUsersParams {
-  page: number;
-  limit: number;
-  sort: string;
-  order: "asc" | "desc";
+// Interfaz para los parámetros de búsqueda
+export interface FindUsersParams extends BaseFilterParams {
   search?: string;
-  roles?: string[];
-  estado?: string;
+  roles?: string[] | ""; // Permitir string vacío para "Todos"
+  estado?: estado_simple | ""; // Permitir string vacío para "Todos"
 }
+
+// Interfaz para la respuesta paginada completa de la API
+export interface PaginatedUsersResponse extends PaginatedResponse<UserData> {}
 
 export const findUsers = async (
   params: FindUsersParams
@@ -42,10 +40,12 @@ export const findUsers = async (
 };
 
 // --- Función para crear un nuevo usuario ---
-export const createUser = async (userData: CreateUserData): Promise<User> => {
+export const createUser = async (
+  userData: CreateUserData
+): Promise<UserData> => {
   try {
     // Llama al endpoint POST /users/create
-    const response = await apiClient.post<User>("/users/create", userData);
+    const response = await apiClient.post<UserData>("/users/create", userData);
     return response.data;
   } catch (error) {
     console.error("Error al crear usuario:", error);
@@ -57,10 +57,10 @@ export const createUser = async (userData: CreateUserData): Promise<User> => {
 export const updateUser = async (
   userId: string,
   userData: UpdateUserData
-): Promise<User> => {
+): Promise<UserData> => {
   try {
     // Llama al endpoint PATCH /users/edit:id
-    const response = await apiClient.patch<User>(
+    const response = await apiClient.patch<UserData>(
       `/users/edit/${userId}`,
       userData
     );
@@ -85,9 +85,9 @@ export const deleteUser = async (userId: string): Promise<void> => {
 };
 
 // --- Función para obtener un usuario por id ---
-export const getUserById = async (userId: string): Promise<User> => {
+export const getUserById = async (userId: string): Promise<UserData> => {
   try {
-    const response = await apiClient.get<User>(`/users/${userId}`);
+    const response = await apiClient.get<UserData>(`/users/${userId}`);
     return response.data;
   } catch (error) {
     console.error(`Error al obtener usuario ${userId}:`, error);

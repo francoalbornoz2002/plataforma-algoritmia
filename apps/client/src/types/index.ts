@@ -26,10 +26,13 @@ export enum dias_semana {
   Sabado = "Sabado",
 }
 
-// --- INTERFACES ---
+/* ---------------------- INTERFACES ---------------------- */
 
-// Usuario de la respuesta de la API
-export interface User {
+// ----- USUARIOS ----- //
+
+// Interfaz principal para Usuario
+// También representa CÓMO devuelve la API los datos del usuario
+export interface UserData {
   id: string;
   nombre: string;
   apellido: string;
@@ -43,32 +46,21 @@ export interface User {
   deletedAt?: string | Date | null;
 }
 
-// Tipo para crear un usuario
+// Tipo para crear un usuario. Omitimos el id y los timestampsz
 export type CreateUserData = Omit<
-  User,
+  UserData,
   "id" | "createdAt" | "updatedAt" | "deletedAt" | "edad"
 > & {
   password?: string;
 };
 
-// Tipo para actualizar un usuario: Hacemos todos los campos de CreateUsuarioData opcionales,
+// Tipo para actualizar un usuario: todos los campos de CreateUsuarioData opcionales,
 // y EXCLUIMOS 'email'
 export type UpdateUserData = Partial<Omit<CreateUserData, "email">>;
 
-// Un subconjunto del Usuario (solo lo que necesitamos en la Card de cursos)
-export interface DocenteBasico {
-  nombre: string;
-  apellido: string;
-}
+// ----- CURSOS ----- //
 
-// Representa la fila de la tabla intermedia 'docente_curso'
-// Incluye el objeto anidado 'docente' que pedimos en el 'include'
-export interface DocenteCursoConDocente {
-  // No necesitamos idDocente, idCurso, estado aquí si solo mostramos el nombre
-  docente: DocenteBasico;
-}
-
-// La interfaz principal para Curso (debe coincidir con los campos de tu model Curso)
+// La interfaz principal para Curso
 export interface Curso {
   id: string;
   idProgreso: string; // O idProgresoCurso si renombraste
@@ -83,7 +75,20 @@ export interface Curso {
   deletedAt?: string | null;
 }
 
-// La interfaz que representa CÓMO devuelve la API los datos
+// Información del docente para la Card de cursos (Un subconjunto del Usuario)
+export interface DocenteBasico {
+  nombre: string;
+  apellido: string;
+}
+
+// Representa la fila de la tabla intermedia 'docente_curso'
+// Incluye el objeto anidado 'docente' que pedimos en el 'include'
+export interface DocenteCursoConDocente {
+  // No necesitamos idDocente, idCurso, estado aquí si solo mostramos el nombre
+  docente: DocenteBasico;
+}
+
+// La interfaz que representa CÓMO devuelve la API los datos del curso
 // (Curso + docentes anidados + conteo de alumnos)
 export interface CursoConDetalles extends Curso {
   docentes: DocenteCursoConDocente[]; // Array de la interfaz intermedia
@@ -92,20 +97,24 @@ export interface CursoConDetalles extends Curso {
   };
 }
 
-// La interfaz para la respuesta paginada completa de la API (Cursos)
-export interface PaginatedCoursesResponse {
-  data: CursoConDetalles[];
-  total: number;
-  page: number;
-  totalPages: number;
+export interface DocenteParaFiltro {
+  id: string;
+  nombre: string;
+  apellido: string;
 }
 
-// Interfaz para los parámetros de filtros (Cursos)
-export interface FindCoursesParams {
+// Interfaz base para los parámetros de búsqueda y filtros
+export interface BaseFilterParams {
   page: number;
   limit: number;
   sort: string;
   order: "asc" | "desc";
-  search?: string;
-  // ... otros filtros ...
+}
+
+// Interfaz base para la respuesta paginada de la API
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  totalPages: number;
 }
