@@ -39,6 +39,13 @@ export class UsersController {
     return this.usersService.findAll(query);
   }
 
+  @UseGuards(RolesGuard)
+  @Get('teachers')
+  @ApiCreatedResponse({ type: UserEntity, isArray: true })
+  findTeachers() {
+    return this.usersService.findTeachers();
+  }
+
   @Get(':id')
   @ApiCreatedResponse({ type: UserEntity })
   findOne(@Param('id') id: string) {

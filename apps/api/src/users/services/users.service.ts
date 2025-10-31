@@ -162,6 +162,17 @@ export class UsersService {
     }
   }
 
+  async findTeachers() {
+    return this.prisma.usuario.findMany({
+      where: { rol: 'Docente' },
+      select: {
+        id: true,
+        nombre: true,
+        apellido: true,
+      },
+    });
+  }
+
   async findOne(id: string): Promise<Usuario> {
     // Busca un usuario por ID que no haya sido borrado
     const usuario = await this.prisma.usuario.findUnique({
