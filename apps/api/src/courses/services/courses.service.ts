@@ -20,6 +20,7 @@ export class CoursesService {
     const {
       nombre,
       descripcion,
+      imagenUrl,
       contrasenaAcceso,
       modalidadPreferencial,
       docenteIds,
@@ -70,6 +71,7 @@ export class CoursesService {
           data: {
             nombre,
             descripcion,
+            imagenUrl,
             contrasenaAcceso: contrasenaHasheada,
             modalidadPreferencial,
             idProgreso: nuevoProgresoCurso.id, // Vincula con ProgresoCurso
@@ -140,64 +142,64 @@ export class CoursesService {
   }
 
   async findAll(query: FindAllCoursesDto) {
-    // Destructure with defaults from the DTO
+    // Desestructuramos el DTO y ponemos valores por defecto
     const {
       page = 1,
-      limit = 10,
+      limit = 8,
       sort = 'nombre',
       order = 'asc',
       search,
+      estado,
+      docenteIds,
     } = query;
 
     const skip = (page - 1) * limit;
     const take = limit;
 
-    // Build the WHERE clause dynamically
-    const where: Prisma.CursoWhereInput = {
-      deletedAt: null, // Only fetch active courses by default
-    };
+    // --- 1. Construir el WHERE dinámicamente ---
+    const where: Prisma.CursoWhereInput = {};
 
+    // Filtro de Búsqueda (search)
     if (search) {
       where.nombre = {
         contains: search,
-        mode: 'insensitive', // Case-insensitive search
+        mode: 'insensitive', // Para que no distinga mayúsc/minúsc
       };
     }
 
-    // Add more filters based on query params here if needed
-    // if (query.teacherId) {
-    //   where.docentes = {
-    //     some: { idDocente: query.teacherId, estado: estado_simple.Activo }
-    //   };
-    // }
+    // Filtro de Estado
+    if (estado) {
+      where.deletedAt = estado === estado_simple.Activo ? null : { not: null };
+    }
 
-    const allowedSortFields = ['nombre', 'createdAt', 'updatedAt'];
-    const safeSort = allowedSortFields.includes(sort) ? sort : 'nombre';
-    const orderBy = { [safeSort]: order }; // <-- Definido aquí
+    // Filtro de Docentes
+    if (docenteIds && docenteIds.length > 0) {
+      where.docentes = {
+        some: {
+          idDocente: {
+            in: docenteIds,
+          },
+        },
+      };
+    }
 
-    console.log(
-      "DEBUG: Objeto 'where' enviado a Prisma:",
-      JSON.stringify(where, null, 2),
-    );
-    console.log(
-      "DEBUG: Objeto 'orderBy' enviado a Prisma:",
-      JSON.stringify(orderBy, null, 2),
-    );
+    // --- 2. Construir el ORDER BY ---
+    const orderBy: Prisma.CursoOrderByWithRelationInput = {
+      [sort]: order,
+    };
 
+    // --- 3. Ejecutar las consultas ---
     try {
-      // Use transaction to get data and total count consistently
+      // Hacemos dos consultas en paralelo: una para los datos y otra para el conteo total
       const [cursos, total] = await this.prisma.$transaction([
-        // Query 1: Fetch the courses for the current page
         this.prisma.curso.findMany({
           where,
+          orderBy,
           skip,
           take,
-          orderBy,
-          // Include related data needed for the frontend Card
+          // Incluimos los docentes y el conteo de alumnos para la Card
           include: {
-            // Include active teachers and select only their name/lastname
             docentes: {
-              where: { estado: estado_simple.Activo },
               include: {
                 docente: {
                   select: {
@@ -207,31 +209,29 @@ export class CoursesService {
                 },
               },
             },
-            // Count active students associated with the course
             _count: {
               select: {
-                alumnos: {
-                  // Must match the relation field name in schema.prisma
-                  where: { estado: estado_simple.Activo },
-                },
+                alumnos: true,
               },
             },
           },
         }),
-        // Query 2: Get the total count of courses matching the filters
         this.prisma.curso.count({ where }),
       ]);
 
-      // Return the paginated response structure expected by the frontend
+      const totalPages = Math.ceil(total / limit);
+
+      // Devolvemos el objeto paginado que el Frontend espera
       return {
         data: cursos,
-        total: total,
-        page: page,
-        totalPages: Math.ceil(total / limit),
+        total,
+        page,
+        totalPages,
       };
     } catch (error) {
-      console.error('Error fetching courses:', error);
-      throw new BadRequestException('Error al buscar los cursos.');
+      // Manejo de errores
+      console.error('Error in findAll courses service:', error);
+      throw new Error('Error al buscar los cursos.');
     }
   }
 

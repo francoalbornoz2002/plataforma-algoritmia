@@ -1,5 +1,3 @@
-// src/courses/dto/create-course.dto.ts
-
 import { ApiProperty } from '@nestjs/swagger';
 import { dias_semana, modalidad } from '@prisma/client';
 import { Type } from 'class-transformer';
@@ -52,6 +50,10 @@ export class CreateCourseDto {
   @ApiProperty()
   @IsString()
   descripcion: string;
+
+  @ApiProperty()
+  @IsString()
+  imagenUrl: string;
 
   @ApiProperty()
   @IsString()
