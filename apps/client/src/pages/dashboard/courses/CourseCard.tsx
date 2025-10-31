@@ -1,4 +1,3 @@
-// src/pages/Courses/CourseCard.tsx
 import Card from "@mui/material/Card";
 import CardActions from "@mui/material/CardActions";
 import CardContent from "@mui/material/CardContent";
@@ -10,18 +9,17 @@ import Tooltip from "@mui/material/Tooltip";
 import IconButton from "@mui/material/IconButton";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import SchoolIcon from "@mui/icons-material/School"; // Icono para docentes
-import GroupIcon from "@mui/icons-material/Group"; // Icono para alumnos
+import SchoolIcon from "@mui/icons-material/School";
+import GroupIcon from "@mui/icons-material/Group";
 
-// Define la 'forma' de los datos que esta Card espera recibir
-// (Ajusta esto según la estructura real de tu tipo 'Curso')
+// Datos del curso a pasar al componente Card
 export interface CourseData {
   id: string;
   nombre: string;
-  imagenUrl?: string; // URL de la imagen
-  docentes: { nombre: string; apellido: string }[]; // Array de docentes
+  imagenUrl?: string;
+  docentes: { nombre: string; apellido: string }[];
   alumnosInscriptos: number;
-  deletedAt: Date | null; // Para determinar el estado
+  deletedAt: Date | null; // Para determinar el estado activo/inactivo
 }
 
 interface CourseCardProps {
@@ -60,7 +58,7 @@ export default function CourseCard({
   }
 
   // --- Imagen de fallback ---
-  const FOTO_DEFAULT = "https://via.placeholder.com/345x140.png?text=Curso";
+  const FOTO_DEFAULT = "https://placehold.co/345x140.png?text=Curso";
 
   return (
     <Card

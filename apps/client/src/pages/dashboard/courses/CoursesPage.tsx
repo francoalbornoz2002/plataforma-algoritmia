@@ -1,4 +1,3 @@
-// src/pages/Courses/CoursesPage.tsx
 import { useEffect, useState } from "react";
 import {
   Box,
@@ -9,76 +8,136 @@ import {
   Stack,
   TextField,
   Button,
-  Pagination, // Import Pagination
-  Select, // Import Select for sorting
-  MenuItem, // Import MenuItem for sorting
-  FormControl, // Import FormControl for sorting
+  Pagination,
+  Select,
+  MenuItem,
+  FormControl,
   InputLabel,
-  type SelectChangeEvent, // Import InputLabel for sorting
+  type SelectChangeEvent,
+  Autocomplete,
+  Checkbox,
+  ListItemText,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import CourseCard, { type CourseData } from "./CourseCard";
 import { useDebounce } from "../../../hooks/useDebounce";
 import type {
   CursoConDetalles,
-  FindCoursesParams,
-  PaginatedCoursesResponse,
+  DocenteParaFiltro,
+  estado_simple,
 } from "../../../types";
-import { findCourses } from "../../../services/courses.service";
 
-// Define sort options
+import { estado_simple as EstadoSimpleEnum } from "../../../types";
+import {
+  findCourses,
+  findDocentesParaFiltro,
+  type FindCoursesParams,
+  type PaginatedCoursesResponse,
+} from "../../../services/courses.service";
+
+// Definimos opciones de ordenamiento
 const sortOptions = [
   { field: "nombre", label: "Nombre A-Z" },
   { field: "createdAt", label: "Más Recientes" },
-  // Add more as needed
 ];
 
 export default function CoursesPage() {
-  // --- Data State ---
+  /* ---------------------- ESTADOS ---------------------- */
+
+  // ----- ESTADOS PARA LOS DATOS ----- //
   const [cursos, setCursos] = useState<CourseData[]>([]);
   const [totalPages, setTotalPages] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true); // Para saber si está cargando los cursos.
+  const [error, setError] = useState<string | null>(null); // Para settear errores.
 
-  // --- Filter State ---
-  const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
-  // (Add more filter states here later if needed, e.g., teacher filter)
+  // ----- ESTADOS PARA LOS FILTROS ----- //
+  // Filtro de búsqueda por texto
+  const [searchTerm, setSearchTerm] = useState(""); // Búsqueda por nombre
+  const debouncedSearchTerm = useDebounce(searchTerm, 500); // Custom hook para esperar 500 ms al teclear para realizar la búsqueda
 
-  // --- Pagination State ---
-  const [page, setPage] = useState(1); // Page numbers usually start from 1 for UI
-  const [limit, setLimit] = useState(8); // How many cards per page (adjust as needed)
+  // Filtro por estado: Activo, Inactivo o Todos ("")
+  const [estado, setEstado] = useState<estado_simple | "">("");
 
-  // --- Sorting State ---
-  const [sortField, setSortField] = useState("nombre"); // Default sort field
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc"); // Default sort order
+  //Filtro por docente/s
+  const [selectedDocentes, setSelectedDocentes] = useState<DocenteParaFiltro[]>(
+    []
+  );
+  // Estados para cargar los docentes al filtro
+  const [allDocentes, setAllDocentes] = useState<DocenteParaFiltro[]>([]);
+  const [docentesLoading, setDocentesLoading] = useState(false);
 
-  // --- Modal States (for create/edit/delete) ---
+  // ----- ESTADOS PARA PAGINACIÓN ----- //
+  const [page, setPage] = useState(1); // Número de página
+  const [limit, setLimit] = useState(4); // Limite de componentes Card por página
+
+  // ----- ESTADO PARA ORDENAMIENTO ----- //
+  const [sortField, setSortField] = useState("nombre"); // Campo a filtrar, por defecto nombre.
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc"); // Orden, por defencto ascendente.
+
+  // ----- ESTADOS PARA LOS MODALES (para crear, editar y eliminar) ----- //
+  // Estado del modal de creación o edición
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingCourse, setEditingCourse] = useState<CourseData | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [courseToDeleteId, setCourseToDeleteId] = useState<string | null>(null);
-  // (Add loading states for delete/save if needed)
 
-  // --- Data Fetching Effect ---
+  // Estado para settear el curso a editar
+  // Este estado se le pasa como prop al Modal para crear o editar (CourseData para editar, null para crear).
+  const [editingCourse, setEditingCourse] = useState<CourseData | null>(null);
+
+  // Estado para settear el curso a dar de baja
+  const [courseToDeleteId, setCourseToDeleteId] = useState<string | null>(null);
+
+  // Estado del modal para confirmar la baja
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  // Estado de carga si se está eliminando el curso
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  /* ---------------------- EFFECTS ---------------------- */
+
+  // ----- EFFECT PARA CARGAR LOS DOCENTES AL FILTRO (sólo una vez) ----- //
+  useEffect(() => {
+    const fetchDocentes = async () => {
+      setDocentesLoading(true);
+      try {
+        const docentesData = await findDocentesParaFiltro();
+        setAllDocentes(docentesData);
+      } catch (err) {
+        console.error("Error al cargar lista de docentes:", err);
+        // Opcional: mostrar un error al usuario
+      } finally {
+        setDocentesLoading(false);
+      }
+    };
+    fetchDocentes();
+  }, []); // Array de dependencias vacío, ya que se ejecuta solo una vez al renderizar.
+
+  // --- EFFECT PARA FETCHING DE CURSOS --- //
   useEffect(() => {
     const fetchCursosData = async () => {
       setIsLoading(true);
       setError(null);
 
+      // Mapeamos los docentes seleccionados a sus IDs
+      const docenteIds = selectedDocentes.map((d) => d.id);
+
       const params: FindCoursesParams = {
+        // Paginación
         page,
         limit,
+
+        // Ordenamiento
         sort: sortField,
         order: sortOrder,
+
+        // Filtros
         search: debouncedSearchTerm,
-        // Add other filter params here
+        docenteIds: docenteIds.length > 0 ? docenteIds : undefined, // undefined si está vacío
+        estado: estado || undefined, // undefined si es ""
       };
 
       try {
         const response: PaginatedCoursesResponse = await findCourses(params);
 
-        // Transform data for the CourseCard
+        // Tranformamos los datos obtenidos para la CourseCard
         const mappedCursos: CourseData[] = response.data.map(
           (curso: CursoConDetalles) => ({
             id: curso.id,
@@ -87,11 +146,11 @@ export default function CoursesPage() {
             imagenUrl: curso.imagenUrl ?? undefined,
             deletedAt: curso.deletedAt ? new Date(curso.deletedAt) : null,
             docentes: curso.docentes.map((dc) => ({
-              // Safely map teachers
+              // Mapeamos los datos del docente
               nombre: dc.docente?.nombre ?? "N/A",
               apellido: dc.docente?.apellido ?? "",
             })),
-            alumnosInscriptos: curso._count?.alumnos ?? 0, // Use nullish coalescing
+            alumnosInscriptos: curso._count?.alumnos ?? 0,
           })
         );
 
@@ -107,7 +166,17 @@ export default function CoursesPage() {
     };
 
     fetchCursosData();
-  }, [debouncedSearchTerm, page, limit, sortField, sortOrder]); // Dependencies trigger refetch
+  }, [
+    // Array de Dependencias
+    // Este hook se re-ejecutará cada vez que uno de estos valores cambie
+    debouncedSearchTerm,
+    page,
+    limit,
+    sortField,
+    sortOrder,
+    estado,
+    selectedDocentes,
+  ]);
 
   // --- Handlers ---
   const handleAddCourseClick = () => {
@@ -170,12 +239,25 @@ export default function CoursesPage() {
     setPage(1); // Reset to page 1 when sorting changes
   };
 
+  // --- AÑADIDOS: Handlers para nuevos filtros ---
+  const handleEstadoChange = (event: SelectChangeEvent<string>) => {
+    setEstado(event.target.value as estado_simple | "");
+    setPage(1); // Resetear a página 1 al cambiar filtro
+  };
+
+  const handleDocentesChange = (
+    event: React.SyntheticEvent,
+    newValue: DocenteParaFiltro[]
+  ) => {
+    setSelectedDocentes(newValue);
+    setPage(1); // Resetear a página 1 al cambiar filtro
+  };
+
   // --- Render Logic ---
   return (
     <Box
       sx={{
         width: "100%",
-        height: "100%",
         display: "flex",
         flexDirection: "column",
       }}
@@ -184,25 +266,17 @@ export default function CoursesPage() {
         Gestión de Cursos
       </Typography>
 
-      {/* --- Filter and Action Bar --- */}
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        spacing={2}
-        sx={{ mb: 2 }}
-        alignItems="center"
-      >
+      {/* --- Filter and Action Bar (ACTUALIZADO) --- */}
+      <Stack direction="row" spacing={2} alignItems="center">
         <TextField
-          label="Buscar curso..."
-          variant="outlined"
           size="small"
+          label="Buscar curso..."
           value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setPage(1);
-          }} // Reset page on search change
-          sx={{ flexGrow: { sm: 1 }, width: { xs: "100%", sm: "auto" } }}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          sx={{ minWidth: 300 }}
+          variant="outlined"
         />
-        {/* --- Sorting Dropdown --- */}
+        {/* --- Filtro por ordenamiento --- */}
         <FormControl
           size="small"
           sx={{ minWidth: 180, width: { xs: "100%", sm: "auto" } }}
@@ -225,7 +299,62 @@ export default function CoursesPage() {
             ))}
           </Select>
         </FormControl>
-        {/* (Add other filters here) */}
+        {/* --- AÑADIDO: Filtro de Docentes --- */}
+        <Autocomplete
+          multiple
+          id="docentes-filter"
+          options={allDocentes}
+          loading={docentesLoading}
+          value={selectedDocentes}
+          onChange={handleDocentesChange}
+          disableCloseOnSelect
+          getOptionLabel={(option) => `${option.nombre} ${option.apellido}`}
+          isOptionEqualToValue={(option, value) => option.id === value.id}
+          renderOption={(props, option, { selected }) => {
+            // Extraemos la key que React y MUI ponen en 'props'
+            const { key, ...liProps } = props as any;
+            return (
+              <li key={key} {...liProps}>
+                {" "}
+                {/* Pasamos la key por separado */}
+                <Checkbox style={{ marginRight: 8 }} checked={selected} />
+                <ListItemText primary={`${option.nombre} ${option.apellido}`} />
+              </li>
+            );
+          }}
+          style={{ minWidth: 250 }}
+          sx={{ width: { xs: "100%", sm: "auto" } }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              size="small"
+              label="Docentes"
+              placeholder="Buscar docente..."
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (
+                  <>
+                    {docentesLoading ? (
+                      <CircularProgress color="inherit" size={20} />
+                    ) : null}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
+            />
+          )}
+        />
+        {/* --- AÑADIDO: Filtro de Estado --- */}
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Estado</InputLabel>
+          <Select value={estado} label="Estado" onChange={handleEstadoChange}>
+            <MenuItem value="">
+              <em>Todos</em>
+            </MenuItem>
+            <MenuItem value={EstadoSimpleEnum.Activo}>Activo</MenuItem>
+            <MenuItem value={EstadoSimpleEnum.Inactivo}>Inactivo</MenuItem>
+          </Select>
+        </FormControl>
         <Box
           sx={{ flexGrow: { sm: 1 }, display: { xs: "none", sm: "block" } }}
         />{" "}
@@ -264,7 +393,7 @@ export default function CoursesPage() {
             <Grid container spacing={3}>
               {cursos.length > 0 ? (
                 cursos.map((curso) => (
-                  // --- AQUÍ LA CORRECCIÓN ---
+                  // --- AQUÍ LA CORRECCIÓN que tenías ---
                   <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={curso.id}>
                     <CourseCard
                       course={curso}
@@ -272,18 +401,15 @@ export default function CoursesPage() {
                       onDelete={handleDelete}
                     />
                   </Grid>
-                  // --- FIN DE LA CORRECCIÓN ---
                 ))
               ) : (
                 // --- Y AQUÍ TAMBIÉN ---
                 <Grid size={12}>
                   {" "}
-                  {/* Antes 'item xs={12}' */}
                   <Typography sx={{ textAlign: "center", mt: 4 }}>
                     No se encontraron cursos.
                   </Typography>
                 </Grid>
-                // --- FIN DE LA CORRECCIÓN ---
               )}
             </Grid>
           </Box>
