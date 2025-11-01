@@ -29,11 +29,14 @@ import type {
 
 import { estado_simple as EstadoSimpleEnum } from "../../../types";
 import {
+  deleteCourse,
   findCourses,
   findDocentesParaFiltro,
   type FindCoursesParams,
   type PaginatedCoursesResponse,
 } from "../../../services/courses.service";
+import ConfirmationDialog from "../../../components/ConfirmationDialog";
+import CourseFormDialog from "./CourseFormDialog";
 
 // Definimos opciones de ordenamiento
 const sortOptions = [
@@ -49,6 +52,8 @@ export default function CoursesPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setIsLoading] = useState(true); // Para saber si está cargando los cursos.
   const [error, setError] = useState<string | null>(null); // Para settear errores.
+
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   // ----- ESTADOS PARA LOS FILTROS ----- //
   // Filtro de búsqueda por texto
@@ -80,7 +85,7 @@ export default function CoursesPage() {
 
   // Estado para settear el curso a editar
   // Este estado se le pasa como prop al Modal para crear o editar (CourseData para editar, null para crear).
-  const [editingCourse, setEditingCourse] = useState<CourseData | null>(null);
+  const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
 
   // Estado para settear el curso a dar de baja
   const [courseToDeleteId, setCourseToDeleteId] = useState<string | null>(null);
@@ -176,16 +181,17 @@ export default function CoursesPage() {
     sortOrder,
     estado,
     selectedDocentes,
+    refetchTrigger,
   ]);
 
   // --- Handlers ---
   const handleAddCourseClick = () => {
-    setEditingCourse(null);
+    setEditingCourseId(null);
     setIsModalOpen(true);
   };
 
   const handleEdit = (course: CourseData) => {
-    setEditingCourse(course);
+    setEditingCourseId(course.id);
     setIsModalOpen(true);
   };
 
@@ -196,14 +202,14 @@ export default function CoursesPage() {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setEditingCourse(null);
+    setEditingCourseId(null);
   };
 
   const handleSaveCourse = async () => {
     // Logic for saving (create or update)
     handleCloseModal();
-    setPage(1); // Go back to first page after save to see changes
-    // Optionally trigger refetch immediately if needed, though setPage will do it
+    setRefetchTrigger((prev) => prev + 1);
+    setPage(1);
   };
 
   const handleCloseDeleteDialog = () => {
@@ -213,11 +219,20 @@ export default function CoursesPage() {
 
   const confirmDelete = async () => {
     if (!courseToDeleteId) return;
-    // Add delete logic using course service
-    console.log("Deleting course:", courseToDeleteId);
-    handleCloseDeleteDialog();
-    setPage(1); // Go back to first page
-    // Optionally trigger refetch
+
+    setIsDeleting(true);
+    setError(null); // Limpiar errores previos
+    try {
+      await deleteCourse(courseToDeleteId);
+      handleCloseDeleteDialog();
+      // Forzamos el refetch
+      setRefetchTrigger((prev) => prev + 1);
+      // Opcional: mostrar un Snackbar/Toast de éxito
+    } catch (err: any) {
+      setError(err.message || "Error al dar de baja el curso.");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handlePageChange = (
@@ -436,22 +451,21 @@ export default function CoursesPage() {
       )}
 
       {/* --- Modals --- */}
-      {/* <CourseFormDialog 
-            open={isModalOpen} 
-            onClose={handleCloseModal} 
-            courseToEdit={editingCourse}
-            onSave={handleSaveCourse}
-         /> 
-      */}
-      {/* <ConfirmationDialog
-            open={isDeleteDialogOpen}
-            onClose={handleCloseDeleteDialog}
-            onConfirm={confirmDelete}
-            title="Confirmar Baja de Curso"
-            description="¿Estás seguro de que quieres dar de baja este curso?"
-            // Add loading state prop if needed
-         /> 
-      */}
+      <CourseFormDialog
+        open={isModalOpen}
+        onClose={handleCloseModal}
+        courseToEditId={editingCourseId}
+        onSave={handleSaveCourse}
+      />
+
+      <ConfirmationDialog
+        open={isDeleteDialogOpen}
+        onClose={handleCloseDeleteDialog}
+        onConfirm={confirmDelete}
+        title="Confirmar Baja de Curso"
+        description="¿Estás seguro de que quieres dar de baja este curso? Esta acción es reversible."
+        isLoading={isDeleting}
+      />
     </Box>
   );
 }

@@ -28,6 +28,8 @@ interface CourseCardProps {
   onDelete: (id: string) => void;
 }
 
+const baseUrl = import.meta.env.VITE_API_URL_WITHOUT_PREFIX;
+
 export default function CourseCard({
   course,
   onEdit,
@@ -60,6 +62,8 @@ export default function CourseCard({
   // --- Imagen de fallback ---
   const FOTO_DEFAULT = "https://placehold.co/345x140.png?text=Curso";
 
+  const fullImageUrl = imagenUrl ? `${baseUrl}${imagenUrl}` : FOTO_DEFAULT;
+
   return (
     <Card
       sx={{
@@ -72,7 +76,7 @@ export default function CourseCard({
       <CardMedia
         component="img"
         sx={{ height: 140 }}
-        image={imagenUrl || FOTO_DEFAULT}
+        image={fullImageUrl}
         alt={`Imagen del curso ${nombre}`}
       />
 
