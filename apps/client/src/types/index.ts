@@ -46,7 +46,7 @@ export interface UserData {
   deletedAt?: string | Date | null;
 }
 
-// Tipo para crear un usuario. Omitimos el id y los timestampsz
+// Tipo para CREAR un usuario. Omitimos los campos que maneja la BD
 export type CreateUserData = Omit<
   UserData,
   "id" | "createdAt" | "updatedAt" | "deletedAt" | "edad"
@@ -54,7 +54,7 @@ export type CreateUserData = Omit<
   password?: string;
 };
 
-// Tipo para actualizar un usuario: todos los campos de CreateUsuarioData opcionales,
+// Tipo para ACTUALIZAR un usuario: todos los campos de CreateUsuarioData opcionales,
 // y EXCLUIMOS 'email'
 export type UpdateUserData = Partial<Omit<CreateUserData, "email">>;
 
@@ -75,8 +75,29 @@ export interface Curso {
   deletedAt?: string | null;
 }
 
+// Datos para CREAR.
+// Omitimos campos generados y modalidadPreferencial (se setea por defecto en backend)
+// La imagen se manejará por separado como un archivo.
+export type CreateCourseData = Pick<
+  Curso,
+  "nombre" | "descripcion" | "contrasenaAcceso" | "modalidadPreferencial"
+> & {
+  docenteIds: string[]; // Array de IDs
+  diasClase: {
+    id: string | null; // <-- Enviamos el ID real (o null)
+    dia: dias_semana;
+    horaInicio: string;
+    horaFin: string;
+    modalidad: modalidad;
+  }[];
+};
+
+// Datos para ACTUALIZAR
+export type UpdateCourseData = Partial<CreateCourseData>;
+
 // Información del docente para la Card de cursos (Un subconjunto del Usuario)
 export interface DocenteBasico {
+  id: string;
   nombre: string;
   apellido: string;
 }
@@ -102,6 +123,30 @@ export interface DocenteParaFiltro {
   nombre: string;
   apellido: string;
 }
+
+// Tipo para el sub-formulario de Días de Clase
+// (Tendrá un ID temporal en el state del frontend)
+export interface DiaClaseFormData {
+  id: string | null;
+  _tempId?: string; // Para 'key' en React
+  dia: dias_semana;
+  horaInicio: string; // Formato "HH:mm"
+  horaFin: string; // Formato "HH:mm"
+  modalidad: modalidad;
+}
+
+// Tipo que esperamos recibir del backend para PRE-POBLAR el form de edición
+// (Extiende CursoConDetalles para incluir diasClase)
+export type CursoParaEditar = Omit<CursoConDetalles, "docentes"> & {
+  docentes: DocenteParaFiltro[]; // El array plano que envía 'findOne'
+  diasClase: {
+    id: string; // El ID real del DiaClase
+    dia: dias_semana;
+    horaInicio: string;
+    horaFin: string;
+    modalidad: modalidad;
+  }[];
+};
 
 // Interfaz base para los parámetros de búsqueda y filtros
 export interface BaseFilterParams {

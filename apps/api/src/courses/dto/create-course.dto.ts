@@ -1,80 +1,53 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { dias_semana, modalidad } from '@prisma/client';
-import { Type } from 'class-transformer';
+// apps/api/src/courses/dto/create-course.dto.ts
 import {
   IsArray,
-  IsEnum,
   IsString,
   IsUUID,
-  Matches,
-  MinLength,
   ValidateNested,
+  MinLength,
+  IsEnum,
 } from 'class-validator';
+import { plainToInstance, Transform, Type } from 'class-transformer';
+import { DiaClaseDto } from './dia-clase.dto';
+import { modalidad } from '@prisma/client';
 
-// Regex para validar el formato HH:MM (24 horas)
-const HORA_REGEX = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
-
-// DTO anidado para validar cada objeto de dia de clase
-class DiaClaseDto {
-  @ApiProperty()
-  @IsEnum(dias_semana)
-  dia: dias_semana;
-
-  @ApiProperty({ example: '10:00' })
-  @Matches(HORA_REGEX, {
-    message:
-      'La horaInicio debe tener el formato HH:MM (ej. "09:30" o "22:00")',
-  })
-  @IsString()
-  horaInicio: string;
-
-  @ApiProperty({ example: '12:00' })
-  @Matches(HORA_REGEX, {
-    message: 'La horaFin debe tener el formato HH:MM (ej. "14:00" o "08:00")',
-  })
-  @IsString()
-  horaFin: string;
-
-  @ApiProperty()
-  @IsEnum(modalidad)
-  modalidad: modalidad;
+enum ModalidadValidationEnum {
+  Presencial = 'Presencial',
+  Virtual = 'Virtual',
 }
 
-// DTO principal para la creación del curso
 export class CreateCourseDto {
-  @ApiProperty()
   @IsString()
-  @MinLength(6)
+  @MinLength(3)
   nombre: string;
 
-  @ApiProperty()
   @IsString()
+  @MinLength(10)
   descripcion: string;
 
-  @ApiProperty()
-  @IsString()
-  imagenUrl: string;
-
-  @ApiProperty()
   @IsString()
   @MinLength(6)
   contrasenaAcceso: string;
 
-  @ApiProperty()
-  @IsEnum(modalidad)
-  modalidadPreferencial: modalidad;
+  @IsEnum(ModalidadValidationEnum)
+  modalidadPreferencial?: modalidad;
 
-  @ApiProperty({ type: [String] })
+  @Transform(({ value }) => JSON.parse(value)) // Lo parsea a array
   @IsArray()
-  @IsUUID('4', {
-    each: true,
-    message: 'Cada docenteId debe ser un UUID válido',
-  })
+  @IsUUID('all', { each: true }) // Valida que cada item sea un UUID
   docenteIds: string[];
 
-  @ApiProperty({ type: [DiaClaseDto] })
+  @Transform(({ value }) => {
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    // Convertimos manualmente el array de objetos planos
+    // en un array de instancias de DiaClaseDto
+    return plainToInstance(DiaClaseDto, parsed);
+  })
   @IsArray()
-  @ValidateNested({ each: true }) // Valida cada objeto del array
-  @Type(() => DiaClaseDto) // Especifica el tipo para la validación anidada
+  @ValidateNested({ each: true })
+  @Type(() => DiaClaseDto) // Le dice cómo validar cada objeto del array
   diasClase: DiaClaseDto[];
 }

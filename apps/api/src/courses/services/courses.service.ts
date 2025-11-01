@@ -1,148 +1,95 @@
 import {
   BadRequestException,
-  ForbiddenException,
+  ForbiddenException, // Para permisos
   Injectable,
+  InternalServerErrorException, // Para errores genéricos
   NotFoundException,
 } from '@nestjs/common';
 import { CreateCourseDto } from '../dto/create-course.dto';
 import { UpdateCourseDto } from '../dto/update-course.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Curso, estado_simple, Prisma, roles } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
+import { estado_simple, Prisma, roles } from '@prisma/client'; // Importamos 'roles'
+// import * as bcrypt from 'bcrypt';
 import { FindAllCoursesDto } from '../dto/find-all-courses.dto';
+import { dateToTime, timeToDate } from 'src/helpers';
+import { DiaClaseDto } from '../dto/dia-clase.dto';
+import { AuthenticatedUser } from 'src/interfaces/authenticated-user.interface';
+
+import { unlink } from 'fs';
+import { basename, join } from 'path';
 
 @Injectable()
 export class CoursesService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createCourseDto: CreateCourseDto) {
-    // Desestructuración de los campos del DTO
-    const {
-      nombre,
-      descripcion,
-      imagenUrl,
-      contrasenaAcceso,
-      modalidadPreferencial,
-      docenteIds,
-      diasClase,
-    } = createCourseDto;
-
-    // --- Inicia Transacción ---
+  /**
+   * Crea un nuevo curso.
+   * Solo accesible por Administradores.
+   */
+  async create(dto: CreateCourseDto, imagen: Express.Multer.File) {
     try {
-      const nuevoCurso = await this.prisma.$transaction(async (tx) => {
-        // --- Validación de Docentes ---
-        if (docenteIds && docenteIds.length > 0) {
-          const docentes = await tx.usuario.findMany({
-            where: {
-              id: { in: docenteIds },
-              rol: roles.Docente, // O como se llame tu enum Rol
-              deletedAt: null,
-            },
-            select: { id: true },
-          });
-          if (docentes.length !== docenteIds.length) {
-            throw new BadRequestException(
-              'Uno o más IDs de docentes proporcionados son inválidos o no corresponden a un docente activo.',
-            );
-          }
-        }
-        // --- Fin Validación Docentes ---
+      const {
+        nombre,
+        descripcion,
+        contrasenaAcceso,
+        modalidadPreferencial,
+        docenteIds,
+        diasClase,
+      } = dto;
 
-        // 1. Crear ProgresoCurso (los defaults del schema se aplicarán)
-        const nuevoProgresoCurso = await tx.progresoCurso.create({
-          data: {}, // Los defaults manejan la inicialización
-          select: { id: true }, // Solo necesitamos el ID generado
-        });
+      // Manejo de imagen
+      const imagenUrl =
+        imagen && imagen.filename ? `/uploads/${imagen.filename}` : null;
 
-        // 2. Crear DificultadesCurso (los defaults del schema se aplicarán)
-        const nuevasDificultadesCurso = await tx.dificultadesCurso.create({
-          data: {}, // Los defaults manejan la inicialización (dificultadModa es nullable)
-          select: { id: true }, // Solo necesitamos el ID
-        });
+      return await this.prisma.$transaction(async (tx) => {
+        // 1. Crear dependencias
+        const progreso = await tx.progresoCurso.create({ data: {} });
+        const dificultades = await tx.dificultadesCurso.create({ data: {} });
 
-        // --- HASHEAR CONTRASEÑA DE ACCESO ---
-        const contrasenaHasheada = await bcrypt.hash(
-          contrasenaAcceso,
-          +process.env.HASH_SALT,
-        );
-
-        // 3. Crear el Curso, vinculando los IDs generados
-        const cursoCreado = await tx.curso.create({
+        // 2. Crear el curso y sus relaciones anidadas
+        const curso = await tx.curso.create({
           data: {
             nombre,
             descripcion,
+            contrasenaAcceso, // Deberías hashear esta contraseña
             imagenUrl,
-            contrasenaAcceso: contrasenaHasheada,
-            modalidadPreferencial,
-            idProgreso: nuevoProgresoCurso.id, // Vincula con ProgresoCurso
-            idDificultadesCurso: nuevasDificultadesCurso.id, // Vincula con DificultadesCurso
-            // Crear relaciones para docentes
-            docentes: docenteIds
-              ? {
-                  createMany: {
-                    data: docenteIds.map((id) => ({
-                      idDocente: id,
-                      estado: 'Activo', // O tu estado inicial por defecto
-                    })),
-                  },
-                }
-              : undefined,
-            // Crear relaciones para diasClase
-            diasClase: diasClase
-              ? {
-                  createMany: {
-                    data: diasClase.map((dia) => {
-                      // Asegúrate que dia.horaInicio y dia.horaFin vengan en formato "HH:MM"
-                      if (
-                        !/^\d{2}:\d{2}$/.test(dia.horaInicio) ||
-                        !/^\d{2}:\d{2}$/.test(dia.horaFin)
-                      ) {
-                        throw new BadRequestException(
-                          `Formato de hora inválido: ${dia.horaInicio} / ${dia.horaFin}. Usar HH:MM.`,
-                        );
-                      }
-
-                      return {
-                        dia: dia.dia,
-                        // Convierte "HH:MM" a un objeto Date con fecha fija (UTC)
-                        horaInicio: new Date(
-                          `1970-01-01T${dia.horaInicio}:00.000Z`,
-                        ),
-                        horaFin: new Date(`1970-01-01T${dia.horaFin}:00.000Z`),
-                        modalidad: dia.modalidad,
-                      };
-                    }),
-                  },
-                }
-              : undefined,
-          },
-          // Incluimos las relaciones recién creadas en la respuesta
-          include: {
-            progresoCurso: true, // Incluye el objeto progreso creado
-            dificultadesCurso: true, // Incluye el objeto dificultades creado
-            docentes: { include: { docente: true } }, // Incluye datos completos del docente
-            diasClase: true,
+            modalidadPreferencial: modalidadPreferencial,
+            idProgreso: progreso.id,
+            idDificultadesCurso: dificultades.id,
+            docentes: {
+              create: docenteIds.map((idDocente) => ({
+                idDocente: idDocente,
+                estado: 'Activo',
+              })),
+            },
+            diasClase: {
+              create: diasClase.map((dia) => ({
+                dia: dia.dia,
+                modalidad: dia.modalidad,
+                horaInicio: timeToDate(dia.horaInicio),
+                horaFin: timeToDate(dia.horaFin),
+              })),
+            },
           },
         });
-
-        return cursoCreado; // Devuelve el objeto curso final desde la transacción
-      }); // --- Fin Transacción ---
-
-      return nuevoCurso; // Devuelve el resultado de la transacción
+        return curso;
+      });
     } catch (error) {
-      // Manejo básico de errores (puede refinarse)
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        console.error('Código de Error Prisma:', error.code);
-      }
       console.error('Error al crear el curso:', error);
-      throw new BadRequestException(
-        error.message || 'No se pudo crear el curso.',
-      );
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        // Ejemplo: Error de constraint (P2002) o un foreign key (P2003)
+        throw new BadRequestException(
+          'No se pudo crear el curso. Revisa los datos (ej: docentes duplicados o inexistentes).',
+        );
+      }
+      throw new InternalServerErrorException('Error al crear el curso.');
     }
   }
 
+  /**
+   * Busca todos los cursos con paginación y filtros.
+   */
   async findAll(query: FindAllCoursesDto) {
-    // Desestructuramos el DTO y ponemos valores por defecto
     const {
       page = 1,
       limit = 8,
@@ -156,252 +103,366 @@ export class CoursesService {
     const skip = (page - 1) * limit;
     const take = limit;
 
-    // --- 1. Construir el WHERE dinámicamente ---
-    const where: Prisma.CursoWhereInput = {};
-
-    // Filtro de Búsqueda (search)
-    if (search) {
-      where.nombre = {
-        contains: search,
-        mode: 'insensitive', // Para que no distinga mayúsc/minúsc
-      };
-    }
-
-    // Filtro de Estado
-    if (estado) {
-      where.deletedAt = estado === estado_simple.Activo ? null : { not: null };
-    }
-
-    // Filtro de Docentes
-    if (docenteIds && docenteIds.length > 0) {
-      where.docentes = {
-        some: {
-          idDocente: {
-            in: docenteIds,
-          },
-        },
-      };
-    }
-
-    // --- 2. Construir el ORDER BY ---
-    const orderBy: Prisma.CursoOrderByWithRelationInput = {
-      [sort]: order,
-    };
-
-    // --- 3. Ejecutar las consultas ---
     try {
-      // Hacemos dos consultas en paralelo: una para los datos y otra para el conteo total
+      // --- 1. Construir el WHERE ---
+      const where: Prisma.CursoWhereInput = {};
+      if (search) {
+        where.nombre = { contains: search, mode: 'insensitive' };
+      }
+      if (estado) {
+        where.deletedAt =
+          estado === estado_simple.Activo ? null : { not: null };
+      }
+      if (docenteIds && docenteIds.length > 0) {
+        where.docentes = { some: { idDocente: { in: docenteIds } } };
+      }
+
+      // --- 2. Construir el ORDER BY ---
+      const orderBy: Prisma.CursoOrderByWithRelationInput = { [sort]: order };
+
+      // --- 3. Ejecutar consultas ---
       const [cursos, total] = await this.prisma.$transaction([
         this.prisma.curso.findMany({
           where,
           orderBy,
           skip,
           take,
-          // Incluimos los docentes y el conteo de alumnos para la Card
           include: {
             docentes: {
+              where: {
+                estado: 'Activo',
+              },
               include: {
-                docente: {
-                  select: {
-                    nombre: true,
-                    apellido: true,
-                  },
-                },
+                docente: { select: { nombre: true, apellido: true } },
               },
             },
-            _count: {
-              select: {
-                alumnos: true,
-              },
-            },
+            _count: { select: { alumnos: true } },
           },
         }),
         this.prisma.curso.count({ where }),
       ]);
 
       const totalPages = Math.ceil(total / limit);
-
-      // Devolvemos el objeto paginado que el Frontend espera
-      return {
-        data: cursos,
-        total,
-        page,
-        totalPages,
-      };
+      return { data: cursos, total, page, totalPages };
     } catch (error) {
-      // Manejo de errores
-      console.error('Error in findAll courses service:', error);
-      throw new Error('Error al buscar los cursos.');
+      console.error('Error en findAll courses service:', error);
+      throw new InternalServerErrorException('Error al buscar los cursos.');
     }
   }
 
-  async findOne(id: string): Promise<Curso> {
-    // Busca un usuario por ID que no haya sido borrado
-    const curso = await this.prisma.curso.findUnique({
-      where: { id, deletedAt: null },
-    });
-
-    if (!curso) {
-      throw new NotFoundException(`Curso con ID '${id}' no encontrado.`);
-    }
-
-    return curso;
-  }
-
-  async update(id: string, updateCourseDto: UpdateCourseDto, userRole: roles) {
-    const { docenteIds, diasClase, ...basicData } = updateCourseDto;
-
-    // --- 1. CONSTRUIR OBJETO DE DATOS BÁSICOS (dataToUpdate) ---
-    // Este objeto solo contendrá los campos escalares (nombre, desc, etc.)
-    const dataToUpdate: Prisma.CursoUpdateInput = {};
-
-    if (userRole === roles.Administrador) {
-      // El Administrador puede actualizar todos los datos básicos
-      // (Asignamos todos los datos básicos del DTO)
-      Object.assign(dataToUpdate, basicData);
-    } else {
-      // El Docente solo puede actualizar campos permitidos
-      if (basicData.descripcion !== undefined) {
-        dataToUpdate.descripcion = basicData.descripcion;
-      }
-      if (basicData.contrasenaAcceso !== undefined) {
-        dataToUpdate.contrasenaAcceso = basicData.contrasenaAcceso; // ¡Ver hashing!
-      }
-      if (basicData.modalidadPreferencial !== undefined) {
-        dataToUpdate.modalidadPreferencial = basicData.modalidadPreferencial;
-      }
-      // Nota: Si el DTO incluye 'nombre', será ignorado para el Docente.
-    }
-
-    // --- 2. (Opcional) Hashear Contraseña si cambió ---
-    if (dataToUpdate.contrasenaAcceso) {
-      // Reemplaza '10' con tu variable de entorno para salt rounds
-      dataToUpdate.contrasenaAcceso = await bcrypt.hash(
-        dataToUpdate.contrasenaAcceso as string,
-        +process.env.HASH_SALT,
-      );
-    }
-
-    // --- 3. INICIAR TRANSACCIÓN ---
+  /**
+   * Busca un curso por ID con todos los datos para el formulario de edición.
+   */
+  async findOne(id: string) {
     try {
+      const curso = await this.prisma.curso.findUnique({
+        where: { id, deletedAt: null }, // Solo buscar cursos activos
+        include: {
+          docentes: {
+            where: {
+              estado: 'Activo',
+            },
+            select: {
+              docente: {
+                select: { id: true, nombre: true, apellido: true },
+              },
+            },
+          },
+          diasClase: {
+            select: {
+              id: true,
+              dia: true,
+              horaInicio: true,
+              horaFin: true,
+              modalidad: true,
+            },
+          },
+        },
+      });
+
+      if (!curso) {
+        throw new NotFoundException(`Curso con ID '${id}' no encontrado.`);
+      }
+
+      // Transformamos los datos para que coincidan con 'CursoParaEditar'
+      const docentes = curso.docentes.map((dc) => dc.docente);
+      const diasClase = curso.diasClase.map((d) => ({
+        id: d.id,
+        dia: d.dia,
+        modalidad: d.modalidad,
+        horaInicio: dateToTime(d.horaInicio),
+        horaFin: dateToTime(d.horaFin),
+      }));
+
+      const { docentes: _, ...cursoBase } = curso;
+      return { ...cursoBase, docentes, diasClase };
+    } catch (error) {
+      console.error(`Error al buscar el curso ${id}:`, error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Error al buscar el curso.');
+    }
+  }
+
+  /**
+   * Actualiza un curso, aplicando lógica de permisos según el rol.
+   */
+
+  async update(
+    id: string,
+    dto: UpdateCourseDto,
+    imagen: Express.Multer.File,
+    user: AuthenticatedUser, // El usuario autenticado (desde el Controller)
+  ) {
+    try {
+      // 1. Verificar que el curso existe y obtener imagen antigua
+      const cursoExistente = await this.prisma.curso.findUnique({
+        where: { id },
+        select: { imagenUrl: true },
+      });
+      if (!cursoExistente) {
+        throw new NotFoundException(`Curso con ID '${id}' no encontrado.`);
+      }
+      const oldImagenUrl = cursoExistente.imagenUrl;
+
+      // 2. Preparar los datos a actualizar
+      const dataToUpdate: Prisma.CursoUpdateInput = {};
+      const { docenteIds, diasClase, ...dataBasica } = dto;
+      const diasClaseToSync: DiaClaseDto[] | undefined = diasClase;
+      const newImageUploaded = imagen && imagen.filename;
+
+      // 3. Lógica de Permisos
+      if (user.rol === roles.Administrador) {
+        Object.assign(dataToUpdate, dataBasica);
+        if (newImageUploaded) {
+          dataToUpdate.imagenUrl = `/uploads/${imagen.filename}`; // <-- Se guarda con prefijo
+        }
+      } else if (user.rol === roles.Docente) {
+        const isDocenteOfCourse = await this.prisma.docenteCurso.findFirst({
+          where: { idCurso: id, idDocente: user.id, estado: 'Activo' },
+        });
+        if (!isDocenteOfCourse) {
+          throw new ForbiddenException(
+            'No tienes permiso para editar este curso.',
+          );
+        }
+        if (dto.nombre || dto.docenteIds) {
+          throw new ForbiddenException(
+            'Los docentes solo pueden modificar: descripción, imagen, días de clase, contraseña y modalidad preferencial.',
+          );
+        }
+        if (dto.descripcion) dataToUpdate.descripcion = dto.descripcion;
+        if (dto.contrasenaAcceso)
+          dataToUpdate.contrasenaAcceso = dto.contrasenaAcceso;
+        if (dto.modalidadPreferencial)
+          dataToUpdate.modalidadPreferencial = dto.modalidadPreferencial;
+        if (newImageUploaded) {
+          dataToUpdate.imagenUrl = `/uploads/${imagen.filename}`; // <-- Se guarda con prefijo
+        }
+      } else {
+        throw new ForbiddenException('No tienes permisos para esta acción.');
+      }
+
+      // 4. Ejecutar la transacción
       const cursoActualizado = await this.prisma.$transaction(async (tx) => {
-        // --- 3.1. Actualizar los campos básicos del Curso ---
-        // (Esto solo actualiza lo que definimos en 'dataToUpdate')
-        await tx.curso.update({
-          where: { id, deletedAt: null }, // Solo actualiza cursos activos
+        const cursoActualizadoTx = await tx.curso.update({
+          where: { id },
           data: dataToUpdate,
         });
 
-        // --- 3.2. Actualizar 'diasClase' (Admin y Docente pueden) ---
-        if (diasClase) {
-          // El método más simple "sync": borrar todos los y crear los nuevos
-          await tx.diaClase.deleteMany({
-            where: { idCurso: id },
-          });
-
-          await tx.diaClase.createMany({
-            data: diasClase.map((dia) => ({
+        // Sincronizar Docentes
+        if (user.rol === roles.Administrador && docenteIds) {
+          await tx.docenteCurso.updateMany({
+            where: {
               idCurso: id,
-              dia: dia.dia,
-              horaInicio: new Date(`1970-01-01T${dia.horaInicio}:00.000Z`), // Usamos la conversión
-              horaFin: new Date(`1970-01-01T${dia.horaFin}:00.000Z`),
-              modalidad: dia.modalidad,
-            })),
+              idDocente: { notIn: docenteIds },
+              estado: 'Activo',
+            },
+            data: {
+              estado: 'Inactivo',
+            },
           });
-        }
-
-        // --- 3.3. Actualizar 'docenteIds' (SOLO Admin) ---
-        // Usamos el estado "Activo"/"Inactivo" para mantener el historial
-        if (docenteIds && userRole === roles.Administrador) {
-          // 1. Obtener los docentes actualmente activos en el curso
-          const docentesActuales = await tx.docenteCurso.findMany({
-            where: { idCurso: id, estado: estado_simple.Activo },
-          });
-          const idsActuales = docentesActuales.map((d) => d.idDocente);
-
-          // 2. Docentes a INACTIVAR (están en la lista actual pero no en la nueva)
-          const idsAInactivar = idsActuales.filter(
-            (currentId) => !docenteIds.includes(currentId),
-          );
-
-          // 3. Docentes a ACTIVAR/CREAR (están en la nueva lista pero no en la activa actual)
-          const idsAUpsertar = docenteIds; // Queremos asegurar que todos estos estén activos
-
-          // 4. Ejecutar operaciones
-          if (idsAInactivar.length > 0) {
-            await tx.docenteCurso.updateMany({
-              where: { idCurso: id, idDocente: { in: idsAInactivar } },
-              data: { estado: estado_simple.Inactivo },
-            });
-          }
-
-          // Usamos 'upsert' para activar docentes que ya existían (inactivos) o crear nuevos
-          for (const docenteId of idsAUpsertar) {
+          for (const idDocente of docenteIds) {
             await tx.docenteCurso.upsert({
               where: {
-                idDocente_idCurso: { idDocente: docenteId, idCurso: id },
+                idDocente_idCurso: {
+                  idDocente: idDocente,
+                  idCurso: id,
+                },
               },
-              update: { estado: estado_simple.Activo }, // Reactiva
+              update: {
+                estado: 'Activo',
+              },
               create: {
-                idDocente: docenteId,
+                idDocente: idDocente,
                 idCurso: id,
-                estado: estado_simple.Activo,
-              }, // Crea
+                estado: 'Activo',
+              },
             });
           }
-        } else if (docenteIds && userRole === roles.Docente) {
-          // Si un docente intenta modificar la lista de docentes, lanzamos un error
-          throw new ForbiddenException(
-            'Los docentes no pueden modificar la asignación de docentes.',
-          );
         }
 
-        // --- 3.4. Devolver el curso actualizado ---
-        // (Lo buscamos de nuevo para obtener todos los datos frescos)
-        return tx.curso.findUnique({
-          where: { id },
-          include: {
-            progresoCurso: true,
-            dificultadesCurso: true,
-            docentes: {
-              where: { estado: estado_simple.Activo }, // Devolvemos solo los docentes activos
-              include: { docente: true },
-            },
-            diasClase: true,
-          },
+        // Sincronizar Días de Clase
+        if (diasClaseToSync) {
+          await this.sincronizarDiasClase(tx, id, diasClaseToSync);
+        }
+
+        return cursoActualizadoTx;
+      });
+
+      // 5. Borrar archivo de imagen antiguo
+      if (newImageUploaded && oldImagenUrl) {
+        const oldFileName = basename(oldImagenUrl);
+
+        const UPLOADS_PATH = join(process.cwd(), 'uploads');
+        const oldImagePath = join(UPLOADS_PATH, oldFileName);
+
+        unlink(oldImagePath, (err) => {
+          if (err) {
+            console.error(
+              `Error al eliminar imagen antigua ${oldImagePath}:`,
+              err,
+            );
+          } else {
+            console.log(
+              `Imagen antigua ${oldImagePath} eliminada correctamente.`,
+            );
+          }
         });
-      }); // --- Fin de la Transacción ---
+      }
 
       return cursoActualizado;
     } catch (error) {
+      console.error(`Error al actualizar el curso ${id}:`, error);
+      if (
+        error instanceof ForbiddenException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2025') {
-          // 'Record to update not found'
-          throw new NotFoundException(`Curso con ID '${id}' no encontrado.`);
-        }
+        console.error('Prisma Error Code:', error.code, error.message);
+        throw new BadRequestException(
+          'Error al actualizar. Revisa los datos (ej: docentes, días de clase).',
+        );
       }
-      if (error instanceof ForbiddenException) {
-        throw error; // Re-lanza el error de permisos
-      }
-      throw new BadRequestException('No se pudo actualizar el curso.');
+      throw new InternalServerErrorException('Error al actualizar el curso.');
     }
   }
 
-  async delete(id: string) {
-    const curso = await this.prisma.curso.findUnique({
-      where: { id, deletedAt: null },
+  /**
+   * Realiza un soft delete del curso.
+   */
+  async remove(id: string) {
+    try {
+      // 1. Verificar si existe y no está ya eliminado
+      // Necesitamos fetchear el curso para obtener los IDs de progreso y dificultades
+      const curso = await this.prisma.curso.findUnique({
+        where: { id, deletedAt: null },
+        select: { id: true, idProgreso: true, idDificultadesCurso: true }, // Solo traemos lo que necesitamos
+      });
+
+      if (!curso) {
+        throw new NotFoundException(
+          `Curso con ID '${id}' no encontrado o ya ha sido eliminado.`,
+        );
+      }
+
+      // 2. Ejecutar todas las bajas en una transacción
+      // Usamos $transaction con un array de operaciones
+      const [cursoDadoDeBaja] = await this.prisma.$transaction([
+        // a. Dar de baja el curso principal
+        this.prisma.curso.update({
+          where: { id: curso.id },
+          data: { deletedAt: new Date() },
+        }),
+
+        // b. Dar de baja el ProgresoCurso
+        this.prisma.progresoCurso.update({
+          where: { id: curso.idProgreso },
+          data: { estado: 'Inactivo' },
+        }),
+
+        // c. Dar de baja DificultadesCurso
+        this.prisma.dificultadesCurso.update({
+          where: { id: curso.idDificultadesCurso },
+          data: { estado: 'Inactivo' },
+        }),
+
+        // d. Dar de baja asignaciones de Docentes (updateMany)
+        this.prisma.docenteCurso.updateMany({
+          where: { idCurso: curso.id },
+          data: { estado: 'Inactivo' },
+        }),
+
+        // e. Eliminar Días de Clase (deleteMany)
+        this.prisma.diaClase.deleteMany({
+          where: { idCurso: curso.id },
+        }),
+      ]);
+
+      return cursoDadoDeBaja; // Devolvemos el curso actualizado
+    } catch (error) {
+      console.error(`Error al eliminar el curso ${id}:`, error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        // Captura errores de la transacción (ej: un ID no encontrado)
+        throw new BadRequestException(
+          'Error al procesar la baja del curso. Alguna relación no fue encontrada.',
+        );
+      }
+      throw new InternalServerErrorException('Error al eliminar el curso.');
+    }
+  }
+
+  // --- MÉTODO HELPER PARA SINCRONIZAR DÍAS ---
+  // Esta función es privada y se ejecuta dentro de un transaction.
+  // No necesita su propio try/catch, ya que si falla,
+  // el 'catch' del método 'update' se encargará.
+  private async sincronizarDiasClase(
+    tx: Prisma.TransactionClient, // Importante: usar el cliente de transacción
+    idCurso: string,
+    diasDto: DiaClaseDto[],
+  ) {
+    const diasNuevos = diasDto.filter((d) => d.id === null);
+    const diasExistentes = diasDto.filter((d) => d.id !== null);
+    const idsExistentes = diasExistentes.map((d) => d.id!);
+
+    // 1. Borrar días que ya no están en la lista
+    await tx.diaClase.deleteMany({
+      where: {
+        idCurso: idCurso,
+        id: { notIn: idsExistentes },
+      },
     });
 
-    if (!curso) {
-      throw new NotFoundException(
-        `Curso con ID '${id}' no encontrado o ya ha sido eliminado.`,
-      );
+    // 2. Crear los días nuevos
+    if (diasNuevos.length > 0) {
+      await tx.diaClase.createMany({
+        data: diasNuevos.map((d) => ({
+          idCurso: idCurso,
+          dia: d.dia,
+          modalidad: d.modalidad,
+          horaInicio: timeToDate(d.horaInicio),
+          horaFin: timeToDate(d.horaFin),
+        })),
+      });
     }
 
-    // Actualiza el campo deletedAt
-    return this.prisma.curso.update({
-      where: { id },
-      data: { deletedAt: new Date() },
-    });
+    // 3. Actualizar los días existentes
+    for (const dia of diasExistentes) {
+      await tx.diaClase.update({
+        where: { id: dia.id! }, // Asumimos que el ID del día de clase es único
+        data: {
+          dia: dia.dia,
+          modalidad: dia.modalidad,
+          horaInicio: timeToDate(dia.horaInicio),
+          horaFin: timeToDate(dia.horaFin),
+        },
+      });
+    }
   }
 }

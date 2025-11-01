@@ -2,7 +2,6 @@ import axios from "axios";
 
 // Lee la URL base desde las variables de entorno con un valor por defecto para desarrollo.
 const baseURL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
-console.log("AXIOS BASE URL:", baseURL);
 
 // Crea la instancia de axios con la configuración
 const apiClient = axios.create({
