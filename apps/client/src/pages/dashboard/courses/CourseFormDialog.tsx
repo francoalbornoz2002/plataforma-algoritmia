@@ -56,6 +56,7 @@ import {
   type SubmitHandler,
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { enqueueSnackbar } from "notistack";
 
 const VisuallyHiddenInput = styled(Input)({
   clip: "rect(0 0 0 0)",
@@ -220,6 +221,10 @@ export default function CourseFormDialog({
         };
         // 'selectedFile' sigue viniendo del state
         await updateCourse(courseToEditId, updateData, selectedFile);
+        enqueueSnackbar("Curso actualizado con éxito", {
+          variant: "success",
+          autoHideDuration: 3000,
+        });
       } else {
         const createData: CreateCourseData = {
           nombre: data.nombre,
@@ -230,10 +235,26 @@ export default function CourseFormDialog({
           diasClase: diasClaseLimpios,
         };
         await createCourse(createData, selectedFile);
+        enqueueSnackbar("Curso creado con éxito", {
+          variant: "success",
+          autoHideDuration: 3000,
+        });
       }
       onSave(); // Notifica a la página principal
     } catch (err: any) {
-      setError(err.message || "Ocurrió un error al guardar.");
+      if (isEditMode) {
+        setError(err.message || "Ocurrió un error al guardar.");
+        enqueueSnackbar("Error al actualizar el curso", {
+          variant: "error",
+          autoHideDuration: 3000,
+        });
+      } else {
+        setError(err.message || "Ocurrió un error al guardar.");
+        enqueueSnackbar("Error al crear el curso", {
+          variant: "error",
+          autoHideDuration: 3000,
+        });
+      }
     }
     // 'isSubmitting' se pone en 'false' automáticamente
   };

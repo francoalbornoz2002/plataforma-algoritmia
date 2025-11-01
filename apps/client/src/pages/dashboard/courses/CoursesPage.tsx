@@ -37,6 +37,7 @@ import {
 } from "../../../services/courses.service";
 import ConfirmationDialog from "../../../components/ConfirmationDialog";
 import CourseFormDialog from "./CourseFormDialog";
+import { enqueueSnackbar } from "notistack";
 
 // Definimos opciones de ordenamiento
 const sortOptions = [
@@ -224,12 +225,20 @@ export default function CoursesPage() {
     setError(null); // Limpiar errores previos
     try {
       await deleteCourse(courseToDeleteId);
+      enqueueSnackbar("Curso dado de baja con éxito", {
+        variant: "success",
+        autoHideDuration: 3000,
+      });
       handleCloseDeleteDialog();
       // Forzamos el refetch
       setRefetchTrigger((prev) => prev + 1);
       // Opcional: mostrar un Snackbar/Toast de éxito
     } catch (err: any) {
       setError(err.message || "Error al dar de baja el curso.");
+      enqueueSnackbar("Error al dar de baja el curso", {
+        variant: "error",
+        autoHideDuration: 3000,
+      });
     } finally {
       setIsDeleting(false);
     }
