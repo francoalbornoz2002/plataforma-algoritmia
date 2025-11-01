@@ -7,7 +7,7 @@ import {
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Prisma, Usuario } from '@prisma/client';
+import { Prisma, roles, Usuario } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { FindAllUsersDto } from '../dto/find-all-users.dto';
 
@@ -164,7 +164,10 @@ export class UsersService {
 
   async findTeachers() {
     return this.prisma.usuario.findMany({
-      where: { rol: 'Docente' },
+      where: {
+        rol: roles.Docente,
+        deletedAt: null, // Solo docentes activos
+      },
       select: {
         id: true,
         nombre: true,
