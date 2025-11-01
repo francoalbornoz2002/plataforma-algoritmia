@@ -23,7 +23,9 @@ import {
   Box,
   Input, // Para la subida de archivo
   Stack,
-  type SelectChangeEvent, // Para el layout de diasClase
+  FormHelperText,
+  styled,
+  Divider, // Para el layout de diasClase
 } from "@mui/material";
 import {
   CloudUpload as CloudUploadIcon,
@@ -38,12 +40,34 @@ import {
 import {
   type CreateCourseData,
   type UpdateCourseData,
-  type DiaClaseFormData,
   type DocenteParaFiltro,
   modalidad,
   dias_semana,
   type CursoParaEditar,
 } from "../../../types";
+import {
+  courseFormSchema,
+  type CourseFormValues,
+} from "../../../validations/course.schema";
+import {
+  Controller,
+  useFieldArray,
+  useForm,
+  type SubmitHandler,
+} from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const VisuallyHiddenInput = styled(Input)({
+  clip: "rect(0 0 0 0)",
+  clipPath: "inset(50%)",
+  height: 1,
+  overflow: "hidden",
+  position: "absolute",
+  bottom: 0,
+  left: 0,
+  whiteSpace: "nowrap",
+  width: 1,
+});
 
 interface CourseFormDialogProps {
   open: boolean;
@@ -52,12 +76,15 @@ interface CourseFormDialogProps {
   courseToEditId: string | null;
 }
 
-// Estado inicial para los campos simples
-const initialFormState = {
+// --- Valores por defecto para RHF ---
+const defaultValues: CourseFormValues = {
   nombre: "",
   descripcion: "",
   contrasenaAcceso: "",
   modalidadPreferencial: modalidad.Presencial,
+  docentes: [],
+  diasClase: [],
+  imagen: null,
 };
 
 export default function CourseFormDialog({
@@ -66,25 +93,40 @@ export default function CourseFormDialog({
   onSave,
   courseToEditId,
 }: CourseFormDialogProps) {
-  // --- ESTADOS ---
-  const [formData, setFormData] = useState(initialFormState);
-  const [selectedDocentes, setSelectedDocentes] = useState<DocenteParaFiltro[]>(
-    []
-  );
-  const [diasClase, setDiasClase] = useState<DiaClaseFormData[]>([]);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewImage, setPreviewImage] = useState<string | null>(null); // Para previsualizar imagen
+  const isEditMode = !!courseToEditId;
 
-  // Estado para poblar el Autocomplete de docentes
+  // (Estados para datos que no son del formulario)
   const [allDocentes, setAllDocentes] = useState<DocenteParaFiltro[]>([]);
   const [docentesLoading, setDocentesLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); // Para el fetch inicial
+  const [error, setError] = useState<string | null>(null); // Para errores de API
 
-  // Estados de carga y error
-  const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(false); // Cargar datos en modo edición
-  const [error, setError] = useState<string | null>(null);
+  // (Estados para el archivo y su previsualización)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-  const isEditMode = !!courseToEditId;
+  // --- INICIALIZACIÓN DE REACT HOOK FORM ---
+  const {
+    control, // Objeto para conectar componentes de MUI
+    register, // Para campos nativos
+    handleSubmit, // Wrapper para el submit
+    reset, // Para resetear el form (con datos de edición o por defecto)
+    setValue, // Para setear valores manualmente (ej: imagen)
+    formState: { errors, isSubmitting }, // Reemplaza 'isSaving' y maneja errores
+  } = useForm<CourseFormValues>({
+    resolver: zodResolver(courseFormSchema),
+    defaultValues,
+  });
+
+  // --- MANEJO DE DÍAS DE CLASE (useFieldArray) ---
+  const {
+    fields: diasClaseFields,
+    append: appendDiaClase,
+    remove: removeDiaClase,
+  } = useFieldArray({
+    control,
+    name: "diasClase",
+  });
 
   // --- EFFECT: Cargar todos los docentes (para el Autocomplete) ---
   useEffect(() => {
@@ -111,232 +153,204 @@ export default function CourseFormDialog({
         setIsLoading(true);
         setError(null);
         try {
-          // 1. Usamos el servicio actualizado
           const course: CursoParaEditar = await findCourseById(courseToEditId);
 
-          // 2. Poblamos los estados simples
-          setFormData({
+          // Preparamos los datos para que coincidan con el schema
+          const formValues: CourseFormValues = {
             nombre: course.nombre,
             descripcion: course.descripcion,
             contrasenaAcceso: course.contrasenaAcceso,
             modalidadPreferencial: course.modalidadPreferencial,
-          });
+            docentes: course.docentes,
+            diasClase: course.diasClase.map((dia) => ({ ...dia })), // RHF maneja IDs
+            imagen: null, // La imagen se maneja por separado
+          };
 
-          // 3. Poblamos los docentes (con la corrección de tipos)
-          setSelectedDocentes(course.docentes);
+          // ¡Reseteamos todo el formulario con los datos cargados!
+          reset(formValues);
 
-          // 4. Poblamos los días de clase (con ID real y temporal)
-          setDiasClase(
-            course.diasClase.map((dia) => ({
-              ...dia, // Esto incluye el ID real (ej: id: "db-uuid-123")
-              _tempId: crypto.randomUUID(), // Y añadimos el ID temporal para React
-            }))
-          );
-
-          // 5. Poblamos la imagen de previsualización
           if (course.imagenUrl) {
             setPreviewImage(course.imagenUrl);
           }
-          setSelectedFile(null); // Reseteamos el archivo seleccionado
+          setSelectedFile(null);
         } catch (err: any) {
           setError(err.message || "Error al cargar datos del curso.");
         } finally {
           setIsLoading(false);
         }
-      } else {
-        // Si abrimos en modo "Crear", reseteamos todos los estados
-        setFormData(initialFormState);
-        setSelectedDocentes([]);
-        setDiasClase([]);
+      } else if (open) {
+        // Si abrimos en modo "Crear", reseteamos a los valores por defecto
+        reset(defaultValues);
         setSelectedFile(null);
         setPreviewImage(null);
         setError(null);
       }
     };
     fetchCourseData();
-  }, [courseToEditId, open, isEditMode]);
+  }, [courseToEditId, open, isEditMode, reset]); // 'reset' es una dependencia
 
-  // --- Handlers del Formulario Simple ---
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSelectChange = (e: SelectChangeEvent<modalidad>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  // --- Handlers de Días de Clase ---
-  const addDiaClase = () => {
-    setDiasClase([
-      ...diasClase,
-      {
-        id: null, // Es nuevo, no tiene ID real
-        _tempId: crypto.randomUUID(), // ID temporal para la key de React
-        dia: dias_semana.Lunes,
-        horaInicio: "09:00",
-        horaFin: "11:00",
-        modalidad: modalidad.Presencial,
-      },
-    ]);
-  };
-
-  const removeDiaClase = (tempId: string) => {
-    setDiasClase(diasClase.filter((d) => d._tempId !== tempId));
-  };
-
-  const handleDiaClaseChange = (
-    tempId: string,
-    field: keyof Omit<DiaClaseFormData, "id" | "_tempId">,
-    value: string
-  ) => {
-    setDiasClase(
-      diasClase.map((dia) =>
-        dia._tempId === tempId ? { ...dia, [field]: value } : dia
-      )
-    );
-  };
-
-  // --- Handlers de Archivo ---
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setSelectedFile(file);
-      setPreviewImage(URL.createObjectURL(file)); // Crea una URL local para la previsualización
+      setSelectedFile(file); // Aún lo necesitamos para el FormData
+      setValue("imagen", file, { shouldValidate: true }); // Setea el valor en RHF
+      setPreviewImage(URL.createObjectURL(file));
     }
   };
 
-  // --- Handler de Submit ---
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsSaving(true);
-    setError(null);
+  // --- Handler de Submit (NUEVO) ---
+  // RHF llama a esta función SÓLO SI la validación (Zod) pasa
+  const onSubmit: SubmitHandler<CourseFormValues> = async (data) => {
+    setError(null); // Limpiar errores de API previos
 
-    // 1. Preparar datos
-    const docenteIds = selectedDocentes.map((d) => d.id);
-    const diasClaseLimpios = diasClase.map((d) => {
-      const { _tempId, ...dia } = d; // Solo quitamos el _tempId
-      return dia; // 'dia' ahora contiene { id: 'real-id' | null, ... }
-    });
+    // 1. Preparar datos (RHF ya nos da el objeto 'data' validado)
+    const docenteIds = data.docentes.map((d) => d.id);
+    // Los días de clase ya tienen el formato { id: string | null, ... }
+    const diasClaseLimpios = data.diasClase;
 
     try {
       if (isEditMode) {
-        // Modo Edición
         const updateData: UpdateCourseData = {
-          ...formData,
+          nombre: data.nombre,
+          descripcion: data.descripcion,
+          contrasenaAcceso: data.contrasenaAcceso,
+          modalidadPreferencial: data.modalidadPreferencial,
           docenteIds,
           diasClase: diasClaseLimpios,
         };
+        // 'selectedFile' sigue viniendo del state
         await updateCourse(courseToEditId, updateData, selectedFile);
       } else {
-        // Modo Creación
         const createData: CreateCourseData = {
-          ...formData,
+          nombre: data.nombre,
+          descripcion: data.descripcion,
+          contrasenaAcceso: data.contrasenaAcceso,
+          modalidadPreferencial: data.modalidadPreferencial,
           docenteIds,
           diasClase: diasClaseLimpios,
         };
         await createCourse(createData, selectedFile);
       }
-      onSave(); // Llama al handler de CoursesPage para refetchear y cerrar
+      onSave(); // Notifica a la página principal
     } catch (err: any) {
       setError(err.message || "Ocurrió un error al guardar.");
-    } finally {
-      setIsSaving(false);
     }
+    // 'isSubmitting' se pone en 'false' automáticamente
   };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>
+      <DialogTitle align="center">
         {isEditMode ? "Editar Curso" : "Añadir Nuevo Curso"}
       </DialogTitle>
-      <form onSubmit={handleSubmit}>
+      <Divider variant="middle" />
+
+      <form onSubmit={handleSubmit(onSubmit)}>
         <DialogContent>
           {isLoading ? (
             <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
               <CircularProgress />
             </Box>
           ) : (
-            // --- Usamos Grid v2 (con 'size') ---
             <Grid container spacing={3} sx={{ mt: 1 }}>
               {/* --- Columna Izquierda: Datos Principales --- */}
               <Grid size={{ xs: 12, md: 7 }}>
                 <Stack spacing={2}>
                   <TextField
-                    name="nombre"
+                    {...register("nombre")} // Conecta RHF
                     label="Nombre del Curso"
-                    value={formData.nombre}
-                    onChange={handleChange}
                     fullWidth
                     required
-                    disabled={isSaving}
+                    disabled={isSubmitting}
+                    error={!!errors.nombre} // Muestra error de Zod
+                    helperText={errors.nombre?.message} // Muestra mensaje de Zod
                   />
                   <TextField
-                    name="descripcion"
+                    {...register("descripcion")}
                     label="Descripción"
-                    value={formData.descripcion}
-                    onChange={handleChange}
                     fullWidth
                     multiline
                     rows={3}
                     required
-                    disabled={isSaving}
+                    disabled={isSubmitting}
+                    error={!!errors.descripcion}
+                    helperText={errors.descripcion?.message}
                   />
                   <TextField
-                    name="contrasenaAcceso"
+                    {...register("contrasenaAcceso")}
                     label="Contraseña de Acceso"
-                    value={formData.contrasenaAcceso}
-                    onChange={handleChange}
                     fullWidth
                     required
-                    disabled={isSaving}
+                    disabled={isSubmitting}
                     type="password"
+                    error={!!errors.contrasenaAcceso}
+                    helperText={errors.contrasenaAcceso?.message}
                   />
-                  <FormControl fullWidth>
-                    <InputLabel>Modalidad (Consultas)</InputLabel>
-                    <Select
-                      name="modalidadPreferencial"
-                      value={formData.modalidadPreferencial}
-                      label="Modalidad (Consultas)"
-                      onChange={handleSelectChange}
-                      disabled={isSaving}
-                    >
-                      <MenuItem value={modalidad.Presencial}>
-                        Presencial
-                      </MenuItem>
-                      <MenuItem value={modalidad.Virtual}>Virtual</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <Autocomplete
-                    multiple
-                    options={allDocentes}
-                    loading={docentesLoading}
-                    value={selectedDocentes}
-                    onChange={(e, newValue) => setSelectedDocentes(newValue)}
-                    disableCloseOnSelect
-                    getOptionLabel={(o) => `${o.nombre} ${o.apellido}`}
-                    isOptionEqualToValue={(o, v) => o.id === v.id}
-                    renderOption={(props, option, { selected }) => {
-                      const { key, ...liProps } = props as any;
-                      return (
-                        <li key={key} {...liProps}>
-                          <Checkbox
-                            style={{ marginRight: 8 }}
-                            checked={selected}
+                  {/* --- CAMPO 'docentes' (con RHF Controller) --- */}
+                  <Controller
+                    name="docentes"
+                    control={control}
+                    render={({ field: { onChange, value } }) => (
+                      <Autocomplete
+                        multiple
+                        options={allDocentes}
+                        loading={docentesLoading}
+                        value={value || []} // RHF maneja el valor
+                        onChange={(e, newValue) => onChange(newValue)} // RHF maneja el cambio
+                        disableCloseOnSelect
+                        getOptionLabel={(o) => `${o.nombre} ${o.apellido}`}
+                        isOptionEqualToValue={(o, v) => o.id === v.id}
+                        renderOption={(props, option, { selected }) => {
+                          const { key, ...liProps } = props as any;
+                          return (
+                            <li key={key} {...liProps}>
+                              <Checkbox
+                                style={{ marginRight: 8 }}
+                                checked={selected}
+                              />
+                              <ListItemText
+                                primary={`${option.nombre} ${option.apellido}`}
+                              />
+                            </li>
+                          );
+                        }}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Docentes a asignar"
+                            placeholder="Buscar docente..."
+                            error={!!errors.docentes}
+                            helperText={errors.docentes?.message}
                           />
-                          <ListItemText
-                            primary={`${option.nombre} ${option.apellido}`}
-                          />
-                        </li>
-                      );
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Docentes Asignados"
-                        placeholder="Buscar docente..."
+                        )}
                       />
+                    )}
+                  />
+                  {/* --- CAMPO 'modalidadPreferencial' (con RHF Controller) --- */}
+                  <Controller
+                    name="modalidadPreferencial"
+                    control={control}
+                    render={({ field }) => (
+                      <FormControl
+                        fullWidth
+                        error={!!errors.modalidadPreferencial}
+                      >
+                        <InputLabel>Modalidad preferencial</InputLabel>
+                        <Select
+                          {...field} // RHF maneja 'value', 'onChange', 'name'
+                          label="Modalidad (Consultas)"
+                          disabled={isSubmitting}
+                        >
+                          <MenuItem value={modalidad.Presencial}>
+                            Presencial
+                          </MenuItem>
+                          <MenuItem value={modalidad.Virtual}>Virtual</MenuItem>
+                        </Select>
+                        <FormHelperText error={!!errors.modalidadPreferencial}>
+                          {errors.modalidadPreferencial?.message ||
+                            "Para clases de consulta automáticas"}
+                        </FormHelperText>
+                      </FormControl>
                     )}
                   />
                 </Stack>
@@ -344,10 +358,7 @@ export default function CourseFormDialog({
 
               {/* --- Columna Derecha: Imagen --- */}
               <Grid size={{ xs: 12, md: 5 }}>
-                <FormControl fullWidth>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Imagen del Curso
-                  </Typography>
+                <FormControl fullWidth error={!!errors.imagen}>
                   <Box
                     sx={{
                       border: "1px dashed grey",
@@ -358,9 +369,9 @@ export default function CourseFormDialog({
                       display: "flex",
                       justifyContent: "center",
                       alignItems: "center",
-                      position: "relative",
                     }}
                   >
+                    {/* El preview sigue usando el state local */}
                     {previewImage ? (
                       <img
                         src={previewImage}
@@ -373,7 +384,7 @@ export default function CourseFormDialog({
                       />
                     ) : (
                       <Typography variant="body2" color="text.secondary">
-                        Sube una imagen
+                        Imagen para el Curso
                       </Typography>
                     )}
                   </Box>
@@ -382,123 +393,128 @@ export default function CourseFormDialog({
                     variant="outlined"
                     startIcon={<CloudUploadIcon />}
                     sx={{ mt: 1 }}
-                    disabled={isSaving}
+                    disabled={isSubmitting}
                   >
                     Seleccionar Archivo
-                    <Input
+                    <VisuallyHiddenInput
                       type="file"
-                      hidden
+                      // Registramos la imagen, pero el onChange es manual
+                      {...register("imagen")}
                       onChange={handleFileChange}
                       inputProps={{
                         accept: "image/*",
                       }}
                     />
                   </Button>
+                  <FormHelperText error={!!errors.imagen}>
+                    {errors.imagen?.message as string}
+                  </FormHelperText>
                 </FormControl>
               </Grid>
 
-              {/* --- Fila Inferior: Días de Clase --- */}
+              {/* --- Fila Inferior: Días de Clase (con useFieldArray) --- */}
               <Grid size={{ xs: 12 }}>
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="h6" gutterBottom>
                     Días de Clase
                   </Typography>
-                  <Stack spacing={2}>
-                    {diasClase.map((dia) => (
+                  <Stack sx={{ mt: 2 }} spacing={2}>
+                    {/* Iteramos sobre los 'fields' de useFieldArray */}
+                    {diasClaseFields.map((field, index) => (
                       <Stack
-                        key={dia._tempId} // Usamos el ID temporal para la key de React
+                        key={field.id} // RHF provee el 'key'
                         direction={{ xs: "column", sm: "row" }}
                         spacing={1}
                         alignItems="center"
                       >
+                        {/* Cada campo se registra con su índice */}
                         <FormControl
                           size="small"
                           sx={{ minWidth: 130, flex: 1.5 }}
+                          error={!!errors.diasClase?.[index]?.dia}
                         >
                           <InputLabel>Día</InputLabel>
-                          <Select
-                            value={dia.dia}
-                            label="Día"
-                            onChange={(e) =>
-                              handleDiaClaseChange(
-                                dia._tempId!,
-                                "dia",
-                                e.target.value
-                              )
-                            }
-                          >
-                            {Object.values(dias_semana).map((d) => (
-                              <MenuItem key={d} value={d}>
-                                {d}
-                              </MenuItem>
-                            ))}
-                          </Select>
+                          <Controller
+                            name={`diasClase.${index}.dia`}
+                            control={control}
+                            render={({ field }) => (
+                              <Select {...field} label="Día">
+                                {Object.values(dias_semana).map((d) => (
+                                  <MenuItem key={d} value={d}>
+                                    {d}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            )}
+                          />
                         </FormControl>
                         <TextField
+                          {...register(`diasClase.${index}.horaInicio`)}
                           label="Inicio"
                           type="time"
                           size="small"
-                          value={dia.horaInicio}
-                          InputLabelProps={{ shrink: true }} // Para que no se superponga
-                          onChange={(e) =>
-                            handleDiaClaseChange(
-                              dia._tempId!,
-                              "horaInicio",
-                              e.target.value
-                            )
-                          }
+                          InputLabelProps={{ shrink: true }}
                           sx={{ flex: 1 }}
+                          error={!!errors.diasClase?.[index]?.horaInicio}
                         />
                         <TextField
+                          {...register(`diasClase.${index}.horaFin`)}
                           label="Fin"
                           type="time"
                           size="small"
-                          value={dia.horaFin}
-                          InputLabelProps={{ shrink: true }} // Para que no se superponga
-                          onChange={(e) =>
-                            handleDiaClaseChange(
-                              dia._tempId!,
-                              "horaFin",
-                              e.target.value
-                            )
-                          }
+                          InputLabelProps={{ shrink: true }}
                           sx={{ flex: 1 }}
+                          error={!!errors.diasClase?.[index]?.horaFin}
                         />
                         <FormControl
                           size="small"
                           sx={{ minWidth: 130, flex: 1 }}
+                          error={!!errors.diasClase?.[index]?.modalidad}
                         >
                           <InputLabel>Modalidad</InputLabel>
-                          <Select
-                            value={dia.modalidad}
-                            label="Modalidad"
-                            onChange={(e) =>
-                              handleDiaClaseChange(
-                                dia._tempId!,
-                                "modalidad",
-                                e.target.value
-                              )
-                            }
-                          >
-                            <MenuItem value={modalidad.Presencial}>
-                              Presencial
-                            </MenuItem>
-                            <MenuItem value={modalidad.Virtual}>
-                              Virtual
-                            </MenuItem>
-                          </Select>
+                          <Controller
+                            name={`diasClase.${index}.modalidad`}
+                            control={control}
+                            render={({ field }) => (
+                              <Select {...field} label="Modalidad">
+                                <MenuItem value={modalidad.Presencial}>
+                                  Presencial
+                                </MenuItem>
+                                <MenuItem value={modalidad.Virtual}>
+                                  Virtual
+                                </MenuItem>
+                              </Select>
+                            )}
+                          />
                         </FormControl>
                         <IconButton
-                          onClick={() => removeDiaClase(dia._tempId!)}
+                          onClick={() => removeDiaClase(index)} // RHF maneja el borrado
                           color="error"
                         >
                           <DeleteIcon />
                         </IconButton>
                       </Stack>
                     ))}
-                    <Button onClick={addDiaClase} disabled={isSaving}>
+                    <Button
+                      onClick={() =>
+                        // RHF maneja añadir el objeto
+                        appendDiaClase({
+                          id: null,
+                          dia: dias_semana.Lunes,
+                          horaInicio: "09:00",
+                          horaFin: "11:00",
+                          modalidad: modalidad.Presencial,
+                        })
+                      }
+                      disabled={isSubmitting}
+                    >
                       Añadir Día de Clase
                     </Button>
+                    {errors.diasClase && (
+                      <FormHelperText error sx={{ ml: 2 }}>
+                        {errors.diasClase.message}
+                      </FormHelperText>
+                    )}
                   </Stack>
                 </Box>
               </Grid>
@@ -511,11 +527,13 @@ export default function CourseFormDialog({
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={onClose} disabled={isSaving}>
+          <Button onClick={onClose} disabled={isSubmitting}>
             Cancelar
           </Button>
-          <Button type="submit" variant="contained" disabled={isSaving}>
-            {isSaving ? <CircularProgress size={24} /> : "Guardar"}
+          <Button type="submit" variant="contained" disabled={isSubmitting}>
+            {isEditMode ? "Actualizar" : "Crear curso"}
+            {/* 'isSubmitting' reemplaza a 'isSaving' */}
+            {isSubmitting ? <CircularProgress size={24} sx={{ ml: 1 }} /> : ""}
           </Button>
         </DialogActions>
       </form>
