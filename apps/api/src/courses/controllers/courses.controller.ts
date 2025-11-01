@@ -9,6 +9,9 @@ import {
   UseGuards,
   Req,
   Query,
+  UseInterceptors,
+  UploadedFile,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 
 import { CreateCourseDto } from '../dto/create-course.dto';
@@ -17,8 +20,9 @@ import { CoursesService } from '../services/courses.service';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { roles } from '@prisma/client';
 import { Roles } from 'src/auth/decorators/roles.decorator';
-import type { AuthenticationRequest } from 'src/interfaces/authenticated-user.interface';
+import type { AuthenticatedRequest } from 'src/interfaces/authenticated-user.interface';
 import { FindAllCoursesDto } from '../dto/find-all-courses.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('courses')
 export class CoursesController {
@@ -27,8 +31,14 @@ export class CoursesController {
   @UseGuards(RolesGuard)
   @Roles(roles.Administrador)
   @Post('create')
-  create(@Body() createCourseDto: CreateCourseDto) {
-    return this.coursesService.create(createCourseDto);
+  @UseInterceptors(FileInterceptor('imagen'))
+  create(
+    @Body() createCourseDto: CreateCourseDto,
+    @UploadedFile() imagen: Express.Multer.File,
+  ) {
+    console.log('--- CREATE ---');
+    console.log('IMAGEN RECIBIDA:', imagen);
+    return this.coursesService.create(createCourseDto, imagen);
   }
 
   @Get('all')
@@ -42,24 +52,25 @@ export class CoursesController {
     return this.coursesService.findOne(id);
   }
 
-  @Patch('edit/:id')
   @UseGuards(RolesGuard)
   @Roles(roles.Administrador, roles.Docente)
+  @Patch('edit/:id')
+  @UseInterceptors(FileInterceptor('imagen'))
   update(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() updateCourseDto: UpdateCourseDto,
-    @Req() req: AuthenticationRequest,
+    @UploadedFile() imagen: Express.Multer.File,
+    @Req() req: AuthenticatedRequest,
   ) {
-    // Obtenemos el rol del token JWT (inyectado por el Guard)
-    const userRole = req.user.rol;
-
-    return this.coursesService.update(id, updateCourseDto, userRole);
+    console.log('--- UPDATE ---');
+    console.log('IMAGEN RECIBIDA:', imagen);
+    return this.coursesService.update(id, updateCourseDto, imagen, req.user);
   }
 
   @UseGuards(RolesGuard)
   @Roles(roles.Administrador)
   @Delete('delete/:id')
   delete(@Param('id') id: string) {
-    return this.coursesService.delete(id);
+    return this.coursesService.remove(id);
   }
 }
