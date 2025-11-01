@@ -29,7 +29,7 @@ import {
   updateUserSchema,
   type CreateUserFormValues,
   type UpdateUserFormValues,
-} from "../../../schemas/user.schema";
+} from "../../../validations/user.schema";
 import { type UserData } from "../../../types";
 
 // Servicios
