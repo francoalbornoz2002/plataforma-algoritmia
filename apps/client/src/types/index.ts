@@ -28,6 +28,12 @@ export enum dias_semana {
 
 /* ---------------------- INTERFACES ---------------------- */
 
+export interface MenuItemType {
+  text: string;
+  icon: React.ReactElement; // Para aceptar JSX como <DashboardIcon />
+  path: string;
+}
+
 // ----- USUARIOS ----- //
 
 // Interfaz principal para Usuario

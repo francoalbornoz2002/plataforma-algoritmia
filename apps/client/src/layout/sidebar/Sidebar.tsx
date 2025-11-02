@@ -28,7 +28,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 
 import { Link, useLocation } from "react-router";
 import SideBarList from "./SidebarList";
-import { AccountCircle } from "@mui/icons-material";
+import { AccountCircle, School } from "@mui/icons-material";
 import { useAuth } from "../../auth/AuthProvider";
 
 const drawerWidth = 240;
@@ -131,6 +131,7 @@ export interface SidebarLayoutProps {
   menuItems: MenuItemType[]; // Array de elementos del menú
   userInitial?: string; // Inicial del usuario (opcional)
   children: React.ReactNode; // Para renderizar el contenido de la página
+  onOpenCourseSwitcher?: () => void; // Función para el botón del avatar
 }
 
 // Componente principal Sidebar
@@ -138,6 +139,7 @@ export default function Sidebar({
   menuItems,
   userInitial = "U",
   children,
+  onOpenCourseSwitcher,
 }: SidebarLayoutProps) {
   const [open, setOpen] = useState(false);
   const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
@@ -237,6 +239,19 @@ export default function Sidebar({
                 </ListItemIcon>
                 <ListItemText>Mi cuenta</ListItemText>
               </MenuItem>
+              {onOpenCourseSwitcher && (
+                <MenuItem
+                  onClick={() => {
+                    onOpenCourseSwitcher(); // Llama a la función del layout
+                    handleCloseUserMenu(); // Cierra el menú
+                  }}
+                >
+                  <ListItemIcon>
+                    <School fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText>Cambiar de curso</ListItemText>
+                </MenuItem>
+              )}
               <MenuItem onClick={handleLogout}>
                 <ListItemIcon>
                   <LogoutIcon fontSize="small" />

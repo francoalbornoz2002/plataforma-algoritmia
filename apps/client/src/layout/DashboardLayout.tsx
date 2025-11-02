@@ -17,6 +17,9 @@ import {
 } from "@mui/icons-material";
 import type { UserData } from "../types";
 
+import CourseContextLayout from "./CourseContextLayout";
+import { Box, CircularProgress } from "@mui/material"; // Para el 'loading'
+
 export default function DashboardLayout() {
   const { user } = useAuth() as { user: UserData | null };
 
@@ -96,12 +99,39 @@ export default function DashboardLayout() {
     sidebarItems = itemsAlumno;
   }
 
-  return (
-    <>
-      <Sidebar menuItems={sidebarItems} userInitial={"U"}>
-        {/* Se renderizará contenido de la página específica */}
+  if (!user) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  // 1. Si es Admin, renderiza el layout simple
+  if (user.rol === "Administrador") {
+    return (
+      <Sidebar
+        menuItems={sidebarItems}
+        userInitial={user.nombre[0]}
+        // No pasamos 'onOpenCourseSwitcher', así que el botón no aparecerá
+      >
         <Outlet />
       </Sidebar>
-    </>
+    );
+  }
+
+  // 2. Si es Docente o Alumno, renderiza el layout "Guardián"
+  // (Este componente ya incluye el <Sidebar> y el <Outlet> dentro)
+  return (
+    <CourseContextLayout menuItems={sidebarItems} user={user}>
+      <Outlet />
+    </CourseContextLayout>
   );
 }
