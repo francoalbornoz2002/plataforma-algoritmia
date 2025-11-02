@@ -13,10 +13,11 @@ import { estado_simple, Prisma, roles } from '@prisma/client'; // Importamos 'ro
 import { FindAllCoursesDto } from '../dto/find-all-courses.dto';
 import { dateToTime, timeToDate } from 'src/helpers';
 import { DiaClaseDto } from '../dto/dia-clase.dto';
-import { AuthenticatedUser } from 'src/interfaces/authenticated-user.interface';
+import { UserPayload } from 'src/interfaces/authenticated-user.interface';
 
 import { unlink } from 'fs';
 import { basename, join } from 'path';
+import { JoinCourseDto } from '../dto/join-course-dto';
 
 @Injectable()
 export class CoursesService {
@@ -213,7 +214,7 @@ export class CoursesService {
     id: string,
     dto: UpdateCourseDto,
     imagen: Express.Multer.File,
-    user: AuthenticatedUser, // El usuario autenticado (desde el Controller)
+    user: UserPayload, // El usuario autenticado (desde el Controller)
   ) {
     try {
       // 1. Verificar que el curso existe y obtener imagen antigua
@@ -240,7 +241,7 @@ export class CoursesService {
         }
       } else if (user.rol === roles.Docente) {
         const isDocenteOfCourse = await this.prisma.docenteCurso.findFirst({
-          where: { idCurso: id, idDocente: user.id, estado: 'Activo' },
+          where: { idCurso: id, idDocente: user.userId, estado: 'Activo' },
         });
         if (!isDocenteOfCourse) {
           throw new ForbiddenException(
@@ -418,10 +419,144 @@ export class CoursesService {
     }
   }
 
+  async join(user: UserPayload, idCurso: string, joinCourseDto: JoinCourseDto) {
+    const idAlumno = user.userId;
+    console.log('USER DEL JOIN:', user);
+    const { contrasenaAcceso } = joinCourseDto;
+
+    try {
+      // Usamos una transacción para asegurar la integridad de los datos
+      return await this.prisma.$transaction(async (tx) => {
+        // Validamos que exista el curso
+        const curso = await tx.curso.findUnique({
+          where: {
+            id: idCurso,
+            deletedAt: null, // Que el curso esté activo
+          },
+        });
+
+        if (!curso) {
+          throw new NotFoundException(
+            'Curso no encontrado o no está disponible.',
+          );
+        }
+
+        // Verificamos la contraseña de acceso
+        if (curso.contrasenaAcceso !== contrasenaAcceso) {
+          throw new BadRequestException(
+            'La contraseña del curso es incorrecta.',
+          );
+        }
+
+        // Validamos que el alumno no tenga otra inscripción activa
+        const otraInscripcionActiva = await tx.alumnoCurso.findFirst({
+          where: {
+            idAlumno: idAlumno,
+            estado: 'Activo',
+            // Buscamos una inscripción activa que NO sea en este curso
+            NOT: {
+              idCurso: idCurso,
+            },
+          },
+        });
+
+        if (otraInscripcionActiva) {
+          throw new BadRequestException(
+            'Ya tienes una inscripción activa en otro curso. Solo puedes estar en un curso a la vez.',
+          );
+        }
+
+        // --- Crear o Reactivar la inscripción ---
+
+        // Buscamos si ya existe un registro (activo O inactivo) para ESTE curso
+        const inscripcionExistente = await tx.alumnoCurso.findUnique({
+          where: {
+            // Usamos la clave única compuesta
+            idAlumno_idCurso: {
+              idAlumno: idAlumno,
+              idCurso: idCurso,
+            },
+          },
+        });
+
+        if (inscripcionExistente) {
+          // El alumno ya estuvo en este curso
+          if (inscripcionExistente.estado === 'Activo') {
+            throw new BadRequestException('Ya estás inscripto en este curso.');
+          }
+
+          // --- Reactivación ---
+          // Si estaba 'Inactivo', lo reactivamos a él y a su progreso
+
+          // 1. Reactivar Progreso
+          await tx.progresoAlumno.update({
+            where: { id: inscripcionExistente.idProgreso },
+            data: { estado: 'Activo' },
+          });
+
+          // 2. Reactivar Inscripción (AlumnoCurso)
+          const inscripcionReactivada = await tx.alumnoCurso.update({
+            where: {
+              idAlumno_idCurso: {
+                idAlumno: idAlumno,
+                idCurso: idCurso,
+              },
+            },
+            data: { estado: 'Activo' },
+          });
+
+          return inscripcionReactivada;
+        } else {
+          // --- Inscripción Nueva ---
+
+          // Inicializamos el progreso del alumno (tabla ProgresoAlumno)
+          const nuevoProgreso = await tx.progresoAlumno.create({
+            data: {
+              // Los campos utilizan @default de prisma.
+            },
+          });
+
+          // Creamos la Inscripción (tabla AlumnoCurso)
+          const nuevaInscripcion = await tx.alumnoCurso.create({
+            data: {
+              idAlumno: idAlumno,
+              idCurso: idCurso,
+              idProgreso: nuevoProgreso.id,
+              estado: 'Activo',
+            },
+          });
+
+          return nuevaInscripcion;
+        }
+      });
+    } catch (error) {
+      // Manejar los errores de validación que lanzamos (400, 403, 404)
+      if (
+        error instanceof ForbiddenException ||
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+
+      // Manejar errores de base de datos (ej: P2002 si hubo una race condition)
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          // 'Unique constraint failed' - Esto no debería pasar por nuestra lógica, pero es un buen seguro
+          throw new BadRequestException('Ya estás inscripto en este curso.');
+        }
+      }
+
+      // Manejar cualquier otro error
+      console.error('Error al unirse al curso:', error);
+      throw new InternalServerErrorException(
+        'No se pudo completar la inscripción.',
+      );
+    }
+  }
+
   // --- MÉTODO HELPER PARA SINCRONIZAR DÍAS ---
   // Esta función es privada y se ejecuta dentro de un transaction.
-  // No necesita su propio try/catch, ya que si falla,
-  // el 'catch' del método 'update' se encargará.
   private async sincronizarDiasClase(
     tx: Prisma.TransactionClient, // Importante: usar el cliente de transacción
     idCurso: string,
