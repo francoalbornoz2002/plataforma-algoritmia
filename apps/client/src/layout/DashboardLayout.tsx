@@ -1,6 +1,4 @@
 import { type MenuItemType } from "./sidebar/Sidebar";
-
-// Importa TODOS los iconos que necesitarás para CUALQUIER rol
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PeopleIcon from "@mui/icons-material/People";
 import SchoolIcon from "@mui/icons-material/School";
@@ -17,10 +15,10 @@ import {
   QuestionAnswer,
   SwitchAccessShortcutAdd,
 } from "@mui/icons-material";
-import type { User } from "../types";
+import type { UserData } from "../types";
 
 export default function DashboardLayout() {
-  const { user } = useAuth() as { user: User | null };
+  const { user } = useAuth() as { user: UserData | null };
 
   const itemsAdmin: MenuItemType[] = [
     { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },

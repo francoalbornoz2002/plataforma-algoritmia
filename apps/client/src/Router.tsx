@@ -1,7 +1,7 @@
 import React from "react";
 import LoginPage from "./pages/login/LoginPage";
 import { Navigate, Route, Routes } from "react-router";
-import DashboardLayout from "./common/DashboardLayout";
+import DashboardLayout from "./layout/DashboardLayout";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import UsersPage from "./pages/dashboard/users/UsersPage";
 import StatsPage from "./pages/dashboard/stats/StatsPage";
