@@ -25,12 +25,12 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import {
   createUserSchema,
   generos,
-  roles,
+  rolesValues,
   updateUserSchema,
   type CreateUserFormValues,
   type UpdateUserFormValues,
 } from "../../../validations/user.schema";
-import { type UserData } from "../../../types";
+import { roles, type UserData } from "../../../types";
 
 // Servicios
 import { createUser, updateUser } from "../../../services/user.service";
@@ -107,7 +107,7 @@ export default function UserFormDialog({
           fechaNacimiento: new Date(),
           genero: "Masculino",
           email: "",
-          rol: "Alumno",
+          rol: roles.Alumno,
           password: "",
         });
       }
@@ -331,7 +331,7 @@ export default function UserFormDialog({
                     {...field}
                   >
                     {/* Mapea los valores del TIPO Rol */}
-                    {roles.map((rol) => (
+                    {rolesValues.map((rol) => (
                       <MenuItem key={rol} value={rol}>
                         {/* Puedes poner nombres más amigables aquí si quieres */}
                         {rol}

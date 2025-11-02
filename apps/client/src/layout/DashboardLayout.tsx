@@ -119,7 +119,7 @@ export default function DashboardLayout() {
     return (
       <Sidebar
         menuItems={sidebarItems}
-        userInitial={user.nombre[0]}
+        userInitial={(user?.nombre || "U")[0]}
         // No pasamos 'onOpenCourseSwitcher', así que el botón no aparecerá
       >
         <Outlet />

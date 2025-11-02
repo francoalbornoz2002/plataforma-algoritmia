@@ -1,4 +1,3 @@
-import type { Rol } from "./roles";
 export type Genero = "Masculino" | "Femenino" | "Otro";
 
 export enum roles {
@@ -46,7 +45,7 @@ export interface UserData {
   fechaNacimiento: Date;
   genero: Genero;
   email: string;
-  rol: Rol;
+  rol: roles;
   createdAt: string | Date;
   updatedAt: string | Date;
   deletedAt?: string | Date | null;

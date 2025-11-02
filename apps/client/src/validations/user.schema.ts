@@ -1,8 +1,13 @@
 import { z } from "zod";
 import type { Rol } from "../types/roles";
+import { roles } from "../types/index";
 import type { Genero } from "../types";
 
-export const roles: [Rol, ...Rol[]] = ["Administrador", "Docente", "Alumno"];
+export const rolesValues: [Rol, ...Rol[]] = [
+  "Administrador",
+  "Docente",
+  "Alumno",
+];
 export const generos: [Genero, ...Genero[]] = ["Masculino", "Femenino", "Otro"];
 const fechaLimite = new Date();
 

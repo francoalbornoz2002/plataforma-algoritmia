@@ -1,10 +1,9 @@
 import { useState, useEffect, type ReactNode } from "react";
 import { Box, CircularProgress } from "@mui/material";
 import { CourseProvider, useCourseContext } from "../context/CourseContext";
-import type { UserData, MenuItemType } from "../types"; // Asumo que MenuItemType está en types
+import type { UserData, MenuItemType } from "../types";
 import Sidebar from "./sidebar/Sidebar";
-// Importarás tu modal aquí cuando lo creemos
-// import CourseSelectionModal from "./CourseSelectionModal";
+import CourseSelectionModal from "./CourseSelectionModal";
 
 // --- Este es el componente interno que tiene la lógica ---
 function ContextLayout({
@@ -44,17 +43,11 @@ function ContextLayout({
 
   return (
     <>
-      {/* AQUÍ IRÁ TU MODAL
-        <CourseSelectionModal
-          open={isModalOpen}
-          onClose={() => setIsModalOpen(false)} // Permitir cerrarlo por ahora
-          role={user.rol}
-        /> 
-      */}
-
-      {/* Aplicamos el desenfoque a todo el layout (Sidebar + contenido)
-        si el modal está abierto.
-      */}
+      <CourseSelectionModal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)} // Permitir cerrarlo por ahora
+        role={user.rol}
+      />
       <Box
         sx={{
           filter: isModalOpen ? "blur(5px)" : "none",
@@ -64,7 +57,7 @@ function ContextLayout({
       >
         <Sidebar
           menuItems={menuItems}
-          userInitial={user.nombre[0]} // Pasamos la inicial
+          userInitial={(user?.nombre || "U")[0]} // Pasamos la inicial
           onOpenCourseSwitcher={openCourseSwitcher} // Pasamos la función
         >
           {children} {/* El <Outlet /> de DashboardLayout irá aquí */}
