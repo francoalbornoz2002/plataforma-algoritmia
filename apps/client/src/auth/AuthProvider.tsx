@@ -12,7 +12,7 @@ import { useNavigate } from "react-router";
 import { jwtDecode } from "jwt-decode";
 import type { Rol } from "../types/roles";
 
-// Defino la interfaz User
+// Defino la interfaz UserToken
 export interface UserToken {
   userId: string;
   rol: Rol;
@@ -29,7 +29,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Tipado del payload decodificado (ajusta si tu token tiene otros campos)
+// Tipado del payload decodificado
 interface JwtPayload {
   id: string;
   rol: Rol;
@@ -37,9 +37,14 @@ interface JwtPayload {
 }
 
 const getUserFromToken = (token: string | null): UserToken | null => {
+  // Si no hay token, devolvemos null
   if (!token) return null;
+
   try {
+    // Decodificamos el token
     const decoded: JwtPayload = jwtDecode(token);
+
+    // Verificamos que el token no esté expirado
     if (decoded.exp * 1000 < Date.now()) {
       localStorage.removeItem("accessToken");
       return null;
@@ -52,6 +57,7 @@ const getUserFromToken = (token: string | null): UserToken | null => {
       return null;
     }
 
+    // Devolvemos el UserToken
     return { userId: decoded.id, rol: decoded.rol || "" };
   } catch (error) {
     console.error("Error decodificando token:", error);
@@ -88,12 +94,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = useCallback(async (email: string, password: string) => {
     try {
-      // Usa apiClient para la petición
+      // Usamos la instancia de axios apiClient para la petición de login
       const response = await apiClient.post<{ accessToken: string }>(
         "/auth/login",
         { email, password }
       );
+
+      // Guardamos el resultado de la petición
       const new_token = response.data.accessToken;
+
+      // Llamamos a la función para obtener el usuario del token
       const newUser = getUserFromToken(new_token);
 
       if (newUser) {
@@ -117,12 +127,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem("accessToken"); // Limpia el token
     setToken(null); // Limpia el estado del token
     setUser(null); // Limpia el estado del usuario
+    localStorage.removeItem("selectedCourseId"); // Limpia el curso seleccionado
     // El interceptor de Axios dejará de añadir el token
     navigate("/login"); // Redirige al login
   }, [navigate]);
 
   if (isLoading) {
-    return <div>Cargando aplicación...</div>; // O Spinner
+    return <div>Cargando aplicación...</div>;
   }
 
   return (

@@ -30,6 +30,8 @@ import { Link, useLocation } from "react-router";
 import SideBarList from "./SidebarList";
 import { AccountCircle, School } from "@mui/icons-material";
 import { useAuth } from "../../auth/AuthProvider";
+import { useCourseContext } from "../../context/CourseContext";
+import type { MenuItemType } from "../../types";
 
 const drawerWidth = 240;
 const closedDrawerWidth = (theme: Theme) => `calc(${theme.spacing(7)} + 1px)`;
@@ -121,11 +123,6 @@ const Drawer = styled(MuiDrawer, {
 }));
 
 // --- INTERFACES PARA PROPS ---
-export interface MenuItemType {
-  text: string;
-  icon: React.ReactElement; // El icono será un elemento JSX
-  path: string;
-}
 
 export interface SidebarLayoutProps {
   menuItems: MenuItemType[]; // Array de elementos del menú
@@ -147,7 +144,22 @@ export default function Sidebar({
   const location = useLocation();
   const { logout } = useAuth();
 
-  // --- Lógica para obtener el título actual ---
+  // --- OBTENER EL CONTEXTO DEL CURSO --- //
+  // (La envolvemos en un try/catch porque el Admin NO tiene este contexto)
+  let selectedCourseName: string | null = null;
+  try {
+    // Si somos Alumno o Docente
+    const { selectedCourse, isLoading } = useCourseContext();
+    if (selectedCourse && !isLoading) {
+      // Obtenemos el nombre del curso para mostrarlo en el título de la página
+      selectedCourseName = selectedCourse.nombre;
+    }
+  } catch (e) {
+    // Si falla (somos Admin), selectedCourseName se queda 'null',
+    selectedCourseName = null;
+  }
+
+  // --- OBTENER EL TÍTULO ACTUAL DE LA PÁGINA --- //
   const currentPageTitle = useMemo(() => {
     // Busca el item del menú cuya ruta coincida exactamente o sea el prefijo más largo
     let bestMatch = menuItems.find((item) => item.path === location.pathname);
@@ -163,9 +175,15 @@ export default function Sidebar({
         (a, b) => b.path.length - a.path.length
       )[0];
     }
-    return bestMatch ? bestMatch.text : "Plataforma Algoritmia"; // Fallback al título original
-  }, [location.pathname, menuItems]);
-  // --- Fin Lógica Título ---
+    const pageTitle = bestMatch ? bestMatch.text : "Plataforma Algoritmia";
+
+    // Si tenemos un nombre de curso (somos Alumno o Docente), lo añadimos
+    if (selectedCourseName) {
+      return `${selectedCourseName} - ${pageTitle}`;
+    }
+
+    return pageTitle; // Fallback para Admin
+  }, [location.pathname, menuItems, selectedCourseName]);
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -207,7 +225,7 @@ export default function Sidebar({
           >
             <MenuIcon />
           </IconButton>
-          {/* Avatar del usuario y menú desplegable */}
+          {/* Título de la página */}
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             {currentPageTitle}
           </Typography>
@@ -242,8 +260,8 @@ export default function Sidebar({
               {onOpenCourseSwitcher && (
                 <MenuItem
                   onClick={() => {
-                    onOpenCourseSwitcher(); // Llama a la función del layout
-                    handleCloseUserMenu(); // Cierra el menú
+                    onOpenCourseSwitcher();
+                    handleCloseUserMenu();
                   }}
                 >
                   <ListItemIcon>
@@ -279,11 +297,11 @@ export default function Sidebar({
       </Drawer>
       <Container
         component="main"
-        maxWidth="xl" // O "xl", "md" según prefieras el ancho máximo
+        maxWidth="xl"
         sx={{
           flexGrow: 1,
-          pt: 3, // 'Container' ya maneja el padding izquierdo/derecho
-          pb: 3, // Mantenemos el padding vertical
+          pt: 3,
+          pb: 3,
         }}
       >
         <DrawerHeader />
