@@ -8,6 +8,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { AlumnosModule } from './alumnos/alumnos.module';
 import { DocentesModule } from './docentes/docentes.module';
+import { ProgressModule } from './progress/progress.module';
 
 const UPLOADS_PATH = join(process.cwd(), 'uploads');
 
@@ -30,6 +31,7 @@ const UPLOADS_PATH = join(process.cwd(), 'uploads');
     CoursesModule,
     AlumnosModule,
     DocentesModule,
+    ProgressModule,
   ],
   controllers: [],
   providers: [],
