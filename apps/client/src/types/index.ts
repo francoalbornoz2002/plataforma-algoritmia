@@ -1,3 +1,10 @@
+import type {
+  ActivityRange,
+  AttemptsRange,
+  ProgressRange,
+  StarsRange,
+} from "./progress-filters";
+
 export type Genero = "Masculino" | "Femenino" | "Otro";
 
 export enum roles {
@@ -168,3 +175,57 @@ export interface PaginatedResponse<T> {
   page: number;
   totalPages: number;
 }
+
+// --------------- PROGRESO --------------- //
+
+// Para el Resumen/KPIs (coincide con el modelo ProgresoCurso de Prisma)
+export interface ProgresoCurso {
+  id: string;
+  misionesCompletadas: number;
+  totalEstrellas: number;
+  totalExp: number;
+  totalIntentos: number;
+  pctMisionesCompletadas: number; // Prisma usa Decimal, TS lo trata como number
+  promEstrellas: number;
+  promIntentos: number;
+  estado: estado_simple;
+}
+
+// Para la DataGrid (ProgresoAlumno + nombre)
+export interface ProgresoAlumnoDetallado {
+  id: string;
+  cantMisionesCompletadas: number;
+  totalEstrellas: number;
+  totalExp: number;
+  totalIntentos: number;
+  pctMisionesCompletadas: number;
+  promEstrellas: number;
+  promIntentos: number;
+  ultimaActividad: string | null; // Llega como string ISO
+  estado: estado_simple;
+  // Campos añadidos por el servicio:
+  nombre: string;
+  apellido: string;
+}
+
+export type ProgresoAlumno = Omit<
+  ProgresoAlumnoDetallado,
+  "nombre" | "apellido"
+>;
+
+// Para los parámetros del servicio de la DataGrid
+export interface FindStudentProgressParams {
+  page: number;
+  limit: number;
+  sort: string;
+  order: "asc" | "desc";
+  search?: string;
+  progressRange?: ProgressRange | "";
+  starsRange?: StarsRange | "";
+  attemptsRange?: AttemptsRange | "";
+  activityRange?: ActivityRange | "";
+}
+
+// Para la respuesta paginada de la DataGrid
+export interface PaginatedStudentProgressResponse
+  extends PaginatedResponse<ProgresoAlumnoDetallado> {}
