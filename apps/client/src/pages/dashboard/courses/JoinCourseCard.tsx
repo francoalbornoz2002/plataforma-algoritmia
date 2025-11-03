@@ -149,7 +149,7 @@ export default function JoinCourseCard({
           onClick={() => onJoin(course)}
           disabled={isEnrolled} // Deshabilita el botón
         >
-          {isEnrolled ? "Inscripto" : "Inscribirse"}
+          {isEnrolled ? "Ya estás inscripto" : "Inscribirse"}
         </Button>
       </Box>
       {/* --- FIN DEL REEMPLAZO --- */}
