@@ -11,17 +11,19 @@ import SchoolIcon from "@mui/icons-material/School";
 // Importamos los tipos de los servicios
 import type { InscripcionConCurso } from "../../../services/alumnos.service";
 import type { AsignacionConCurso } from "../../../services/docentes.service";
+import { Group } from "@mui/icons-material";
 
 // El componente acepta la "inscripción" o "asignación" completa
 type MyCourseEntry = InscripcionConCurso | AsignacionConCurso;
 
+// Propiedades para el componente
 interface MyCoursesCardProps {
   inscripcion: MyCourseEntry;
   onClick: (inscripcion: MyCourseEntry) => void;
 }
 
 // Obtenemos la URL de la API (asegúrate de que VITE_API_URL esté en tu .env)
-const API_BASE_URL = import.meta.env.VITE_API_URL_WITHOUT_PREFIX;
+const API_URL_WITHOUT_PREFIX = import.meta.env.VITE_API_URL_WITHOUT_PREFIX;
 const FOTO_DEFAULT = "https://placehold.co/345x140.png?text=Curso";
 
 export default function MyCoursesCard({
@@ -30,11 +32,13 @@ export default function MyCoursesCard({
 }: MyCoursesCardProps) {
   // Sacamos el 'estado' del nivel superior y 'curso' del objeto anidado
   const { curso, estado } = inscripcion;
-  const { nombre, imagenUrl, docentes } = curso; // 'docentes' aquí es el array plano
+  const { nombre, imagenUrl, docentes, _count } = curso;
 
   const isDisabled = estado === "Inactivo";
 
-  // --- Lógica para mostrar docentes (copiada de tu CourseCard) ---
+  const cantidadAlumnosInscriptos = _count?.alumnos ?? 0;
+
+  // --- LÓGICA PARA MOSTRAR LOS DOCENTES ---
   let docentesDisplay: string;
   if (!docentes || docentes.length === 0) {
     docentesDisplay = "Sin docentes asignados";
@@ -51,7 +55,10 @@ export default function MyCoursesCard({
     docentesDisplay = `${primerosDos} +${restantes} más`;
   }
 
-  const fullImageUrl = imagenUrl ? `${API_BASE_URL}${imagenUrl}` : FOTO_DEFAULT;
+  // Obtenemos la imágen almacenada del curso.
+  const fullImageUrl = imagenUrl
+    ? `${API_URL_WITHOUT_PREFIX}${imagenUrl}`
+    : FOTO_DEFAULT;
 
   return (
     <Card
@@ -73,6 +80,7 @@ export default function MyCoursesCard({
           flexGrow: 1, // Asegura que la CardActionArea ocupe toda la tarjeta
         }}
       >
+        {/* Imagen del curso */}
         <CardMedia
           component="img"
           sx={{ height: 140 }}
@@ -119,6 +127,19 @@ export default function MyCoursesCard({
             <SchoolIcon sx={{ fontSize: 18, mr: 1, opacity: 0.8 }} />
             <Typography variant="body2" color="text.secondary" noWrap>
               {docentesDisplay}
+            </Typography>
+          </Box>
+          {/* Fila 3: Cantidad de alumnos inscriptos */}
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              color: "text.secondary",
+            }}
+          >
+            <Group sx={{ fontSize: 18, mr: 1, opacity: 0.8 }} />
+            <Typography variant="body2" color="text.secondary">
+              {cantidadAlumnosInscriptos} Alumnos inscriptos
             </Typography>
           </Box>
         </CardContent>
