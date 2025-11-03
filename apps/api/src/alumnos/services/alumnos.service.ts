@@ -1,10 +1,14 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { dateToTime } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ProgressService } from 'src/progress/services/progress.service';
 
 @Injectable()
 export class AlumnosService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private progressService: ProgressService,
+  ) {}
 
   async findMyCourses(idAlumno: string) {
     try {
@@ -71,5 +75,12 @@ export class AlumnosService {
       console.error('Error al buscar los cursos del alumno:', error);
       throw new InternalServerErrorException('Error al obtener tus cursos');
     }
+  }
+
+  async findMyProgress(idAlumno: string, idCurso: string) {
+    // 3. Llamamos al servicio experto
+    // La validación de si el alumno existe en el curso
+    // ya la hace 'getStudentProgress'
+    return this.progressService.getStudentProgress(idAlumno, idCurso);
   }
 }

@@ -32,7 +32,16 @@ export class ProgressService {
       if (!curso || !curso.progresoCurso) {
         throw new NotFoundException('Progreso del curso no encontrado.');
       }
-      return curso.progresoCurso;
+      // Convertimos los campos Decimal (que llegan como string) a Number (float)
+      const progreso = curso.progresoCurso;
+      return {
+        ...progreso,
+        pctMisionesCompletadas: parseFloat(
+          progreso.pctMisionesCompletadas as any,
+        ),
+        promEstrellas: parseFloat(progreso.promEstrellas as any),
+        promIntentos: parseFloat(progreso.promIntentos as any),
+      };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       console.error('Error en getCourseOverview:', error);
@@ -95,8 +104,16 @@ export class ProgressService {
       ]);
 
       // 4. Mapear la respuesta para el DataGrid
+      // Mapear la respuesta y convertir los Decimal a Number
       const data = alumnos.map((ac) => ({
-        ...ac.progresoAlumno, // Todos los campos de progreso
+        ...ac.progresoAlumno,
+        // Convertimos los campos Decimal
+        pctMisionesCompletadas: parseFloat(
+          ac.progresoAlumno.pctMisionesCompletadas as any,
+        ),
+        promEstrellas: parseFloat(ac.progresoAlumno.promEstrellas as any),
+        promIntentos: parseFloat(ac.progresoAlumno.promIntentos as any),
+        // Añadimos los campos del alumno
         nombre: ac.alumno.nombre,
         apellido: ac.alumno.apellido,
       }));
@@ -254,5 +271,45 @@ export class ProgressService {
         [sort]: order,
       },
     };
+  }
+
+  async getStudentProgress(idAlumno: string, idCurso: string) {
+    try {
+      // 1. Buscamos la inscripción específica
+      const inscripcion = await this.prisma.alumnoCurso.findUnique({
+        where: {
+          idAlumno_idCurso: {
+            idAlumno: idAlumno,
+            idCurso: idCurso,
+          },
+        },
+        // 2. Incluimos el progreso de esa inscripción
+        include: {
+          progresoAlumno: true,
+        },
+      });
+
+      // 3. Validamos que exista
+      if (!inscripcion || !inscripcion.progresoAlumno) {
+        throw new NotFoundException(
+          'No se encontró tu progreso para este curso.',
+        );
+      }
+
+      // 4. Devolvemos solo el objeto de progreso
+      const progreso = inscripcion.progresoAlumno;
+      return {
+        ...progreso,
+        pctMisionesCompletadas: parseFloat(
+          progreso.pctMisionesCompletadas as any,
+        ),
+        promEstrellas: parseFloat(progreso.promEstrellas as any),
+        promIntentos: parseFloat(progreso.promIntentos as any),
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      console.error('Error en getStudentProgress:', error);
+      throw new InternalServerErrorException('Error al obtener tu progreso.');
+    }
   }
 }
