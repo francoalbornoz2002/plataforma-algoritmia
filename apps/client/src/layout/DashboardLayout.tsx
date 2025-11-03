@@ -1,4 +1,3 @@
-import { type MenuItemType } from "./sidebar/Sidebar";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PeopleIcon from "@mui/icons-material/People";
 import SchoolIcon from "@mui/icons-material/School";
@@ -15,7 +14,7 @@ import {
   QuestionAnswer,
   SwitchAccessShortcutAdd,
 } from "@mui/icons-material";
-import type { UserData } from "../types";
+import type { MenuItemType, UserData } from "../types";
 
 import CourseContextLayout from "./CourseContextLayout";
 import { Box, CircularProgress } from "@mui/material"; // Para el 'loading'
@@ -38,31 +37,35 @@ export default function DashboardLayout() {
   ];
   const itemsDocente = [
     { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
-    { text: "Progreso", icon: <BarChartIcon />, path: "/dashboard/progress" },
+    {
+      text: "Progreso",
+      icon: <BarChartIcon />,
+      path: "/dashboard/course/progress",
+    },
     {
       text: "Dificultades",
       icon: <QueryStats />,
-      path: "/dashboard/difficultities",
+      path: "/dashboard/course/difficultities",
     },
     {
       text: "Sesiones de refuerzo",
       icon: <SwitchAccessShortcutAdd />,
-      path: "/dashboard/sessions",
+      path: "/dashboard/course/sessions",
     },
     {
       text: "Consultas",
       icon: <QuestionAnswer />,
-      path: "/dashboard/consults",
+      path: "/dashboard/course/consults",
     },
     {
       text: "Clases de consulta",
       icon: <Class />,
-      path: "/dashboard/consults-classes",
+      path: "/dashboard/course/consults-classes",
     },
     {
       text: "Configuración de curso",
       icon: <SettingsIcon />,
-      path: "/dashboard/settings-course",
+      path: "/dashboard/course/course-settings",
     }, // Ejemplo
   ];
   const itemsAlumno = [

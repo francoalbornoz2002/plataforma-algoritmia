@@ -13,6 +13,8 @@ import AccountPage from "./pages/AccountPage";
 import ProtectedRoute from "./auth/ProtectedRoute";
 import RoleProtectedRoute from "./auth/RoleProtectedRoute";
 import { Roles } from "./types/roles";
+import ProgressPage from "./pages/docente/ProgressPage";
+import MyProgressPage from "./pages/alumno/MyProgressPage";
 
 export const AppRouter: React.FC<{}> = () => {
   return (
@@ -41,6 +43,22 @@ export const AppRouter: React.FC<{}> = () => {
             {/* Si agregas más rutas de admin aquí, estarán protegidas */}
           </Route>{" "}
           {/* Fin de rutas protegidas para el rol ADMIN */}
+          <Route
+            element={<RoleProtectedRoute allowedRoles={[Roles.Docente]} />}
+          >
+            {/* Todas las rutas anidadas aquí requieren DOCENTE y usan DashboardLayout */}
+            {/*<Route path="course/dashboard" element={<DocenteDashboardView />} />*/}
+            <Route path="course/progress" element={<ProgressPage />} />
+            {/*<Route path="course/dificulties" element={<DificultiesPage />} />*/}
+            {/*<Route path="course/sessions" element={<DashboardPage />} />*/}
+          </Route>
+          <Route element={<RoleProtectedRoute allowedRoles={[Roles.Alumno]} />}>
+            {/* Todas las rutas anidadas aquí requieren DOCENTE y usan DashboardLayout */}
+            {/*<Route path="my/dashboard" element={<DocenteDashboardView />} />*/}
+            <Route path="my/progress" element={<MyProgressPage />} />
+            {/*<Route path="my/dificulties" element={<DificultiesPage />} />*/}
+            {/*<Route path="my/sessions" element={<DashboardPage />} />*/}
+          </Route>
         </Route>{" "}
         {/* Fin del grupo de rutas que usan DashBoardLayout */}
       </Route>{" "}
