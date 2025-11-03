@@ -1,6 +1,6 @@
 import apiClient from "../lib/axios";
 // Usamos el tipo que ya existe
-import type { CursoParaEditar, estado_simple } from "../types";
+import type { CursoParaEditar, estado_simple, ProgresoAlumno } from "../types";
 
 // 1. Definimos el tipo de dato que devuelve 'findMyCourses'
 export interface InscripcionConCurso {
@@ -44,5 +44,22 @@ export const joinCourse = async (
   } catch (err: any) {
     console.error("Error joining course:", err.response?.data || err.message);
     throw err.response?.data || new Error("Error al unirse al curso.");
+  }
+};
+
+export const getMyProgress = async (
+  idCurso: string
+): Promise<ProgresoAlumno> => {
+  try {
+    const response = await apiClient.get("/alumnos/my/progress", {
+      params: { idCurso }, // Envía ?idCurso=...
+    });
+    return response.data;
+  } catch (err: any) {
+    console.error(
+      "Error fetching student progress:",
+      err.response?.data || err.message
+    );
+    throw err.response?.data || new Error("Error al obtener tu progreso.");
   }
 };
