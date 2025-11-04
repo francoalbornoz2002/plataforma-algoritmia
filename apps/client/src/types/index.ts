@@ -246,6 +246,42 @@ export interface FindStudentProgressParams {
 export interface PaginatedStudentProgressResponse
   extends PaginatedResponse<ProgresoAlumnoDetallado> {}
 
+// ----- DIFICULTADES ----- //
+
+// 1. Para el Resumen/KPIs de Dificultades (coincide con DificultadesCurso)
+export interface DificultadesCurso {
+  id: string;
+  temaModa: temas;
+  idDificultadModa: string | null;
+  promDificultades: number;
+  promGrado: grado_dificultad;
+  estado: estado_simple;
+  dificultadModa?: {
+    // El include que añadimos
+    nombre: string;
+  };
+}
+
+// 2. Para la DataGrid de Dificultades del Docente
+export interface AlumnoDificultadResumen {
+  id: string; // id del ALUMNO
+  nombre: string;
+  apellido: string;
+  totalDificultades: number;
+}
+
+// 3. Para los parámetros del servicio de la DataGrid
+export interface FindStudentDifficultiesParams extends BaseFilterParams {
+  search?: string;
+  tema?: temas | "";
+  dificultadId?: string | "";
+  grado?: grado_dificultad | "";
+}
+
+// 4. Para la respuesta paginada de la DataGrid
+export interface PaginatedStudentDifficultiesResponse
+  extends PaginatedResponse<AlumnoDificultadResumen> {}
+
 export interface DificultadAlumnoDetallada {
   id: string;
   nombre: string;

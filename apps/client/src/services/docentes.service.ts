@@ -2,8 +2,12 @@ import apiClient from "../lib/axios";
 // Usamos el tipo que ya existe
 import type {
   CursoParaEditar,
+  DificultadAlumnoDetallada,
+  DificultadesCurso,
   estado_simple,
+  FindStudentDifficultiesParams,
   FindStudentProgressParams,
+  PaginatedStudentDifficultiesResponse,
   PaginatedStudentProgressResponse,
   ProgresoCurso,
 } from "../types";
@@ -91,6 +95,90 @@ export const getStudentProgressList = async (
     throw (
       err.response?.data ||
       new Error("Error al obtener el progreso de los alumnos.")
+    );
+  }
+};
+
+/**
+ * Obtiene el Resumen (KPIs) de Dificultades de un curso
+ */
+export const getCourseDifficultiesOverview = async (
+  idCurso: string
+): Promise<DificultadesCurso> => {
+  try {
+    const response = await apiClient.get(
+      `/docentes/my/courses/${idCurso}/difficulties-overview`
+    );
+    // Convertimos los Decimal a Number si es necesario
+    response.data.promDificultades = parseFloat(response.data.promDificultades);
+    return response.data;
+  } catch (err: any) {
+    console.error(
+      "Error fetching difficulties overview:",
+      err.response?.data || err.message
+    );
+    throw (
+      err.response?.data ||
+      new Error("Error al obtener el resumen de dificultades.")
+    );
+  }
+};
+
+/**
+ * Obtiene la lista paginada de alumnos para la DataGrid de Dificultades
+ */
+export const getStudentDifficultyList = async (
+  idCurso: string,
+  params: FindStudentDifficultiesParams
+): Promise<PaginatedStudentDifficultiesResponse> => {
+  try {
+    // Limpiamos los params vacíos (como hicimos en ProgressPage)
+    const cleanedParams = { ...params };
+    (
+      Object.keys(cleanedParams) as Array<keyof FindStudentDifficultiesParams>
+    ).forEach((key) => {
+      if (cleanedParams[key] === "") {
+        delete cleanedParams[key];
+      }
+    });
+
+    const response = await apiClient.get(
+      `/docentes/me/courses/${idCurso}/difficulties-list`,
+      {
+        params: cleanedParams,
+      }
+    );
+    return response.data;
+  } catch (err: any) {
+    console.error(
+      "Error fetching student difficulty list:",
+      err.response?.data || err.message
+    );
+    throw (
+      err.response?.data || new Error("Error al obtener la lista de alumnos.")
+    );
+  }
+};
+
+/**
+ * Obtiene el detalle de dificultades de UN alumno (para el modal)
+ */
+export const getStudentDifficultiesDetail = async (
+  idCurso: string,
+  idAlumno: string
+): Promise<DificultadAlumnoDetallada[]> => {
+  try {
+    const response = await apiClient.get(
+      `/docentes/me/courses/${idCurso}/student/${idAlumno}/difficulties`
+    );
+    return response.data;
+  } catch (err: any) {
+    console.error(
+      "Error fetching student difficulties detail:",
+      err.response?.data || err.message
+    );
+    throw (
+      err.response?.data || new Error("Error al obtener el detalle del alumno.")
     );
   }
 };
