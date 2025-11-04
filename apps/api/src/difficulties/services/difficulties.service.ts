@@ -82,7 +82,13 @@ export class DifficultiesService {
           'Resumen de dificultades del curso no encontrado.',
         );
       }
-      return curso.dificultadesCurso;
+
+      const overview = curso.dificultadesCurso;
+
+      return {
+        ...overview,
+        promDificultades: parseFloat(overview.promDificultades as any),
+      };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       console.error('Error en getCourseDifficultiesOverview:', error);
