@@ -15,6 +15,7 @@ import RoleProtectedRoute from "./auth/RoleProtectedRoute";
 import { Roles } from "./types/roles";
 import ProgressPage from "./pages/docente/ProgressPage";
 import MyProgressPage from "./pages/alumno/MyProgressPage";
+import MyDifficultiesPage from "./pages/alumno/MyDifficultiesPage";
 
 export const AppRouter: React.FC<{}> = () => {
   return (
@@ -56,7 +57,7 @@ export const AppRouter: React.FC<{}> = () => {
             {/* Todas las rutas anidadas aquí requieren DOCENTE y usan DashboardLayout */}
             {/*<Route path="my/dashboard" element={<DocenteDashboardView />} />*/}
             <Route path="my/progress" element={<MyProgressPage />} />
-            {/*<Route path="my/dificulties" element={<DificultiesPage />} />*/}
+            <Route path="my/difficulties" element={<MyDifficultiesPage />} />
             {/*<Route path="my/sessions" element={<DashboardPage />} />*/}
           </Route>
         </Route>{" "}
