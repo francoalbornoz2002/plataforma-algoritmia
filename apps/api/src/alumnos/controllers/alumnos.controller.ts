@@ -31,4 +31,13 @@ export class AlumnosController {
     const idAlumno = req.user.userId; // 4. Obtener el ID del alumno
     return this.alumnosService.findMyProgress(idAlumno, idCurso); // 5. Llamar al servicio
   }
+
+  @Get('my/difficulties')
+  findMyDifficulties(
+    @Req() req: AuthenticatedUserRequest,
+    @Query('idCurso', ParseUUIDPipe) idCurso: string,
+  ) {
+    const idAlumno = req.user.userId;
+    return this.alumnosService.findMyDifficulties(idAlumno, idCurso);
+  }
 }

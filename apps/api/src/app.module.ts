@@ -9,6 +9,7 @@ import { join } from 'path';
 import { AlumnosModule } from './alumnos/alumnos.module';
 import { DocentesModule } from './docentes/docentes.module';
 import { ProgressModule } from './progress/progress.module';
+import { DifficultiesModule } from './difficulties/difficulties.module';
 
 const UPLOADS_PATH = join(process.cwd(), 'uploads');
 
@@ -32,6 +33,7 @@ const UPLOADS_PATH = join(process.cwd(), 'uploads');
     AlumnosModule,
     DocentesModule,
     ProgressModule,
+    DifficultiesModule,
   ],
   controllers: [],
   providers: [],
