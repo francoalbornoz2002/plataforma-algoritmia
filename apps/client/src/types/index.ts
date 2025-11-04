@@ -32,6 +32,22 @@ export enum dias_semana {
   Sabado = "Sabado",
 }
 
+export enum temas {
+  Secuencia = "Secuencia",
+  Logica = "Logica",
+  Estructuras = "Estructuras",
+  Variables = "Variables",
+  Procedimientos = "Procedimientos",
+  Ninguno = "Ninguno",
+}
+
+export enum grado_dificultad {
+  Ninguno = "Ninguno",
+  Bajo = "Bajo",
+  Medio = "Medio",
+  Alto = "Alto",
+}
+
 /* ---------------------- INTERFACES ---------------------- */
 
 export interface MenuItemType {
@@ -229,3 +245,11 @@ export interface FindStudentProgressParams {
 // Para la respuesta paginada de la DataGrid
 export interface PaginatedStudentProgressResponse
   extends PaginatedResponse<ProgresoAlumnoDetallado> {}
+
+export interface DificultadAlumnoDetallada {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  tema: temas;
+  grado: grado_dificultad; // El grado del alumno
+}
