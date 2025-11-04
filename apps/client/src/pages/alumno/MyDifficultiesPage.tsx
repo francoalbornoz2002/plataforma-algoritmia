@@ -106,14 +106,13 @@ export default function MyDifficultiesPage() {
                   <Chip
                     label={dificultad.grado}
                     color={getGradoColor(dificultad.grado)}
-                    size="small"
+                    variant="outlined"
                   />
                 </Stack>
               </AccordionSummary>
               <AccordionDetails>
                 <Chip
                   label={dificultad.tema}
-                  size="small"
                   variant="outlined"
                   sx={{ mb: 2 }}
                 />
