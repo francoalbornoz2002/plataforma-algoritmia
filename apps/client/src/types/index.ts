@@ -268,6 +268,10 @@ export interface AlumnoDificultadResumen {
   nombre: string;
   apellido: string;
   totalDificultades: number;
+  gradoAlto: number;
+  gradoMedio: number;
+  gradoBajo: number;
+  gradoNinguno: number;
 }
 
 // 3. Para los parámetros del servicio de la DataGrid

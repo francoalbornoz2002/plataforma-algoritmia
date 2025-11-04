@@ -169,30 +169,45 @@ export class DifficultiesService {
           skip,
           take,
           select: {
-            // <-- Usamos 'select' para traer solo lo necesario
             id: true,
             nombre: true,
             apellido: true,
-            _count: {
-              select: {
-                dificultades: {
-                  // <-- Contamos las dificultades
-                  where: { idCurso: idCurso }, // Solo de este curso
-                },
-              },
+            dificultades: {
+              where: { idCurso: idCurso },
+              select: { grado: true },
             },
           },
         }),
         this.prisma.usuario.count({ where }), // <-- Contamos 'usuario'
       ]);
 
-      // 4. Mapear la respuesta para el DataGrid
-      const data = alumnos.map((alumno) => ({
-        id: alumno.id,
-        nombre: alumno.nombre,
-        apellido: alumno.apellido,
-        totalDificultades: alumno._count.dificultades,
-      }));
+      // 4. Mapear la respuesta Y CALCULAR LOS CONTEOS
+      const data = alumnos.map((alumno) => {
+        // Contamos los grados manualmente
+        const alto = alumno.dificultades.filter(
+          (d) => d.grado === 'Alto',
+        ).length;
+        const medio = alumno.dificultades.filter(
+          (d) => d.grado === 'Medio',
+        ).length;
+        const bajo = alumno.dificultades.filter(
+          (d) => d.grado === 'Bajo',
+        ).length;
+        const ninguno = alumno.dificultades.filter(
+          (d) => d.grado === 'Ninguno',
+        ).length;
+
+        return {
+          id: alumno.id,
+          nombre: alumno.nombre,
+          apellido: alumno.apellido,
+          totalDificultades: alumno.dificultades.length,
+          gradoAlto: alto,
+          gradoMedio: medio,
+          gradoBajo: bajo,
+          gradoNinguno: ninguno,
+        };
+      });
 
       const totalPages = Math.ceil(total / limit);
       return { data, total, page, totalPages };

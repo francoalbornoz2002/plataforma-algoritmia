@@ -143,7 +143,7 @@ export const getStudentDifficultyList = async (
     });
 
     const response = await apiClient.get(
-      `/docentes/me/courses/${idCurso}/difficulties-list`,
+      `/docentes/my/courses/${idCurso}/difficulties-list`,
       {
         params: cleanedParams,
       }
@@ -169,7 +169,7 @@ export const getStudentDifficultiesDetail = async (
 ): Promise<DificultadAlumnoDetallada[]> => {
   try {
     const response = await apiClient.get(
-      `/docentes/me/courses/${idCurso}/student/${idAlumno}/difficulties`
+      `/docentes/my/courses/${idCurso}/student/${idAlumno}/difficulties`
     );
     return response.data;
   } catch (err: any) {

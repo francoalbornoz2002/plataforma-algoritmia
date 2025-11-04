@@ -45,7 +45,7 @@ export default function DashboardLayout() {
     {
       text: "Dificultades",
       icon: <QueryStats />,
-      path: "/dashboard/course/difficultities",
+      path: "/dashboard/course/difficulties",
     },
     {
       text: "Sesiones de refuerzo",
