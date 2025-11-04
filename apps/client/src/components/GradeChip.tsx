@@ -8,10 +8,11 @@ import InfoIcon from "@mui/icons-material/Info";
 import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
 
 interface GradeChipProps {
+  texto?: string;
   grado: grado_dificultad;
 }
 
-export default function GradeChip({ grado }: GradeChipProps) {
+export default function GradeChip({ texto, grado }: GradeChipProps) {
   let icon: React.ReactElement | undefined = undefined;
   let color: ChipProps["color"] = "default";
 
@@ -35,14 +36,28 @@ export default function GradeChip({ grado }: GradeChipProps) {
       break;
   }
 
+  let textoRender = grado.toString();
+  if (texto) {
+    textoRender = `${texto} ${grado}`;
+  }
+
   // 3. Renderizamos el Chip con las props dinámicas
   return (
     <Chip
-      label={grado}
+      label={textoRender}
       color={color}
       icon={icon}
       variant="filled" // 'filled' resalta más que 'outlined' para el grado
-      sx={{ ml: 1, flexShrink: 0 }}
+      sx={{
+        ml: 1,
+        flexShrink: 0,
+        ...(color === "warning" && {
+          color: "#fff", // Esto cambia el color del texto (label)
+          "& .MuiChip-icon": {
+            color: "#fff", // Esto cambia el color del ícono (svg)
+          },
+        }),
+      }}
     />
   );
 }
