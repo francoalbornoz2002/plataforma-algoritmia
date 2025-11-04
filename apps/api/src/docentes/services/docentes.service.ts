@@ -1,4 +1,10 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import { FindStudentDifficultiesDto } from 'src/difficulties/dto/find-student-difficulties.dto';
+import { DifficultiesService } from 'src/difficulties/services/difficulties.service';
 import { dateToTime } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { FindStudentProgressDto } from 'src/progress/dto/find-student-progress.dto';
@@ -9,7 +15,32 @@ export class DocentesService {
   constructor(
     private prisma: PrismaService,
     private progressService: ProgressService,
+    private difficultiesService: DifficultiesService,
   ) {}
+
+  private async checkDocenteAccess(idDocente: string, idCurso: string) {
+    try {
+      const asignacion = await this.prisma.docenteCurso.findFirst({
+        where: {
+          idDocente: idDocente,
+          idCurso: idCurso,
+          estado: 'Activo', // Solo docentes actualmente activos en el curso
+        },
+      });
+
+      if (!asignacion) {
+        throw new ForbiddenException(
+          'No tienes permiso para acceder a este curso.',
+        );
+      }
+    } catch (error) {
+      if (error instanceof ForbiddenException) throw error;
+      // Manejar otros errores si la consulta falla
+      console.error('Error en checkDocenteAccess:', error);
+      throw new InternalServerErrorException('Error al verificar permisos.');
+    }
+  }
+
   /**
    * Busca TODOS los cursos (activos e inactivos) asignados a un docente.
    * Ordena por estado para que los 'Activo' aparezcan primero.
@@ -80,18 +111,46 @@ export class DocentesService {
   /**
    * Pide el Resumen (KPIs) del curso al ProgressService
    */
-  async getCourseOverview(idCurso: string) {
-    // (Aquí iría la lógica de permisos: ¿Es este docente de este curso?)
-    // ...
+  async getCourseOverview(idCurso: string, idDocente: string) {
+    await this.checkDocenteAccess(idDocente, idCurso);
     return this.progressService.getCourseOverview(idCurso);
   }
 
   /**
    * Pide la lista de alumnos al ProgressService
    */
-  async getStudentProgressList(idCurso: string, dto: FindStudentProgressDto) {
-    // (Aquí iría la lógica de permisos: ¿Es este docente de este curso?)
-    // ...
+  async getStudentProgressList(
+    idCurso: string,
+    dto: FindStudentProgressDto,
+    idDocente: string,
+  ) {
+    await this.checkDocenteAccess(idDocente, idCurso);
     return this.progressService.getStudentProgressList(idCurso, dto);
+  }
+
+  async getCourseDifficultiesOverview(idCurso: string, idDocente: string) {
+    await this.checkDocenteAccess(idDocente, idCurso);
+    return this.difficultiesService.getCourseDifficultiesOverview(idCurso);
+  }
+
+  async getStudentDifficultyList(
+    idCurso: string,
+    dto: FindStudentDifficultiesDto,
+    idDocente: string,
+  ) {
+    await this.checkDocenteAccess(idDocente, idCurso);
+    return this.difficultiesService.getStudentDifficultyList(idCurso, dto);
+  }
+
+  async getStudentDifficultiesDetail(
+    idAlumno: string,
+    idCurso: string,
+    idDocente: string,
+  ) {
+    await this.checkDocenteAccess(idDocente, idCurso);
+    return this.difficultiesService.getStudentDifficultiesDetail(
+      idAlumno,
+      idCurso,
+    );
   }
 }
