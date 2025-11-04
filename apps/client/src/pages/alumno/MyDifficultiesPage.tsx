@@ -1,43 +1,41 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Typography,
   CircularProgress,
   Alert,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Chip,
   Stack,
+  Grid, // <-- Importar Grid
+  FormControl, // <-- Importar Filtros
+  InputLabel,
+  Select,
+  MenuItem,
+  type SelectChangeEvent,
 } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+// (Ya no importamos Accordion, AccordionSummary, etc.)
 import { useCourseContext } from "../../context/CourseContext";
 import { getMyDifficulties } from "../../services/alumnos.service";
 import type { DificultadAlumnoDetallada } from "../../types";
-import { grado_dificultad, temas } from "../../types"; // Asumo que los enums están en types
+import { grado_dificultad, temas } from "../../types"; // Importamos los enums
 
-// Helper para dar color al Chip de Grado
-const getGradoColor = (grado: grado_dificultad) => {
-  switch (grado) {
-    case grado_dificultad.Alto:
-      return "error";
-    case grado_dificultad.Medio:
-      return "warning";
-    case grado_dificultad.Bajo:
-      return "info";
-    default:
-      return "default";
-  }
-};
+// --- ¡Importamos la nueva Card! ---
+import DifficultCard from "./DifficultCard";
 
 export default function MyDifficultiesPage() {
   const { selectedCourse } = useCourseContext();
+
+  // Estados de datos
   const [difficulties, setDifficulties] = useState<DificultadAlumnoDetallada[]>(
     []
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // --- ¡NUEVOS ESTADOS DE FILTRO! ---
+  const [temaFilter, setTemaFilter] = useState("Todos");
+  const [gradoFilter, setGradoFilter] = useState("Todos");
+
+  // Efecto de Fetch (sin cambios)
   useEffect(() => {
     if (!selectedCourse) {
       setLoading(false);
@@ -59,6 +57,26 @@ export default function MyDifficultiesPage() {
         setLoading(false);
       });
   }, [selectedCourse]);
+
+  // --- ¡NUEVA LÓGICA DE FILTRADO! ---
+  const filteredDifficulties = useMemo(() => {
+    return difficulties.filter((d) => {
+      const matchesTema = temaFilter === "Todos" || d.tema === temaFilter;
+      const matchesGrado = gradoFilter === "Todos" || d.grado === gradoFilter;
+      return matchesTema && matchesGrado;
+    });
+  }, [difficulties, temaFilter, gradoFilter]);
+
+  // Handlers para los filtros
+  const handleTemaChange = (e: SelectChangeEvent<string>) => {
+    setTemaFilter(e.target.value);
+  };
+
+  const handleGradoChange = (e: SelectChangeEvent<string>) => {
+    setGradoFilter(e.target.value);
+  };
+
+  // --- RENDERIZADO ---
 
   if (!selectedCourse) {
     return (
@@ -86,41 +104,67 @@ export default function MyDifficultiesPage() {
         Mis Dificultades en {selectedCourse.nombre}
       </Typography>
 
-      {difficulties.length === 0 ? (
-        <Alert severity="success" sx={{ mt: 2 }}>
-          ¡Felicidades! Aún no se han detectado dificultades en tu progreso.
+      {/* --- SECCIÓN DE FILTROS --- */}
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={2}
+        sx={{ mb: 3, mt: 2 }}
+      >
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Filtrar por Tema</InputLabel>
+          <Select
+            value={temaFilter}
+            label="Filtrar por Tema"
+            onChange={handleTemaChange}
+          >
+            <MenuItem value="Todos">Todos los Temas</MenuItem>
+            {/* Iteramos sobre el enum 'temas', omitimos el "Ninguno" */}
+            {Object.values(temas)
+              .filter((tema) => tema !== temas.Ninguno)
+              .map((tema) => (
+                <MenuItem key={tema} value={tema}>
+                  {tema}
+                </MenuItem>
+              ))}
+          </Select>
+        </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Filtrar por Grado</InputLabel>
+          <Select
+            value={gradoFilter}
+            label="Filtrar por Grado"
+            onChange={handleGradoChange}
+          >
+            <MenuItem value="Todos">Todos los Grados</MenuItem>
+            {/* Iteramos sobre el enum 'grado_dificultad' */}
+            {Object.values(grado_dificultad).map((grado) => (
+              <MenuItem key={grado} value={grado}>
+                {grado}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Stack>
+
+      {/* --- SECCIÓN DE CONTENIDO (GRID) --- */}
+      {filteredDifficulties.length === 0 ? (
+        <Alert
+          severity={difficulties.length === 0 ? "success" : "info"}
+          sx={{ mt: 2 }}
+        >
+          {difficulties.length === 0
+            ? "¡Felicidades! Aún no se han detectado dificultades en tu progreso."
+            : "No se encontraron dificultades que coincidan con tus filtros."}
         </Alert>
       ) : (
-        <Stack spacing={1} sx={{ mt: 2 }}>
-          {difficulties.map((dificultad) => (
-            <Accordion key={dificultad.id}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Stack
-                  direction="row"
-                  spacing={2}
-                  alignItems="center"
-                  justifyContent="space-between"
-                  sx={{ width: "100%" }}
-                >
-                  <Typography variant="h6">{dificultad.nombre}</Typography>
-                  <Chip
-                    label={dificultad.grado}
-                    color={getGradoColor(dificultad.grado)}
-                    variant="outlined"
-                  />
-                </Stack>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Chip
-                  label={dificultad.tema}
-                  variant="outlined"
-                  sx={{ mb: 2 }}
-                />
-                <Typography>{dificultad.descripcion}</Typography>
-              </AccordionDetails>
-            </Accordion>
+        <Grid container spacing={2}>
+          {filteredDifficulties.map((dificultad) => (
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={dificultad.id}>
+              <DifficultCard dificultad={dificultad} />
+            </Grid>
           ))}
-        </Stack>
+        </Grid>
       )}
     </Box>
   );
