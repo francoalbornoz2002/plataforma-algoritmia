@@ -9,31 +9,49 @@ import {
 } from 'class-validator';
 
 export class SubmitMissionDto {
-  @ApiProperty()
+  @ApiProperty({
+    description: 'El UUID del alumno que completó la misión.',
+    example: '5f085294-79cc-4731-99fd-12bcd4849599',
+  })
   @IsUUID()
   idAlumno: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'El UUID de la misión (de la tabla "misiones").',
+    example: 'f47ac10b-58cc-4372-a567-0e02b2c3d479',
+  })
   @IsUUID()
-  idMision: string; // El UUID de la misión que completó
+  idMision: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Cantidad de estrellas obtenidas (0-3).',
+    example: 3,
+  })
   @IsInt()
   @Min(0)
-  @Max(3) // Asumo 3 estrellas como máximo
+  @Max(3)
   estrellas: number;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Puntos de experiencia (EXP) ganados.',
+    example: 50,
+  })
   @IsInt()
   @Min(0)
   exp: number;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Cantidad de intentos que tomó la misión.',
+    example: 1,
+  })
   @IsInt()
-  @IsPositive() // Al menos 1 intento
+  @IsPositive()
   intentos: number;
 
-  @ApiProperty()
-  @IsDateString() // <-- 2. Añadir la fecha
-  fechaCompletado: string; // La enviamos como string ISO (ej: "2025-11-03T20:00:00.000Z")
+  @ApiProperty({
+    description: 'Fecha y hora (en formato ISO 8601) de cuándo se completó.',
+    example: '2025-11-05T02:10:00.000Z',
+  })
+  @IsDateString()
+  fechaCompletado: string;
 }
