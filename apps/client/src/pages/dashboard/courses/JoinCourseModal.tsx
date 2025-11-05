@@ -13,6 +13,7 @@ import { useState, useEffect } from "react";
 // Importamos el servicio de alumno
 import { joinCourse } from "../../../services/alumnos.service";
 import type { CursoConDetalles } from "../../../types";
+import { enqueueSnackbar } from "notistack";
 // El tipo de curso que viene de la pestaña "Todos los Cursos"
 
 interface JoinCourseModalProps {
@@ -58,6 +59,10 @@ export default function JoinCourseModal({
 
       // 2. Si tiene éxito, llamamos al callback
       onJoinSuccess();
+      enqueueSnackbar("Inscripción al curso exitosa", {
+        variant: "success",
+        autoHideDuration: 3000,
+      });
 
       // 3. Cerramos este modal
       onClose();
