@@ -47,6 +47,16 @@ import UserFormDialog from "./UserFormDialog";
 import { enqueueSnackbar } from "notistack";
 import { useDebounce } from "../../../hooks/useDebounce";
 
+import { roles as RolesEnum } from "../../../types"; // O desde donde venga tu enum 'roles'
+
+// --- 2. DEFINE LA LISTA DE ROLES DISPONIBLES ---
+// (Usamos los valores del enum)
+const ROLES_DISPONIBLES = [
+  RolesEnum.Administrador,
+  RolesEnum.Docente,
+  RolesEnum.Alumno,
+];
+
 export default function UsersPage() {
   /* ---------------------- ESTADOS ---------------------- */
   // ----- ESTADO PARA LOS DATOS ----- //
@@ -371,11 +381,13 @@ export default function UsersPage() {
               multiple
               value={roles}
               onChange={handleRolChange}
-              input={<OutlinedInput label="Tag" />}
+              input={<OutlinedInput label="Rol" />}
               renderValue={(selected) => selected.join(", ")}
             >
-              {roles.map((rol) => (
+              {/* 3. Mapeamos la constante 'ROLES_DISPONIBLES' */}
+              {ROLES_DISPONIBLES.map((rol) => (
                 <MenuItem key={rol} value={rol}>
+                  {/* Comprobamos si el 'rol' está en el estado 'roles' */}
                   <Checkbox checked={roles.includes(rol)} />
                   <ListItemText primary={rol} />
                 </MenuItem>
