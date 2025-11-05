@@ -32,7 +32,7 @@ function KpiCard({ title, value, loading }: KpiCardProps) {
         <Typography variant="body2" color="text.secondary" gutterBottom>
           {title}
         </Typography>
-        <Typography variant="h4" component="div">
+        <Typography variant="h5" component="div">
           {loading ? <CircularProgress size={30} /> : value}
         </Typography>
       </CardContent>

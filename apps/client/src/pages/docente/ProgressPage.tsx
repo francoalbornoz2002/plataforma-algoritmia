@@ -250,7 +250,7 @@ export default function ProgressPage() {
     <Box>
       {/* --- A. Resumen (KPIs) --- */}
       <Typography variant="h4" gutterBottom>
-        Resumen del Curso
+        Resumen de Progreso
       </Typography>
       {overviewError && <Alert severity="error">{overviewError}</Alert>}
       <Grid container spacing={3} sx={{ mb: 3 }}>
