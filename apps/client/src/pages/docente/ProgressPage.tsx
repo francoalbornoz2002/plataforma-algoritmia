@@ -177,12 +177,8 @@ export default function ProgressPage() {
         field: "nombre",
         headerName: "Alumno",
         flex: 2,
-        // --- CORRECCIÓN AQUÍ ---
-        // La firma es (value, row).
-        // 'value' es row.nombre (porque field es "nombre")
-        // 'row' es el objeto completo ProgresoAlumnoDetallado
         valueGetter: (value: any, row: ProgresoAlumnoDetallado) =>
-          `${row.apellido}, ${row.nombre}`,
+          `${row.nombre} ${row.apellido}`,
       },
       {
         field: "pctMisionesCompletadas",
