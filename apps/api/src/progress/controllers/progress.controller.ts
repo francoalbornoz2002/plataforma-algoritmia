@@ -1,6 +1,7 @@
 import { Body, Controller, ForbiddenException, Post } from '@nestjs/common';
 import { ProgressService } from '../services/progress.service';
 import { SubmitMissionDto } from '../dto/submit-mission.dto';
+import { Public } from 'src/auth/decorators/public.decorator';
 
 @Controller('progress')
 export class ProgressController {
@@ -12,6 +13,7 @@ export class ProgressController {
    * Por ahora, lo dejamos abierto para probar con Swagger.
    */
   // @UseGuards(ApiKeyGuard)
+  @Public()
   @Post('submit-mission')
   submitMission(@Body() submitMissionDto: SubmitMissionDto) {
     try {
