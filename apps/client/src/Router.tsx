@@ -21,20 +21,21 @@ import DifficultiesPage from "./pages/docente/DifficultiesPage";
 export const AppRouter: React.FC<{}> = () => {
   return (
     <Routes>
-      {/* 1. Ruta Pública para Login */}
+      {/* 1. Rutas Públicas */}
       <Route path="/login" element={<LoginPage />} />
-      {/* 2. Grupo de Rutas Protegidas (Requieren Autenticación) */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      {/* 2. Grupo de Rutas Protegidas (Autenticación) */}
       <Route element={<ProtectedRoute />}>
-        <Route path="/dashboard" element={<DashboardLayout />}>
-          <Route index element={<DashboardPage />} />
-          {/* 2.1 Grupo de Rutas SOLO para ADMIN (dentro de /dashboard) */}
-          {/* RoleProtectedRoute verifica si el rol es ADMIN */}
-          <Route
-            element={
-              <RoleProtectedRoute allowedRoles={[Roles.Administrador]} />
-            }
-          >
-            {/* Todas las rutas anidadas aquí requieren ADMIN y usan DashboardLayout */}
+        {/* GRUPO 1: ADMIN (/dashboard) */}
+        {/* Primero validamos el ROL */}
+        <Route
+          path="/dashboard"
+          element={<RoleProtectedRoute allowedRoles={[Roles.Administrador]} />}
+        >
+          {/* Si el ROL es correcto, renderiza este layout
+              que a su vez renderiza un <Outlet /> para las páginas */}
+          <Route element={<DashboardLayout />}>
+            <Route index element={<DashboardPage />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="courses" element={<CoursesPage />} />
             <Route path="stats" element={<StatsPage />} />
@@ -42,31 +43,40 @@ export const AppRouter: React.FC<{}> = () => {
             <Route path="audit" element={<AuditPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="account" element={<AccountPage />} />
-            {/* Si agregas más rutas de admin aquí, estarán protegidas */}
-          </Route>{" "}
-          {/* Fin de rutas protegidas para el rol ADMIN */}
-          <Route
-            element={<RoleProtectedRoute allowedRoles={[Roles.Docente]} />}
-          >
-            {/* Todas las rutas anidadas aquí requieren DOCENTE y usan DashboardLayout */}
-            {/*<Route path="course/dashboard" element={<DocenteDashboardView />} />*/}
-            <Route path="course/progress" element={<ProgressPage />} />
-            <Route path="course/difficulties" element={<DifficultiesPage />} />
-            {/*<Route path="course/sessions" element={<DashboardPage />} />*/}
           </Route>
-          <Route element={<RoleProtectedRoute allowedRoles={[Roles.Alumno]} />}>
-            {/* Todas las rutas anidadas aquí requieren DOCENTE y usan DashboardLayout */}
-            {/*<Route path="my/dashboard" element={<DocenteDashboardView />} />*/}
-            <Route path="my/progress" element={<MyProgressPage />} />
-            <Route path="my/difficulties" element={<MyDifficultiesPage />} />
-            {/*<Route path="my/sessions" element={<DashboardPage />} />*/}
+        </Route>
+
+        {/* GRUPO 2: DOCENTE (/course) */}
+        {/* Primero validamos el ROL */}
+        <Route
+          path="/course"
+          element={<RoleProtectedRoute allowedRoles={[Roles.Docente]} />}
+        >
+          {/* Si el ROL es correcto, renderiza el DashboardLayout */}
+          <Route element={<DashboardLayout />}>
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="progress" element={<ProgressPage />} />
+            <Route path="difficulties" element={<DifficultiesPage />} />
+            <Route path="account" element={<AccountPage />} />
           </Route>
-        </Route>{" "}
-        {/* Fin del grupo de rutas que usan DashBoardLayout */}
+        </Route>
+
+        {/* GRUPO 3: ALUMNO (/my) */}
+        {/* Primero validamos el ROL */}
+        <Route
+          path="/my"
+          element={<RoleProtectedRoute allowedRoles={[Roles.Alumno]} />}
+        >
+          {/* Si el ROL es correcto, renderiza el DashboardLayout */}
+          <Route element={<DashboardLayout />}>
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="progress" element={<MyProgressPage />} />
+            <Route path="difficulties" element={<MyDifficultiesPage />} />
+            <Route path="account" element={<AccountPage />} />
+          </Route>
+        </Route>
       </Route>{" "}
-      {/* Fin del grupo de rutas protegidas por autenticación */}
-      {/* 3. Redirección a la Home */}
-      <Route path="/" element={<Navigate to="/" replace />} />
+      {/* Fin Rutas Protegidas */}
       {/* 4. Ruta 404 */}
       <Route path="*" element={<div>404 - Página no encontrada</div>} />
     </Routes>

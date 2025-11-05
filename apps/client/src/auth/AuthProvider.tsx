@@ -11,6 +11,7 @@ import apiClient from "../lib/axios"; // Importa la instancia configurada
 import { useNavigate } from "react-router";
 import { jwtDecode } from "jwt-decode";
 import type { Rol } from "../types/roles";
+import { roles } from "../types";
 
 // Defino la interfaz UserToken
 export interface UserToken {
@@ -92,36 +93,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(false);
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
-    try {
-      // Usamos la instancia de axios apiClient para la petición de login
-      const response = await apiClient.post<{ accessToken: string }>(
-        "/auth/login",
-        { email, password }
-      );
+  const login = useCallback(
+    async (email: string, password: string) => {
+      try {
+        const response = await apiClient.post<{ accessToken: string }>(
+          "/auth/login",
+          { email, password }
+        );
+        const new_token = response.data.accessToken;
+        const newUser = getUserFromToken(new_token);
 
-      // Guardamos el resultado de la petición
-      const new_token = response.data.accessToken;
+        if (newUser) {
+          localStorage.setItem("accessToken", new_token);
+          setToken(new_token);
+          setUser(newUser);
 
-      // Llamamos a la función para obtener el usuario del token
-      const newUser = getUserFromToken(new_token);
+          // 1. Determinar la ruta "home" basada en el rol
+          let homeRoute = "/"; // Fallback
 
-      if (newUser) {
-        localStorage.setItem("accessToken", new_token);
-        setToken(new_token);
-        setUser(newUser);
-        // El interceptor de apiClient ya está configurado para usar este token
-      } else {
-        throw new Error("Token recibido inválido.");
+          if (newUser.rol === roles.Administrador) {
+            homeRoute = "/dashboard";
+          } else if (newUser.rol === roles.Docente) {
+            homeRoute = "/course/dashboard"; // <-- Nueva ruta de Docente
+          } else if (newUser.rol === roles.Alumno) {
+            homeRoute = "/my/dashboard"; // <-- Nueva ruta de Alumno
+          }
+
+          // 2. Redirigir SIEMPRE a la ruta 'home' correcta
+          navigate(homeRoute, { replace: true });
+        } else {
+          throw new Error("Token recibido inválido.");
+        }
+      } catch (error) {
+        console.error("Error en AuthProvider login:", error);
+        localStorage.removeItem("accessToken");
+        setToken(null);
+        setUser(null);
+        throw error;
       }
-    } catch (error) {
-      console.error("Error en AuthProvider login:", error);
-      localStorage.removeItem("accessToken");
-      setToken(null);
-      setUser(null);
-      throw error; // Relanza para que LoginPage lo capture
-    }
-  }, []);
+    },
+    [navigate] // <-- Añadir 'navigate' a las dependencias
+  );
 
   const logout = useCallback(() => {
     localStorage.removeItem("accessToken"); // Limpia el token

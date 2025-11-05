@@ -1,7 +1,8 @@
-// src/components/auth/RoleProtectedRoute.tsx
+// src/auth/RoleProtectedRoute.tsx
 import { Navigate, Outlet, useLocation } from "react-router";
 import { useAuth } from "./AuthProvider";
-import { type Rol } from "../types/roles";
+import { type Rol } from "../types/roles"; // Importa 'roles'
+import { roles } from "../types";
 
 interface RoleProtectedRouteProps {
   allowedRoles: Rol[];
@@ -13,13 +14,31 @@ export default function RoleProtectedRoute({
   const { user } = useAuth();
   const location = useLocation();
 
-  // La comparación funciona igual porque user.rol es un string
+  // Si el usuario existe Y su rol está permitido
   if (user && allowedRoles.includes(user.rol)) {
-    return <Outlet />;
-  } else {
-    console.warn(
-      `Acceso denegado a ${location.pathname} para el rol ${user?.rol}`
-    );
-    return <Navigate to="/" state={{ from: location }} replace />;
+    return <Outlet />; // <-- Permite el acceso
   }
+
+  // Si el usuario existe pero NO tiene el rol
+  if (user) {
+    console.warn(
+      `Acceso denegado a ${location.pathname} para el rol ${user.rol}`
+    );
+
+    // --- MEJORA DE UX ---
+    // Lo redirigimos a SU dashboard, no al login
+    let homeRoute = "/login"; // Fallback por si acaso
+    if (user.rol === roles.Administrador) {
+      homeRoute = "/dashboard";
+    } else if (user.rol === roles.Docente) {
+      homeRoute = "/course/dashboard";
+    } else if (user.rol === roles.Alumno) {
+      homeRoute = "/my/dashboard";
+    }
+
+    return <Navigate to={homeRoute} state={{ from: location }} replace />;
+  }
+
+  // Si no hay usuario (esto es un fallback, ProtectedRoute ya debería haberlo atajado)
+  return <Navigate to="/login" state={{ from: location }} replace />;
 }

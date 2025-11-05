@@ -22,6 +22,7 @@ import { Box, CircularProgress } from "@mui/material"; // Para el 'loading'
 export default function DashboardLayout() {
   const { user } = useAuth() as { user: UserData | null };
 
+  // --- 1. LISTA DE ADMIN (prefijo /dashboard) ---
   const itemsAdmin: MenuItemType[] = [
     { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
     { text: "Usuarios", icon: <PeopleIcon />, path: "/dashboard/users" },
@@ -34,61 +35,64 @@ export default function DashboardLayout() {
       icon: <SettingsIcon />,
       path: "/dashboard/settings",
     },
+    // (La ruta de AccountPage está separada en tu Router,
+    // pero si la quieres en el sidebar, añádela aquí)
+    // { text: "Mi Cuenta", icon: <AccountCircle />, path: "/dashboard/account" },
   ];
+
+  // --- 2. LISTA DE DOCENTE (prefijo /course) ---
   const itemsDocente = [
-    { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
-    {
-      text: "Progreso",
-      icon: <BarChartIcon />,
-      path: "/dashboard/course/progress",
-    },
+    { text: "Dashboard", icon: <DashboardIcon />, path: "/course/dashboard" },
+    { text: "Progreso", icon: <BarChartIcon />, path: "/course/progress" },
     {
       text: "Dificultades",
       icon: <QueryStats />,
-      path: "/dashboard/course/difficulties",
+      path: "/course/difficulties",
     },
     {
       text: "Sesiones de refuerzo",
       icon: <SwitchAccessShortcutAdd />,
-      path: "/dashboard/course/sessions",
+      path: "/course/sessions", // (Ruta futura)
     },
     {
       text: "Consultas",
       icon: <QuestionAnswer />,
-      path: "/dashboard/course/consults",
+      path: "/course/consults", // (Ruta futura)
     },
     {
       text: "Clases de consulta",
       icon: <Class />,
-      path: "/dashboard/course/consults-classes",
+      path: "/course/consults-classes", // (Ruta futura)
     },
     {
       text: "Configuración de curso",
       icon: <SettingsIcon />,
-      path: "/dashboard/course/course-settings",
-    }, // Ejemplo
+      path: "/course/settings-course", // (Ruta futura)
+    },
   ];
+
+  // --- 3. LISTA DE ALUMNO (prefijo /my) ---
   const itemsAlumno = [
-    { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
+    { text: "Dashboard", icon: <DashboardIcon />, path: "/my/dashboard" },
     {
       text: "Mi progreso",
       icon: <BarChartIcon />,
-      path: "/dashboard/my/progress",
+      path: "/my/progress", // (Tu router usa 'progress')
     },
     {
       text: "Mis dificultades",
       icon: <QueryStats />,
-      path: "/dashboard/my/difficulties",
+      path: "/my/difficulties", // (Tu router usa 'difficulties')
     },
     {
       text: "Sesiones de refuerzo",
       icon: <SwitchAccessShortcutAdd />,
-      path: "/dashboard/my/sessions",
+      path: "/my/sessions", // (Ruta futura)
     },
     {
       text: "Consultas",
       icon: <QuestionAnswer />,
-      path: "/dashboard/my/consults",
+      path: "/my/consults", // (Ruta futura)
     },
   ];
 
