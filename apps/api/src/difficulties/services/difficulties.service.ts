@@ -1,11 +1,13 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { FindStudentDifficultiesDto } from '../dto/find-student-difficulties.dto';
-import { Prisma, roles } from '@prisma/client';
+import { grado_dificultad, Prisma, roles, temas } from '@prisma/client';
+import { SubmitDifficultyDto } from '../dto/submit-difficulty.dto';
 
 @Injectable()
 export class DifficultiesService {
@@ -261,5 +263,166 @@ export class DifficultiesService {
         'Error al obtener las dificultades del alumno.',
       );
     }
+  }
+
+  /**
+   * Registra o actualiza la dificultad de un alumno y recalcula los KPIs del curso.
+   */
+  async submitDifficulty(dto: SubmitDifficultyDto) {
+    const { idAlumno, idDificultad, grado } = dto;
+
+    try {
+      // 1. Validar que el alumno esté activo en un curso
+      const inscripcion = await this.prisma.alumnoCurso.findFirst({
+        where: {
+          idAlumno: idAlumno,
+          estado: 'Activo',
+        },
+        select: { idCurso: true },
+      });
+
+      if (!inscripcion) {
+        throw new NotFoundException(
+          'No se encontró una inscripción activa para este alumno.',
+        );
+      }
+      const { idCurso } = inscripcion;
+
+      // 2. Ejecutar todo como una transacción
+      return await this.prisma.$transaction(async (tx) => {
+        // --- Paso A: Usamos UPSERT (Tu lógica) ---
+        await tx.dificultadAlumno.upsert({
+          // Dónde buscar: la clave única
+          where: {
+            idAlumno_idCurso_idDificultad: {
+              idAlumno,
+              idCurso,
+              idDificultad,
+            },
+          },
+          // Qué hacer si SÍ existe (UPDATE)
+          update: {
+            grado: grado,
+          },
+          // Qué hacer si NO existe (CREATE)
+          create: {
+            idAlumno,
+            idCurso,
+            idDificultad,
+            grado: grado,
+          },
+        });
+
+        // --- Paso B: Recalcular los KPIs del curso ---
+        await this.recalculateCourseDifficulties(tx, idCurso);
+
+        return { message: 'Dificultad registrada/actualizada con éxito' };
+      });
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2003') {
+          // Foreign key constraint failed
+          throw new BadRequestException(
+            'El idDificultad o idAlumno no existen.',
+          );
+        }
+      }
+      console.error('Error en submitDifficulty:', error);
+      throw new InternalServerErrorException(
+        'Error al registrar la dificultad.',
+      );
+    }
+  }
+
+  /**
+   * HELPER: Recalcula los KPIs de DificultadesCurso
+   * (Esta es la lógica que discutimos)
+   */
+  private async recalculateCourseDifficulties(
+    tx: Prisma.TransactionClient,
+    idCurso: string,
+  ) {
+    // 1. Encontrar el registro de DificultadesCurso a actualizar
+    const curso = await tx.curso.findUnique({
+      where: { id: idCurso },
+      select: { idDificultadesCurso: true },
+    });
+    if (!curso) throw new Error('Curso no encontrado en recalculate'); // Error interno
+
+    // 2. Obtener TODOS los registros de dificultad de ESTE curso
+    const allDifAlumnos = await tx.dificultadAlumno.findMany({
+      where: { idCurso: idCurso },
+      select: {
+        idAlumno: true,
+        idDificultad: true,
+        grado: true,
+        dificultad: { select: { tema: true } }, // Hacemos JOIN con 'dificultad'
+      },
+    });
+
+    // Si no hay dificultades, reseteamos y salimos
+    if (allDifAlumnos.length === 0) {
+      await tx.dificultadesCurso.update({
+        where: { id: curso.idDificultadesCurso },
+        data: {
+          temaModa: 'Ninguno',
+          idDificultadModa: null,
+          promDificultades: 0,
+          promGrado: 'Ninguno',
+        },
+      });
+      return;
+    }
+
+    // --- 3. Calcular KPIs (Lógica en TypeScript) ---
+
+    // KPI: Promedio de dificultades por alumno
+    const totalAlumnosSet = new Set(allDifAlumnos.map((d) => d.idAlumno));
+    const promDificultades = allDifAlumnos.length / totalAlumnosSet.size;
+
+    // KPI: Dificultad más frecuente (Moda)
+    const difCounts = new Map<string, number>();
+    allDifAlumnos.forEach((d) =>
+      difCounts.set(d.idDificultad, (difCounts.get(d.idDificultad) || 0) + 1),
+    );
+    const dificultadModaId = [...difCounts.entries()].reduce((a, b) =>
+      b[1] > a[1] ? b : a,
+    )[0];
+
+    // KPI: Tema más frecuente (Moda)
+    const temaCounts = new Map<temas, number>();
+    allDifAlumnos.forEach((d) =>
+      temaCounts.set(
+        d.dificultad.tema,
+        (temaCounts.get(d.dificultad.tema) || 0) + 1,
+      ),
+    );
+    const temaModa = [...temaCounts.entries()].reduce((a, b) =>
+      b[1] > a[1] ? b : a,
+    )[0];
+
+    // KPI: Grado promedio (con pesos)
+    const pesos = { Ninguno: 0, Bajo: 1, Medio: 2, Alto: 3 };
+    let sumaPesos = 0;
+    allDifAlumnos.forEach((d) => (sumaPesos += pesos[d.grado]));
+    const promNumerico = sumaPesos / allDifAlumnos.length;
+
+    let promGrado: grado_dificultad = 'Ninguno';
+    if (promNumerico > 2.5) promGrado = 'Alto';
+    else if (promNumerico > 1.5)
+      promGrado = 'Medio'; // 1.51 a 2.5
+    else if (promNumerico > 0) promGrado = 'Bajo'; // 0.1 a 1.5
+
+    // 4. Actualizar la tabla DificultadesCurso
+    await tx.dificultadesCurso.update({
+      where: { id: curso.idDificultadesCurso },
+      data: {
+        temaModa: temaModa,
+        idDificultadModa: dificultadModaId,
+        promDificultades: promDificultades,
+        promGrado: promGrado,
+      },
+    });
   }
 }
