@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -12,6 +13,9 @@ import {
   StarsRange,
 } from '../dto/find-student-progress.dto';
 import { Prisma } from '@prisma/client';
+import { SubmitMissionDto } from '../dto/submit-mission.dto';
+
+const TOTAL_MISIONES_JUEGO = 10; // (Hardcodeado por ahora)
 
 @Injectable()
 export class ProgressService {
@@ -125,6 +129,145 @@ export class ProgressService {
       throw new InternalServerErrorException(
         'Error al obtener el progreso de los alumnos.',
       );
+    }
+  }
+
+  async getStudentProgress(idAlumno: string, idCurso: string) {
+    try {
+      // 1. Buscamos la inscripción específica
+      const inscripcion = await this.prisma.alumnoCurso.findUnique({
+        where: {
+          idAlumno_idCurso: {
+            idAlumno: idAlumno,
+            idCurso: idCurso,
+          },
+        },
+        // 2. Incluimos el progreso de esa inscripción
+        include: {
+          progresoAlumno: true,
+        },
+      });
+
+      // 3. Validamos que exista
+      if (!inscripcion || !inscripcion.progresoAlumno) {
+        throw new NotFoundException(
+          'No se encontró tu progreso para este curso.',
+        );
+      }
+
+      // 4. Devolvemos solo el objeto de progreso
+      const progreso = inscripcion.progresoAlumno;
+      return {
+        ...progreso,
+        pctMisionesCompletadas: parseFloat(
+          progreso.pctMisionesCompletadas as any,
+        ),
+        promEstrellas: parseFloat(progreso.promEstrellas as any),
+        promIntentos: parseFloat(progreso.promIntentos as any),
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      console.error('Error en getStudentProgress:', error);
+      throw new InternalServerErrorException('Error al obtener tu progreso.');
+    }
+  }
+
+  /**
+   * Registra una misión completada y recalcula los progresos.
+   * Esta es la lógica principal de tu Propuesta 2 y 3.
+   */
+  async submitMission(dto: SubmitMissionDto) {
+    const { idAlumno, idMision, estrellas, exp, intentos, fechaCompletado } =
+      dto;
+
+    try {
+      // 1. Validar que el alumno esté activo en un curso
+      const inscripcion = await this.prisma.alumnoCurso.findFirst({
+        where: {
+          idAlumno: idAlumno,
+          estado: 'Activo',
+        },
+        select: {
+          idCurso: true,
+          idProgreso: true, // El ID del ProgresoAlumno
+        },
+      });
+
+      if (!inscripcion) {
+        throw new NotFoundException(
+          'No se encontró una inscripción activa para este alumno.',
+        );
+      }
+
+      const { idProgreso, idCurso } = inscripcion;
+
+      // 2. Ejecutar todo como una transacción (como discutimos)
+      return await this.prisma.$transaction(async (tx) => {
+        // --- Paso A: Registrar la misión ---
+        await tx.misionCompletada.create({
+          data: {
+            idMision: idMision,
+            idProgreso: idProgreso, // ID de ProgresoAlumno
+            estrellas: estrellas,
+            exp: exp,
+            intentos: intentos,
+            fechaCompletado: new Date(fechaCompletado),
+          },
+        });
+
+        // --- Paso B: Actualizar ProgresoAlumno (Atómicamente) ---
+        const progAlumnoActualizado = await tx.progresoAlumno.update({
+          where: { id: idProgreso },
+          data: {
+            // Operaciones atómicas para evitar 'race conditions'
+            totalEstrellas: { increment: estrellas },
+            totalExp: { increment: exp },
+            totalIntentos: { increment: intentos },
+            cantMisionesCompletadas: { increment: 1 },
+            ultimaActividad: new Date(), // TODO: Que la nueva ultima actividad sea la fecha de la ultima misión completada registrada
+          },
+        });
+
+        // --- Paso C: Recalcular Promedios (Alumno) ---
+        // (Esto es seguro porque ocurre DENTRO de la transacción)
+        const nuevoPromEstrellas =
+          progAlumnoActualizado.totalEstrellas /
+          progAlumnoActualizado.cantMisionesCompletadas;
+        const nuevoPromIntentos =
+          progAlumnoActualizado.totalIntentos /
+          progAlumnoActualizado.cantMisionesCompletadas;
+        const nuevoPctCompletadas =
+          (progAlumnoActualizado.cantMisionesCompletadas /
+            TOTAL_MISIONES_JUEGO) *
+          100;
+
+        await tx.progresoAlumno.update({
+          where: { id: idProgreso },
+          data: {
+            promEstrellas: nuevoPromEstrellas,
+            promIntentos: nuevoPromIntentos,
+            pctMisionesCompletadas: nuevoPctCompletadas,
+          },
+        });
+
+        // --- Paso D: Recalcular ProgresoCurso (Agregación) ---
+        // Llamamos al helper para que actualice los KPIs del curso
+        await this.recalculateCourseProgress(tx, idCurso);
+
+        return { message: 'Progreso registrado con éxito' };
+      });
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        // Error de constraint (ej: idMision no existe)
+        if (error.code === 'P2003' || error.code === 'P2002') {
+          throw new BadRequestException(
+            'Datos inválidos (ej: Misión o Alumno no existen)',
+          );
+        }
+      }
+      console.error('Error en submitMission:', error);
+      throw new InternalServerErrorException('Error al registrar el progreso.');
     }
   }
 
@@ -273,43 +416,54 @@ export class ProgressService {
     };
   }
 
-  async getStudentProgress(idAlumno: string, idCurso: string) {
-    try {
-      // 1. Buscamos la inscripción específica
-      const inscripcion = await this.prisma.alumnoCurso.findUnique({
-        where: {
-          idAlumno_idCurso: {
-            idAlumno: idAlumno,
-            idCurso: idCurso,
-          },
-        },
-        // 2. Incluimos el progreso de esa inscripción
-        include: {
-          progresoAlumno: true,
-        },
-      });
+  /**
+   * Recalcula los KPIs de ProgresoCurso
+   */
+  private async recalculateCourseProgress(
+    tx: Prisma.TransactionClient,
+    idCurso: string,
+  ) {
+    // 1. Obtenemos el ID del ProgresoCurso
+    const curso = await tx.curso.findUnique({
+      where: { id: idCurso },
+      select: { idProgreso: true },
+    });
+    if (!curso) return; // El curso no existe
 
-      // 3. Validamos que exista
-      if (!inscripcion || !inscripcion.progresoAlumno) {
-        throw new NotFoundException(
-          'No se encontró tu progreso para este curso.',
-        );
-      }
+    // 2. Hacemos una agregación de TODOS los progresos de alumnos
+    // que pertenecen a este curso
+    const agregados = await tx.progresoAlumno.aggregate({
+      _sum: {
+        cantMisionesCompletadas: true,
+        totalEstrellas: true,
+        totalExp: true,
+        totalIntentos: true,
+      },
+      _avg: {
+        pctMisionesCompletadas: true,
+        promEstrellas: true,
+        promIntentos: true,
+      },
+      where: {
+        alumnoCurso: {
+          idCurso: idCurso,
+          estado: 'Activo', // Solo de alumnos activos
+        },
+      },
+    });
 
-      // 4. Devolvemos solo el objeto de progreso
-      const progreso = inscripcion.progresoAlumno;
-      return {
-        ...progreso,
-        pctMisionesCompletadas: parseFloat(
-          progreso.pctMisionesCompletadas as any,
-        ),
-        promEstrellas: parseFloat(progreso.promEstrellas as any),
-        promIntentos: parseFloat(progreso.promIntentos as any),
-      };
-    } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      console.error('Error en getStudentProgress:', error);
-      throw new InternalServerErrorException('Error al obtener tu progreso.');
-    }
+    // 3. Actualizamos la tabla ProgresoCurso
+    await tx.progresoCurso.update({
+      where: { id: curso.idProgreso },
+      data: {
+        misionesCompletadas: agregados._sum.cantMisionesCompletadas || 0,
+        totalEstrellas: agregados._sum.totalEstrellas || 0,
+        totalExp: agregados._sum.totalExp || 0,
+        totalIntentos: agregados._sum.totalIntentos || 0,
+        pctMisionesCompletadas: agregados._avg.pctMisionesCompletadas || 0,
+        promEstrellas: agregados._avg.promEstrellas || 0,
+        promIntentos: agregados._avg.promIntentos || 0,
+      },
+    });
   }
 }
