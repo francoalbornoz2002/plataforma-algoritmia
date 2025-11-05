@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, type ReactNode } from "react";
 import {
   Box,
   Typography,
@@ -49,23 +49,46 @@ import { temas, grado_dificultad } from "../../types";
 // 3. Importamos el Modal
 import StudentDifficultyDetailModal from "./StudentDifficultyDetailModal";
 import GradeChip from "../../components/GradeChip";
+import TemaChip from "../../components/TemaChip";
 
 // Componente Helper de KPI (copiado de ProgressPage)
 interface KpiCardProps {
   title: string;
-  value: string | number;
+  value: ReactNode;
   loading: boolean;
 }
 function KpiCard({ title, value, loading }: KpiCardProps) {
   return (
     <Card>
-      <CardContent sx={{ textAlign: "center" }}>
+      {/* Añadimos minHeight para que todas las cards tengan la misma altura */}
+      <CardContent sx={{ textAlign: "center", minHeight: 90 }}>
         <Typography variant="body2" color="text.secondary" gutterBottom>
           {title}
         </Typography>
-        <Typography variant="h4" component="div">
-          {loading ? <CircularProgress size={30} /> : value}
-        </Typography>
+        {/* Añadimos un Box para centrar verticalmente el contenido
+          y manejar el spinner de carga de forma limpia.
+        */}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            minHeight: 40, // Altura mínima para el contenido
+            mt: 0.5,
+          }}
+        >
+          {loading ? (
+            <CircularProgress size={30} />
+          ) : // Si el valor es texto/número, lo envolvemos en Typography
+          typeof value === "string" || typeof value === "number" ? (
+            <Typography variant="h5" component="div">
+              {value}
+            </Typography>
+          ) : (
+            // Si no, renderizamos el componente (nuestro Chip)
+            value
+          )}
+        </Box>
       </CardContent>
     </Card>
   );
@@ -261,28 +284,42 @@ export default function DifficultiesPage() {
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <KpiCard
-            title="Tema más frecuente"
+            title="Dificultad más frecuente"
             value={overview?.dificultadModa?.nombre || "N/A"}
             loading={overviewLoading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          {/* --- 3. Pasamos el TemaChip como 'value' --- */}
           <KpiCard
             title="Tema (Moda)"
-            value={overview?.temaModa || "N/A"}
+            value={
+              overview?.temaModa && overview.temaModa !== temas.Ninguno ? (
+                <TemaChip tema={overview.temaModa} />
+              ) : (
+                "N/A" // Fallback si el tema es 'Ninguno'
+              )
+            }
             loading={overviewLoading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          {/* --- 4. Pasamos el GradeChip como 'value' --- */}
           <KpiCard
             title="Grado (Promedio)"
-            value={overview?.promGrado || "N/A"}
+            value={
+              overview?.promGrado ? (
+                <GradeChip grado={overview.promGrado} />
+              ) : (
+                "N/A"
+              )
+            }
             loading={overviewLoading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <KpiCard
-            title="Dificultades (Prom./Alumno)"
+            title="Dificultades (Prom./Alu.)"
             value={overview ? overview.promDificultades.toFixed(1) : 0}
             loading={overviewLoading}
           />
