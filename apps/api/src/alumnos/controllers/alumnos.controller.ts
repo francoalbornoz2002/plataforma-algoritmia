@@ -1,7 +1,9 @@
 import {
+  Body,
   Controller,
   Get,
   ParseUUIDPipe,
+  Post,
   Query,
   Req,
   UseGuards,
@@ -11,6 +13,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { roles } from '@prisma/client';
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
+import { JoinCourseDto } from '../dto/join-course-dto';
 
 @UseGuards(RolesGuard)
 @Roles(roles.Alumno)
@@ -23,13 +26,22 @@ export class AlumnosController {
     return this.alumnosService.findMyCourses(req.user.userId);
   }
 
+  @Post('my/join-course')
+  joinCourse(
+    @Req() req: AuthenticatedUserRequest, // Obtenemos el alumno del token
+    @Body() joinCourseDto: JoinCourseDto, // Obtenemos { idCurso, contrasenaAcceso } del body
+  ) {
+    // Pasamos el usuario y el DTO completo al servicio
+    return this.alumnosService.joinCourse(req.user, joinCourseDto);
+  }
+
   @Get('my/progress')
   findMyProgress(
     @Req() req: AuthenticatedUserRequest,
-    @Query('idCurso', ParseUUIDPipe) idCurso: string, // 3. Recibir el ID del curso
+    @Query('idCurso', ParseUUIDPipe) idCurso: string, // Recibimos el ID del curso
   ) {
-    const idAlumno = req.user.userId; // 4. Obtener el ID del alumno
-    return this.alumnosService.findMyProgress(idAlumno, idCurso); // 5. Llamar al servicio
+    const idAlumno = req.user.userId; // Obtenemos el ID del alumno
+    return this.alumnosService.findMyProgress(idAlumno, idCurso); // Llamamos al servicio
   }
 
   @Get('my/difficulties')

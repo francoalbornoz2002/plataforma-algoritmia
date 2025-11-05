@@ -23,7 +23,6 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
 import { FindAllCoursesDto } from '../dto/find-all-courses.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { JoinCourseDto } from '../dto/join-course-dto';
 
 @Controller('courses')
 export class CoursesController {
@@ -69,17 +68,5 @@ export class CoursesController {
   @Delete('delete/:id')
   delete(@Param('id') id: string) {
     return this.coursesService.remove(id);
-  }
-
-  @UseGuards(RolesGuard)
-  @Roles(roles.Alumno)
-  @Post(':id/join')
-  join(
-    @Param('id', ParseUUIDPipe) idCurso: string, // Obtenemos el ID del curso de la URL
-    @Req() req: AuthenticatedUserRequest, // Obtenemos el usuario (alumno) del token
-    @Body() joinCourseDto: JoinCourseDto, // Obtenemos la contraseña del body
-  ) {
-    console.log('USER DEL REQUEST:', req.user);
-    return this.coursesService.join(req.user, idCurso, joinCourseDto);
   }
 }
