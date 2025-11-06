@@ -101,7 +101,7 @@ export default function LoginPage() {
           p: 4,
           width: "100%",
           maxWidth: 400,
-          boxShadow: 3,
+          boxShadow: 5,
         }}
       >
         <Stack
