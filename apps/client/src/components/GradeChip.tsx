@@ -1,7 +1,5 @@
 import { Chip, type ChipProps } from "@mui/material";
-import { grado_dificultad } from "../types"; // Ajusta la ruta a 'types'
-
-// 1. Importamos los íconos que pediste
+import { grado_dificultad } from "../types";
 import DangerousIcon from "@mui/icons-material/Dangerous";
 import WarningIcon from "@mui/icons-material/Warning";
 import InfoIcon from "@mui/icons-material/Info";

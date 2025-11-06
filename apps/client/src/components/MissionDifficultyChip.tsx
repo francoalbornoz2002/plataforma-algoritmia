@@ -1,7 +1,5 @@
 import { Chip, type ChipProps } from "@mui/material";
-import { dificultad_mision } from "../types"; // Ajusta la ruta a 'types'
-
-// 1. Importamos los íconos
+import { dificultad_mision } from "../types";
 import {
   LooksOne,
   LooksTwo,

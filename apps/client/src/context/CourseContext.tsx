@@ -7,7 +7,7 @@ import {
   useMemo,
 } from "react";
 import type { CursoParaEditar } from "../types"; // Importamos el tipo que ya definimos
-import { findCourseById } from "../services/courses.service"; // Importamos el servicio
+import { findCourseById } from "../features/courses/services/courses.service"; // Importamos el servicio
 
 // 1. Definimos la "forma" de nuestro contexto
 interface CourseContextType {

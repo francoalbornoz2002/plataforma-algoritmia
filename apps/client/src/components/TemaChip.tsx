@@ -1,7 +1,5 @@
 import { Chip } from "@mui/material";
-import { temas } from "../types"; // Ajusta la ruta a 'types'
-
-// 1. Importamos los íconos para cada tema
+import { temas } from "../types";
 import FormatListNumberedIcon from "@mui/icons-material/FormatListNumbered"; // Secuencia
 import AccountTreeIcon from "@mui/icons-material/AccountTree"; // Logica
 import LoopIcon from "@mui/icons-material/Loop"; // Estructuras
@@ -16,7 +14,7 @@ interface TemaChipProps {
 export default function TemaChip({ tema }: TemaChipProps) {
   let icon: React.ReactElement;
 
-  // 2. Hacemos un switch para asignar el ícono correcto
+  // Hacemos un switch para asignar el ícono correcto
   switch (tema) {
     case temas.Secuencia:
       icon = <FormatListNumberedIcon sx={{ fontSize: "1.25rem" }} />;
@@ -39,6 +37,6 @@ export default function TemaChip({ tema }: TemaChipProps) {
       break;
   }
 
-  // 3. Renderizamos el Chip
+  // Renderizamos el Chip
   return <Chip icon={icon} label={tema} variant="outlined" />;
 }

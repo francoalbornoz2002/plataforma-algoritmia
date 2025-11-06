@@ -29,9 +29,9 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { Link, useLocation } from "react-router";
 import SideBarList from "./SidebarList";
 import { AccountCircle, School } from "@mui/icons-material";
-import { useAuth } from "../../auth/AuthProvider";
 import { useCourseContext } from "../../context/CourseContext";
 import type { MenuItemType } from "../../types";
+import { useAuth } from "../../features/authentication/context/AuthProvider";
 
 const drawerWidth = 240;
 const closedDrawerWidth = (theme: Theme) => `calc(${theme.spacing(7)} + 1px)`;

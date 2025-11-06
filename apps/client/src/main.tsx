@@ -9,7 +9,7 @@ import "./index.css";
 import App from "./App.tsx";
 import { ThemeConfig } from "./config/theme.config.tsx";
 import { BrowserRouter } from "react-router";
-import { AuthProvider } from "./auth/AuthProvider.tsx";
+import { AuthProvider } from "./features/authentication/context/AuthProvider";
 import { SnackbarProvider } from "notistack";
 
 createRoot(document.getElementById("root")!).render(

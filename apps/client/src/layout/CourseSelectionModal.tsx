@@ -25,20 +25,20 @@ import {
 import {
   findMyCourses as findMyStudentCourses,
   type InscripcionConCurso,
-} from "../services/alumnos.service";
+} from "../features/users/services/alumnos.service";
 import {
   findMyCourses as findMyTeacherCourses,
   type AsignacionConCurso,
-} from "../services/docentes.service";
+} from "../features/users/services/docentes.service";
+
+// 3. Componentes Hijos
+import MyCoursesCard from "../features/courses/components/MyCoursesCard"; // <-- Tarjeta para "Mis Cursos"
+import JoinCourseCard from "../features/courses/components/JoinCourseCard"; // <-- Tarjeta para "Inscribirse"
+import JoinCourseModal from "../features/courses/components/JoinCourseModal"; // <-- Modal de Contraseña
 import {
   findCourses,
   type PaginatedCoursesResponse,
-} from "../services/courses.service";
-
-// 3. Componentes Hijos
-import MyCoursesCard from "../pages/dashboard/courses/MyCoursesCard"; // <-- Tarjeta para "Mis Cursos"
-import JoinCourseCard from "../pages/dashboard/courses/JoinCourseCard"; // <-- Tarjeta para "Inscribirse"
-import JoinCourseModal from "../pages/dashboard/courses/JoinCourseModal"; // <-- Modal de Contraseña
+} from "../features/courses/services/courses.service";
 
 interface CourseSelectionModalProps {
   open: boolean;

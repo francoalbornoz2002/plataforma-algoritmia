@@ -1,5 +1,3 @@
-// src/components/ConfirmationDialog.tsx
-
 import {
   Dialog,
   DialogTitle,

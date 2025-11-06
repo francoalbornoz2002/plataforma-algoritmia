@@ -6,8 +6,8 @@ import {
   ListItemText,
   Tooltip,
 } from "@mui/material";
-import type { MenuItemType } from "./Sidebar";
 import { Link } from "react-router";
+import type { MenuItemType } from "../../types";
 
 interface SideBarListProps {
   menuItems: MenuItemType[]; // Indica que es un array de MenuItemType

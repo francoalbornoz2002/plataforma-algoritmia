@@ -1,22 +1,24 @@
 import React from "react";
-import LoginPage from "./pages/login/LoginPage";
+import LoginPage from "./features/authentication/pages/LoginPage";
 import { Navigate, Route, Routes } from "react-router";
-import DashboardLayout from "./layout/DashboardLayout";
-import DashboardPage from "./pages/dashboard/DashboardPage";
-import UsersPage from "./pages/dashboard/users/UsersPage";
-import StatsPage from "./pages/dashboard/stats/StatsPage";
-import ReportsPage from "./pages/dashboard/reports/ReportsPage";
-import SettingsPage from "./pages/SettingsPage";
-import AuditPage from "./pages/dashboard/audit/AuditPage";
-import CoursesPage from "./pages/dashboard/courses/CoursesPage";
-import AccountPage from "./pages/AccountPage";
-import ProtectedRoute from "./auth/ProtectedRoute";
-import RoleProtectedRoute from "./auth/RoleProtectedRoute";
+import UsersPage from "./features/users/pages/UsersPage";
+import StatsPage from "./features/stats/StatsPage";
+import ReportsPage from "./features/reports/ReportsPage";
+import AuditPage from "./features/audit/AuditPage";
+import CoursesPage from "./features/courses/pages/CoursesPage";
+import AccountPage from "./features/users/pages/AccountPage";
+import ProtectedRoute from "./features/authentication/guards/ProtectedRoute";
+import RoleProtectedRoute from "./features/authentication/guards/RoleProtectedRoute";
+import MyProgressPage from "./features/progress/pages/MyProgressPage";
+import DifficultiesPage from "./features/difficulties/pages/DifficultiesPage";
+import ProgressPage from "./features/progress/pages/ProgressPage";
+import MyDifficultiesPage from "./features/difficulties/pages/MyDifficultiesPage";
+import CourseSettingsPage from "./features/courses/pages/CourseSettingsPage";
+import SidebarLayout from "./layout/SidebarLayout";
+import AdminDashboardPage from "./features/dashboards/AdminDashboardPage";
+import DocenteDashboardPage from "./features/dashboards/DocenteDashboard";
+import AlumnoDashboardPage from "./features/dashboards/AlumnoDashboardPage";
 import { Roles } from "./types/roles";
-import ProgressPage from "./pages/docente/ProgressPage";
-import MyProgressPage from "./pages/alumno/MyProgressPage";
-import MyDifficultiesPage from "./pages/alumno/MyDifficultiesPage";
-import DifficultiesPage from "./pages/docente/DifficultiesPage";
 
 export const AppRouter: React.FC<{}> = () => {
   return (
@@ -26,6 +28,8 @@ export const AppRouter: React.FC<{}> = () => {
       <Route path="/" element={<Navigate to="/login" replace />} />
       {/* 2. Grupo de Rutas Protegidas (Autenticación) */}
       <Route element={<ProtectedRoute />}>
+        {/* Ruta común para todos, para modificar su cuenta */}
+        <Route path="my/account" element={<AccountPage />} />
         {/* GRUPO 1: ADMIN (/dashboard) */}
         {/* Primero validamos el ROL */}
         <Route
@@ -34,14 +38,13 @@ export const AppRouter: React.FC<{}> = () => {
         >
           {/* Si el ROL es correcto, renderiza este layout
               que a su vez renderiza un <Outlet /> para las páginas */}
-          <Route element={<DashboardLayout />}>
-            <Route index element={<DashboardPage />} />
+          <Route element={<SidebarLayout />}>
+            <Route index element={<AdminDashboardPage />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="courses" element={<CoursesPage />} />
             <Route path="stats" element={<StatsPage />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="audit" element={<AuditPage />} />
-            <Route path="settings" element={<SettingsPage />} />
             <Route path="account" element={<AccountPage />} />
           </Route>
         </Route>
@@ -53,11 +56,11 @@ export const AppRouter: React.FC<{}> = () => {
           element={<RoleProtectedRoute allowedRoles={[Roles.Docente]} />}
         >
           {/* Si el ROL es correcto, renderiza el DashboardLayout */}
-          <Route element={<DashboardLayout />}>
-            <Route path="dashboard" element={<DashboardPage />} />
+          <Route element={<SidebarLayout />}>
+            <Route path="dashboard" element={<DocenteDashboardPage />} />
             <Route path="progress" element={<ProgressPage />} />
             <Route path="difficulties" element={<DifficultiesPage />} />
-            <Route path="account" element={<AccountPage />} />
+            <Route path="settings" element={<CourseSettingsPage />} />
           </Route>
         </Route>
 
@@ -68,11 +71,10 @@ export const AppRouter: React.FC<{}> = () => {
           element={<RoleProtectedRoute allowedRoles={[Roles.Alumno]} />}
         >
           {/* Si el ROL es correcto, renderiza el DashboardLayout */}
-          <Route element={<DashboardLayout />}>
-            <Route path="dashboard" element={<DashboardPage />} />
+          <Route element={<SidebarLayout />}>
+            <Route path="dashboard" element={<AlumnoDashboardPage />} />
             <Route path="progress" element={<MyProgressPage />} />
             <Route path="difficulties" element={<MyDifficultiesPage />} />
-            <Route path="account" element={<AccountPage />} />
           </Route>
         </Route>
       </Route>{" "}
