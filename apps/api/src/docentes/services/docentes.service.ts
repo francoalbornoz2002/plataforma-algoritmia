@@ -153,4 +153,17 @@ export class DocentesService {
       idCurso,
     );
   }
+
+  async getStudentMissions(
+    idAlumno: string,
+    idCurso: string,
+    idDocente: string,
+  ) {
+    // 1. Validamos que el docente tenga acceso a este curso
+    await this.checkDocenteAccess(idDocente, idCurso);
+    // (Aquí podríamos validar también que el alumno pertenezca al curso si quisiéramos)
+
+    // 2. Llamamos al servicio "cerebro"
+    return this.progressService.getStudentMissionStatus(idAlumno, idCurso);
+  }
 }

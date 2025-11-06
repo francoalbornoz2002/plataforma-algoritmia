@@ -84,4 +84,18 @@ export class DocentesController {
       idDocente,
     );
   }
+
+  @Get('my/courses/:idCurso/student/:idAlumno/missions')
+  getStudentMissions(
+    @Param('idCurso', ParseUUIDPipe) idCurso: string,
+    @Param('idAlumno', ParseUUIDPipe) idAlumno: string,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const idDocente = req.user.userId;
+    return this.docentesService.getStudentMissions(
+      idAlumno,
+      idCurso,
+      idDocente,
+    );
+  }
 }
