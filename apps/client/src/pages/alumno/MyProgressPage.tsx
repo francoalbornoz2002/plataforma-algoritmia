@@ -7,16 +7,18 @@ import {
   Alert,
   Card,
   CardContent,
+  Divider,
 } from "@mui/material";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
 // 1. Hooks y Servicios
 import { useCourseContext } from "../../context/CourseContext";
-import { getMyProgress } from "../../services/alumnos.service";
+import { getMyMissions, getMyProgress } from "../../services/alumnos.service";
 
 // 2. Tipos
-import type { ProgresoAlumno } from "../../types";
+import type { MisionConEstado, ProgresoAlumno } from "../../types";
+import MissionCard from "../../components/MissionCard";
 
 // --- Componente Helper para los KPIs ---
 // (Copiado de la ProgressPage del Docente)
@@ -47,30 +49,52 @@ export default function MyProgressPage() {
 
   // --- 2. ESTADOS ---
   const [progress, setProgress] = useState<ProgresoAlumno | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadingProgress, setLoadingProgress] = useState(true);
+  const [errorProgress, setErrorProgress] = useState<string | null>(null);
+
+  const [missions, setMissions] = useState<MisionConEstado[]>([]);
+  const [loadingMissions, setLoadingMissions] = useState(true);
+  const [errorMissions, setErrorMissions] = useState<string | null>(null);
 
   // --- 3. DATA FETCHING ---
   useEffect(() => {
     // Solo buscamos si hay un curso seleccionado
     if (!selectedCourse) {
-      setLoading(false);
-      setError(null);
+      setLoadingProgress(false);
+      setLoadingMissions(false);
+      setErrorProgress(null);
+      setErrorMissions(null);
       setProgress(null);
+      setMissions([]);
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    // --- Fetch 1: KPIs de Progreso ---
+    setLoadingProgress(true);
+    setErrorProgress(null);
     getMyProgress(selectedCourse.id)
       .then((data) => {
         setProgress(data);
       })
       .catch((err) => {
-        setError(err.message);
+        setErrorProgress(err.message);
       })
       .finally(() => {
-        setLoading(false);
+        setLoadingProgress(false);
+      });
+
+    // --- Fetch 2: Lista de Misiones ---
+    setLoadingMissions(true);
+    setErrorMissions(null);
+    getMyMissions(selectedCourse.id)
+      .then((data) => {
+        setMissions(data);
+      })
+      .catch((err) => {
+        setErrorMissions(err.message);
+      })
+      .finally(() => {
+        setLoadingMissions(false);
       });
   }, [selectedCourse]); // Se re-ejecuta cada vez que el curso cambia
 
@@ -84,17 +108,9 @@ export default function MyProgressPage() {
     );
   }
 
-  if (loading) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return <Alert severity="error">{error}</Alert>;
-  }
+  // (Unimos ambos 'loading' y 'error' para los KPIs)
+  const isLoading = loadingProgress;
+  const error = errorProgress;
 
   // Formateamos el valor de "Última Actividad"
   const ultimaActividadFormateada = progress?.ultimaActividad
@@ -118,28 +134,28 @@ export default function MyProgressPage() {
             value={
               progress ? `${progress.pctMisionesCompletadas.toFixed(1)}%` : 0
             }
-            loading={loading}
+            loading={isLoading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <KpiCard
             title="Estrellas (Prom.)"
             value={progress ? `⭐ ${progress.promEstrellas.toFixed(1)}` : 0}
-            loading={loading}
+            loading={isLoading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <KpiCard
             title="Intentos (Prom.)"
             value={progress ? progress.promIntentos.toFixed(1) : 0}
-            loading={loading}
+            loading={isLoading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <KpiCard
             title="EXP Total"
             value={progress ? progress.totalExp : 0}
-            loading={loading}
+            loading={isLoading}
           />
         </Grid>
 
@@ -148,34 +164,58 @@ export default function MyProgressPage() {
           <KpiCard
             title="Misiones Completadas"
             value={progress ? progress.cantMisionesCompletadas : 0}
-            loading={loading}
+            loading={isLoading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <KpiCard
             title="Estrellas Totales"
             value={progress ? progress.totalEstrellas : 0}
-            loading={loading}
+            loading={isLoading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <KpiCard
             title="Intentos Totales"
             value={progress ? progress.totalIntentos : 0}
-            loading={loading}
+            loading={isLoading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <KpiCard
             title="Última Actividad"
             value={ultimaActividadFormateada}
-            loading={loading}
+            loading={isLoading}
           />
         </Grid>
       </Grid>
 
-      {/* (Aquí podrías añadir más componentes, como un gráfico
-         o una lista de las últimas misiones completadas) */}
+      <Divider sx={{ my: 4 }} />
+
+      {/* --- B. Grilla de Misiones --- */}
+      <Typography variant="h4" gutterBottom>
+        Estado de Misiones
+      </Typography>
+
+      {loadingMissions ? (
+        <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : errorMissions ? (
+        <Alert severity="error">{errorMissions}</Alert>
+      ) : missions.length === 0 ? (
+        <Alert severity="info">
+          Aún no hay misiones cargadas para este curso.
+        </Alert>
+      ) : (
+        <Grid container spacing={2} sx={{ mt: 2 }}>
+          {missions.map((missionData) => (
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={missionData.mision.id}>
+              <MissionCard missionData={missionData} />
+            </Grid>
+          ))}
+        </Grid>
+      )}
     </Box>
   );
 }

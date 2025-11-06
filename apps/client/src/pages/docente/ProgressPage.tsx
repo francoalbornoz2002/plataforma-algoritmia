@@ -17,6 +17,8 @@ import {
   Select,
   MenuItem,
   type SelectChangeEvent,
+  Tooltip,
+  Button,
 } from "@mui/material";
 import {
   DataGrid,
@@ -47,6 +49,7 @@ import {
   ProgressRange,
   StarsRange,
 } from "../../types/progress-filters";
+import StudentProgressDetailModal from "./StudentProgressDetailModal";
 
 // --- Componente Helper para los KPIs ---
 interface KpiCardProps {
@@ -69,6 +72,8 @@ function KpiCard({ title, value, loading }: KpiCardProps) {
   );
 }
 // --- Fin Componente Helper ---
+
+type StudentRow = ProgresoAlumnoDetallado;
 
 export default function ProgressPage() {
   // --- 1. CONTEXTO ---
@@ -103,6 +108,9 @@ export default function ProgressPage() {
   // Estado local para el buscador (para debouncing)
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  // Estado para el modal del detalle de las misiones del alumno
+  const [viewingStudent, setViewingStudent] = useState<StudentRow | null>(null);
 
   // --- 3. DATA FETCHING (EFFECTS) ---
 
@@ -232,6 +240,26 @@ export default function ProgressPage() {
             })
           );
         },
+      },
+      {
+        field: "actions",
+        headerName: "Misiones",
+        flex: 1,
+        align: "center",
+        headerAlign: "center",
+        sortable: false,
+        minWidth: 120,
+        renderCell: (params) => (
+          <Tooltip title="Ver detalle de misiones">
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => setViewingStudent(params.row)} // <-- Abre el modal
+            >
+              Detalle
+            </Button>
+          </Tooltip>
+        ),
       },
     ],
     []
@@ -383,6 +411,17 @@ export default function ProgressPage() {
           onSortModelChange={handleSortChange}
         />
       </Box>
+      {/* --- D. RENDERIZADO DEL MODAL DE DETALLE --- */}
+      {viewingStudent && (
+        <StudentProgressDetailModal
+          open={!!viewingStudent}
+          onClose={() => setViewingStudent(null)}
+          idCurso={selectedCourse.id}
+          // Usamos el 'idAlumno' que acabamos de añadir
+          idAlumno={viewingStudent.idAlumno}
+          nombreAlumno={`${viewingStudent.nombre} ${viewingStudent.apellido}`}
+        />
+      )}
     </Box>
   );
 }
