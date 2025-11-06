@@ -6,7 +6,6 @@ import {
   Chip,
   Stack,
   Divider,
-  type ChipProps,
 } from "@mui/material";
 
 // 1. Importamos los íconos para la dificultad de la misión
@@ -14,17 +13,7 @@ import StarIcon from "@mui/icons-material/Star"; // Estrellas
 import BoltIcon from "@mui/icons-material/Bolt"; // EXP
 import ReplayIcon from "@mui/icons-material/Replay"; // Intentos
 import LockIcon from "@mui/icons-material/Lock"; // Pendiente
-import CheckCircleIcon from "@mui/icons-material/CheckCircle"; // Completada
-import {
-  LooksOne, // Fácil (1)
-  LooksTwo, // Medio (2)
-  Looks3, // Difícil (3)
-} from "@mui/icons-material"; // (O puedes usar otros que te gusten)
-import {
-  dificultad_mision,
-  type MisionCompletada,
-  type MisionConEstado,
-} from "../types";
+import { type MisionCompletada, type MisionConEstado } from "../types";
 import MissionDifficultyChip from "./MissionDifficultyChip";
 
 interface MissionCardProps {

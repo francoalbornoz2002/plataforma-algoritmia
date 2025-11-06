@@ -6,7 +6,7 @@ import {
   LooksOne,
   LooksTwo,
   Looks3,
-  CheckCircleOutline, // Un ícono neutral para 'default'
+  CheckCircleOutline,
 } from "@mui/icons-material";
 
 interface MissionDifficultyChip {
