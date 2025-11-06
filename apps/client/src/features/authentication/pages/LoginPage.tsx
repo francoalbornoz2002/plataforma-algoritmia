@@ -1,127 +1,112 @@
-import { useState } from "react";
-import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
-import TextField from "@mui/material/TextField";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Checkbox from "@mui/material/Checkbox";
-import Link from "@mui/material/Link";
-import Button from "@mui/material/Button";
-import Divider from "@mui/material/Divider";
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
-import DialogActions from "@mui/material/DialogActions";
-import { useForm, type SubmitHandler, Controller } from "react-hook-form";
-import { useLocation, useNavigate } from "react-router";
-import { CircularProgress } from "@mui/material";
-import { useSnackbar } from "notistack";
-import { useAuth } from "../context/AuthProvider";
+import { useState } from 'react';
+import {
+  Box,
+  Typography,
+  TextField,
+  FormControlLabel,
+  Checkbox,
+  Link,
+  Button,
+  Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  CircularProgress,
+  Paper,
+  Stack,
+} from '@mui/material';
+import { useForm, type SubmitHandler, Controller } from 'react-hook-form';
+import { useSnackbar } from 'notistack';
+import { useAuth } from '../context/AuthProvider';
 
-// Defino el tipo de dato para los datos del formulario
-interface LoginFormInputs {
-  email: string;
-  password: string;
-  remember: boolean;
-}
+// --- Importamos el Schema y el Resolver ---
+import { zodResolver } from '@hookform/resolvers/zod';
+import { loginSchema, type LoginFormInputs } from '../validations/login.schema';
 
 export default function LoginPage() {
-  // Estado para controlar la visibilidad del modal o dialog
   const [openDialog, setOpenDialog] = useState(false);
-  const [loginError, setLoginError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { login } = useAuth(); // Obtiene la función login del contexto
+  const { login } = useAuth();
 
-  const from = location.state?.from?.pathname || "/dashboard";
-
-  if (loginError) {
-    enqueueSnackbar(loginError, { variant: "error" });
-    setLoginError(null);
-  }
-
-  // Inicializa react-hook-form
+  // --- Inicialización de RHF (actualizada con Zod) ---
   const {
-    register, // Función para registrar inputs
-    handleSubmit, // Función para envolver el manejador de envío
-    control, // Necesario para componentes controlados como el Checkbox de MUI
-    formState: { errors }, // Objeto que contiene los errores del formulario
+    register,
+    handleSubmit,
+    control,
+    formState: { errors, isSubmitting }, // Usamos 'isSubmitting'
   } = useForm<LoginFormInputs>({
-    mode: "onBlur",
+    mode: 'onBlur',
+    resolver: zodResolver(loginSchema), // Conectamos Zod
     defaultValues: {
-      // Establece valores por defecto si es necesario
-      email: "",
-      password: "",
+      email: '',
+      password: '',
       remember: false,
     },
   });
 
-  // Manejo de estados para el dialog o modal
   const handleOpenDialog = () => setOpenDialog(true);
   const handleCloseDialog = () => setOpenDialog(false);
 
-  // Defino la función manejadora del envío
+  // --- Función 'onSubmit' (actualizada) ---
   const onSubmit: SubmitHandler<LoginFormInputs> = async (data) => {
-    setIsLoading(true);
-    setLoginError(null);
+    // (Ya no necesitamos setIsLoading ni setLoginError)
     try {
       // Llama a la función login del AuthProvider
       await login(data.email, data.password);
-      navigate(from, { replace: true });
+
     } catch (error: any) {
-      console.error("Error en LoginPage onSubmit:", error);
-      // Muestra el error (AuthProvider ya lo formateó o es un error genérico)
-      // Ajusta para acceder al mensaje de error específico de Axios si está disponible
+      console.error('Error en LoginPage onSubmit:', error);
       const message =
         error?.response?.data?.message ||
         error?.message ||
-        "Error al iniciar sesión.";
-      setLoginError(message);
-    } finally {
-      setIsLoading(false);
+        'Error al iniciar sesión.';
+      
+      // Llamamos al snackbar directamente
+      enqueueSnackbar(message, { variant: 'error' });
     }
+    // (Ya no necesitamos 'finally')
   };
 
   return (
     <Box
       sx={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: "100vh",
-        bgcolor: "grey.100",
+        display: 'flex',
+        flexDirection: 'column', // Para centrar mejor
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        bgcolor: 'grey.100',
       }}
     >
-      <Card
+      {/* --- Usamos <Paper /> --- */}
+      <Paper
+        elevation={6} // Más sombra para que "flote"
         sx={{
           p: 4,
-          width: "100%",
+          width: '100%',
           maxWidth: 400,
-          boxShadow: 5,
+          borderRadius: 2, // Bordes redondeados
         }}
       >
         <Stack
-          //spacing={1.5}
           component="form"
           onSubmit={handleSubmit(onSubmit)}
           noValidate
+          spacing={2} // Usamos 'spacing' de Stack
         >
-          {/* 1. Title */}
           <Typography
             variant="h4"
             component="h1"
             gutterBottom
             align="center"
-            sx={{ mb: 3 }}
+            sx={{ fontWeight: 'bold' }} // Un poco más de énfasis
           >
             Iniciar sesión
           </Typography>
 
-          {/* Campo Email con react-hook-form */}
+          {/* --- Campos (actualizados con Zod) --- */}
           <TextField
             required
             fullWidth
@@ -129,26 +114,12 @@ export default function LoginPage() {
             label="Correo electrónico"
             autoComplete="email"
             variant="outlined"
-            // Registra el campo con reglas de validación
-            {...register("email", {
-              required: "El correo electrónico es obligatorio",
-              pattern: {
-                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                message: "Formato de correo inválido",
-              },
-            })}
-            // Muestra los errores
+            {...register('email')}
             error={!!errors.email}
-            helperText={errors.email ? errors.email.message : " "}
-            slotProps={{
-              formHelperText: {
-                style: { minHeight: "1.25em" },
-              },
-            }}
-            sx={{ mb: 1.5 }}
+            helperText={errors.email ? errors.email.message : ' '}
+            disabled={isSubmitting}
           />
 
-          {/* Campo Contraseña con react-hook-form */}
           <TextField
             required
             fullWidth
@@ -157,33 +128,18 @@ export default function LoginPage() {
             id="password"
             autoComplete="current-password"
             variant="outlined"
-            // Registra el campo con reglas de validación
-            {...register("password", {
-              required: "La contraseña es obligatoria",
-              minLength: {
-                value: 6,
-                message: "La contraseña debe tener al menos 6 caracteres",
-              },
-            })}
-            // Muestra los errores
+            {...register('password')}
             error={!!errors.password}
-            helperText={errors.password ? errors.password.message : " "}
-            slotProps={{
-              formHelperText: {
-                style: { minHeight: "1.25em" },
-              },
-            }}
-            sx={{ mb: 0.5 }}
+            helperText={errors.password ? errors.password.message : ' '}
+            disabled={isSubmitting}
           />
 
-          {/* Check de recordar contraseña y olvidé mi contraseña */}
           <Stack
             direction="row"
             justifyContent="space-between"
             alignItems="center"
-            sx={{ mb: 0.5 }}
+            sx={{ mt: -1 }}
           >
-            {/* Checkbox integrado con Controller */}
             <Controller
               name="remember"
               control={control}
@@ -194,10 +150,10 @@ export default function LoginPage() {
                       {...field}
                       checked={field.value}
                       color="primary"
-                      disabled={isLoading}
+                      disabled={isSubmitting}
                     />
                   }
-                  label="Recordar contraseña"
+                  label="Recordarme"
                 />
               )}
             />
@@ -206,19 +162,22 @@ export default function LoginPage() {
             </Link>
           </Stack>
 
-          {/* 6. Botoón de login */}
-          <Button type="submit" fullWidth variant="contained" sx={{ mt: 1 }}>
-            {isLoading ? (
-              <CircularProgress size={24} color="inherit" />
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            disabled={isSubmitting}
+            sx={{ mt: 2, py: 1.5 }}
+          >
+            {isSubmitting ? (
+              <CircularProgress size={24} />
             ) : (
-              "Ingresar"
+              'Ingresar'
             )}
           </Button>
 
-          {/* 7. Divider */}
           <Divider sx={{ my: 2 }}>O</Divider>
 
-          {/* 8. "No tengo usuario" Link */}
           <Typography variant="body2" align="center">
             <Link
               component="button"
@@ -230,7 +189,9 @@ export default function LoginPage() {
             </Link>
           </Typography>
         </Stack>
-      </Card>
+      </Paper>
+      {/* --- Fin del <Paper /> --- */}
+
 
       {/* Modal de "No tengo usuario" */}
       <Dialog open={openDialog} onClose={handleCloseDialog}>
