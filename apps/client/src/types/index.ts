@@ -48,6 +48,12 @@ export enum grado_dificultad {
   Alto = "Alto",
 }
 
+export enum dificultad_mision {
+  Facil = "Facil",
+  Medio = "Medio",
+  Dificil = "Dificil",
+}
+
 /* ---------------------- INTERFACES ---------------------- */
 
 export interface MenuItemType {
@@ -210,6 +216,7 @@ export interface ProgresoCurso {
 // Para la DataGrid (ProgresoAlumno + nombre)
 export interface ProgresoAlumnoDetallado {
   id: string;
+  idAlumno: string;
   cantMisionesCompletadas: number;
   totalEstrellas: number;
   totalExp: number;
@@ -292,4 +299,30 @@ export interface DificultadAlumnoDetallada {
   descripcion: string;
   tema: temas;
   grado: grado_dificultad; // El grado del alumno
+}
+
+// ---------- MISIONES ---------- //
+// 1. Tipo para la Misión Maestra (de la tabla 'misiones')
+export interface Mision {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  dificultadMision: dificultad_mision;
+  // (No incluimos 'misionesCompletadas' que venía de Prisma)
+}
+
+// 2. Tipo para la Misión Completada (de la tabla 'mision_completada')
+export interface MisionCompletada {
+  idMision: string;
+  idProgreso: string;
+  estrellas: number;
+  exp: number;
+  intentos: number;
+  fechaCompletado: string | null; // Llega como string ISO
+}
+
+// 3. Tipo para la respuesta "fusionada" del backend
+export interface MisionConEstado {
+  mision: Mision;
+  completada: MisionCompletada | null; // null si está pendiente
 }
