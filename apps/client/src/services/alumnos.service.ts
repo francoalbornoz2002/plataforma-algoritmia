@@ -4,6 +4,7 @@ import type {
   CursoParaEditar,
   DificultadAlumnoDetallada,
   estado_simple,
+  MisionConEstado,
   ProgresoAlumno,
 } from "../types";
 
@@ -83,5 +84,26 @@ export const getMyDifficulties = async (
       err.response?.data || err.message
     );
     throw err.response?.data || new Error("Error al obtener tus dificultades.");
+  }
+};
+
+/**
+ * Obtiene el estado de todas las misiones (completadas/pendientes)
+ * para el alumno actual en el curso seleccionado.
+ */
+export const getMyMissions = async (
+  idCurso: string
+): Promise<MisionConEstado[]> => {
+  try {
+    const response = await apiClient.get("/alumnos/my/missions", {
+      params: { idCurso },
+    });
+    return response.data;
+  } catch (err: any) {
+    console.error(
+      "Error fetching student missions:",
+      err.response?.data || err.message
+    );
+    throw err.response?.data || new Error("Error al obtener tus misiones.");
   }
 };
