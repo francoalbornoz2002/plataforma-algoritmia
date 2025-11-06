@@ -3,7 +3,7 @@ import { Box, CircularProgress } from "@mui/material";
 import { CourseProvider, useCourseContext } from "../context/CourseContext";
 import type { UserData, MenuItemType } from "../types";
 import Sidebar from "./sidebar/Sidebar";
-import CourseSelectionModal from "./CourseSelectionModal";
+import CourseSelectionModal from "../features/courses/components/CourseSelectionModal";
 
 // --- Este es el componente interno que tiene la lógica ---
 function ContextLayout({

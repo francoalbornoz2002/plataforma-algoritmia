@@ -13,32 +13,32 @@ import {
 } from "@mui/material";
 
 // 1. Contexto y Tipos
-import { useCourseContext } from "../context/CourseContext";
+import { useCourseContext } from "../../../context/CourseContext";
 import {
   roles,
   type CursoParaEditar,
   type CursoConDetalles,
   estado_simple,
-} from "../types";
+} from "../../../types";
 
 // 2. Servicios
 import {
   findMyCourses as findMyStudentCourses,
   type InscripcionConCurso,
-} from "../features/users/services/alumnos.service";
+} from "../../users/services/alumnos.service";
 import {
   findMyCourses as findMyTeacherCourses,
   type AsignacionConCurso,
-} from "../features/users/services/docentes.service";
+} from "../../users/services/docentes.service";
 
 // 3. Componentes Hijos
-import MyCoursesCard from "../features/courses/components/MyCoursesCard"; // <-- Tarjeta para "Mis Cursos"
-import JoinCourseCard from "../features/courses/components/JoinCourseCard"; // <-- Tarjeta para "Inscribirse"
-import JoinCourseModal from "../features/courses/components/JoinCourseModal"; // <-- Modal de Contraseña
+import MyCoursesCard from "./MyCoursesCard"; // <-- Tarjeta para "Mis Cursos"
+import JoinCourseCard from "./JoinCourseCard"; // <-- Tarjeta para "Inscribirse"
+import JoinCourseModal from "./JoinCourseModal"; // <-- Modal de Contraseña
 import {
   findCourses,
   type PaginatedCoursesResponse,
-} from "../features/courses/services/courses.service";
+} from "../services/courses.service";
 
 interface CourseSelectionModalProps {
   open: boolean;
