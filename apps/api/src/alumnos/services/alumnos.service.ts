@@ -198,4 +198,9 @@ export class AlumnosService {
     // 3. Llamamos al servicio experto
     return this.difficultiesService.getStudentDifficulties(idAlumno, idCurso);
   }
+
+  // --- ¡NUEVO MÉTODO AQUÍ! ---
+  async findMyMissions(idAlumno: string, idCurso: string) {
+    return this.progressService.getStudentMissionStatus(idAlumno, idCurso);
+  }
 }

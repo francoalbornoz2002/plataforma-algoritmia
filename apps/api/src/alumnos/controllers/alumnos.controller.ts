@@ -52,4 +52,13 @@ export class AlumnosController {
     const idAlumno = req.user.userId;
     return this.alumnosService.findMyDifficulties(idAlumno, idCurso);
   }
+
+  @Get('my/missions')
+  findMyMissions(
+    @Req() req: AuthenticatedUserRequest,
+    @Query('idCurso', ParseUUIDPipe) idCurso: string,
+  ) {
+    const idAlumno = req.user.userId;
+    return this.alumnosService.findMyMissions(idAlumno, idCurso);
+  }
 }
