@@ -111,15 +111,19 @@ export class ProgressService {
       // Mapear la respuesta y convertir los Decimal a Number
       const data = alumnos.map((ac) => ({
         ...ac.progresoAlumno,
-        // Convertimos los campos Decimal
+        // ¡LA CORRECCIÓN!
+        // El 'id' que viene de 'progresoAlumno' es el idProgreso.
+        // Necesitamos añadir explícitamente el idAlumno.
+        id: ac.progresoAlumno.id, // (Este es idProgreso)
+        idAlumno: ac.idAlumno, // <-- AÑADIMOS EL ID DEL ALUMNO
+        nombre: ac.alumno.nombre,
+        apellido: ac.alumno.apellido,
+        // Conversión de Decimal a Number
         pctMisionesCompletadas: parseFloat(
           ac.progresoAlumno.pctMisionesCompletadas as any,
         ),
         promEstrellas: parseFloat(ac.progresoAlumno.promEstrellas as any),
         promIntentos: parseFloat(ac.progresoAlumno.promIntentos as any),
-        // Añadimos los campos del alumno
-        nombre: ac.alumno.nombre,
-        apellido: ac.alumno.apellido,
       }));
 
       const totalPages = Math.ceil(total / limit);
@@ -268,6 +272,73 @@ export class ProgressService {
       }
       console.error('Error en submitMission:', error);
       throw new InternalServerErrorException('Error al registrar el progreso.');
+    }
+  }
+
+  /**
+   * Obtiene la lista de TODAS las misiones del juego,
+   * fusionada con el estado (completada o pendiente) de UN alumno.
+   */
+  async getStudentMissionStatus(idAlumno: string, idCurso: string) {
+    try {
+      // 1. Buscar el idProgreso del alumno en ESE curso
+      const inscripcion = await this.prisma.alumnoCurso.findUnique({
+        where: {
+          idAlumno_idCurso: {
+            idAlumno: idAlumno,
+            idCurso: idCurso,
+          },
+        },
+        select: { idProgreso: true },
+      });
+
+      if (!inscripcion) {
+        throw new NotFoundException(
+          'Inscripción del alumno en este curso no encontrada.',
+        );
+      }
+      const { idProgreso } = inscripcion;
+
+      // 2. Buscar TODAS las misiones maestras (ej: las 10 misiones)
+      const allMissions = await this.prisma.mision.findMany({
+        orderBy: {
+          dificultadMision: 'asc', // Opcional: ordenar Facil -> Dificil
+        },
+        include: {
+          // 3. Incluir el registro de "misionCompletada" SÓLO
+          // si coincide con el idProgreso de nuestro alumno.
+          misionesCompletadas: {
+            where: {
+              idProgreso: idProgreso,
+            },
+          },
+        },
+      });
+
+      // 4. Formatear la respuesta (la "fusión")
+      // Formatear la respuesta de forma segura
+      return allMissions.map((mision) => {
+        // Desestructuramos el objeto 'mision'.
+        // 'misionesCompletadas' se va a una variable...
+        const { misionesCompletadas, ...restOfMision } = mision;
+
+        // ...y 'restOfMision' contiene el resto (id, nombre, desc).
+
+        // Obtenemos el registro (o null) de la variable que separamos
+        const completada = misionesCompletadas[0] || null;
+
+        // Devolvemos el objeto limpio y 100% type-safe
+        return {
+          mision: restOfMision, // Este es el objeto 'mision' SIN 'misionesCompletadas'
+          completada: completada,
+        };
+      });
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      console.error('Error en getStudentMissionStatus:', error);
+      throw new InternalServerErrorException(
+        'Error al obtener el estado de las misiones.',
+      );
     }
   }
 
