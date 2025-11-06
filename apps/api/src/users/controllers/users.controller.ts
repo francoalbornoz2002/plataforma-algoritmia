@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Query,
+  Req,
 } from '@nestjs/common';
 import { UsersService } from '../services/users.service';
 import { CreateUserDto } from '../dto/create-user.dto';
@@ -18,6 +19,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { roles } from '@prisma/client';
 import { FindAllUsersDto } from '../dto/find-all-users.dto';
+import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
 
 @Controller('users')
 @ApiTags('users')
@@ -35,8 +37,9 @@ export class UsersController {
   @Roles(roles.Administrador)
   @Get('all')
   @ApiCreatedResponse({ type: UserEntity, isArray: true })
-  findAll(@Query() query: FindAllUsersDto) {
-    return this.usersService.findAll(query);
+  findAll(@Query() findAllUsersDto: FindAllUsersDto, @Req() req: AuthenticatedUserRequest) {
+    const adminId = req.user.userId
+    return this.usersService.findAll(findAllUsersDto, adminId);
   }
 
   @UseGuards(RolesGuard)

@@ -55,7 +55,7 @@ export class UsersService {
     });
   }
 
-  async findAll(query: FindAllUsersDto): Promise<PaginatedUsersResponse> {
+  async findAll(dto: FindAllUsersDto, adminIdToExclude: string): Promise<PaginatedUsersResponse> {
     const {
       page = 1,
       limit = 6, // Asegúrate que este '6' coincida con el default de tu DTO
@@ -64,7 +64,7 @@ export class UsersService {
       search,
       roles,
       estado,
-    } = query;
+    } = dto;
 
     // --- 1. Calcular Paginación ---
     const skip = (page - 1) * limit;
@@ -72,8 +72,9 @@ export class UsersService {
 
     // --- 2. Construir el WHERE dinámico ---
     const where: Prisma.UsuarioWhereInput = {
-      // No filtramos por deletedAt por defecto,
-      // lo dejamos en manos del filtro 'estado'.
+      id: {
+        not: adminIdToExclude,
+      },
     };
 
     // Filtro de Búsqueda (Nombre, Apellido, Email, DNI)

@@ -81,7 +81,7 @@ export default function UsersPage() {
   // ----- ESTADO PARA PAGINACIÓN ----- //
   const [paginationModel, setPaginationModel] = useState({
     page: 0, // Número de página del DataGrid
-    pageSize: 6, // Limite de filas por página en el DataGrid
+    pageSize: 7, // Limite de filas por página en el DataGrid
   });
 
   // ----- ESTADO PARA ORDENAMIENTO ----- //
@@ -437,7 +437,7 @@ export default function UsersPage() {
           paginationMode="server" // Le dice que la paginación es en el backend
           sortingMode="server" // Le dice que el orden es en el backend
           // --- 2. CONEXIÓN CON EL ESTADO DE PAGINACIÓN ---
-          pageSizeOptions={[6, 10, 20]}
+          pageSizeOptions={[7, 10, 20]}
           paginationModel={paginationModel} // <-- Lee el estado
           onPaginationModelChange={setPaginationModel} // <-- Actualiza el estado
           // --- 3. CONEXIÓN CON EL ESTADO DE ORDENAMIENTO ---
@@ -445,6 +445,8 @@ export default function UsersPage() {
           onSortModelChange={setSortModel} // <-- Lee el modelo de ordenamiento
           disableRowSelectionOnClick
           disableColumnResize={true}
+          
+          sx={{ height: 476 }}
         />
       </Box>
       {/* --- Dialog/Modal para Crear/Editar Usuario --- */}
