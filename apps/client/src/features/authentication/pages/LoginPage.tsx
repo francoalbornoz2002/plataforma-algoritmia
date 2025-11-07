@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Box,
   Typography,
@@ -16,14 +16,16 @@ import {
   CircularProgress,
   Paper,
   Stack,
-} from '@mui/material';
-import { useForm, type SubmitHandler, Controller } from 'react-hook-form';
-import { useSnackbar } from 'notistack';
-import { useAuth } from '../context/AuthProvider';
+  InputAdornment,
+} from "@mui/material";
+import { useForm, type SubmitHandler, Controller } from "react-hook-form";
+import { useSnackbar } from "notistack";
+import { useAuth } from "../context/AuthProvider";
 
 // --- Importamos el Schema y el Resolver ---
-import { zodResolver } from '@hookform/resolvers/zod';
-import { loginSchema, type LoginFormInputs } from '../validations/login.schema';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { loginSchema, type LoginFormInputs } from "../validations/login.schema";
+import { Lock, Mail } from "@mui/icons-material";
 
 export default function LoginPage() {
   const [openDialog, setOpenDialog] = useState(false);
@@ -37,11 +39,11 @@ export default function LoginPage() {
     control,
     formState: { errors, isSubmitting }, // Usamos 'isSubmitting'
   } = useForm<LoginFormInputs>({
-    mode: 'onBlur',
+    mode: "onBlur",
     resolver: zodResolver(loginSchema), // Conectamos Zod
     defaultValues: {
-      email: '',
-      password: '',
+      email: "",
+      password: "",
       remember: false,
     },
   });
@@ -55,16 +57,15 @@ export default function LoginPage() {
     try {
       // Llama a la función login del AuthProvider
       await login(data.email, data.password);
-
     } catch (error: any) {
-      console.error('Error en LoginPage onSubmit:', error);
+      console.error("Error en LoginPage onSubmit:", error);
       const message =
         error?.response?.data?.message ||
         error?.message ||
-        'Error al iniciar sesión.';
-      
+        "Error al iniciar sesión.";
+
       // Llamamos al snackbar directamente
-      enqueueSnackbar(message, { variant: 'error' });
+      enqueueSnackbar(message, { variant: "error" });
     }
     // (Ya no necesitamos 'finally')
   };
@@ -72,12 +73,12 @@ export default function LoginPage() {
   return (
     <Box
       sx={{
-        display: 'flex',
-        flexDirection: 'column', // Para centrar mejor
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        bgcolor: 'grey.100',
+        display: "flex",
+        flexDirection: "column", // Para centrar mejor
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "100vh",
+        bgcolor: "grey.100",
       }}
     >
       {/* --- Usamos <Paper /> --- */}
@@ -85,11 +86,21 @@ export default function LoginPage() {
         elevation={6} // Más sombra para que "flote"
         sx={{
           p: 4,
-          width: '100%',
-          maxWidth: 400,
+          width: "100%",
+          maxWidth: 420,
           borderRadius: 2, // Bordes redondeados
         }}
       >
+        <Typography
+          variant="h4"
+          component="h1"
+          gutterBottom
+          align="center"
+          sx={{ fontWeight: "bold" }} // Un poco más de énfasis
+        >
+          Plataforma Algoritmia
+        </Typography>
+        <Divider sx={{ mb: 2 }} />
         <Stack
           component="form"
           onSubmit={handleSubmit(onSubmit)}
@@ -97,11 +108,10 @@ export default function LoginPage() {
           spacing={2} // Usamos 'spacing' de Stack
         >
           <Typography
-            variant="h4"
-            component="h1"
-            gutterBottom
+            variant="h5"
+            component="h2"
             align="center"
-            sx={{ fontWeight: 'bold' }} // Un poco más de énfasis
+            sx={{ fontWeight: "bold", mb: 2 }}
           >
             Iniciar sesión
           </Typography>
@@ -114,10 +124,19 @@ export default function LoginPage() {
             label="Correo electrónico"
             autoComplete="email"
             variant="outlined"
-            {...register('email')}
+            {...register("email")}
             error={!!errors.email}
-            helperText={errors.email ? errors.email.message : ' '}
+            helperText={errors.email ? errors.email.message : " "}
             disabled={isSubmitting}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Mail />
+                  </InputAdornment>
+                ),
+              },
+            }}
           />
 
           <TextField
@@ -128,10 +147,19 @@ export default function LoginPage() {
             id="password"
             autoComplete="current-password"
             variant="outlined"
-            {...register('password')}
+            {...register("password")}
             error={!!errors.password}
-            helperText={errors.password ? errors.password.message : ' '}
+            helperText={errors.password ? errors.password.message : " "}
             disabled={isSubmitting}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Lock />
+                  </InputAdornment>
+                ),
+              },
+            }}
           />
 
           <Stack
@@ -169,11 +197,7 @@ export default function LoginPage() {
             disabled={isSubmitting}
             sx={{ mt: 2, py: 1.5 }}
           >
-            {isSubmitting ? (
-              <CircularProgress size={24} />
-            ) : (
-              'Ingresar'
-            )}
+            {isSubmitting ? <CircularProgress size={24} /> : "Ingresar"}
           </Button>
 
           <Divider sx={{ my: 2 }}>O</Divider>
@@ -191,7 +215,6 @@ export default function LoginPage() {
         </Stack>
       </Paper>
       {/* --- Fin del <Paper /> --- */}
-
 
       {/* Modal de "No tengo usuario" */}
       <Dialog open={openDialog} onClose={handleCloseDialog}>
