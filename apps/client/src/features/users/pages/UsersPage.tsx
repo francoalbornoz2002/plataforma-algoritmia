@@ -448,7 +448,21 @@ export default function UsersPage() {
           onSortModelChange={setSortModel} // <-- Lee el modelo de ordenamiento
           disableRowSelectionOnClick
           disableColumnResize={true}
-          sx={{ height: 476 }}
+          sx={{
+            height: 476,
+            "& .MuiDataGrid-cell:focus": {
+              outline: "none",
+            },
+            "& .MuiDataGrid-cell:focus-within": {
+              outline: "none",
+            },
+            "& .MuiDataGrid-columnHeader:focus": {
+              outline: "none",
+            },
+            "& .MuiDataGrid-columnHeader:focus-within": {
+              outline: "none",
+            },
+          }}
         />
       </Box>
       {/* --- Dialog/Modal para Crear/Editar Usuario --- */}

@@ -400,6 +400,22 @@ export default function DifficultiesPage() {
           sortingMode="server"
           sortModel={[{ field: queryOptions.sort, sort: queryOptions.order }]}
           onSortModelChange={handleSortChange}
+          disableRowSelectionOnClick
+          disableColumnResize={true}
+          sx={{
+            "& .MuiDataGrid-cell:focus": {
+              outline: "none",
+            },
+            "& .MuiDataGrid-cell:focus-within": {
+              outline: "none",
+            },
+            "& .MuiDataGrid-columnHeader:focus": {
+              outline: "none",
+            },
+            "& .MuiDataGrid-columnHeader:focus-within": {
+              outline: "none",
+            },
+          }}
         />
       </Box>
 
