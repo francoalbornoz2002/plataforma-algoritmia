@@ -86,7 +86,7 @@ export default function UsersPage() {
 
   // ----- ESTADO PARA ORDENAMIENTO ----- //
   const [sortModel, setSortModel] = useState<GridSortModel>([
-    { field: "apellido", sort: "asc" }, // Campo a filtrar, por defecto apellido.
+    { field: "nombre", sort: "asc" }, // Campo a filtrar, por defecto apellido.
   ]);
 
   // ----- ESTADOs PARA LOS MODALES (para crear, editar y eliminar) ----- //
@@ -276,6 +276,8 @@ export default function UsersPage() {
       field: "estado",
       headerName: "Estado",
       width: 100,
+      align: "center",
+      headerAlign: "center",
       // Determina el valor basado en deletedAt
       valueGetter: (value: any, row: UserData): "Activo" | "Inactivo" => {
         return row.deletedAt ? "Inactivo" : "Activo";
@@ -367,7 +369,8 @@ export default function UsersPage() {
         <Stack direction="row" spacing={2} alignItems="center">
           <TextField
             size="small"
-            label="Buscar usuario..."
+            label="Buscar usuario"
+            placeholder="Nombre, Apellido, Dni, Email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             sx={{ minWidth: 300 }}
@@ -445,7 +448,6 @@ export default function UsersPage() {
           onSortModelChange={setSortModel} // <-- Lee el modelo de ordenamiento
           disableRowSelectionOnClick
           disableColumnResize={true}
-          
           sx={{ height: 476 }}
         />
       </Box>

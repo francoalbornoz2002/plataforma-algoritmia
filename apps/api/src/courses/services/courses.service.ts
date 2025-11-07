@@ -113,7 +113,9 @@ export class CoursesService {
           estado === estado_simple.Activo ? null : { not: null };
       }
       if (docenteIds && docenteIds.length > 0) {
-        where.docentes = { some: { idDocente: { in: docenteIds } } };
+        where.docentes = {
+          some: { idDocente: { in: docenteIds }, estado: estado_simple.Activo },
+        };
       }
 
       // --- 2. Construir el ORDER BY ---
