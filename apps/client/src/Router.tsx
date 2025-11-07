@@ -19,6 +19,7 @@ import AdminDashboardPage from "./features/dashboards/AdminDashboardPage";
 import DocenteDashboardPage from "./features/dashboards/DocenteDashboard";
 import AlumnoDashboardPage from "./features/dashboards/AlumnoDashboardPage";
 import { Roles } from "./types/roles";
+import SettingsPage from "./features/institution/pages/SettingsPage";
 
 export const AppRouter: React.FC<{}> = () => {
   return (
@@ -45,7 +46,7 @@ export const AppRouter: React.FC<{}> = () => {
             <Route path="stats" element={<StatsPage />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="audit" element={<AuditPage />} />
-            <Route path="account" element={<AccountPage />} />
+            <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Route>
 

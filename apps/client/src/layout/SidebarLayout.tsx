@@ -8,12 +8,14 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import Sidebar from "./sidebar/Sidebar";
 import { Outlet } from "react-router";
 import {
+  AssignmentLate,
   Class,
-  QueryStats,
-  QuestionAnswer,
+  Insights,
+  LocationCity,
   SwitchAccessShortcutAdd,
 } from "@mui/icons-material";
 import type { MenuItemType, UserData } from "../types";
+import MarkUnreadChatAltIcon from "@mui/icons-material/MarkUnreadChatAlt";
 
 import CourseContextLayout from "./CourseContextLayout";
 import { Box, CircularProgress } from "@mui/material"; // Para el 'loading'
@@ -31,8 +33,8 @@ export default function SidebarLayout() {
     { text: "Reportes", icon: <AssessmentIcon />, path: "/dashboard/reports" },
     { text: "Auditoría", icon: <VpnKeyIcon />, path: "/dashboard/audit" },
     {
-      text: "Configuración",
-      icon: <SettingsIcon />,
+      text: "Datos de la Institución",
+      icon: <LocationCity />,
       path: "/dashboard/settings",
     },
     // (La ruta de AccountPage está separada en tu Router,
@@ -43,10 +45,10 @@ export default function SidebarLayout() {
   // --- 2. LISTA DE DOCENTE (prefijo /course) ---
   const itemsDocente = [
     { text: "Dashboard", icon: <DashboardIcon />, path: "/course/dashboard" },
-    { text: "Progreso", icon: <BarChartIcon />, path: "/course/progress" },
+    { text: "Progreso", icon: <Insights />, path: "/course/progress" },
     {
       text: "Dificultades",
-      icon: <QueryStats />,
+      icon: <AssignmentLate />,
       path: "/course/difficulties",
     },
     {
@@ -56,7 +58,7 @@ export default function SidebarLayout() {
     },
     {
       text: "Consultas",
-      icon: <QuestionAnswer />,
+      icon: <MarkUnreadChatAltIcon />,
       path: "/course/consults", // (Ruta futura)
     },
     {
@@ -76,12 +78,12 @@ export default function SidebarLayout() {
     { text: "Dashboard", icon: <DashboardIcon />, path: "/my/dashboard" },
     {
       text: "Mi progreso",
-      icon: <BarChartIcon />,
+      icon: <Insights />,
       path: "/my/progress", // (Tu router usa 'progress')
     },
     {
       text: "Mis dificultades",
-      icon: <QueryStats />,
+      icon: <AssignmentLate />,
       path: "/my/difficulties", // (Tu router usa 'difficulties')
     },
     {
@@ -91,7 +93,7 @@ export default function SidebarLayout() {
     },
     {
       text: "Consultas",
-      icon: <QuestionAnswer />,
+      icon: <MarkUnreadChatAltIcon />,
       path: "/my/consults", // (Ruta futura)
     },
   ];

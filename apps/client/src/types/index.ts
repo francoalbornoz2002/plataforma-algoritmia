@@ -326,3 +326,33 @@ export interface MisionConEstado {
   mision: Mision;
   completada: MisionCompletada | null; // null si está pendiente
 }
+
+// ---------- INSTITUCIÓN ---------- //
+export interface Provincia {
+  id: number;
+  provincia: string;
+}
+
+export interface Localidad {
+  id: number;
+  idProvincia: number;
+  localidad: string;
+}
+
+export interface Institucion {
+  id: string;
+  idLocalidad: number;
+  nombre: string;
+  direccion: string;
+  email: string;
+  telefono: string;
+  localidad: {
+    id: number;
+    idProvincia: number;
+    localidad: string;
+    provincia: {
+      id: number;
+      provincia: string;
+    };
+  };
+}

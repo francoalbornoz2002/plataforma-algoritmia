@@ -1,0 +1,306 @@
+import { useEffect, useState } from "react";
+import {
+  Paper,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Button,
+  CircularProgress,
+  Alert,
+  FormHelperText,
+  Box,
+  Stack,
+} from "@mui/material";
+import { useForm, Controller, type SubmitHandler } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useSnackbar } from "notistack";
+
+import {
+  upsertInstitucion,
+  getProvincias,
+  getLocalidadesByProvincia,
+} from "../services/institution.service";
+import {
+  institutionSchema,
+  type InstitutionFormValues,
+} from "../validations/institution.schema";
+import type { Provincia, Localidad, Institucion } from "../../../types";
+
+interface InstitutionFormProps {
+  initialData: Institucion | null;
+  onSave: (newData: Institucion) => void;
+}
+
+export default function InstitutionForm({
+  initialData,
+  onSave,
+}: InstitutionFormProps) {
+  const { enqueueSnackbar } = useSnackbar();
+
+  // Estados para los Dropdowns
+  const [provincias, setProvincias] = useState<Provincia[]>([]);
+  const [localidades, setLocalidades] = useState<Localidad[]>([]);
+
+  // Estado de Error
+  const [error, setError] = useState<string | null>(null);
+
+  // React Hook Form
+  const {
+    control,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<InstitutionFormValues>({
+    resolver: zodResolver(institutionSchema),
+    defaultValues: {
+      nombre: "",
+      direccion: "",
+      email: "",
+      telefono: "",
+      idProvincia: 0,
+      idLocalidad: 0,
+    },
+  });
+
+  const watchedProvinciaId = watch("idProvincia");
+
+  // --- EFECTO DE CARGA INICIAL (Ahora depende de 'initialData') ---
+  useEffect(() => {
+    // 1. Cargar las provincias (siempre)
+    getProvincias().then(setProvincias);
+
+    // 2. Si tenemos datos (Modo Edición/Vista)
+    if (initialData) {
+      const initialProvinciaId = initialData.localidad.idProvincia;
+
+      // 3. Cargar las localidades de esa provincia
+      getLocalidadesByProvincia(initialProvinciaId).then(setLocalidades);
+
+      // 4. Resetear el formulario con los datos cargados
+      reset({
+        nombre: initialData.nombre,
+        direccion: initialData.direccion,
+        email: initialData.email,
+        telefono: initialData.telefono,
+        idProvincia: initialProvinciaId,
+        idLocalidad: initialData.idLocalidad,
+      });
+    } else {
+      // Modo Creación: Reseteamos a los 'defaultValues' del useForm
+      reset({
+        nombre: "",
+        direccion: "",
+        email: "",
+        telefono: "",
+        idProvincia: 0,
+        idLocalidad: 0,
+      });
+    }
+  }, [initialData, reset]); // Se ejecuta si 'initialData' cambia
+
+  // --- EFECTO DE CASCADA (Dropdowns Anidados) ---
+  useEffect(() => {
+    if (!watchedProvinciaId) {
+      setLocalidades([]);
+      return;
+    }
+
+    // No corremos esto si 'watchedProvinciaId' es el mismo que el inicial
+    if (watchedProvinciaId === initialData?.localidad?.idProvincia) {
+      return;
+    }
+
+    const loadLocalidades = async () => {
+      try {
+        const localidadesData =
+          await getLocalidadesByProvincia(watchedProvinciaId);
+        setLocalidades(localidadesData);
+        setValue("idLocalidad", 0); // Resetear localidad
+      } catch (err: any) {
+        console.error(err);
+        setLocalidades([]);
+      }
+    };
+
+    loadLocalidades();
+  }, [watchedProvinciaId, setValue, initialData]);
+
+  // --- HANDLER DE SUBMIT ---
+  const onSubmit: SubmitHandler<InstitutionFormValues> = async (data) => {
+    setError(null);
+    try {
+      const newData = await upsertInstitucion(data);
+      onSave(newData); // Llama al callback del padre
+      enqueueSnackbar("Datos de la institución guardados con éxito", {
+        variant: "success",
+      });
+    } catch (err: any) {
+      setError(err.message || "Error al guardar los datos.");
+      enqueueSnackbar("Error: " + err.message, { variant: "error" });
+    }
+  };
+
+  return (
+    <Box>
+      <Paper elevation={5} sx={{ p: 4, maxWidth: 800, mx: "auto" }}>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Stack spacing={3}>
+            {/* --- 1. Provincia --- */}
+            <FormControl fullWidth error={!!errors.idProvincia}>
+              <InputLabel>Provincia</InputLabel>
+              <Controller
+                name="idProvincia"
+                control={control}
+                render={({ field }) => (
+                  <Select {...field} label="Provincia" disabled={isSubmitting}>
+                    <MenuItem value={0} disabled>
+                      Seleccione una provincia...
+                    </MenuItem>
+                    {provincias.map((p) => (
+                      <MenuItem key={p.id} value={p.id}>
+                        {p.provincia}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                )}
+              />
+              <FormHelperText>
+                {errors.idProvincia?.message as string}
+              </FormHelperText>
+            </FormControl>
+
+            {/* --- 2. Localidad --- */}
+            <FormControl fullWidth error={!!errors.idLocalidad}>
+              <InputLabel>Localidad</InputLabel>
+              <Controller
+                name="idLocalidad"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    label="Localidad"
+                    disabled={
+                      !watchedProvinciaId ||
+                      isSubmitting ||
+                      localidades.length === 0
+                    }
+                  >
+                    <MenuItem value={0} disabled>
+                      Seleccione una localidad...
+                    </MenuItem>
+                    {localidades.map((l) => (
+                      <MenuItem key={l.id} value={l.id}>
+                        {l.localidad}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                )}
+              />
+              <FormHelperText>
+                {errors.idLocalidad?.message as string}
+              </FormHelperText>
+            </FormControl>
+
+            {/* --- 3. Nombre --- */}
+            <Controller
+              name="nombre"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Nombre de la Institución"
+                  fullWidth
+                  required
+                  error={!!errors.nombre}
+                  helperText={errors.nombre?.message}
+                  disabled={isSubmitting}
+                />
+              )}
+            />
+
+            {/* --- 4. Dirección --- */}
+            <Controller
+              name="direccion"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Dirección"
+                  fullWidth
+                  required
+                  error={!!errors.direccion}
+                  helperText={errors.direccion?.message}
+                  disabled={isSubmitting}
+                />
+              )}
+            />
+
+            <Stack direction={"row"} spacing={3}>
+              {/* --- 5. Email --- */}
+              <Controller
+                name="email"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Email de Contacto"
+                    type="email"
+                    fullWidth
+                    required
+                    error={!!errors.email}
+                    helperText={errors.email?.message}
+                    disabled={isSubmitting}
+                  />
+                )}
+              />
+
+              {/* --- 6. Teléfono --- */}
+              <Controller
+                name="telefono"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Teléfono de Contacto"
+                    fullWidth
+                    required
+                    error={!!errors.telefono}
+                    helperText={errors.telefono?.message}
+                    disabled={isSubmitting}
+                  />
+                )}
+              />
+            </Stack>
+
+            {/* --- Botón y Error --- */}
+            <Box>
+              {error && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  {error}
+                </Alert>
+              )}
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                fullWidth
+                disabled={isSubmitting}
+                sx={{ py: 1.5 }}
+              >
+                {isSubmitting ? (
+                  <CircularProgress size={24} />
+                ) : (
+                  "Guardar Cambios"
+                )}
+              </Button>
+            </Box>
+          </Stack>
+        </form>
+      </Paper>
+    </Box>
+  );
+}
