@@ -83,8 +83,13 @@ export class AuditoriaService {
         this.prisma.logAuditoria.count({ where }),
       ]);
 
+      const safeLogs = logs.map((log) => ({
+        ...log,
+        id: log.id.toString(), // <-- Conversión
+      }));
+
       const totalPages = Math.ceil(total / limit);
-      return { data: logs, total, page, totalPages };
+      return { data: safeLogs, total, page, totalPages };
     } catch (error) {
       console.error('Error en AuditoriaService.findAll:', error);
       throw new InternalServerErrorException(

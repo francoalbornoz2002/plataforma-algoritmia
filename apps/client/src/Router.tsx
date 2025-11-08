@@ -4,7 +4,7 @@ import { Navigate, Route, Routes } from "react-router";
 import UsersPage from "./features/users/pages/UsersPage";
 import StatsPage from "./features/stats/StatsPage";
 import ReportsPage from "./features/reports/ReportsPage";
-import AuditPage from "./features/audit/AuditPage";
+import AuditPage from "./features/audit/pages/AuditPage";
 import CoursesPage from "./features/courses/pages/CoursesPage";
 import AccountPage from "./features/users/pages/AccountPage";
 import ProtectedRoute from "./features/authentication/guards/ProtectedRoute";
