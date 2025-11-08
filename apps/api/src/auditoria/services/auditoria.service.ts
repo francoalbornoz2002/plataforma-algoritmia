@@ -54,8 +54,6 @@ export class AuditoriaService {
       }
     }
 
-    console.log('OPERACIÓN QUE LLEGA: ' + operacion);
-
     if (operacion === 'DELETE') {
       // 1. Si el frontend pide "DELETE" (Baja Lógica)...
       where.operacion = 'UPDATE'; // ...buscamos un UPDATE...
@@ -75,8 +73,6 @@ export class AuditoriaService {
       // 2. Si es "CREATE" o "UPDATE", lo buscamos tal cual.
       where.operacion = { equals: operacion, mode: 'insensitive' };
     }
-
-    console.log('WHERE QUE LLEGA: ' + JSON.stringify(where));
 
     // 2. Construir el ORDER BY
     const orderBy: Prisma.LogAuditoriaOrderByWithRelationInput = {
