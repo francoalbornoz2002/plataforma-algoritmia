@@ -273,33 +273,60 @@ export class CoursesService {
         });
 
         // Sincronizar Docentes
-        if (user.rol === roles.Administrador && docenteIds) {
+        if (user.rol === roles.Administrador && dto.docenteIds !== undefined) {
+          const { docenteIds } = dto; // La nueva lista de IDs
+
+          // 1. DESACTIVAR:
+          // (Pone 'Inactivo' a los docentes que están en la BD pero NO en la nueva lista)
           await tx.docenteCurso.updateMany({
             where: {
               idCurso: id,
               idDocente: { notIn: docenteIds },
-              estado: 'Activo',
+              estado: 'Activo', // Solo afecta a los que estaban activos
             },
-            data: {
-              estado: 'Inactivo',
-            },
+            data: { estado: 'Inactivo' },
           });
-          for (const idDocente of docenteIds) {
-            await tx.docenteCurso.upsert({
-              where: {
-                idDocente_idCurso: {
-                  idDocente: idDocente,
-                  idCurso: id,
-                },
-              },
-              update: {
-                estado: 'Activo',
-              },
-              create: {
-                idDocente: idDocente,
+
+          // 2. REACTIVAR:
+          // (Pone 'Activo' a los docentes que SÍ están en la nueva lista
+          // pero que figuraban como 'Inactivo' en la BD)
+          await tx.docenteCurso.updateMany({
+            where: {
+              idCurso: id,
+              idDocente: { in: docenteIds },
+              estado: 'Inactivo', // Solo afecta a los que estaban inactivos
+            },
+            data: { estado: 'Activo' },
+          });
+
+          // 3. CREAR NUEVOS:
+          // (Esta es la parte más importante)
+
+          // 3.1. Primero, buscamos los docentes que YA existen en la tabla
+          const asignacionesExistentes = await tx.docenteCurso.findMany({
+            where: {
+              idCurso: id,
+              idDocente: { in: docenteIds },
+            },
+            select: { idDocente: true },
+          });
+          const idsExistentes = new Set(
+            asignacionesExistentes.map((a) => a.idDocente),
+          );
+
+          // 3.2. Filtramos la lista para encontrar los que son 100% nuevos
+          const idsParaCrear = docenteIds.filter(
+            (id) => !idsExistentes.has(id),
+          );
+
+          // 3.3. Creamos solo los nuevos
+          if (idsParaCrear.length > 0) {
+            await tx.docenteCurso.createMany({
+              data: idsParaCrear.map((idDocente) => ({
                 idCurso: id,
+                idDocente: idDocente,
                 estado: 'Activo',
-              },
+              })),
             });
           }
         }

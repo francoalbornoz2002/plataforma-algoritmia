@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
@@ -11,6 +11,7 @@ import { DocentesModule } from './docentes/docentes.module';
 import { ProgressModule } from './progress/progress.module';
 import { DifficultiesModule } from './difficulties/difficulties.module';
 import { InstitucionModule } from './institucion/institucion.module';
+import { AuditoriaModule } from './auditoria/auditoria.module';
 
 const UPLOADS_PATH = join(process.cwd(), 'uploads');
 
@@ -36,6 +37,7 @@ const UPLOADS_PATH = join(process.cwd(), 'uploads');
     ProgressModule,
     DifficultiesModule,
     InstitucionModule,
+    AuditoriaModule,
   ],
   controllers: [],
   providers: [],
