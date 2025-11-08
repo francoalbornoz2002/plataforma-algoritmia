@@ -1,37 +1,95 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
-import { LogData } from '../interfaces/LogData.interface';
+import { FindAuditoriaLogsDto } from '../dto/find-audit-logs.dto';
 
 @Injectable()
 export class AuditoriaService {
-  // Usamos un 'PrismaService' separado para evitar bucles infinitos
-  // (Si el log se logueara a sí mismo)
-  // Pero por ahora, usemos el 'prisma' normal
   constructor(private prisma: PrismaService) {}
 
   /**
-   * Crea un registro de auditoría.
-   * Se ejecuta "en segundo plano" (sin 'await') para no frenar la
-   * petición principal del usuario.
+   * Obtiene los logs de auditoría con filtros, paginación y ordenamiento.
    */
-  logChange(data: LogData): void {
-    this.prisma.logAuditoria
-      .create({
-        data: {
-          tablaAfectada: data.tablaAfectada,
-          idFilaAfectada: data.idFilaAfectada,
-          operacion: data.operacion,
-          idUsuarioModifico: data.idUsuarioModifico,
-          // Convertimos los objetos a Json
-          valoresAnteriores: data.valoresAnteriores,
-          valoresNuevos: data.valoresNuevos,
-          fechaHora: new Date(), // La fecha del servidor
-        },
-      })
-      .catch((err) => {
-        // Si el log falla, no queremos que crashee la app
-        console.error('CRITICAL: Falla al guardar el log de auditoría:', err);
-      });
+  async findAll(dto: FindAuditoriaLogsDto) {
+    const {
+      page,
+      limit,
+      sort,
+      order,
+      fechaDesde,
+      fechaHasta,
+      tablaAfectada,
+      operacion,
+      search,
+    } = dto;
+
+    const skip = (page - 1) * limit;
+    const take = limit;
+
+    // 1. Construir el WHERE dinámicamente
+    const where: Prisma.LogAuditoriaWhereInput = {};
+
+    if (tablaAfectada) {
+      where.tablaAfectada = { equals: tablaAfectada, mode: 'insensitive' };
+    }
+    if (operacion) {
+      where.operacion = { equals: operacion, mode: 'insensitive' };
+    }
+    if (search) {
+      // Busca en 'tablaAfectada' O 'idFilaAfectada'
+      where.OR = [
+        { tablaAfectada: { contains: search, mode: 'insensitive' } },
+        { idFilaAfectada: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    if (fechaDesde || fechaHasta) {
+      where.fechaHora = {};
+      if (fechaDesde) {
+        where.fechaHora.gte = new Date(fechaDesde);
+      }
+      if (fechaHasta) {
+        // Ajustamos la fecha "hasta" para incluir el día entero
+        const hasta = new Date(fechaHasta);
+        hasta.setDate(hasta.getDate() + 1); // Se vuelve "hasta" las 00:00 del día siguiente
+        where.fechaHora.lt = hasta;
+      }
+    }
+
+    // 2. Construir el ORDER BY
+    const orderBy: Prisma.LogAuditoriaOrderByWithRelationInput = {
+      // Por defecto ordenamos por fecha (más nuevos primero) si no se especifica
+      [sort || 'fechaHora']: order || 'desc',
+    };
+
+    // 3. Ejecutar consultas
+    try {
+      const [logs, total] = await this.prisma.$transaction([
+        this.prisma.logAuditoria.findMany({
+          where,
+          orderBy,
+          skip,
+          take,
+          include: {
+            // Incluimos el usuario que hizo el cambio
+            usuarioModifico: {
+              select: {
+                nombre: true,
+                apellido: true,
+                email: true,
+              },
+            },
+          },
+        }),
+        this.prisma.logAuditoria.count({ where }),
+      ]);
+
+      const totalPages = Math.ceil(total / limit);
+      return { data: logs, total, page, totalPages };
+    } catch (error) {
+      console.error('Error en AuditoriaService.findAll:', error);
+      throw new InternalServerErrorException(
+        'Error al obtener los logs de auditoría.',
+      );
+    }
   }
 }
