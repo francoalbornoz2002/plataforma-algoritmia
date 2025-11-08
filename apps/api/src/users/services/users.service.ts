@@ -55,7 +55,10 @@ export class UsersService {
     });
   }
 
-  async findAll(dto: FindAllUsersDto, adminIdToExclude: string): Promise<PaginatedUsersResponse> {
+  async findAll(
+    dto: FindAllUsersDto,
+    adminIdToExclude: string,
+  ): Promise<PaginatedUsersResponse> {
     const {
       page = 1,
       limit = 6, // Asegúrate que este '6' coincida con el default de tu DTO
