@@ -32,9 +32,7 @@ export class AuditoriaService {
     if (tablaAfectada) {
       where.tablaAfectada = { equals: tablaAfectada, mode: 'insensitive' };
     }
-    if (operacion) {
-      where.operacion = { equals: operacion, mode: 'insensitive' };
-    }
+
     if (search) {
       // Busca en 'tablaAfectada' O 'idFilaAfectada'
       where.OR = [
@@ -42,6 +40,7 @@ export class AuditoriaService {
         { idFilaAfectada: { contains: search, mode: 'insensitive' } },
       ];
     }
+
     if (fechaDesde || fechaHasta) {
       where.fechaHora = {};
       if (fechaDesde) {
@@ -54,6 +53,30 @@ export class AuditoriaService {
         where.fechaHora.lt = hasta;
       }
     }
+
+    console.log('OPERACIÓN QUE LLEGA: ' + operacion);
+
+    if (operacion === 'DELETE') {
+      // 1. Si el frontend pide "DELETE" (Baja Lógica)...
+      where.operacion = 'UPDATE'; // ...buscamos un UPDATE...
+
+      // ...donde 'deletedAt' pasó de NULL...
+      where.valoresAnteriores = {
+        path: ['deleted_at'],
+        equals: Prisma.JsonNull,
+      };
+
+      // ...a NO-NULL (una fecha).
+      where.valoresNuevos = {
+        path: ['deleted_at'],
+        not: Prisma.JsonNull,
+      };
+    } else if (operacion) {
+      // 2. Si es "CREATE" o "UPDATE", lo buscamos tal cual.
+      where.operacion = { equals: operacion, mode: 'insensitive' };
+    }
+
+    console.log('WHERE QUE LLEGA: ' + JSON.stringify(where));
 
     // 2. Construir el ORDER BY
     const orderBy: Prisma.LogAuditoriaOrderByWithRelationInput = {

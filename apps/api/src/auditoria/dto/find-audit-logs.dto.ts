@@ -1,4 +1,5 @@
-import { IsOptional, IsString, IsDateString } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsOptional, IsString, IsDateString, IsBoolean } from 'class-validator';
 import { PaginationDto } from 'src/common/pagination.dto';
 
 export class FindAuditoriaLogsDto extends PaginationDto {

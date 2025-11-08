@@ -3,9 +3,6 @@ import {
   Box,
   Typography,
   Alert,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   TextField,
   FormControl,
   InputLabel,
@@ -18,22 +15,20 @@ import {
   DialogActions,
   Paper,
   type SelectChangeEvent,
-  Grid,
   TableContainer,
   Table,
   TableHead,
   TableRow,
   TableCell,
   TableBody,
+  Stack,
 } from "@mui/material";
 import {
   DataGrid,
   type GridColDef,
-  type GridPaginationModel,
   type GridSortModel,
   type GridRenderCellParams,
 } from "@mui/x-data-grid";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { format, isValid } from "date-fns";
 import { es } from "date-fns/locale";
 import type { FindLogsParams, LogAuditoria } from "../../../types";
@@ -154,86 +149,92 @@ export default function AuditPage() {
   const [logToView, setLogToView] = useState<LogAuditoria | null>(null);
 
   // --- Estado de Filtros ---
-  const [queryOptions, setQueryOptions] = useState<FindLogsParams>({
-    page: 1,
-    limit: 10,
-    sort: "fechaHora", // Ordenar por fecha por defecto
-    order: "desc",
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0, // MUI usa 0-indexed
+    pageSize: 10,
+  });
+
+  const [sortModel, setSortModel] = useState<GridSortModel>([
+    { field: "fechaHora", sort: "desc" },
+  ]);
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  // Agrupamos los filtros que no son de la grilla
+  const [filters, setFilters] = useState({
     fechaDesde: "",
     fechaHasta: "",
     tablaAfectada: "",
     operacion: "",
-    search: "",
   });
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   // --- Data Fetching (DataGrid) ---
   useEffect(() => {
     setGridLoading(true);
     setGridError(null);
-    findLogs(queryOptions)
+
+    // 1. Construimos los parámetros
+    const params: FindLogsParams = {
+      page: paginationModel.page + 1, // API usa 1-indexed
+      limit: paginationModel.pageSize,
+      sort: sortModel[0]?.field || "fechaHora",
+      order: sortModel[0]?.sort || "desc",
+      search: debouncedSearchTerm,
+      ...filters, // Añadimos los filtros de fecha, tabla, etc.
+    };
+
+    // 2. Llamamos al servicio
+    findLogs(params)
       .then((response) => {
         setRows(response.data);
         setTotalRows(response.total);
       })
       .catch((err) => setGridError(err.message))
       .finally(() => setGridLoading(false));
-  }, [queryOptions]);
-
-  // Efecto para el buscador (debounce)
-  useEffect(() => {
-    setQueryOptions((prev) => ({
-      ...prev,
-      search: debouncedSearchTerm,
-      page: 1,
-    }));
-  }, [debouncedSearchTerm]);
+  }, [
+    // 3. Escuchamos todos los estados
+    paginationModel,
+    sortModel,
+    debouncedSearchTerm,
+    filters,
+  ]);
 
   // --- Handlers ---
-  const handlePaginationChange = (model: GridPaginationModel) => {
-    setQueryOptions((prev) => ({
-      ...prev,
-      page: model.page + 1,
-      limit: model.pageSize,
-    }));
-  };
-
-  const handleSortChange = (model: GridSortModel) => {
-    setQueryOptions((prev) => ({
-      ...prev,
-      sort: model[0]?.field || "fechaHora",
-      order: model[0]?.sort || "desc",
-    }));
-  };
-
+  // Handler para los Select de texto
   const handleFilterChange = (
     e: SelectChangeEvent<string> | React.ChangeEvent<HTMLInputElement>
   ) => {
-    setQueryOptions((prev) => ({
+    setFilters((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
-      page: 1,
     }));
+
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
   };
 
+  // Handler para las Fechas
   const handleDateChange = (
     fieldName: "fechaDesde" | "fechaHasta",
     newDate: Date | null
   ) => {
     let dateString = "";
-    // Verificamos que la fecha sea válida
     if (newDate && isValid(newDate)) {
-      // Formateamos a 'yyyy-MM-dd' para enviarlo a la API
       dateString = format(newDate, "yyyy-MM-dd");
     }
-
-    setQueryOptions((prev) => ({
+    setFilters((prev) => ({
       ...prev,
-      [fieldName]: dateString, // Guardamos el string
-      page: 1, // Reseteamos la página
+      [fieldName]: dateString,
     }));
+    // Reseteamos la página al cambiar un filtro
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+  };
+
+  // Handler para el Search (¡Importante!)
+  // (Resetea la página CADA VEZ que el usuario tipea)
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
   };
 
   // --- Columnas (DataGrid) ---
@@ -306,101 +307,80 @@ export default function AuditPage() {
       </Typography>
 
       {/* --- B. Filtros --- */}
-      <Accordion sx={{ mb: 2 }}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography>Filtros</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Grid container spacing={2}>
-            {/* Fila 1 */}
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <TextField
-                label="Buscar (Tabla o ID Fila)..."
-                variant="outlined"
-                size="small"
-                fullWidth
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <FormControl size="small" fullWidth>
-                <InputLabel>Tabla Afectada</InputLabel>
-                <Select
-                  name="tablaAfectada"
-                  value={queryOptions.tablaAfectada}
-                  label="Tabla Afectada"
-                  onChange={handleFilterChange}
-                >
-                  <MenuItem value="">Todas</MenuItem>
-                  {/* (Estos valores los hardcodeamos por ahora) */}
-                  <MenuItem value="usuarios">Usuarios</MenuItem>
-                  <MenuItem value="cursos">Cursos</MenuItem>
-                  <MenuItem value="institucion">Institución</MenuItem>
-                  <MenuItem value="alumno_curso">Inscripciones</MenuItem>
-                  <MenuItem value="docente_curso">Asignaciones</MenuItem>
-                  <MenuItem value="mision_completada">Misiones</MenuItem>
-                  <MenuItem value="dificultad_alumno">Dificultades</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <FormControl size="small" fullWidth>
-                <InputLabel>Operación</InputLabel>
-                <Select
-                  name="operacion"
-                  value={queryOptions.operacion}
-                  label="Operación"
-                  onChange={handleFilterChange}
-                >
-                  <MenuItem value="">Todas</MenuItem>
-                  <MenuItem value="CREATE">Crear</MenuItem>
-                  <MenuItem value="UPDATE">Actualizar</MenuItem>
-                  <MenuItem value="DELETE">Borrar</MenuItem>
-                  <MenuItem value="SOFT_DELETE">Baja Lógica</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            {/* Fila 2 - Fechas */}
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <DatePicker
-                label="Fecha Desde"
-                // Convertimos el string del estado (ej: "2025-11-01") a Date
-                value={
-                  queryOptions.fechaDesde
-                    ? new Date(queryOptions.fechaDesde)
-                    : null
-                }
-                onChange={(newDate) => handleDateChange("fechaDesde", newDate)}
-                // Usamos slotProps para pasar props al TextField interno
-                slotProps={{
-                  textField: {
-                    size: "small",
-                    fullWidth: true,
-                  },
-                }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <DatePicker
-                label="Fecha Hasta"
-                value={
-                  queryOptions.fechaHasta
-                    ? new Date(queryOptions.fechaHasta)
-                    : null
-                }
-                onChange={(newDate) => handleDateChange("fechaHasta", newDate)}
-                slotProps={{
-                  textField: {
-                    size: "small",
-                    fullWidth: true,
-                  },
-                }}
-              />
-            </Grid>
-          </Grid>
-        </AccordionDetails>
-      </Accordion>
+      <Stack
+        direction="row"
+        spacing={1.5}
+        alignItems="center"
+        sx={{
+          mb: 2,
+          flexWrap: "wrap", // Permite que los filtros bajen si no hay espacio
+          gap: 1, // Espacio vertical si 'wrap' ocurre
+        }}
+      >
+        <TextField
+          label="Buscar (Tabla o ID Fila)..."
+          variant="outlined"
+          size="small"
+          value={searchTerm}
+          onChange={handleSearchChange}
+          sx={{ minWidth: 250, flexGrow: 1 }} // El buscador crece
+        />
+        <FormControl size="small" sx={{ minWidth: 180 }}>
+          <InputLabel>Tabla Afectada</InputLabel>
+          <Select
+            name="tablaAfectada"
+            value={filters.tablaAfectada}
+            label="Tabla Afectada"
+            onChange={handleFilterChange}
+          >
+            <MenuItem value="">Todas</MenuItem>
+            <MenuItem value="usuarios">usuarios</MenuItem>
+            <MenuItem value="cursos">cursos</MenuItem>
+            <MenuItem value="institucion">institucion</MenuItem>
+            <MenuItem value="alumno_curso">alumno_curso</MenuItem>
+            <MenuItem value="docente_curso">docente_curso</MenuItem>
+            <MenuItem value="mision_completada">misiones_completadas</MenuItem>
+            <MenuItem value="dificultad_alumno">dificultad_alumno</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Operación</InputLabel>
+          <Select
+            name="operacion"
+            value={filters.operacion}
+            label="Operación"
+            onChange={handleFilterChange}
+          >
+            <MenuItem value="">Todas</MenuItem>
+            <MenuItem value="INSERT">INSERT</MenuItem>
+            <MenuItem value="UPDATE">UPDATE</MenuItem>
+            <MenuItem value="DELETE">DELETE (Lógico)</MenuItem>
+          </Select>
+        </FormControl>
+        <DatePicker
+          label="Fecha Desde"
+          value={filters.fechaDesde ? new Date(filters.fechaDesde) : null}
+          onChange={(newDate) => handleDateChange("fechaDesde", newDate)}
+          slotProps={{
+            textField: {
+              size: "small",
+              sx: { width: 170 }, // Ancho fijo para la fecha
+            },
+          }}
+        />
+        <DatePicker
+          label="Fecha Hasta"
+          value={filters.fechaHasta ? new Date(filters.fechaHasta) : null}
+          onChange={(newDate) => handleDateChange("fechaHasta", newDate)}
+          slotProps={{
+            textField: {
+              size: "small",
+              sx: { width: 170 }, // Ancho fijo para la fecha
+            },
+          }}
+          disableFuture={true}
+        />
+      </Stack>
 
       {/* --- C. DataGrid --- */}
       {gridError && <Alert severity="error">{gridError}</Alert>}
@@ -411,15 +391,12 @@ export default function AuditPage() {
           rowCount={totalRows}
           loading={gridLoading}
           paginationMode="server"
-          paginationModel={{
-            page: queryOptions.page - 1,
-            pageSize: queryOptions.limit,
-          }}
-          onPaginationModelChange={handlePaginationChange}
+          paginationModel={paginationModel}
+          onPaginationModelChange={setPaginationModel}
           pageSizeOptions={[10, 20, 30]}
           sortingMode="server"
-          sortModel={[{ field: queryOptions.sort, sort: queryOptions.order }]}
-          onSortModelChange={handleSortChange}
+          sortModel={sortModel}
+          onSortModelChange={setSortModel}
           sx={{
             // Desactivamos los 'outline' de foco
             "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
@@ -430,6 +407,7 @@ export default function AuditPage() {
                 outline: "none",
               },
           }}
+          disableColumnResize
         />
       </Box>
 
