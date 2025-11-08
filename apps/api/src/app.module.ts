@@ -10,6 +10,7 @@ import { AlumnosModule } from './alumnos/alumnos.module';
 import { DocentesModule } from './docentes/docentes.module';
 import { ProgressModule } from './progress/progress.module';
 import { DifficultiesModule } from './difficulties/difficulties.module';
+import { AuditoriaModule } from './auditoria/auditoria.module';
 
 const UPLOADS_PATH = join(process.cwd(), 'uploads');
 
@@ -34,6 +35,7 @@ const UPLOADS_PATH = join(process.cwd(), 'uploads');
     DocentesModule,
     ProgressModule,
     DifficultiesModule,
+    AuditoriaModule,
   ],
   controllers: [],
   providers: [],
