@@ -230,13 +230,6 @@ export default function AuditPage() {
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
   };
 
-  // Handler para el Search (¡Importante!)
-  // (Resetea la página CADA VEZ que el usuario tipea)
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    setPaginationModel((prev) => ({ ...prev, page: 0 }));
-  };
-
   // --- Columnas (DataGrid) ---
   const columns = useMemo<GridColDef<LogAuditoria>[]>(
     () => [
@@ -322,7 +315,7 @@ export default function AuditPage() {
           variant="outlined"
           size="small"
           value={searchTerm}
-          onChange={handleSearchChange}
+          onChange={(e) => setSearchTerm(e.target.value)}
           sx={{ minWidth: 250, flexGrow: 1 }} // El buscador crece
         />
         <FormControl size="small" sx={{ minWidth: 180 }}>
