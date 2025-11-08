@@ -5,6 +5,8 @@ import { ValidationPipe } from '@nestjs/common';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import morgan from 'morgan';
 import { CORS } from './constants';
+import { PrismaService } from './prisma/prisma.service';
+import { AuditInterceptor } from './auditoria/interceptors/audit.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -56,6 +58,13 @@ async function bootstrap() {
 
   // Habilitamos CORS
   app.enableCors(CORS);
+
+  // --- REGISTRAR EL INTERCEPTOR PARA AUDITORIA GLOBALMENTE ---
+  // Obtenemos la instancia (Singleton) de PrismaService
+  const prismaService = app.get(PrismaService);
+
+  // Inyectamos manualmente el PrismaService en el constructor del interceptor
+  app.useGlobalInterceptors(new AuditInterceptor());
 
   await app.listen(PORT);
 }
