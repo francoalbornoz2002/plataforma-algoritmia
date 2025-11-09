@@ -20,6 +20,7 @@ import DocenteDashboardPage from "./features/dashboards/DocenteDashboard";
 import AlumnoDashboardPage from "./features/dashboards/AlumnoDashboardPage";
 import { Roles } from "./types/roles";
 import SettingsPage from "./features/institution/pages/SettingsPage";
+import MyConsultsPage from "./features/consultas/page/MyConsultsPage";
 
 export const AppRouter: React.FC<{}> = () => {
   return (
@@ -76,6 +77,11 @@ export const AppRouter: React.FC<{}> = () => {
             <Route path="dashboard" element={<AlumnoDashboardPage />} />
             <Route path="progress" element={<MyProgressPage />} />
             <Route path="difficulties" element={<MyDifficultiesPage />} />
+            <Route path="consults" element={<MyConsultsPage />} />
+          </Route>
+        </Route>
+      </Route>
+      {/* 
           </Route>
         </Route>
       </Route>{" "}
