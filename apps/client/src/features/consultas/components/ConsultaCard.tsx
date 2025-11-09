@@ -9,7 +9,8 @@ import {
   Button,
   Rating,
   Tooltip,
-  IconButton, // <-- Para mostrar la valoración
+  IconButton,
+  Chip, // <-- Para mostrar la valoración
 } from "@mui/material";
 import type { Consulta } from "../../../types";
 import { estado_consulta } from "../../../types";
@@ -17,7 +18,7 @@ import { estado_consulta } from "../../../types";
 // Los chips que ya creamos
 import TemaChip from "../../../components/TemaChip";
 import EstadoConsultaChip from "../../../components/EstadoConsultaChip";
-import { Delete, Edit } from "@mui/icons-material";
+import { Delete, DeleteSweep, Edit } from "@mui/icons-material";
 
 interface ConsultaCardProps {
   consulta: Consulta;
@@ -39,10 +40,13 @@ export default function ConsultaCard({
     estado,
     respuestaConsulta,
     valoracionAlumno,
+    deletedAt,
   } = consulta;
 
+  const isDeleted = !!deletedAt; // (Si no es null, es true)
+
   return (
-    <Card variant="outlined">
+    <Card variant="outlined" sx={{ opacity: isDeleted ? 0.6 : 1.0 }}>
       {/* --- 1. PREGUNTA DEL ALUMNO --- */}
       <CardContent sx={{ pb: 1 }}>
         {/* Fila 1: Título y Estado */}
@@ -61,7 +65,19 @@ export default function ConsultaCard({
           >
             {titulo}
           </Typography>
-          <EstadoConsultaChip estado={estado} />
+          {isDeleted ? (
+            <Chip
+              icon={<DeleteSweep />}
+              label="Dada de baja"
+              color="error"
+              size="small"
+              variant="filled"
+              sx={{ ml: 1, flexShrink: 0 }}
+            />
+          ) : (
+            // Si no está borrada, mostramos el chip de estado normal
+            <EstadoConsultaChip estado={estado} />
+          )}
         </Box>
 
         {/* Fila 2: Tema */}
@@ -92,51 +108,53 @@ export default function ConsultaCard({
       )}
 
       {/* --- 3. ACCIONES / VALORACIÓN (ACTUALIZADO) --- */}
-      <Divider />
-      <CardActions sx={{ justifyContent: "flex-end", p: 1, pt: 1.5 }}>
-        {/* --- LÓGICA DE ACCIONES --- */}
+      {!isDeleted && (
+        <>
+          <Divider />
+          <CardActions sx={{ justifyContent: "flex-end", p: 1, pt: 1.5 }}>
+            {/* Caso 1: Está PENDIENTE (Muestra Edit/Delete) */}
+            {estado === estado_consulta.Pendiente && (
+              <Box>
+                <Tooltip title="Editar consulta">
+                  <IconButton size="small" onClick={() => onEdit(consulta)}>
+                    <Edit />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Dar de baja consulta">
+                  <IconButton
+                    size="small"
+                    onClick={() => onDelete(consulta)}
+                    color="error"
+                  >
+                    <Delete />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            )}
 
-        {/* Caso 1: Está PENDIENTE */}
-        {consulta.estado === estado_consulta.Pendiente && (
-          <Box>
-            <Tooltip title="Editar consulta">
-              <IconButton size="small" onClick={() => onEdit(consulta)}>
-                <Edit />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Borrar consulta">
-              <IconButton
+            {/* Caso 2: Está REVISADA (Muestra Valorar) */}
+            {estado === estado_consulta.Revisada && (
+              <Button
                 size="small"
-                onClick={() => onDelete(consulta)}
-                color="error"
+                variant="outlined"
+                onClick={() => onValorar(consulta)}
               >
-                <Delete />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        )}
+                Valorar Respuesta
+              </Button>
+            )}
 
-        {/* Caso 2: Está REVISADA */}
-        {consulta.estado === estado_consulta.Revisada && (
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={() => onValorar(consulta)}
-          >
-            Valorar Respuesta
-          </Button>
-        )}
-
-        {/* Caso 3: Está RESUELTA */}
-        {consulta.estado === estado_consulta.Resuelta && (
-          <Stack direction="column" alignItems="flex-end" sx={{ pr: 1 }}>
-            <Typography variant="caption" color="text.secondary">
-              Tu valoración:
-            </Typography>
-            <Rating value={valoracionAlumno} readOnly />
-          </Stack>
-        )}
-      </CardActions>
+            {/* Caso 3: Está RESUELTA (Muestra la Valoración) */}
+            {estado === estado_consulta.Resuelta && (
+              <Stack direction="column" alignItems="flex-end" sx={{ pr: 1 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Tu valoración:
+                </Typography>
+                <Rating value={valoracionAlumno} readOnly />
+              </Stack>
+            )}
+          </CardActions>
+        </>
+      )}
     </Card>
   );
 }

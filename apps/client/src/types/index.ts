@@ -415,6 +415,7 @@ export interface Consulta {
   estado: estado_consulta;
   valoracionAlumno: number | null;
   comentarioValoracion: string | null;
+  deletedAt: string | null; // Llega como string ISO
 
   // La respuesta (si existe)
   respuestaConsulta: {
