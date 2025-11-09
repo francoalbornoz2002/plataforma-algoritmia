@@ -54,6 +54,13 @@ export enum dificultad_mision {
   Dificil = "Dificil",
 }
 
+export enum estado_consulta {
+  Pendiente = "Pendiente",
+  A_revisar = "A revisar",
+  Revisada = "Revisada",
+  Resuelta = "Resuelta",
+}
+
 /* ---------------------- INTERFACES ---------------------- */
 
 export interface MenuItemType {
@@ -386,3 +393,41 @@ export interface FindLogsParams extends BaseFilterParams {
 // 3. Para la respuesta paginada de la API
 export interface PaginatedLogsResponse
   extends PaginatedResponse<LogAuditoria> {}
+
+//
+
+export interface FindConsultasParams extends BaseFilterParams {
+  tema?: temas | "";
+  estado?: estado_consulta | "";
+  search?: string;
+}
+
+// 2. El objeto 'Consulta' como lo recibe el frontend
+// (Basado en el 'include' del backend)
+export interface Consulta {
+  id: string;
+  idAlumno: string;
+  idCurso: string;
+  titulo: string;
+  tema: temas;
+  descripcion: string;
+  fechaConsulta: string; // Llega como string ISO
+  estado: estado_consulta;
+  valoracionAlumno: number | null;
+  comentarioValoracion: string | null;
+
+  // La respuesta (si existe)
+  respuestaConsulta: {
+    id: string; // (Asumiendo que el modelo 'RespuestaConsulta' tiene un id)
+    descripcion: string;
+    fechaRespuesta: string;
+    docente: {
+      nombre: string;
+      apellido: string;
+    };
+  } | null;
+}
+
+// 3. Para la respuesta paginada de la API
+export interface PaginatedConsultasResponse
+  extends PaginatedResponse<Consulta> {}

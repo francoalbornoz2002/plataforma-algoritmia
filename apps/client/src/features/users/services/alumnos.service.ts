@@ -1,12 +1,20 @@
 import apiClient from "../../../lib/axios";
 // Usamos el tipo que ya existe
 import type {
+  Consulta,
   CursoParaEditar,
   DificultadAlumnoDetallada,
   estado_simple,
+  FindConsultasParams,
   MisionConEstado,
+  PaginatedConsultasResponse,
   ProgresoAlumno,
 } from "../../../types";
+import type {
+  CreateConsultaFormValues,
+  UpdateConsultaFormValues,
+} from "../../consultas/validations/consulta.schema";
+import type { ValorarConsultaFormValues } from "../../consultas/validations/valorarConsulta.schema";
 
 // 1. Definimos el tipo de dato que devuelve 'findMyCourses'
 export interface InscripcionConCurso {
@@ -105,5 +113,120 @@ export const getMyMissions = async (
       err.response?.data || err.message
     );
     throw err.response?.data || new Error("Error al obtener tus misiones.");
+  }
+};
+
+/**
+ * Obtiene la lista paginada y filtrada de consultas del alumno
+ */
+export const getMyConsultas = async (
+  idCurso: string,
+  params: FindConsultasParams
+): Promise<PaginatedConsultasResponse> => {
+  try {
+    // Limpiamos los params (filtros vacíos)
+    const cleanedParams: Partial<FindConsultasParams> = { ...params };
+    (Object.keys(cleanedParams) as Array<keyof FindConsultasParams>).forEach(
+      (key) => {
+        if (cleanedParams[key] === "") {
+          delete cleanedParams[key];
+        }
+      }
+    );
+
+    const response = await apiClient.get(
+      `/alumnos/my/courses/${idCurso}/consults`,
+      {
+        params: cleanedParams,
+      }
+    );
+    return response.data;
+  } catch (err: any) {
+    console.error(
+      "Error fetching student consults:",
+      err.response?.data || err.message
+    );
+    throw err.response?.data || new Error("Error al obtener tus consultas.");
+  }
+};
+
+/**
+ * Crea una nueva consulta (Alumno)
+ */
+export const createConsulta = async (
+  idCurso: string,
+  data: CreateConsultaFormValues
+): Promise<Consulta> => {
+  try {
+    // El backend DTO espera 'fechaConsulta', la añadimos
+    const payload = {
+      ...data,
+      fechaConsulta: new Date().toISOString(), // Añadimos la fecha actual
+    };
+
+    const response = await apiClient.post(
+      `/alumnos/my/courses/${idCurso}/consults/create`,
+      payload
+    );
+    return response.data;
+  } catch (err: any) {
+    console.error("Error creating consult:", err.response?.data || err.message);
+    throw err.response?.data || new Error("Error al crear la consulta.");
+  }
+};
+
+/**
+ * Edita una consulta existente (Alumno)
+ */
+export const updateConsulta = async (
+  idConsulta: string,
+  data: UpdateConsultaFormValues // Usamos el DTO de Update
+): Promise<Consulta> => {
+  try {
+    // Apuntamos a la nueva ruta "edit"
+    const response = await apiClient.patch(
+      `/alumnos/my/consults/edit/${idConsulta}`,
+      data
+    );
+    return response.data;
+  } catch (err: any) {
+    console.error("Error updating consult:", err.response?.data || err.message);
+    throw err.response?.data || new Error("Error al actualizar la consulta.");
+  }
+};
+
+// --- ¡NUEVA FUNCIÓN DE BORRADO! ---
+/**
+ * Borra (soft delete) una consulta (Alumno)
+ */
+export const deleteConsulta = async (idConsulta: string): Promise<Consulta> => {
+  try {
+    // Apuntamos a la nueva ruta "delete"
+    const response = await apiClient.delete(
+      `/alumnos/my/consults/delete/${idConsulta}`
+    );
+    return response.data;
+  } catch (err: any) {
+    console.error("Error deleting consult:", err.response?.data || err.message);
+    throw err.response?.data || new Error("Error al borrar la consulta.");
+  }
+};
+
+/**
+ * Valora una respuesta (Alumno)
+ */
+export const valorarConsulta = async (
+  idConsulta: string,
+  data: ValorarConsultaFormValues
+): Promise<Consulta> => {
+  try {
+    const response = await apiClient.patch(
+      `/alumnos/my/consults/${idConsulta}/valorar`,
+      data
+    );
+    return response.data;
+  } catch (err: any) {
+    console.error("Error rating consult:", err.response?.data || err.message);
+    throw err.response?.data || new Error("Error al valorar la consulta.");
   }
 };
