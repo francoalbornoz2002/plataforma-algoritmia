@@ -12,6 +12,7 @@ import { ProgressModule } from './progress/progress.module';
 import { DifficultiesModule } from './difficulties/difficulties.module';
 import { InstitucionModule } from './institucion/institucion.module';
 import { AuditoriaModule } from './auditoria/auditoria.module';
+import { ConsultasModule } from './consultas/consultas.module';
 
 const UPLOADS_PATH = join(process.cwd(), 'uploads');
 
@@ -38,6 +39,7 @@ const UPLOADS_PATH = join(process.cwd(), 'uploads');
     DifficultiesModule,
     InstitucionModule,
     AuditoriaModule,
+    ConsultasModule,
   ],
   controllers: [],
   providers: [],
