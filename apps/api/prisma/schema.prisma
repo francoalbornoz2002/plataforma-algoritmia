@@ -61,6 +61,9 @@ model Consulta {
   estado               estado_consulta
   valoracionAlumno     Int?               @map("valoracion_alumno") @db.SmallInt
   comentarioValoracion String?            @map("comentario_valoracion") @db.VarChar(255)
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+  deletedAt            DateTime?          @map("deleted_at")
   alumno               Usuario            @relation("ConsultasAlumno", fields: [idAlumno], references: [id], onDelete: NoAction, onUpdate: NoAction)
   curso                Curso              @relation("ConsultasCurso", fields: [idCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
   valoracion           Valoracion?        @relation(fields: [valoracionAlumno], references: [valor], onDelete: NoAction, onUpdate: NoAction)
