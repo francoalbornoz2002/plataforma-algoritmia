@@ -1,8 +1,10 @@
 import {
+  Body,
   Controller,
   Get,
   Param,
   ParseUUIDPipe,
+  Post,
   Query,
   Req,
   UseGuards,
@@ -14,6 +16,8 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
 import { FindStudentProgressDto } from 'src/progress/dto/find-student-progress.dto';
 import { FindStudentDifficultiesDto } from 'src/difficulties/dto/find-student-difficulties.dto';
+import { FindConsultasDto } from 'src/consultas/dto/find-consultas.dto';
+import { CreateRespuestaDto } from 'src/consultas/dto/create-respuesta.dto';
 
 @UseGuards(RolesGuard)
 @Roles(roles.Docente)
@@ -97,5 +101,25 @@ export class DocentesController {
       idCurso,
       idDocente,
     );
+  }
+
+  @Get('my/courses/:idCurso/consults')
+  findConsultas(
+    @Param('idCurso', ParseUUIDPipe) idCurso: string,
+    @Req() req: AuthenticatedUserRequest,
+    @Query() dto: FindConsultasDto, // <-- 3. Usar el DTO de filtros
+  ) {
+    const idDocente = req.user.userId;
+    return this.docentesService.findConsultas(idCurso, idDocente, dto);
+  }
+
+  @Post('my/consults/:idConsulta/respond')
+  createRespuesta(
+    @Param('idConsulta', ParseUUIDPipe) idConsulta: string,
+    @Req() req: AuthenticatedUserRequest,
+    @Body() dto: CreateRespuestaDto, // <-- 4. Usar el DTO de respuesta
+  ) {
+    const idDocente = req.user.userId;
+    return this.docentesService.createRespuesta(idConsulta, idDocente, dto);
   }
 }

@@ -2,7 +2,10 @@ import {
   ForbiddenException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
+import { CreateRespuestaDto } from 'src/consultas/dto/create-respuesta.dto';
+import { FindConsultasDto } from 'src/consultas/dto/find-consultas.dto';
 import { FindStudentDifficultiesDto } from 'src/difficulties/dto/find-student-difficulties.dto';
 import { DifficultiesService } from 'src/difficulties/services/difficulties.service';
 import { dateToTime } from 'src/helpers';
@@ -12,6 +15,7 @@ import { ProgressService } from 'src/progress/services/progress.service';
 
 @Injectable()
 export class DocentesService {
+  consultasService: any;
   constructor(
     private prisma: PrismaService,
     private progressService: ProgressService,
@@ -165,5 +169,36 @@ export class DocentesService {
 
     // 2. Llamamos al servicio "cerebro"
     return this.progressService.getStudentMissionStatus(idAlumno, idCurso);
+  }
+
+  async findConsultas(
+    idCurso: string,
+    idDocente: string,
+    dto: FindConsultasDto,
+  ) {
+    await this.checkDocenteAccess(idDocente, idCurso); // 3. Validar
+    return this.consultasService.findConsultasForDocente(idCurso, dto);
+  }
+
+  async createRespuesta(
+    idConsulta: string,
+    idDocente: string,
+    dto: CreateRespuestaDto,
+  ) {
+    // 4.1. Buscamos la consulta para saber a qué curso pertenece
+    const consulta = await this.prisma.consulta.findUnique({
+      where: { id: idConsulta },
+      select: { idCurso: true },
+    });
+
+    if (!consulta) {
+      throw new NotFoundException('La consulta no existe.');
+    }
+
+    // 4.2. Validamos que el docente pertenezca a ESE curso
+    await this.checkDocenteAccess(idDocente, consulta.idCurso);
+
+    // 4.3. Si todo está bien, llamamos al servicio
+    return this.consultasService.createRespuesta(idConsulta, idDocente, dto);
   }
 }

@@ -2,7 +2,10 @@ import {
   Body,
   Controller,
   Get,
+  Delete,
+  Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Query,
   Req,
@@ -14,6 +17,10 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { roles } from '@prisma/client';
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
 import { JoinCourseDto } from '../dto/join-course-dto';
+import { CreateConsultaDto } from 'src/consultas/dto/create-consulta.dto';
+import { FindConsultasDto } from 'src/consultas/dto/find-consultas.dto';
+import { ValorarConsultaDto } from 'src/consultas/dto/valorar-consulta.dto';
+import { UpdateConsultaDto } from 'src/consultas/dto/update-consulta.dto';
 
 @UseGuards(RolesGuard)
 @Roles(roles.Alumno)
@@ -60,5 +67,54 @@ export class AlumnosController {
   ) {
     const idAlumno = req.user.userId;
     return this.alumnosService.findMyMissions(idAlumno, idCurso);
+  }
+
+  @Get('my/courses/:idCurso/consults')
+  findMyConsultas(
+    @Req() req: AuthenticatedUserRequest,
+    @Param('idCurso', ParseUUIDPipe) idCurso: string,
+    @Query() dto: FindConsultasDto,
+  ) {
+    const idAlumno = req.user.userId;
+    return this.alumnosService.findMyConsultas(idAlumno, idCurso, dto);
+  }
+
+  @Post('my/courses/:idCurso/consults/create')
+  createConsulta(
+    @Req() req: AuthenticatedUserRequest,
+    @Param('idCurso', ParseUUIDPipe) idCurso: string,
+    @Body() dto: CreateConsultaDto,
+  ) {
+    const idAlumno = req.user.userId;
+    return this.alumnosService.createConsulta(idAlumno, idCurso, dto);
+  }
+
+  @Patch('my/consults/edit/:idConsulta')
+  updateConsulta(
+    @Req() req: AuthenticatedUserRequest,
+    @Param('idConsulta', ParseUUIDPipe) idConsulta: string,
+    @Body() dto: UpdateConsultaDto,
+  ) {
+    const idAlumno = req.user.userId;
+    return this.alumnosService.updateConsulta(idConsulta, idAlumno, dto);
+  }
+
+  @Delete('my/consults/delete/:idConsulta')
+  deleteConsulta(
+    @Req() req: AuthenticatedUserRequest,
+    @Param('idConsulta', ParseUUIDPipe) idConsulta: string,
+  ) {
+    const idAlumno = req.user.userId;
+    return this.alumnosService.deleteConsulta(idConsulta, idAlumno);
+  }
+
+  @Patch('my/consults/:idConsulta/valorar')
+  valorarConsulta(
+    @Req() req: AuthenticatedUserRequest,
+    @Param('idConsulta', ParseUUIDPipe) idConsulta: string,
+    @Body() dto: ValorarConsultaDto,
+  ) {
+    const idAlumno = req.user.userId;
+    return this.alumnosService.valorarConsulta(idConsulta, idAlumno, dto);
   }
 }

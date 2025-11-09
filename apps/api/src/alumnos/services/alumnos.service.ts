@@ -11,6 +11,11 @@ import { UserPayload } from 'src/interfaces/authenticated-user.interface';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ProgressService } from 'src/progress/services/progress.service';
 import { JoinCourseDto } from '../dto/join-course-dto';
+import { ConsultasService } from 'src/consultas/services/consultas.service';
+import { FindConsultasDto } from 'src/consultas/dto/find-consultas.dto';
+import { CreateConsultaDto } from 'src/consultas/dto/create-consulta.dto';
+import { ValorarConsultaDto } from 'src/consultas/dto/valorar-consulta.dto';
+import { UpdateConsultaDto } from 'src/consultas/dto/update-consulta.dto';
 
 @Injectable()
 export class AlumnosService {
@@ -18,6 +23,7 @@ export class AlumnosService {
     private prisma: PrismaService,
     private progressService: ProgressService,
     private difficultiesService: DifficultiesService,
+    private consultasService: ConsultasService,
   ) {}
 
   async findMyCourses(idAlumno: string) {
@@ -199,8 +205,45 @@ export class AlumnosService {
     return this.difficultiesService.getStudentDifficulties(idAlumno, idCurso);
   }
 
-  // --- ¡NUEVO MÉTODO AQUÍ! ---
   async findMyMissions(idAlumno: string, idCurso: string) {
     return this.progressService.getStudentMissionStatus(idAlumno, idCurso);
+  }
+
+  async findMyConsultas(
+    idAlumno: string,
+    idCurso: string,
+    dto: FindConsultasDto,
+  ) {
+    return this.consultasService.findConsultasForAlumno(idAlumno, idCurso, dto);
+  }
+
+  async createConsulta(
+    idAlumno: string,
+    idCurso: string,
+    dto: CreateConsultaDto,
+  ) {
+    // El servicio "cerebro" hace todo el trabajo
+    return this.consultasService.createConsulta(idAlumno, idCurso, dto);
+  }
+
+  async updateConsulta(
+    idConsulta: string,
+    idAlumno: string,
+    dto: UpdateConsultaDto,
+  ) {
+    return this.consultasService.updateConsulta(idConsulta, idAlumno, dto);
+  }
+
+  async deleteConsulta(idConsulta: string, idAlumno: string) {
+    return this.consultasService.deleteConsulta(idConsulta, idAlumno);
+  }
+
+  async valorarConsulta(
+    idConsulta: string,
+    idAlumno: string,
+    dto: ValorarConsultaDto,
+  ) {
+    // El servicio "cerebro" hace todo el trabajo
+    return this.consultasService.valorarConsulta(idConsulta, idAlumno, dto);
   }
 }
