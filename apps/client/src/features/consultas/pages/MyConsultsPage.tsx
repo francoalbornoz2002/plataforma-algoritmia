@@ -12,6 +12,7 @@ import {
   MenuItem,
   Button,
   type SelectChangeEvent,
+  Pagination,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import {
@@ -26,10 +27,12 @@ import CreateConsultaModal from "../components/CreateConsultaModal";
 import { useCourseContext } from "../../../context/CourseContext";
 import { useDebounce } from "../../../hooks/useDebounce";
 import { getMyConsultas } from "../../users/services/alumnos.service";
-import ConsultaCard from "../components/ConsultaCard";
 import ValorarConsultaModal from "../components/ValorarConsultaModal";
 import EditConsultaModal from "../components/EditConsultaModal";
 import DeleteConsultaDialog from "../components/DeleteConsultaDialog";
+import ConsultaAccordionAlumno from "../components/ConsultaAccordionAlumno";
+
+const PAGE_SIZE = 5;
 
 export default function MyConsultsPage() {
   const { selectedCourse } = useCourseContext();
@@ -51,7 +54,9 @@ export default function MyConsultsPage() {
     null
   ); //
 
-  // Estados para filtros y paginación (preparados para DataGrid o lista)
+  // Estados para filtros y paginación
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [filters, setFilters] = useState({
     tema: "",
     estado: "",
@@ -68,7 +73,7 @@ export default function MyConsultsPage() {
 
     const params: FindConsultasParams = {
       page: 1, // (Por ahora traemos todo, no paginamos)
-      limit: 100,
+      limit: PAGE_SIZE,
       sort: "fechaConsulta",
       order: "desc",
       search: debouncedSearchTerm,
@@ -79,6 +84,7 @@ export default function MyConsultsPage() {
     getMyConsultas(selectedCourse.id, params)
       .then((response) => {
         setConsultas(response.data);
+        setTotalPages(response.totalPages);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -87,7 +93,7 @@ export default function MyConsultsPage() {
   // Efecto que reacciona a los filtros
   useEffect(() => {
     fetchConsultas();
-  }, [selectedCourse, debouncedSearchTerm, filters]); // Refresca si cambia el curso o filtros
+  }, [selectedCourse, debouncedSearchTerm, filters, page]); // Refresca si cambia el curso o filtros
 
   // --- Handlers ---
   const handleFilterChange = (e: SelectChangeEvent<string>) => {
@@ -95,10 +101,19 @@ export default function MyConsultsPage() {
       ...prev,
       [e.target.name]: e.target.value,
     }));
+    setPage(1);
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
+    setPage(1);
+  };
+
+  const handlePageChange = (
+    event: React.ChangeEvent<unknown>,
+    value: number
+  ) => {
+    setPage(value);
   };
 
   const handleSaveSuccess = () => {
@@ -116,23 +131,9 @@ export default function MyConsultsPage() {
   return (
     <Box>
       {/* --- 1. Cabecera y Botón "Nueva" --- */}
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ mb: 3 }}
-      >
-        <Typography variant="h4" gutterBottom sx={{ mb: 0 }}>
-          Mis Consultas en {selectedCourse.nombre}
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setIsCreateModalOpen(true)}
-        >
-          Nueva Consulta
-        </Button>
-      </Stack>
+      <Typography variant="h4" gutterBottom sx={{ mb: 2 }}>
+        Mis Consultas en {selectedCourse.nombre}
+      </Typography>
 
       {/* --- 2. Filtros --- */}
       <Stack direction="row" spacing={1.5} sx={{ mb: 2 }}>
@@ -142,7 +143,7 @@ export default function MyConsultsPage() {
           size="small"
           value={searchTerm}
           onChange={handleSearchChange}
-          sx={{ minWidth: 250, flexGrow: 1 }}
+          sx={{ minWidth: 250, maxWidth: 600, flexGrow: 1 }}
         />
         <FormControl size="small" sx={{ minWidth: 180 }}>
           <InputLabel>Tema</InputLabel>
@@ -178,6 +179,14 @@ export default function MyConsultsPage() {
             ))}
           </Select>
         </FormControl>
+        <Box sx={{ flexGrow: 1 }} />
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setIsCreateModalOpen(true)}
+        >
+          Nueva Consulta
+        </Button>
       </Stack>
 
       {/* --- 3. Lista de Consultas (Cards) (ACTUALIZADO) --- */}
@@ -192,12 +201,13 @@ export default function MyConsultsPage() {
               No se encontraron consultas con esos filtros. ¡O crea una nueva!
             </Alert>
           ) : (
-            <Stack spacing={2} sx={{ mt: 2 }}>
+            <Stack spacing={1} sx={{ mt: 2 }}>
+              {" "}
+              {/* 7. Usamos Stack (no spacing=2) */}
               {consultas.map((c) => (
-                <ConsultaCard
+                <ConsultaAccordionAlumno // <-- Usamos el nuevo acordeón
                   key={c.id}
                   consulta={c}
-                  // Conectamos todos los botones
                   onValorar={() => setConsultaToValorar(c)}
                   onEdit={() => setConsultaToEdit(c)}
                   onDelete={() => setConsultaToDelete(c)}
@@ -205,6 +215,17 @@ export default function MyConsultsPage() {
               ))}
             </Stack>
           )}
+
+          {/* --- 8. Paginación --- */}
+          <Stack alignItems="center" sx={{ mt: 3 }}>
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={handlePageChange}
+              color="primary"
+              disabled={loading}
+            />
+          </Stack>
         </Box>
       )}
 
