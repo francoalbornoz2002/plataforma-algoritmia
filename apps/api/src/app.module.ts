@@ -13,6 +13,7 @@ import { DifficultiesModule } from './difficulties/difficulties.module';
 import { InstitucionModule } from './institucion/institucion.module';
 import { AuditoriaModule } from './auditoria/auditoria.module';
 import { ConsultasModule } from './consultas/consultas.module';
+import { ClasesConsultaModule } from './clases-consulta/clases-consulta.module';
 
 const UPLOADS_PATH = join(process.cwd(), 'uploads');
 
@@ -40,6 +41,7 @@ const UPLOADS_PATH = join(process.cwd(), 'uploads');
     InstitucionModule,
     AuditoriaModule,
     ConsultasModule,
+    ClasesConsultaModule,
   ],
   controllers: [],
   providers: [],
