@@ -402,8 +402,7 @@ export interface FindConsultasParams extends BaseFilterParams {
   search?: string;
 }
 
-// 2. El objeto 'Consulta' como lo recibe el frontend
-// (Basado en el 'include' del backend)
+// 1. TIPO CONSULTA (Alumno)
 export interface Consulta {
   id: string;
   idAlumno: string;
@@ -411,15 +410,15 @@ export interface Consulta {
   titulo: string;
   tema: temas;
   descripcion: string;
-  fechaConsulta: string; // Llega como string ISO
+  fechaConsulta: string;
   estado: estado_consulta;
   valoracionAlumno: number | null;
   comentarioValoracion: string | null;
-  deletedAt: string | null; // Llega como string ISO
+  deletedAt: string | null;
 
   // La respuesta (si existe)
   respuestaConsulta: {
-    id: string; // (Asumiendo que el modelo 'RespuestaConsulta' tiene un id)
+    id: string;
     descripcion: string;
     fechaRespuesta: string;
     docente: {
@@ -429,6 +428,19 @@ export interface Consulta {
   } | null;
 }
 
-// 3. Para la respuesta paginada de la API
+// 2. TIPO PAGINADO (Para el Alumno)
 export interface PaginatedConsultasResponse
   extends PaginatedResponse<Consulta> {}
+
+// 3. TIPO EXTENDIDO (Para el Docente)
+export interface ConsultaDocente extends Consulta {
+  // Hereda todo de 'Consulta' y añade 'alumno'
+  alumno: {
+    nombre: string;
+    apellido: string;
+  };
+}
+
+// 4. TIPO PAGINADO (Para el Docente)
+export interface PaginatedConsultasDocenteResponse
+  extends PaginatedResponse<ConsultaDocente> {}
