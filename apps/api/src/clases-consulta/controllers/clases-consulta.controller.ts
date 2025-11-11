@@ -52,7 +52,7 @@ export class ClasesConsultaController {
 
   @Delete('delete/:id')
   @Roles(roles.Docente)
-  remove(@Param('id') id: string) {
-    return this.clasesConsultaService.remove(id);
+  remove(@Param('id') id: string, @Req() req: AuthenticatedUserRequest) {
+    return this.clasesConsultaService.remove(id, req.user);
   }
 }
