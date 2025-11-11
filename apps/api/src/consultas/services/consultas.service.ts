@@ -205,6 +205,7 @@ export class ConsultasService {
 
     const where: Prisma.ConsultaWhereInput = {
       idCurso,
+      deletedAt: null,
       ...(tema && { tema: tema }),
       ...(estado && { estado: estado }),
       ...(search && {
