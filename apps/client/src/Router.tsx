@@ -22,6 +22,7 @@ import { Roles } from "./types/roles";
 import SettingsPage from "./features/institution/pages/SettingsPage";
 import MyConsultsPage from "./features/consultas/pages/MyConsultsPage";
 import ConsultasPage from "./features/consultas/pages/ConsultasPage";
+import ClasesConsultaPage from "./features/clases-consulta/pages/ClasesConsultaPage";
 
 export const AppRouter: React.FC<{}> = () => {
   return (
@@ -64,6 +65,7 @@ export const AppRouter: React.FC<{}> = () => {
             <Route path="progress" element={<ProgressPage />} />
             <Route path="difficulties" element={<DifficultiesPage />} />
             <Route path="consults" element={<ConsultasPage />} />
+            <Route path="consult-classes" element={<ClasesConsultaPage />} />
             <Route path="settings" element={<CourseSettingsPage />} />
           </Route>
         </Route>
