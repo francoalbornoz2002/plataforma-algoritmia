@@ -59,17 +59,17 @@ export default function SidebarLayout() {
     {
       text: "Consultas",
       icon: <MarkUnreadChatAltIcon />,
-      path: "/course/consults", // (Ruta futura)
+      path: "/course/consults",
     },
     {
       text: "Clases de consulta",
       icon: <Class />,
-      path: "/course/consult-classes", // (Ruta futura)
+      path: "/course/consult-classes",
     },
     {
       text: "Configuración de curso",
       icon: <SettingsIcon />,
-      path: "/course/settings-course", // (Ruta futura)
+      path: "/course/settings-course",
     },
   ];
 
@@ -79,22 +79,22 @@ export default function SidebarLayout() {
     {
       text: "Mi progreso",
       icon: <Insights />,
-      path: "/my/progress", // (Tu router usa 'progress')
+      path: "/my/progress",
     },
     {
       text: "Mis dificultades",
       icon: <AssignmentLate />,
-      path: "/my/difficulties", // (Tu router usa 'difficulties')
+      path: "/my/difficulties",
     },
     {
-      text: "Sesiones de refuerzo",
+      text: "Mis sesiones de refuerzo",
       icon: <SwitchAccessShortcutAdd />,
       path: "/my/sessions", // (Ruta futura)
     },
     {
-      text: "Consultas",
+      text: "Mis consultas",
       icon: <MarkUnreadChatAltIcon />,
-      path: "/my/consults", // (Ruta futura)
+      path: "/my/consults",
     },
   ];
 
