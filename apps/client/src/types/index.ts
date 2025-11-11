@@ -61,6 +61,13 @@ export enum estado_consulta {
   Resuelta = "Resuelta",
 }
 
+export enum estado_clase_consulta {
+  Programada = "Programada",
+  Realizada = "Realizada",
+  No_realizada = "No realizada",
+  Cancelada = "Cancelada",
+}
+
 /* ---------------------- INTERFACES ---------------------- */
 
 export interface MenuItemType {
@@ -444,3 +451,41 @@ export interface ConsultaDocente extends Consulta {
 // 4. TIPO PAGINADO (Para el Docente)
 export interface PaginatedConsultasDocenteResponse
   extends PaginatedResponse<ConsultaDocente> {}
+
+// 1. Para el objeto 'ClaseConsulta' (lo que devuelve el backend)
+// (Basado en el 'include' que definimos en el servicio 'findAll')
+export interface ClaseConsulta {
+  id: string;
+  idDocente: string;
+  idCurso: string;
+  nombre: string;
+  descripcion: string;
+  fechaClase: string; // Llega como string ISO
+  horaInicio: string; // Llega como string (formato "HH:mm" o ISO)
+  horaFin: string; // Llega como string
+  modalidad: modalidad;
+  estadoClase: estado_clase_consulta;
+  deletedAt: string | null; // Llega como string ISO
+
+  // Relaciones (del 'include')
+  docenteResponsable: {
+    nombre: string;
+    apellido: string;
+  };
+  consultasEnClase: {
+    consulta: {
+      id: string;
+      titulo: string;
+    };
+  }[];
+}
+
+export interface ConsultaSimple {
+  id: string;
+  titulo: string;
+  tema: temas;
+  alumno: {
+    nombre: string;
+    apellido: string;
+  };
+}
