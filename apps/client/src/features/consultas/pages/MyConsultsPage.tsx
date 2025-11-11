@@ -13,6 +13,7 @@ import {
   Button,
   type SelectChangeEvent,
   Pagination,
+  Paper,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import {
@@ -130,66 +131,71 @@ export default function MyConsultsPage() {
 
   return (
     <Box>
-      {/* --- 1. Cabecera y Botón "Nueva" --- */}
-      <Typography variant="h4" gutterBottom sx={{ mb: 2 }}>
-        Mis Consultas en {selectedCourse.nombre}
-      </Typography>
-
-      {/* --- 2. Filtros --- */}
-      <Stack direction="row" spacing={1.5} sx={{ mb: 2 }}>
-        <TextField
-          label="Buscar por título o descripción..."
-          variant="outlined"
-          size="small"
-          value={searchTerm}
-          onChange={handleSearchChange}
-          sx={{ minWidth: 250, maxWidth: 600, flexGrow: 1 }}
-        />
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel>Tema</InputLabel>
-          <Select
-            name="tema"
-            value={filters.tema}
-            label="Tema"
-            onChange={handleFilterChange}
-          >
-            <MenuItem value="">Todos</MenuItem>
-            {Object.values(temas)
-              .filter((t) => t !== temas.Ninguno)
-              .map((t) => (
-                <MenuItem key={t} value={t}>
-                  {t}
+      {/* --- 1. Filtros --- */}
+      <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
+        <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
+          Filtros de búsqueda
+        </Typography>
+        <Stack direction="row" spacing={1.5} sx={{ mb: 2 }}>
+          <TextField
+            label="Buscar por título o descripción..."
+            variant="outlined"
+            size="small"
+            value={searchTerm}
+            onChange={handleSearchChange}
+            sx={{ minWidth: 250, maxWidth: 600, flexGrow: 1 }}
+          />
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel>Tema</InputLabel>
+            <Select
+              name="tema"
+              value={filters.tema}
+              label="Tema"
+              onChange={handleFilterChange}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {Object.values(temas)
+                .filter((t) => t !== temas.Ninguno)
+                .map((t) => (
+                  <MenuItem key={t} value={t}>
+                    {t}
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel>Estado</InputLabel>
+            <Select
+              name="estado"
+              value={filters.estado}
+              label="Estado"
+              onChange={handleFilterChange}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {Object.values(estado_consulta).map((e) => (
+                <MenuItem key={e} value={e}>
+                  {e}
                 </MenuItem>
               ))}
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel>Estado</InputLabel>
-          <Select
-            name="estado"
-            value={filters.estado}
-            label="Estado"
-            onChange={handleFilterChange}
+            </Select>
+          </FormControl>
+        </Stack>
+        <Stack direction="row" spacing={1}>
+          <Box sx={{ flexGrow: 1 }} />
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setIsCreateModalOpen(true)}
           >
-            <MenuItem value="">Todos</MenuItem>
-            {Object.values(estado_consulta).map((e) => (
-              <MenuItem key={e} value={e}>
-                {e}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <Box sx={{ flexGrow: 1 }} />
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setIsCreateModalOpen(true)}
-        >
-          Nueva Consulta
-        </Button>
-      </Stack>
+            Nueva Consulta
+          </Button>
+        </Stack>
+      </Paper>
 
-      {/* --- 3. Lista de Consultas (Cards) (ACTUALIZADO) --- */}
+      {/* --- 2. Lista de Consultas (Cards) (ACTUALIZADO) --- */}
+      <Typography variant="h5" gutterBottom sx={{ mb: 1 }}>
+        Consultas realizadas
+      </Typography>
       {loading ? (
         <CircularProgress sx={{ display: "block", margin: "auto", mt: 4 }} />
       ) : error ? (

@@ -165,6 +165,9 @@ export default function ConsultasPage() {
           </FormControl>
         </Stack>
       </Paper>
+      <Typography variant="h5" gutterBottom>
+        Consultas del curso
+      </Typography>
 
       {/* --- 2. Lista de Consultas (Acordeones) --- */}
       {loading ? (
