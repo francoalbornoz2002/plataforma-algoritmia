@@ -56,6 +56,8 @@ export default function ConsultaAccordion({
     defaultValues: { descripcion: "" },
   });
 
+  const { respuestaConsulta } = consulta;
+
   // Handler para enviar la respuesta
   const onSubmit: SubmitHandler<CreateRespuestaFormValues> = async (data) => {
     setApiError(null);
@@ -71,6 +73,20 @@ export default function ConsultaAccordion({
   const isPendiente = consulta.estado === estado_consulta.Pendiente;
   const isRevisada = consulta.estado === estado_consulta.Revisada;
   const isResuelta = consulta.estado === estado_consulta.Resuelta;
+
+  // 1. Formateo de Fecha de Consulta (la del Alumno)
+  // (Usamos el "hack" de string-split para evitar UTC)
+  const fechaConsultaString = consulta.fechaConsulta.split("T")[0];
+  const [yearC, monthC, dayC] = fechaConsultaString.split("-");
+  const fechaConsultaFormateada = `${dayC}/${monthC}/${yearC}`;
+
+  // 2. Formateo de Fecha de Respuesta (la del Docente)
+  let fechaRespuestaFormateada = ""; // Default
+  if (respuestaConsulta) {
+    const fechaRespuestaString = respuestaConsulta.fechaRespuesta.split("T")[0];
+    const [yearR, monthR, dayR] = fechaRespuestaString.split("-");
+    fechaRespuestaFormateada = `${dayR}/${monthR}/${yearR}`;
+  }
 
   return (
     // Deshabilitamos el acordeón si ya está resuelta
@@ -88,10 +104,7 @@ export default function ConsultaAccordion({
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="body2" color="text.secondary">
               Consulta de {consulta.alumno.nombre} {consulta.alumno.apellido} (
-              {format(new Date(consulta.fechaConsulta), "dd/MM/yyyy", {
-                locale: es,
-              })}
-              )
+              {fechaConsultaFormateada})
             </Typography>
             <Typography variant="h6" noWrap>
               {consulta.titulo}
@@ -161,16 +174,10 @@ export default function ConsultaAccordion({
           )}
 
           {/* Respuesta (si ya está Revisada o Resuelta) */}
-          {(isRevisada || isResuelta) && (
+          {(isRevisada || isResuelta) && respuestaConsulta && (
             <Box>
               <Typography variant="overline" color="text.secondary">
-                Tu Respuesta (
-                {format(
-                  new Date(consulta.respuestaConsulta!.fechaRespuesta),
-                  "dd/MM/yyyy",
-                  { locale: es }
-                )}
-                )
+                Tu Respuesta ({fechaRespuestaFormateada})
               </Typography>
               <Typography variant="body2" sx={{ fontStyle: "italic" }}>
                 {consulta.respuestaConsulta!.descripcion}

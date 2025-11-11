@@ -24,6 +24,8 @@ import { estado_consulta } from "../../../types";
 
 import TemaChip from "../../../components/TemaChip";
 import EstadoConsultaChip from "../../../components/EstadoConsultaChip";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 interface ConsultaAccordionAlumnoProps {
   consulta: Consulta;
@@ -33,7 +35,6 @@ interface ConsultaAccordionAlumnoProps {
 }
 
 export default function ConsultaAccordionAlumno({
-  // <-- 3. Nombre cambiado
   consulta,
   onValorar,
   onEdit,
@@ -50,6 +51,20 @@ export default function ConsultaAccordionAlumno({
   } = consulta;
 
   const isDeleted = !!deletedAt;
+
+  // 1. Formateo de Fecha de Consulta (la del Alumno)
+  // (Usamos el "hack" de string-split para evitar UTC)
+  const fechaConsultaString = consulta.fechaConsulta.split("T")[0];
+  const [yearC, monthC, dayC] = fechaConsultaString.split("-");
+  const fechaConsultaFormateada = `${dayC}/${monthC}/${yearC}`;
+
+  // 2. Formateo de Fecha de Respuesta (la del Docente)
+  let fechaRespuestaFormateada = ""; // Default
+  if (respuestaConsulta) {
+    const fechaRespuestaString = respuestaConsulta.fechaRespuesta.split("T")[0];
+    const [yearR, monthR, dayR] = fechaRespuestaString.split("-");
+    fechaRespuestaFormateada = `${dayR}/${monthR}/${yearR}`;
+  }
 
   return (
     <Accordion
@@ -70,9 +85,14 @@ export default function ConsultaAccordionAlumno({
         >
           {/* Columna Izquierda: Título y Tema */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="h6" noWrap>
-              {titulo}
-            </Typography>
+            <Stack direction="row" spacing={1}>
+              <Typography variant="overline" noWrap>
+                {fechaConsultaFormateada}
+              </Typography>
+              <Typography variant="h6" noWrap>
+                {titulo}
+              </Typography>
+            </Stack>
             <TemaChip tema={tema} />
           </Box>
           {/* Columna Derecha: Estado */}
@@ -110,7 +130,8 @@ export default function ConsultaAccordionAlumno({
               <Box>
                 <Typography variant="overline" color="text.secondary">
                   Respuesta de {respuestaConsulta.docente.nombre}{" "}
-                  {respuestaConsulta.docente.apellido}
+                  {respuestaConsulta.docente.apellido} (
+                  {fechaRespuestaFormateada})
                 </Typography>
                 <Typography variant="body2" sx={{ fontStyle: "italic" }}>
                   {respuestaConsulta.descripcion}
