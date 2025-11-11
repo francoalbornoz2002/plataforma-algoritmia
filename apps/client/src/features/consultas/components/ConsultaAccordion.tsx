@@ -87,7 +87,11 @@ export default function ConsultaAccordion({
           {/* Columna Izquierda: Alumno y Título */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="body2" color="text.secondary">
-              {consulta.alumno.nombre} {consulta.alumno.apellido}
+              Consulta de {consulta.alumno.nombre} {consulta.alumno.apellido} (
+              {format(new Date(consulta.fechaConsulta), "dd/MM/yyyy", {
+                locale: es,
+              })}
+              )
             </Typography>
             <Typography variant="h6" noWrap>
               {consulta.titulo}
@@ -107,11 +111,7 @@ export default function ConsultaAccordion({
           {/* Descripción del Alumno */}
           <Box>
             <Typography variant="overline" color="text.secondary">
-              Consulta del Alumno (
-              {format(new Date(consulta.fechaConsulta), "dd/MM/yyyy", {
-                locale: es,
-              })}
-              )
+              Descripcion de la consulta
             </Typography>
             <Typography variant="body2">{consulta.descripcion}</Typography>
           </Box>

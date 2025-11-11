@@ -64,7 +64,7 @@ export default function SidebarLayout() {
     {
       text: "Clases de consulta",
       icon: <Class />,
-      path: "/course/consults-classes", // (Ruta futura)
+      path: "/course/consult-classes", // (Ruta futura)
     },
     {
       text: "Configuración de curso",

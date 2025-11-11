@@ -11,7 +11,8 @@ import {
   Select,
   MenuItem,
   type SelectChangeEvent,
-  Pagination, // <-- Usaremos paginación
+  Pagination,
+  Paper, // <-- Usaremos paginación
 } from "@mui/material";
 import { useCourseContext } from "../../../context/CourseContext";
 import { useDebounce } from "../../../hooks/useDebounce";
@@ -114,58 +115,58 @@ export default function ConsultasPage() {
 
   return (
     <Box>
-      {/* --- 1. Cabecera --- */}
-      <Typography variant="h4" gutterBottom>
-        Consultas del Curso ({selectedCourse.nombre})
-      </Typography>
-
-      {/* --- 2. Filtros --- */}
-      <Stack direction="row" spacing={1.5} sx={{ mb: 2 }}>
-        <TextField
-          label="Buscar por título o descripción..."
-          variant="outlined"
-          size="small"
-          value={searchTerm}
-          onChange={handleSearchChange}
-          sx={{ minWidth: 250, flexGrow: 1 }}
-        />
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel>Tema</InputLabel>
-          <Select
-            name="tema"
-            value={filters.tema}
-            label="Tema"
-            onChange={handleFilterChange}
-          >
-            <MenuItem value="">Todos</MenuItem>
-            {Object.values(temas)
-              .filter((t) => t !== temas.Ninguno)
-              .map((t) => (
-                <MenuItem key={t} value={t}>
-                  {t}
+      {/* --- 1. Filtros y Orden --- */}
+      <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
+        <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
+          Filtros de búsqueda
+        </Typography>
+        <Stack direction="row" spacing={1.5} sx={{ mb: 2 }}>
+          <TextField
+            label="Buscar por título o descripción..."
+            variant="outlined"
+            size="small"
+            value={searchTerm}
+            onChange={handleSearchChange}
+            sx={{ minWidth: 250, flexGrow: 1 }}
+          />
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel>Tema</InputLabel>
+            <Select
+              name="tema"
+              value={filters.tema}
+              label="Tema"
+              onChange={handleFilterChange}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {Object.values(temas)
+                .filter((t) => t !== temas.Ninguno)
+                .map((t) => (
+                  <MenuItem key={t} value={t}>
+                    {t}
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel>Estado</InputLabel>
+            <Select
+              name="estado"
+              value={filters.estado}
+              label="Estado"
+              onChange={handleFilterChange}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {Object.values(estado_consulta).map((e) => (
+                <MenuItem key={e} value={e}>
+                  {e}
                 </MenuItem>
               ))}
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel>Estado</InputLabel>
-          <Select
-            name="estado"
-            value={filters.estado}
-            label="Estado"
-            onChange={handleFilterChange}
-          >
-            <MenuItem value="">Todos</MenuItem>
-            {Object.values(estado_consulta).map((e) => (
-              <MenuItem key={e} value={e}>
-                {e}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Stack>
+            </Select>
+          </FormControl>
+        </Stack>
+      </Paper>
 
-      {/* --- 3. Lista de Consultas (Acordeones) --- */}
+      {/* --- 2. Lista de Consultas (Acordeones) --- */}
       {loading ? (
         <CircularProgress sx={{ display: "block", margin: "auto", mt: 4 }} />
       ) : error ? (
@@ -189,7 +190,7 @@ export default function ConsultasPage() {
             </Stack>
           )}
 
-          {/* --- 4. Paginación --- */}
+          {/* --- 3. Paginación --- */}
           <Stack alignItems="center" sx={{ mt: 3 }}>
             <Pagination
               count={totalPages}
