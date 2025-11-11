@@ -245,7 +245,9 @@ export default function ClasesConsultaPage() {
           </Button>
         </Stack>
       </Paper>
-
+      <Typography variant="h5" gutterBottom>
+        Clases de consultas del curso
+      </Typography>
       {/* --- 2. Lista de Clases (Cards) --- */}
       {loading ? (
         <CircularProgress sx={{ display: "block", margin: "auto", mt: 4 }} />
@@ -255,7 +257,7 @@ export default function ClasesConsultaPage() {
         <Box>
           {clasesFiltradasYOrdenadas.length === 0 ? (
             <Alert severity="info" sx={{ mt: 2 }}>
-              No se encontraron clases de consulta con esos filtros.
+              No se encontraron clases de consulta.
             </Alert>
           ) : (
             <Grid container spacing={2}>
