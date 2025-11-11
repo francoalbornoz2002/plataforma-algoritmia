@@ -2,9 +2,11 @@ import apiClient from "../../../lib/axios";
 // Usamos el tipo que ya existe
 import type {
   Consulta,
+  ConsultaSimple,
   CursoParaEditar,
   DificultadAlumnoDetallada,
   DificultadesCurso,
+  DocenteBasico,
   estado_simple,
   FindConsultasParams,
   FindStudentDifficultiesParams,
@@ -267,5 +269,48 @@ export const createRespuesta = async (
       err.response?.data || err.message
     );
     throw err.response?.data || new Error("Error al enviar la respuesta.");
+  }
+};
+
+/**
+ * Obtiene la lista de docentes activos de un curso (para filtros)
+ */
+export const findActiveDocentes = async (
+  idCurso: string
+): Promise<DocenteBasico[]> => {
+  try {
+    const response = await apiClient.get(
+      `/docentes/my/courses/${idCurso}/active-docentes`
+    );
+    return response.data;
+  } catch (err: any) {
+    console.error(
+      "Error fetching active docentes:",
+      err.response?.data || err.message
+    );
+    throw err.response?.data || new Error("Error al obtener los docentes.");
+  }
+};
+
+/**
+ * Obtiene la lista de consultas pendientes de un curso
+ */
+export const findPendingConsultas = async (
+  idCurso: string
+): Promise<ConsultaSimple[]> => {
+  try {
+    const response = await apiClient.get(
+      `/docentes/my/courses/${idCurso}/pending-consultas`
+    );
+    return response.data;
+  } catch (err: any) {
+    console.error(
+      "Error fetching pending consultas:",
+      err.response?.data || err.message
+    );
+    throw (
+      err.response?.data ||
+      new Error("Error al obtener las consultas pendientes.")
+    );
   }
 };
