@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { CreateRespuestaDto } from 'src/consultas/dto/create-respuesta.dto';
 import { FindConsultasDto } from 'src/consultas/dto/find-consultas.dto';
+import { ConsultasService } from 'src/consultas/services/consultas.service';
 import { FindStudentDifficultiesDto } from 'src/difficulties/dto/find-student-difficulties.dto';
 import { DifficultiesService } from 'src/difficulties/services/difficulties.service';
 import { dateToTime } from 'src/helpers';
@@ -15,11 +16,11 @@ import { ProgressService } from 'src/progress/services/progress.service';
 
 @Injectable()
 export class DocentesService {
-  consultasService: any;
   constructor(
     private prisma: PrismaService,
     private progressService: ProgressService,
     private difficultiesService: DifficultiesService,
+    private consultasService: ConsultasService,
   ) {}
 
   private async checkDocenteAccess(idDocente: string, idCurso: string) {
