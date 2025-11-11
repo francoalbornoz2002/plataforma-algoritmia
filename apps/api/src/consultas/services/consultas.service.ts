@@ -300,6 +300,31 @@ export class ConsultasService {
     }
   }
 
+  /**
+   * Obtiene solo las consultas 'Pendientes' de un curso (para el formulario)
+   */
+  async findPendingConsultasByCurso(idCurso: string) {
+    return this.prisma.consulta.findMany({
+      where: {
+        idCurso: idCurso,
+        estado: estado_consulta.Pendiente,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        titulo: true,
+        tema: true,
+        // (Incluimos el alumno para que el docente vea de quién es)
+        alumno: {
+          select: { nombre: true, apellido: true },
+        },
+      },
+      orderBy: {
+        fechaConsulta: 'asc',
+      },
+    });
+  }
+
   // --- HELPER DE PERMISOS (Sigue igual) ---
   private async checkConsultaOwnershipAndState(
     idConsulta: string,

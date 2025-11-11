@@ -18,12 +18,16 @@ import { FindStudentProgressDto } from 'src/progress/dto/find-student-progress.d
 import { FindStudentDifficultiesDto } from 'src/difficulties/dto/find-student-difficulties.dto';
 import { FindConsultasDto } from 'src/consultas/dto/find-consultas.dto';
 import { CreateRespuestaDto } from 'src/consultas/dto/create-respuesta.dto';
+import { ConsultasService } from 'src/consultas/services/consultas.service';
 
 @UseGuards(RolesGuard)
 @Roles(roles.Docente)
 @Controller('docentes')
 export class DocentesController {
-  constructor(private readonly docentesService: DocentesService) {}
+  constructor(
+    private readonly docentesService: DocentesService,
+    private readonly consultasService: ConsultasService,
+  ) {}
 
   @Get('my/courses')
   findMyCourses(@Req() req: AuthenticatedUserRequest) {
@@ -121,5 +125,24 @@ export class DocentesController {
   ) {
     const idDocente = req.user.userId;
     return this.docentesService.createRespuesta(idConsulta, idDocente, dto);
+  }
+
+  @Get('my/courses/:idCurso/active-docentes')
+  getActiveDocentes(
+    @Param('idCurso', ParseUUIDPipe) idCurso: string,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const idDocente = req.user.userId;
+    return this.docentesService.findActiveDocentesByCurso(idCurso, idDocente);
+  }
+
+  // --- ¡NUEVO ENDPOINT 2! ---
+  @Get('my/courses/:idCurso/pending-consultas')
+  getPendingConsultas(
+    @Param('idCurso', ParseUUIDPipe) idCurso: string,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const idDocente = req.user.userId;
+    return this.consultasService.findPendingConsultasByCurso(idCurso);
   }
 }

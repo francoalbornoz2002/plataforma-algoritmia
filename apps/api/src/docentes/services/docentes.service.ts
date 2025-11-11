@@ -202,4 +202,35 @@ export class DocentesService {
     // 4.3. Si todo está bien, llamamos al servicio
     return this.consultasService.createRespuesta(idConsulta, idDocente, dto);
   }
+
+  /**
+   * Obtiene la lista de docentes activos de un curso (para los filtros)
+   */
+  async findActiveDocentesByCurso(
+    idCurso: string,
+    idDocenteSolicitante: string,
+  ) {
+    // 1. Validamos que el docente que pide tenga acceso
+    await this.checkDocenteAccess(idDocenteSolicitante, idCurso);
+
+    // 2. Buscamos los docentes activos
+    const asignaciones = await this.prisma.docenteCurso.findMany({
+      where: {
+        idCurso: idCurso,
+        estado: 'Activo',
+      },
+      include: {
+        docente: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+          },
+        },
+      },
+    });
+
+    // 3. Mapeamos la respuesta
+    return asignaciones.map((a) => a.docente);
+  }
 }
