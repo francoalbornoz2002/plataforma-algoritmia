@@ -155,10 +155,15 @@ export class ClasesConsultaService {
           select: { nombre: true, apellido: true },
         },
         consultasEnClase: {
-          // Las consultas vinculadas
           select: {
             consulta: {
-              select: { id: true, titulo: true },
+              // Seleccionamos el objeto 'consulta'
+              include: {
+                // E incluimos su 'alumno'
+                alumno: {
+                  select: { nombre: true, apellido: true },
+                },
+              },
             },
           },
         },
