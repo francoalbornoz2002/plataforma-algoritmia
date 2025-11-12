@@ -473,10 +473,7 @@ export interface ClaseConsulta {
     apellido: string;
   };
   consultasEnClase: {
-    consulta: {
-      id: string;
-      titulo: string;
-    };
+    consulta: ConsultaSimple & { id: string };
   }[];
 }
 
@@ -484,6 +481,8 @@ export interface ConsultaSimple {
   id: string;
   titulo: string;
   tema: temas;
+  descripcion: string;
+  fechaConsulta: string;
   alumno: {
     nombre: string;
     apellido: string;
