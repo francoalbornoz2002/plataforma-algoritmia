@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -52,6 +52,15 @@ export default function ConsultaSelectionModal({
   const [viewingConsulta, setViewingConsulta] = useState<ConsultaSimple | null>(
     null
   );
+
+  useEffect(() => {
+    if (open) {
+      setSelectionModel({
+        type: "include",
+        ids: new Set(initialSelection),
+      });
+    }
+  }, [open, initialSelection]);
 
   const handleConfirm = () => {
     // 1. Convertimos el Set<GridRowId> a (string | number)[]
