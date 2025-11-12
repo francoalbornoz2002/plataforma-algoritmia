@@ -11,12 +11,12 @@ export const createClaseConsultaSchema = z.object({
 
   descripcion: z
     .string()
-    .min(10, "La descripción debe tener al menos 10 caracteres"),
+    .min(5, "La descripción debe tener al menos 10 caracteres"),
 
   // Usamos z.string() y refinamos, porque el DatePicker de MUI
   // a veces devuelve un objeto Date, y 'nativeEnum' falla.
   // Es más simple validar el string final.
-  fechaClase: z.string().min(1, "La fecha es obligatoria"), // O .date() si usás Controller
+  fechaClase: z.string().min(1, "La fecha es obligatoria"),
 
   horaInicio: z.string().regex(timeRegex, "Formato inválido (debe ser HH:mm)"),
 
