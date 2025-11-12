@@ -34,7 +34,7 @@ import { roles, type UserData } from "../../../types";
 
 // Servicios
 import { createUser, updateUser } from "../services/user.service";
-import { Box } from "@mui/material";
+import { Box, Divider } from "@mui/material";
 
 import { useSnackbar } from "notistack";
 
@@ -160,110 +160,114 @@ export default function UserFormDialog({
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
+      <DialogTitle align="center">
         {isEditMode ? "Editar Usuario" : "Crear Nuevo Usuario"}
       </DialogTitle>
+      <Divider variant="middle" />
       {/* Usamos handleSubmit aquí */}
       <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
         <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            {" "}
+          <Stack spacing={2}>
             {/* Añade padding top */}
-            <TextField
-              label="Nombre"
-              fullWidth
-              required
-              {...register("nombre")}
-              error={!!errors.nombre}
-              helperText={errors.nombre?.message || " "}
-              slotProps={{
-                formHelperText: {
-                  style: { minHeight: "1.25em" },
-                },
-              }}
-              disabled={isSubmitting}
-            />
-            <TextField
-              label="Apellido"
-              fullWidth
-              required
-              {...register("apellido")}
-              error={!!errors.apellido}
-              helperText={errors.apellido?.message || " "}
-              slotProps={{
-                formHelperText: {
-                  style: { minHeight: "1.25em" },
-                },
-              }}
-              disabled={isSubmitting}
-            />
-            <TextField
-              label="DNI"
-              fullWidth
-              required
-              {...register("dni")}
-              error={!!errors.dni}
-              helperText={errors.dni?.message || " "}
-              slotProps={{
-                formHelperText: {
-                  style: { minHeight: "1.25em" },
-                },
-              }}
-              disabled={isSubmitting}
-            />
-            {/* DatePicker para Fecha de Nacimiento */}
-            <Controller
-              name="fechaNacimiento"
-              control={control}
-              render={({ field, fieldState: { error } }) => (
-                <LocalizationProvider
-                  dateAdapter={AdapterDateFns}
-                  adapterLocale={es}
-                >
-                  <DatePicker
-                    label="Fecha de Nacimiento *" // Asterisco si es requerido
-                    format="dd/MM/yyyy"
-                    value={field.value || null}
-                    onChange={(date) => field.onChange(date)}
-                    disabled={isSubmitting}
-                    disableFuture
-                    slotProps={{
-                      textField: {
-                        required: true, // Indica visualmente que es requerido
-                        fullWidth: true,
-                        error: !!error,
-                        helperText: error?.message || " ",
-                      },
-                    }}
-                  />
-                </LocalizationProvider>
-              )}
-            />
-            {/* Selector de Género */}
-            <Controller
-              name="genero"
-              control={control}
-              render={({ field, fieldState: { error } }) => (
-                <FormControl fullWidth required error={!!error}>
-                  <InputLabel id="genero-select-label">Género</InputLabel>
-                  <Select
-                    labelId="genero-select-label"
-                    label="Género"
-                    disabled={isSubmitting}
-                    {...field}
+            <Stack direction="row" spacing={2}>
+              <TextField
+                label="Nombre"
+                fullWidth
+                required
+                {...register("nombre")}
+                error={!!errors.nombre}
+                helperText={errors.nombre?.message || " "}
+                slotProps={{
+                  formHelperText: {
+                    style: { minHeight: "1.25em" },
+                  },
+                }}
+                disabled={isSubmitting}
+              />
+              <TextField
+                label="Apellido"
+                fullWidth
+                required
+                {...register("apellido")}
+                error={!!errors.apellido}
+                helperText={errors.apellido?.message || " "}
+                slotProps={{
+                  formHelperText: {
+                    style: { minHeight: "1.25em" },
+                  },
+                }}
+                disabled={isSubmitting}
+              />
+            </Stack>
+            <Stack direction="row" spacing={2}>
+              <TextField
+                label="DNI"
+                fullWidth
+                required
+                {...register("dni")}
+                error={!!errors.dni}
+                helperText={errors.dni?.message || " "}
+                slotProps={{
+                  formHelperText: {
+                    style: { minHeight: "1.25em" },
+                  },
+                }}
+                disabled={isSubmitting}
+              />
+              {/* DatePicker para Fecha de Nacimiento */}
+              <Controller
+                name="fechaNacimiento"
+                control={control}
+                render={({ field, fieldState: { error } }) => (
+                  <LocalizationProvider
+                    dateAdapter={AdapterDateFns}
+                    adapterLocale={es}
                   >
-                    {/* Mapea los valores del TIPO Género */}
-                    {generos.map((genero) => (
-                      <MenuItem key={genero} value={genero}>
-                        {/* Puedes poner nombres más amigables aquí si quieres */}
-                        {genero}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {error && <FormHelperText>{error.message}</FormHelperText>}
-                </FormControl>
-              )}
-            />
+                    <DatePicker
+                      label="Fecha de Nacimiento" // Asterisco si es requerido
+                      format="dd/MM/yyyy"
+                      value={field.value || null}
+                      onChange={(date) => field.onChange(date)}
+                      disabled={isSubmitting}
+                      disableFuture
+                      slotProps={{
+                        textField: {
+                          required: true, // Indica visualmente que es requerido
+                          fullWidth: true,
+                          error: !!error,
+                          helperText: error?.message || " ",
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
+                )}
+              />
+              {/* Selector de Género */}
+              <Controller
+                name="genero"
+                control={control}
+                render={({ field, fieldState: { error } }) => (
+                  <FormControl fullWidth required error={!!error}>
+                    <InputLabel id="genero-select-label">Género</InputLabel>
+                    <Select
+                      labelId="genero-select-label"
+                      label="Género"
+                      disabled={isSubmitting}
+                      {...field}
+                    >
+                      {/* Mapea los valores del TIPO Género */}
+                      {generos.map((genero) => (
+                        <MenuItem key={genero} value={genero}>
+                          {/* Puedes poner nombres más amigables aquí si quieres */}
+                          {genero}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    {error && <FormHelperText>{error.message}</FormHelperText>}
+                  </FormControl>
+                )}
+              />
+            </Stack>
             <TextField
               label="Email"
               fullWidth
@@ -348,7 +352,6 @@ export default function UserFormDialog({
           </Stack>
         </DialogContent>
         <DialogActions sx={{ p: "16px 24px" }}>
-          {" "}
           {/* Añade padding */}
           <Button onClick={onClose} disabled={isSubmitting}>
             Cancelar

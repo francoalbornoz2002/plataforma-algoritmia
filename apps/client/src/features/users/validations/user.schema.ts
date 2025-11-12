@@ -24,8 +24,10 @@ const userBaseSchema = z.object({
     ),
   genero: z.enum(generos, "Debe seleccionar un género"),
   email: z
-    .email("Formato de correo inválido")
-    .min(1, "El email es obligatorio"),
+    .string()
+    .min(1, "El email es obligatorio")
+    .email("Debe ingresar un correo válido"),
+
   rol: z.enum(roles, "Debe seleccionar un rol"),
 });
 

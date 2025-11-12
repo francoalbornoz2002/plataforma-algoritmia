@@ -342,6 +342,7 @@ export default function CourseFormDialog({
                             placeholder="Buscar docente..."
                             error={!!errors.docentes}
                             helperText={errors.docentes?.message}
+                            required
                           />
                         )}
                       />
@@ -355,6 +356,7 @@ export default function CourseFormDialog({
                       <FormControl
                         fullWidth
                         error={!!errors.modalidadPreferencial}
+                        required
                       >
                         <InputLabel>Modalidad preferencial</InputLabel>
                         <Select

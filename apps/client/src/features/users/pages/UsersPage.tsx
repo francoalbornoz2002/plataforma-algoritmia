@@ -33,6 +33,7 @@ import {
   ListItemText,
   MenuItem,
   OutlinedInput,
+  Paper,
   Select,
   Stack,
   TextField,
@@ -352,20 +353,10 @@ export default function UsersPage() {
         flexDirection: "column",
       }}
     >
-      <Typography variant="h4" gutterBottom>
-        Gestión de Usuarios
-      </Typography>
-
-      {/* --- Sección de Filtros y Botón de crear usuario --- */}
-      <Box
-        sx={{
-          mb: 2,
-          gap: 2,
-          flexWrap: "wrap",
-          alignItems: "center",
-          flexGrow: 1,
-        }}
-      >
+      <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
+        <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
+          Filtros de búsqueda
+        </Typography>
         <Stack direction="row" spacing={2} alignItems="center">
           <TextField
             size="small"
@@ -408,6 +399,9 @@ export default function UsersPage() {
             </Select>
           </FormControl>
           <Box sx={{ flexGrow: 1 }} />
+        </Stack>
+        <Stack direction="row" spacing={1}>
+          <Box sx={{ flexGrow: 1 }} />
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -417,7 +411,7 @@ export default function UsersPage() {
             Añadir Usuario
           </Button>
         </Stack>
-      </Box>
+      </Paper>
 
       {/* Muestra un error si falló la carga */}
       {error && (
