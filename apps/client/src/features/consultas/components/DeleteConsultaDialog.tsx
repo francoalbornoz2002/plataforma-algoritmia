@@ -11,6 +11,7 @@ import {
 import { useState } from "react";
 import type { Consulta } from "../../../types";
 import { deleteConsulta } from "../../users/services/alumnos.service";
+import { enqueueSnackbar } from "notistack";
 
 interface DeleteConsultaDialogProps {
   open: boolean;
@@ -34,10 +35,16 @@ export default function DeleteConsultaDialog({
     try {
       // Llamamos al servicio de borrado
       await deleteConsulta(consultaToDelete.id);
+      enqueueSnackbar("Consulta dada de baja correctamente", {
+        variant: "success",
+      });
       onDeleteSuccess(); // Refresca la lista
       onClose(); // Cierra el modal
     } catch (err: any) {
       setError(err.message || "Error al borrar la consulta.");
+      enqueueSnackbar(err.message || "Error al dar de baja la consulta.", {
+        variant: "error",
+      });
     } finally {
       setIsDeleting(false);
     }

@@ -25,6 +25,7 @@ import {
 
 // Importamos el servicio de UPDATE
 import { updateConsulta } from "../../users/services/alumnos.service";
+import { enqueueSnackbar } from "notistack";
 
 interface EditConsultaModalProps {
   open: boolean;
@@ -77,10 +78,16 @@ export default function EditConsultaModal({
     try {
       // Llamamos al servicio de ACTUALIZACIÓN
       await updateConsulta(consultaToEdit.id, data);
+      enqueueSnackbar("Consulta actualizada correctamente", {
+        variant: "success",
+      });
       onSave();
       handleClose();
     } catch (err: any) {
       setApiError(err.message || "Error al actualizar la consulta.");
+      enqueueSnackbar(err.message || "Error al actualizar la consulta.", {
+        variant: "error",
+      });
     }
   };
 

@@ -32,6 +32,7 @@ interface CreateConsultaModalProps {
 
 // (Importamos el servicio)
 import { createConsulta } from "../../users/services/alumnos.service";
+import { enqueueSnackbar } from "notistack";
 
 export default function CreateConsultaModal({
   open,
@@ -67,10 +68,16 @@ export default function CreateConsultaModal({
     try {
       // Llamamos al servicio (con la ruta /create que definiste)
       await createConsulta(idCurso, data);
+      enqueueSnackbar("Consulta creada correctamente", {
+        variant: "success",
+      });
       onSave(); // Avisa a la página que refresque
       handleClose(); // Cierra el modal
     } catch (err: any) {
       setApiError(err.message || "Error al crear la consulta.");
+      enqueueSnackbar(err.message || "Error al crear la consulta.", {
+        variant: "error",
+      });
     }
   };
 

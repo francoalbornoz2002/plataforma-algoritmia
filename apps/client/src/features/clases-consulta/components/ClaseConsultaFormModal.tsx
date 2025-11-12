@@ -44,6 +44,7 @@ import { timeToDate } from "../../../utils/dateHelpers"; // El helper que creamo
 
 // El modal de selección que ya arreglamos
 import ConsultaSelectionModal from "./ConsultaSelectionModal";
+import { enqueueSnackbar } from "notistack";
 
 interface ClaseConsultaFormModalProps {
   open: boolean;
@@ -156,16 +157,25 @@ export default function ClaseConsultaFormModal({
     try {
       if (isEditMode) {
         await updateClaseConsulta(claseToEdit!.id, payload);
+        enqueueSnackbar("Clase actualizada correctamente", {
+          variant: "success",
+        });
       } else {
         await createClaseConsulta(
           payload as CreateClaseConsultaFormValues, // Forzamos el tipo (Zod ya validó)
           selectedCourse.id
         );
+        enqueueSnackbar("Clase de cosnulta creada correctamente", {
+          variant: "success",
+        });
       }
       onSave(); // Refresca la lista en la página
       handleClose(); // Cierra el modal
     } catch (err: any) {
       setApiError(err.message || "Error al guardar la clase.");
+      enqueueSnackbar(err.message || "Error al guardar la clase.", {
+        variant: "error",
+      });
     }
   };
 

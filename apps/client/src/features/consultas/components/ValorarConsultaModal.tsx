@@ -24,6 +24,7 @@ import type { Consulta } from "../../../types";
 
 // (Importamos el servicio)
 import { valorarConsulta } from "../../users/services/alumnos.service";
+import { enqueueSnackbar } from "notistack";
 
 interface ValorarConsultaModalProps {
   open: boolean;
@@ -64,10 +65,16 @@ export default function ValorarConsultaModal({
     setApiError(null);
     try {
       await valorarConsulta(consulta.id, data);
+      enqueueSnackbar("Consulta valorada correctamente", {
+        variant: "success",
+      });
       onSave(); // Avisa a la página que refresque
       handleClose(); // Cierra el modal
     } catch (err: any) {
       setApiError(err.message || "Error al valorar la consulta.");
+      enqueueSnackbar(err.message || "Error al valorar la consulta.", {
+        variant: "error",
+      });
     }
   };
 

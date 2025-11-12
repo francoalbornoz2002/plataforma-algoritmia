@@ -33,6 +33,7 @@ import { createRespuesta } from "../../users/services/docentes.service";
 // Chips Reutilizables
 import TemaChip from "../../../components/TemaChip";
 import EstadoConsultaChip from "../../../components/EstadoConsultaChip";
+import { enqueueSnackbar } from "notistack";
 
 interface ConsultaAccordionProps {
   consulta: ConsultaDocente;
@@ -63,10 +64,16 @@ export default function ConsultaAccordion({
     setApiError(null);
     try {
       await createRespuesta(consulta.id, data);
+      enqueueSnackbar("Respuesta enviada correctamente", {
+        variant: "success",
+      });
       onResponseSuccess(); // Avisa a la página que refresque
       reset(); // Limpia el formulario
     } catch (err: any) {
       setApiError(err.message || "Error al enviar la respuesta.");
+      enqueueSnackbar(err.message || "Error al enviar la respuesta.", {
+        variant: "error",
+      });
     }
   };
 
