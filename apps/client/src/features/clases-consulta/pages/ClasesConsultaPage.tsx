@@ -34,6 +34,7 @@ import {
 import ClaseConsultaCard from "../components/ClaseConsultaCard";
 import ClaseConsultaFormModal from "../components/ClaseConsultaFormModal";
 import DeleteClaseDialog from "../components/DeleteClaseDialog";
+import ClaseDetailModal from "../components/ClaseDetailModal";
 
 // Tipos para los filtros
 type OrdenFiltro =
@@ -62,11 +63,12 @@ export default function ClasesConsultaPage() {
   const [orden, setOrden] = useState<OrdenFiltro>("fecha-desc");
 
   // --- Estados de Modales ---
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [claseToEdit, setClaseToEdit] = useState<ClaseConsulta | null>(null);
   const [claseToDelete, setClaseToDelete] = useState<ClaseConsulta | null>(
     null
   );
+  const [claseToView, setClaseToView] = useState<ClaseConsulta | null>(null);
 
   // --- Data Fetching (Cliente) ---
   const fetchData = () => {
@@ -143,12 +145,12 @@ export default function ClasesConsultaPage() {
   // --- Handlers ---
   const handleOpenCreate = () => {
     setClaseToEdit(null); // Asegurarse de que esté en modo "Crear"
-    setIsModalOpen(true);
+    setIsFormModalOpen(true);
   };
 
   const handleOpenEdit = (clase: ClaseConsulta) => {
     setClaseToEdit(clase); // Pone el objeto en modo "Editar"
-    setIsModalOpen(true);
+    setIsFormModalOpen(true);
   };
 
   const handleSaveSuccess = () => {
@@ -267,6 +269,7 @@ export default function ClasesConsultaPage() {
                     clase={clase}
                     onEdit={handleOpenEdit}
                     onDelete={setClaseToDelete}
+                    onViewDetails={setClaseToView}
                   />
                 </Grid>
               ))}
@@ -278,8 +281,8 @@ export default function ClasesConsultaPage() {
       {/* --- 3. Modales --- */}
       {/* (El modal de Crear/Editar se renderiza solo cuando 'isModalOpen' es true) */}
       <ClaseConsultaFormModal
-        open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        open={isFormModalOpen}
+        onClose={() => setIsFormModalOpen(false)}
         onSave={handleSaveSuccess}
         claseToEdit={claseToEdit}
         docentesList={docentesList}
@@ -292,6 +295,14 @@ export default function ClasesConsultaPage() {
           onClose={() => setClaseToDelete(null)}
           onDeleteSuccess={handleSaveSuccess}
           clase={claseToDelete}
+        />
+      )}
+
+      {claseToView && (
+        <ClaseDetailModal
+          open={!!claseToView}
+          onClose={() => setClaseToView(null)}
+          clase={claseToView}
         />
       )}
     </Box>
