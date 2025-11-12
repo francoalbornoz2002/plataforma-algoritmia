@@ -66,14 +66,14 @@ export default function MyConsultsPage() {
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   // --- Data Fetching ---
-  const fetchConsultas = () => {
+  const fetchConsultas = (currentPage: number) => {
     if (!selectedCourse) return;
 
     setLoading(true);
     setError(null);
 
     const params: FindConsultasParams = {
-      page: 1, // (Por ahora traemos todo, no paginamos)
+      page: currentPage, // (Por ahora traemos todo, no paginamos)
       limit: PAGE_SIZE,
       sort: "fechaConsulta",
       order: "desc",
@@ -93,7 +93,7 @@ export default function MyConsultsPage() {
 
   // Efecto que reacciona a los filtros
   useEffect(() => {
-    fetchConsultas();
+    fetchConsultas(page);
   }, [selectedCourse, debouncedSearchTerm, filters, page]); // Refresca si cambia el curso o filtros
 
   // --- Handlers ---
@@ -118,7 +118,7 @@ export default function MyConsultsPage() {
   };
 
   const handleSaveSuccess = () => {
-    fetchConsultas(); // Refresca la lista
+    fetchConsultas(page); // Refresca la lista
   };
 
   if (!selectedCourse) {
