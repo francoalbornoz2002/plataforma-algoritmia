@@ -55,12 +55,19 @@ export default function ClaseConsultaCard({
   // 'deletedAt' es el 'soft delete' (que también la pone en estado 'Cancelada')
   const isCanceled = !!deletedAt;
 
-  // --- Formateo de Datos ---
-  const fecha = format(new Date(fechaClase), "EEEE dd 'de' MMMM, yyyy", {
-    locale: es,
-  });
-  // (Usamos new Date(1970...) para que 'format' interprete la hora correctamente)
-  const hora = `${format(new Date(`1970-01-01T${horaInicio}Z`), "HH:mm")} - ${format(new Date(`1970-01-01T${horaFin}Z`), "HH:mm")} hs`;
+  // 1. Formateo de Fecha (el "hack" anti-UTC)
+  const fechaString = fechaClase.split("T")[0]; // "2025-11-11"
+  const [year, month, day] = fechaString.split("-");
+  const fecha = `${day}/${month}/${year}`; // "11/11/2025"
+
+  // 2. Formateo de Hora (el "hack" anti-UTC)
+  // 'horaInicio' es "1970-01-01T14:00:00.000Z"
+  // Le cortamos la parte de la hora "T14:00:00.000Z"
+  // y nos quedamos con los primeros 5 chars ("14:00")
+  const horaInicioStr = horaInicio.split("T")[1].substring(0, 5); // "14:00"
+  const horaFinStr = horaFin.split("T")[1].substring(0, 5); // "15:30"
+  const hora = `${horaInicioStr} - ${horaFinStr} hs`;
+
   const docente = `${docenteResponsable.nombre} ${docenteResponsable.apellido}`;
   const totalConsultas = consultasEnClase.length;
 
