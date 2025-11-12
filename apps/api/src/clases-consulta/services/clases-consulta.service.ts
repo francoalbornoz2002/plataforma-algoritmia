@@ -51,68 +51,70 @@ export class ClasesConsultaService {
 
     try {
       // --- TRANSACCIÓN ---
-      return await this.prisma.$transaction(async (tx) => {
-        // --- 1. Validación de Seguridad (Reglas de Negocio) ---
+      return await this.prisma.$transaction(
+        async (tx: Prisma.TransactionClient) => {
+          // --- 1. Validación de Seguridad (Reglas de Negocio) ---
 
-        // a. Validar que el docente creador pertenece al curso
-        await this.checkDocenteAccess(tx, idDocenteCreador, idCurso);
+          // a. Validar que el docente creador pertenece al curso
+          await this.checkDocenteAccess(tx, idDocenteCreador, idCurso);
 
-        // b. Validar que el docente ELEGIDO (idDocente) pertenece al curso
-        await this.checkDocenteAccess(tx, idDocente, idCurso);
+          // b. Validar que el docente ELEGIDO (idDocente) pertenece al curso
+          await this.checkDocenteAccess(tx, idDocente, idCurso);
 
-        // c. Validar que TODAS las consultas estén 'Pendiente'
-        const consultas = await tx.consulta.findMany({
-          where: {
-            id: { in: consultasIds },
-            idCurso: idCurso, // Asegurarnos de que sean de este curso
-          },
-        });
+          // c. Validar que TODAS las consultas estén 'Pendiente'
+          const consultas = await tx.consulta.findMany({
+            where: {
+              id: { in: consultasIds },
+              idCurso: idCurso, // Asegurarnos de que sean de este curso
+            },
+          });
 
-        if (consultas.length !== consultasIds.length) {
-          throw new BadRequestException(
-            'Una o más consultas no se encontraron o no pertenecen a este curso.',
+          if (consultas.length !== consultasIds.length) {
+            throw new BadRequestException(
+              'Una o más consultas no se encontraron o no pertenecen a este curso.',
+            );
+          }
+
+          const noPendientes = consultas.filter(
+            (c) => c.estado !== estado_consulta.Pendiente,
           );
-        }
+          if (noPendientes.length > 0) {
+            throw new BadRequestException(
+              'Solo puedes seleccionar consultas con estado "Pendiente".',
+            );
+          }
 
-        const noPendientes = consultas.filter(
-          (c) => c.estado !== estado_consulta.Pendiente,
-        );
-        if (noPendientes.length > 0) {
-          throw new BadRequestException(
-            'Solo puedes seleccionar consultas con estado "Pendiente".',
-          );
-        }
+          // --- 2. Crear la Clase de Consulta ---
+          const nuevaClase = await tx.claseConsulta.create({
+            data: {
+              ...restDto,
+              idCurso,
+              idDocente,
+              fechaClase: new Date(fechaClase),
+              horaInicio: timeToDate(horaInicio),
+              horaFin: timeToDate(horaFin),
+              estadoClase: estado_clase_consulta.Programada,
+              estadoRevision: estado_revision.Pendiente,
+            },
+          });
 
-        // --- 2. Crear la Clase de Consulta ---
-        const nuevaClase = await tx.claseConsulta.create({
-          data: {
-            ...restDto,
-            idCurso,
-            idDocente,
-            fechaClase: new Date(fechaClase),
-            horaInicio: timeToDate(horaInicio),
-            horaFin: timeToDate(horaFin),
-            estadoClase: estado_clase_consulta.Programada,
-            estadoRevision: estado_revision.Pendiente,
-          },
-        });
+          // --- 3. Vincular las consultas a la clase (Tabla ConsultaClase) ---
+          await tx.consultaClase.createMany({
+            data: consultasIds.map((idConsulta) => ({
+              idClaseConsulta: nuevaClase.id,
+              idConsulta: idConsulta,
+            })),
+          });
 
-        // --- 3. Vincular las consultas a la clase (Tabla ConsultaClase) ---
-        await tx.consultaClase.createMany({
-          data: consultasIds.map((idConsulta) => ({
-            idClase: nuevaClase.id,
-            idConsulta: idConsulta,
-          })),
-        });
+          // --- 4. Actualizar el estado de esas consultas ---
+          await tx.consulta.updateMany({
+            where: { id: { in: consultasIds } },
+            data: { estado: estado_consulta.A_revisar },
+          });
 
-        // --- 4. Actualizar el estado de esas consultas ---
-        await tx.consulta.updateMany({
-          where: { id: { in: consultasIds } },
-          data: { estado: estado_consulta.A_revisar },
-        });
-
-        return nuevaClase;
-      });
+          return nuevaClase;
+        },
+      );
     } catch (error) {
       if (
         error instanceof BadRequestException ||
@@ -331,7 +333,7 @@ export class ClasesConsultaService {
 
     // 3. Hacer el "soft delete" (que en tu schema es un UPDATE)
     // Usamos $transaction para revertir el estado de las consultas
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // a. Actualizar la clase a 'Cancelada' y marcar 'deletedAt'
       const claseCancelada = await tx.claseConsulta.update({
         where: { id },
@@ -343,7 +345,7 @@ export class ClasesConsultaService {
 
       // b. Buscar las consultas que estaban "A revisar" por esta clase
       const consultasVinculadas = await tx.consultaClase.findMany({
-        where: { idClase: id },
+        where: { idClaseConsulta: id },
         select: { idConsulta: true },
       });
       const idsConsultas = consultasVinculadas.map((c) => c.idConsulta);
@@ -356,7 +358,7 @@ export class ClasesConsultaService {
 
       // d. (Opcional: Borrar los vínculos en 'ConsultaClase')
       await tx.consultaClase.deleteMany({
-        where: { idClase: id },
+        where: { idClaseConsulta: id },
       });
 
       return claseCancelada;
