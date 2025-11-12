@@ -9,6 +9,7 @@ import {
   Tooltip,
   IconButton,
   Chip,
+  Button,
 } from "@mui/material";
 // Íconos para la info
 import EditIcon from "@mui/icons-material/Edit";
@@ -17,9 +18,6 @@ import EventIcon from "@mui/icons-material/Event";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import PersonIcon from "@mui/icons-material/Person";
 import QuestionAnswerIcon from "@mui/icons-material/QuestionAnswer";
-// Helpers de fecha
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 // Tipos y Componentes
 import type { ClaseConsulta } from "../../../types";
 import { estado_clase_consulta } from "../../../types";
@@ -29,12 +27,14 @@ interface ClaseConsultaCardProps {
   clase: ClaseConsulta;
   onEdit: (clase: ClaseConsulta) => void;
   onDelete: (clase: ClaseConsulta) => void;
+  onViewDetails: (clase: ClaseConsulta) => void;
 }
 
 export default function ClaseConsultaCard({
   clase,
   onEdit,
   onDelete,
+  onViewDetails,
 }: ClaseConsultaCardProps) {
   const {
     nombre,
@@ -151,6 +151,13 @@ export default function ClaseConsultaCard({
       <CardActions sx={{ justifyContent: "space-between", p: 1, px: 2 }}>
         <Chip label={modalidad} size="small" />
 
+        <Button
+          size="small"
+          onClick={() => onViewDetails(clase)}
+          disabled={isCanceled} // Deshabilitado si está cancelada
+        >
+          Ver consultas a revisar ({totalConsultas})
+        </Button>
         {/* Botones (Solo si no está cancelada) */}
         {!isCanceled && (
           <Box>
