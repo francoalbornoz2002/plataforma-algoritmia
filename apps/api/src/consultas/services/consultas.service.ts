@@ -314,6 +314,8 @@ export class ConsultasService {
         id: true,
         titulo: true,
         tema: true,
+        descripcion: true,
+        fechaConsulta: true,
         // (Incluimos el alumno para que el docente vea de quién es)
         alumno: {
           select: { nombre: true, apellido: true },
