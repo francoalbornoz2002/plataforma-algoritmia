@@ -42,7 +42,6 @@ import {
   updateClaseConsulta,
 } from "../services/clases-consulta.service";
 import { useCourseContext } from "../../../context/CourseContext";
-import { timeToDate } from "../../../utils/dateHelpers";
 
 interface ClaseConsultaFormModalProps {
   open: boolean;
@@ -110,7 +109,7 @@ export default function ClaseConsultaFormModal({
         horaInicio: "",
         horaFin: "",
         idDocente: "",
-        modalidad: undefined,
+        modalidad: modalidad.Presencial,
         consultasIds: [],
       }); // Reset a defaults de Zod
     }
@@ -211,6 +210,7 @@ export default function ClaseConsultaFormModal({
                 render={({ field }) => (
                   <DatePicker
                     label="Fecha de la Clase"
+                    disablePast
                     value={field.value ? new Date(field.value) : null}
                     onChange={(newDate) =>
                       field.onChange(newDate?.toISOString())
@@ -233,7 +233,11 @@ export default function ClaseConsultaFormModal({
                   <TimePicker
                     label="Hora Inicio (HH:mm)"
                     ampm={false}
-                    value={field.value ? timeToDate(field.value) : null}
+                    value={
+                      field.value
+                        ? new Date(`1970-01-01T${field.value}:00`)
+                        : null
+                    }
                     onChange={(newDate) =>
                       field.onChange(newDate ? format(newDate, "HH:mm") : "")
                     }
@@ -255,7 +259,11 @@ export default function ClaseConsultaFormModal({
                   <TimePicker
                     label="Hora Fin (HH:mm)"
                     ampm={false}
-                    value={field.value ? timeToDate(field.value) : null}
+                    value={
+                      field.value
+                        ? new Date(`1970-01-01T${field.value}:00`)
+                        : null
+                    }
                     onChange={(newDate) =>
                       field.onChange(newDate ? format(newDate, "HH:mm") : "")
                     }
@@ -332,12 +340,15 @@ export default function ClaseConsultaFormModal({
                         error={!!errors.consultasIds}
                       />
                     )}
-                    renderOption={(props, option, { selected }) => (
-                      <li {...props}>
-                        <Checkbox checked={selected} />
-                        <ListItemText primary={option.label} />
-                      </li>
-                    )}
+                    renderOption={(props, option, { selected }) => {
+                      const { key, ...restProps } = props as any;
+                      return (
+                        <li key={option.id} {...restProps}>
+                          <Checkbox checked={selected} />
+                          <ListItemText primary={option.label} />
+                        </li>
+                      );
+                    }}
                   />
                 )}
               />
