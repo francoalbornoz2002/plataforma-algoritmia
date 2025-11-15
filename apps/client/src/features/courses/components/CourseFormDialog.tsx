@@ -356,7 +356,6 @@ export default function CourseFormDialog({
                       <FormControl
                         fullWidth
                         error={!!errors.modalidadPreferencial}
-                        required
                       >
                         <InputLabel>Modalidad preferencial</InputLabel>
                         <Select
