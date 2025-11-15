@@ -1,8 +1,10 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
@@ -10,6 +12,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma, roles, Usuario } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { FindAllUsersDto } from '../dto/find-all-users.dto';
+import { LoginDto } from 'src/auth/dto/login.dto';
 
 // Defino el tipo de usuario sin password a devolver
 type SafeUser = Omit<Usuario, 'password'>;
@@ -191,6 +194,108 @@ export class UsersService {
     }
 
     return usuario;
+  }
+
+  async findAlumnoForGame(dto: LoginDto) {
+    // Realizamos desestructuración del dto
+    const { email, password } = dto;
+
+    // Validamos que el usuario (alumno) exista y esté activo.
+    const alumno = await this.prisma.usuario.findUnique({
+      where: { email },
+    });
+
+    // Si está inactivo, lanzamos error
+    if (alumno?.deletedAt) {
+      throw new UnauthorizedException('Este usuario está inactivo.');
+    }
+
+    // Si no es un alumno, lanzamos error
+    if (alumno?.rol !== roles.Alumno) {
+      throw new ForbiddenException(
+        'Acceso denegado. Solo los alumnos pueden jugar.',
+      );
+    }
+
+    // Si no se encuentra o la contraseña es incorrecta, lanzamos error
+    if (!alumno || !(await bcrypt.compare(password, alumno.password))) {
+      throw new UnauthorizedException('Credenciales inválidas.');
+    }
+
+    // Obtenemos la inscripción activa del alumno
+    const inscripcion = await this.prisma.alumnoCurso.findFirst({
+      where: {
+        idAlumno: alumno.id,
+        estado: 'Activo',
+      },
+      select: {
+        idCurso: true,
+        idProgreso: true,
+      },
+    });
+
+    // Si no existe una inscripción activa, lazamos error.
+    if (!inscripcion) {
+      throw new NotFoundException(
+        'Este alumno no tiene una inscripción activa.',
+      );
+    }
+
+    const { idCurso, idProgreso } = inscripcion;
+
+    // Obtenemos el progreso_alumno para obtener la última actividad
+    const progreso = await this.prisma.progresoAlumno.findUnique({
+      where: { id: idProgreso },
+      select: { ultimaActividad: true },
+    });
+
+    // Si no existe el progreso, lanzamos error
+    if (!progreso) {
+      throw new NotFoundException(
+        'No se encontró el registro de progreso del alumno.',
+      );
+    }
+
+    // Obtenemos las misiones completadas por el alumno en ese progreso
+    const misionesCompletadas = await this.prisma.misionCompletada.findMany({
+      where: { idProgreso: idProgreso },
+      select: {
+        // Devolvemos solo lo que Godot necesita guardar
+        idMision: true,
+        estrellas: true,
+        exp: true,
+        intentos: true,
+        fechaCompletado: true,
+      },
+    });
+
+    // Obtenemos las dificultades registradas por el alumno en ese curso
+    const dificultadesAlumno = await this.prisma.dificultadAlumno.findMany({
+      where: {
+        idAlumno: alumno.id,
+        idCurso: idCurso,
+      },
+      select: {
+        // Devolvemos solo lo que Godot necesita
+        idDificultad: true,
+        grado: true,
+      },
+    });
+
+    // Armamos y devolvemos la respuesta final
+    const alumnoData = {
+      id: alumno.id,
+      nombre: alumno.nombre,
+      apellido: alumno.apellido,
+      genero: alumno.genero,
+      ultimaActividad: progreso.ultimaActividad,
+    };
+
+    return {
+      alumno: alumnoData,
+      misionesCompletadas: misionesCompletadas,
+      dificultadesAlumno: dificultadesAlumno,
+    };
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
