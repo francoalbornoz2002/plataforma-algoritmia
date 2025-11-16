@@ -16,10 +16,8 @@ export class ProgressController {
 
   /**
    * Endpoint para que el videojuego registre una misión completada.
-   * TODO: Proteger esto con un Guardia de API Key en lugar de JWT.
-   * Por ahora, lo dejamos abierto para probar con Swagger.
    */
-  // @UseGuards(ApiKeyGuard)
+  // TODO: Proteger esto con un Guardia de API Key
   @Public()
   @Post('submit-mission')
   @HttpCode(HttpStatus.OK)
@@ -36,6 +34,10 @@ export class ProgressController {
     }
   }
 
+  /**
+   * Endpoint para que el videojuego registre un lote de misiones completadas.
+   */
+  // TODO: Proteger esto con un Guardia de API Key
   @Post('submit-batch')
   @Public()
   @HttpCode(HttpStatus.OK)
