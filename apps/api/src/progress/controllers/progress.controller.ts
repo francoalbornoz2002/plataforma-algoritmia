@@ -1,4 +1,11 @@
-import { Body, Controller, ForbiddenException, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  HttpCode,
+  HttpStatus,
+  Post,
+} from '@nestjs/common';
 import { ProgressService } from '../services/progress.service';
 import { SubmitMissionDto } from '../dto/submit-mission.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
@@ -15,6 +22,7 @@ export class ProgressController {
   // @UseGuards(ApiKeyGuard)
   @Public()
   @Post('submit-mission')
+  @HttpCode(HttpStatus.OK)
   submitMission(@Body() submitMissionDto: SubmitMissionDto) {
     try {
       // Llamamos al servicio "cerebro"
@@ -26,5 +34,13 @@ export class ProgressController {
       }
       throw error;
     }
+  }
+
+  @Post('submit-batch')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  // Aceptamos un ARRAY del DTO que ya tienes
+  async submitBatchMissions(@Body() dtos: SubmitMissionDto[]) {
+    return this.progressService.submitBatchMissions(dtos);
   }
 }
