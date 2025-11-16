@@ -30,6 +30,7 @@ export class AuthController {
   }
 
   @Post('game-login')
+  @Public()
   @HttpCode(HttpStatus.OK)
   async gameLogin(@Body() gameLoginDto: LoginDto) {
     return this.usersService.findAlumnoForGame(gameLoginDto);
