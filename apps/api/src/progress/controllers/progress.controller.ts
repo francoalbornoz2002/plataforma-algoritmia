@@ -22,16 +22,7 @@ export class ProgressController {
   @Post('submit-mission')
   @HttpCode(HttpStatus.OK)
   submitMission(@Body() submitMissionDto: SubmitMissionDto) {
-    try {
-      // Llamamos al servicio "cerebro"
-      return this.progressService.submitMission(submitMissionDto);
-    } catch (error) {
-      // Manejar errores conocidos
-      if (error instanceof ForbiddenException) {
-        throw new ForbiddenException(error.message);
-      }
-      throw error;
-    }
+    return this.progressService.submitMission(submitMissionDto);
   }
 
   /**
@@ -41,8 +32,7 @@ export class ProgressController {
   @Post('submit-batch')
   @Public()
   @HttpCode(HttpStatus.OK)
-  // Aceptamos un ARRAY del DTO que ya tienes
-  async submitBatchMissions(@Body() dtos: SubmitMissionDto[]) {
+  submitBatchMissions(@Body() dtos: SubmitMissionDto[]) {
     return this.progressService.submitBatchMissions(dtos);
   }
 }
