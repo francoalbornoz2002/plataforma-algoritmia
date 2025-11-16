@@ -206,60 +206,62 @@ export class ProgressService {
       const { idProgreso, idCurso } = inscripcion;
 
       // 2. Ejecutar todo como una transacción (como discutimos)
-      return await this.prisma.$transaction(async (tx) => {
-        // --- Paso A: Registrar la misión ---
-        await tx.misionCompletada.create({
-          data: {
-            idMision: idMision,
-            idProgreso: idProgreso, // ID de ProgresoAlumno
-            estrellas: estrellas,
-            exp: exp,
-            intentos: intentos,
-            fechaCompletado: new Date(fechaCompletado),
-          },
-        });
+      return await this.prisma.$transaction(
+        async (tx: Prisma.TransactionClient) => {
+          // --- Paso A: Registrar la misión ---
+          await tx.misionCompletada.create({
+            data: {
+              idMision: idMision,
+              idProgreso: idProgreso, // ID de ProgresoAlumno
+              estrellas: estrellas,
+              exp: exp,
+              intentos: intentos,
+              fechaCompletado: new Date(fechaCompletado),
+            },
+          });
 
-        // --- Paso B: Actualizar ProgresoAlumno (Atómicamente) ---
-        const progAlumnoActualizado = await tx.progresoAlumno.update({
-          where: { id: idProgreso },
-          data: {
-            // Operaciones atómicas para evitar 'race conditions'
-            totalEstrellas: { increment: estrellas },
-            totalExp: { increment: exp },
-            totalIntentos: { increment: intentos },
-            cantMisionesCompletadas: { increment: 1 },
-            ultimaActividad: new Date(), // TODO: Que la nueva ultima actividad sea la fecha de la ultima misión completada registrada
-          },
-        });
+          // --- Paso B: Actualizar ProgresoAlumno (Atómicamente) ---
+          const progAlumnoActualizado = await tx.progresoAlumno.update({
+            where: { id: idProgreso },
+            data: {
+              // Operaciones atómicas para evitar 'race conditions'
+              totalEstrellas: { increment: estrellas },
+              totalExp: { increment: exp },
+              totalIntentos: { increment: intentos },
+              cantMisionesCompletadas: { increment: 1 },
+              ultimaActividad: new Date(), // TODO: Que la nueva ultima actividad sea la fecha de la ultima misión completada registrada
+            },
+          });
 
-        // --- Paso C: Recalcular Promedios (Alumno) ---
-        // (Esto es seguro porque ocurre DENTRO de la transacción)
-        const nuevoPromEstrellas =
-          progAlumnoActualizado.totalEstrellas /
-          progAlumnoActualizado.cantMisionesCompletadas;
-        const nuevoPromIntentos =
-          progAlumnoActualizado.totalIntentos /
-          progAlumnoActualizado.cantMisionesCompletadas;
-        const nuevoPctCompletadas =
-          (progAlumnoActualizado.cantMisionesCompletadas /
-            TOTAL_MISIONES_JUEGO) *
-          100;
+          // --- Paso C: Recalcular Promedios (Alumno) ---
+          // (Esto es seguro porque ocurre DENTRO de la transacción)
+          const nuevoPromEstrellas =
+            progAlumnoActualizado.totalEstrellas /
+            progAlumnoActualizado.cantMisionesCompletadas;
+          const nuevoPromIntentos =
+            progAlumnoActualizado.totalIntentos /
+            progAlumnoActualizado.cantMisionesCompletadas;
+          const nuevoPctCompletadas =
+            (progAlumnoActualizado.cantMisionesCompletadas /
+              TOTAL_MISIONES_JUEGO) *
+            100;
 
-        await tx.progresoAlumno.update({
-          where: { id: idProgreso },
-          data: {
-            promEstrellas: nuevoPromEstrellas,
-            promIntentos: nuevoPromIntentos,
-            pctMisionesCompletadas: nuevoPctCompletadas,
-          },
-        });
+          await tx.progresoAlumno.update({
+            where: { id: idProgreso },
+            data: {
+              promEstrellas: nuevoPromEstrellas,
+              promIntentos: nuevoPromIntentos,
+              pctMisionesCompletadas: nuevoPctCompletadas,
+            },
+          });
 
-        // --- Paso D: Recalcular ProgresoCurso (Agregación) ---
-        // Llamamos al helper para que actualice los KPIs del curso
-        await this.recalculateCourseProgress(tx, idCurso);
+          // --- Paso D: Recalcular ProgresoCurso (Agregación) ---
+          // Llamamos al helper para que actualice los KPIs del curso
+          await this.recalculateCourseProgress(tx, idCurso);
 
-        return { message: 'Progreso registrado con éxito' };
-      });
+          return { message: 'Progreso registrado con éxito' };
+        },
+      );
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -272,6 +274,134 @@ export class ProgressService {
       }
       console.error('Error en submitMission:', error);
       throw new InternalServerErrorException('Error al registrar el progreso.');
+    }
+  }
+
+  /**
+   * Registra un LOTE de misiones completadas y recalcula los progresos.
+   */
+  async submitBatchMissions(dtos: SubmitMissionDto[]) {
+    // 1. Validación de entrada
+    if (!dtos || dtos.length === 0) {
+      throw new BadRequestException(
+        'El lote de misiones no puede estar vacío.',
+      );
+    }
+
+    // 2. Todos los DTOs deben ser del MISMO alumno
+    const idAlumno = dtos[0].idAlumno;
+    const todosDelMismoAlumno = dtos.every((dto) => dto.idAlumno === idAlumno);
+    if (!todosDelMismoAlumno) {
+      throw new BadRequestException(
+        'Todas las misiones del lote deben pertenecer al mismo alumno.',
+      );
+    }
+
+    try {
+      // 3. Validar al alumno y obtener su progreso
+      const inscripcion = await this.prisma.alumnoCurso.findFirst({
+        where: { idAlumno: idAlumno, estado: 'Activo' },
+        select: { idCurso: true, idProgreso: true },
+      });
+
+      if (!inscripcion) {
+        throw new NotFoundException(
+          'No se encontró una inscripción activa para este alumno.',
+        );
+      }
+
+      const { idProgreso, idCurso } = inscripcion;
+
+      // 4. Agregar los totales del lote
+      let totalEstrellas = 0;
+      let totalExp = 0;
+      let totalIntentos = 0;
+      const cantMisiones = dtos.length;
+      let ultimaActividad = new Date(0); // Fecha mínima (Epoch)
+
+      for (const mision of dtos) {
+        totalEstrellas += mision.estrellas;
+        totalExp += mision.exp;
+        totalIntentos += mision.intentos;
+
+        // Encontramos la fecha más reciente del lote
+        const fechaMision = new Date(mision.fechaCompletado);
+        if (fechaMision > ultimaActividad) {
+          ultimaActividad = fechaMision;
+        }
+      }
+
+      // 5. Ejecutar todo como una transacción
+      return await this.prisma.$transaction(
+        async (tx: Prisma.TransactionClient) => {
+          // --- Paso A: Registrar TODAS las misiones ---
+          const misionesData = dtos.map((mision) => ({
+            idMision: mision.idMision,
+            idProgreso: idProgreso,
+            estrellas: mision.estrellas,
+            exp: mision.exp,
+            intentos: mision.intentos,
+            fechaCompletado: new Date(mision.fechaCompletado),
+          }));
+
+          await tx.misionCompletada.createMany({
+            data: misionesData,
+            skipDuplicates: true, // Por si acaso el cliente envía una misión dos veces
+          });
+
+          // --- Paso B: Actualizar ProgresoAlumno (Atómicamente con los totales) ---
+          const progAlumnoActualizado = await tx.progresoAlumno.update({
+            where: { id: idProgreso },
+            data: {
+              totalEstrellas: { increment: totalEstrellas },
+              totalExp: { increment: totalExp },
+              totalIntentos: { increment: totalIntentos },
+              cantMisionesCompletadas: { increment: cantMisiones },
+              ultimaActividad: ultimaActividad,
+            },
+          });
+
+          // --- Paso C: Recalcular Promedios ---
+          const nuevoPromEstrellas =
+            progAlumnoActualizado.totalEstrellas /
+            progAlumnoActualizado.cantMisionesCompletadas;
+          const nuevoPromIntentos =
+            progAlumnoActualizado.totalIntentos /
+            progAlumnoActualizado.cantMisionesCompletadas;
+          const nuevoPctCompletadas =
+            (progAlumnoActualizado.cantMisionesCompletadas /
+              TOTAL_MISIONES_JUEGO) *
+            100;
+
+          await tx.progresoAlumno.update({
+            where: { id: idProgreso },
+            data: {
+              promEstrellas: nuevoPromEstrellas,
+              promIntentos: nuevoPromIntentos,
+              pctMisionesCompletadas: nuevoPctCompletadas,
+            },
+          });
+
+          // --- Paso D: Recalcular ProgresoCurso ---
+          await this.recalculateCourseProgress(tx, idCurso);
+
+          return { message: 'Lote de progreso registrado con éxito' };
+        },
+      );
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      if (error instanceof BadRequestException) throw error;
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2003' || error.code === 'P2002') {
+          throw new BadRequestException(
+            'Datos inválidos (ej: una Misión o Alumno no existen)',
+          );
+        }
+      }
+      console.error('Error en submitBatchMissions:', error);
+      throw new InternalServerErrorException(
+        'Error al registrar el lote de progreso.',
+      );
     }
   }
 
