@@ -17,22 +17,22 @@ export class ProgressController {
   /**
    * Endpoint para que el videojuego registre una misión completada.
    */
-  // TODO: Proteger esto con un Guardia de API Key
-  @Public()
-  @Post('submit-mission')
-  @HttpCode(HttpStatus.OK)
-  submitMission(@Body() submitMissionDto: SubmitMissionDto) {
-    return this.progressService.submitMission(submitMissionDto);
-  }
+  // // TODO: Proteger esto con un Guardia de API Key
+  // @Public()
+  // @Post('submit-mission')
+  // @HttpCode(HttpStatus.OK)
+  // submitMission(@Body() submitMissionDto: SubmitMissionDto) {
+  //   return this.progressService.submitMission(submitMissionDto);
+  // }
 
   /**
-   * Endpoint para que el videojuego registre un lote de misiones completadas.
+   * Endpoint para que el videojuego registre y sincronice una o más misiones completadas.
    */
   // TODO: Proteger esto con un Guardia de API Key
-  @Post('submit-batch')
+  @Post('submit-missions')
   @Public()
   @HttpCode(HttpStatus.OK)
   submitBatchMissions(@Body() dtos: SubmitMissionDto[]) {
-    return this.progressService.submitBatchMissions(dtos);
+    return this.progressService.submitMissions(dtos);
   }
 }
