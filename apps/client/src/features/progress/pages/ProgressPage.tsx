@@ -3,10 +3,7 @@ import {
   Box,
   Typography,
   Grid,
-  CircularProgress,
   Alert,
-  Card,
-  CardContent,
   Accordion,
   AccordionSummary,
   AccordionDetails,
@@ -50,28 +47,7 @@ import {
   StarsRange,
 } from "../../../types/progress-filters";
 import StudentProgressDetailModal from "../components/StudentProgressDetailModal";
-
-// --- Componente Helper para los KPIs ---
-interface KpiCardProps {
-  title: string;
-  value: string | number;
-  loading: boolean;
-}
-function KpiCard({ title, value, loading }: KpiCardProps) {
-  return (
-    <Card>
-      <CardContent sx={{ textAlign: "center" }}>
-        <Typography variant="body2" color="text.secondary" gutterBottom>
-          {title}
-        </Typography>
-        <Typography variant="h4" component="div">
-          {loading ? <CircularProgress size={30} /> : value}
-        </Typography>
-      </CardContent>
-    </Card>
-  );
-}
-// --- Fin Componente Helper ---
+import KpiCard from "../components/KpiCard";
 
 type StudentRow = ProgresoAlumnoDetallado;
 

@@ -22,29 +22,7 @@ import {
 // 2. Tipos
 import type { MisionConEstado, ProgresoAlumno } from "../../../types";
 import MissionCard from "../components/MissionCard";
-
-// --- Componente Helper para los KPIs ---
-// (Copiado de la ProgressPage del Docente)
-interface KpiCardProps {
-  title: string;
-  value: string | number;
-  loading: boolean;
-}
-function KpiCard({ title, value, loading }: KpiCardProps) {
-  return (
-    <Card>
-      <CardContent sx={{ textAlign: "center" }}>
-        <Typography variant="body2" color="text.secondary" gutterBottom>
-          {title}
-        </Typography>
-        <Typography variant="h5" component="div">
-          {loading ? <CircularProgress size={30} /> : value}
-        </Typography>
-      </CardContent>
-    </Card>
-  );
-}
-// --- Fin Componente Helper ---
+import KpiCard from "../components/KpiCard";
 
 export default function MyProgressPage() {
   // --- 1. CONTEXTO ---
@@ -173,7 +151,7 @@ export default function MyProgressPage() {
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <KpiCard
             title="Estrellas Totales"
-            value={progress ? progress.totalEstrellas : 0}
+            value={progress ? `⭐ ${progress.totalEstrellas}` : 0}
             loading={isLoading}
           />
         </Grid>
