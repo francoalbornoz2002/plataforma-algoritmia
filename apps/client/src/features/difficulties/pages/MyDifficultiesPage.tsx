@@ -100,7 +100,7 @@ export default function MyDifficultiesPage() {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h5" gutterBottom>
         Mis Dificultades en {selectedCourse.nombre}
       </Typography>
 
