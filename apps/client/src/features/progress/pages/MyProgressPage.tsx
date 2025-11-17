@@ -5,8 +5,6 @@ import {
   Grid,
   CircularProgress,
   Alert,
-  Card,
-  CardContent,
   Divider,
 } from "@mui/material";
 import { formatDistanceToNow } from "date-fns";
@@ -89,9 +87,7 @@ export default function MyProgressPage() {
     );
   }
 
-  // (Unimos ambos 'loading' y 'error' para los KPIs)
   const isLoading = loadingProgress;
-  const error = errorProgress;
 
   // Formateamos el valor de "Última Actividad"
   const ultimaActividadFormateada = progress?.ultimaActividad
