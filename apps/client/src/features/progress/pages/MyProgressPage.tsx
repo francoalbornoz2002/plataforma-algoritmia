@@ -20,7 +20,7 @@ import {
 // 2. Tipos
 import type { MisionConEstado, ProgresoAlumno } from "../../../types";
 import MissionCard from "../components/MissionCard";
-import KpiCard from "../components/KpiCard";
+import KpiProgressCard from "../components/KpiProgressCard";
 
 export default function MyProgressPage() {
   // --- 1. CONTEXTO ---
@@ -99,14 +99,14 @@ export default function MyProgressPage() {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h5" gutterBottom>
         Mi Progreso en {selectedCourse.nombre}
       </Typography>
 
       {/* --- Grilla de KPIs --- */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <KpiCard
+          <KpiProgressCard
             title="Progreso Total"
             value={
               progress ? `${progress.pctMisionesCompletadas.toFixed(1)}%` : 0
@@ -115,21 +115,21 @@ export default function MyProgressPage() {
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <KpiCard
+          <KpiProgressCard
             title="Estrellas (Prom.)"
             value={progress ? progress.promEstrellas.toFixed(1) : 0}
             loading={isLoading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <KpiCard
+          <KpiProgressCard
             title="Intentos (Prom.)"
             value={progress ? progress.promIntentos.toFixed(1) : 0}
             loading={isLoading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <KpiCard
+          <KpiProgressCard
             title="EXP Total"
             value={progress ? progress.totalExp : 0}
             loading={isLoading}
@@ -138,28 +138,28 @@ export default function MyProgressPage() {
 
         {/* --- Fila 2 de KPIs --- */}
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <KpiCard
+          <KpiProgressCard
             title="Misiones Completadas"
             value={progress ? progress.cantMisionesCompletadas : 0}
             loading={isLoading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <KpiCard
+          <KpiProgressCard
             title="Estrellas Totales"
             value={progress ? progress.totalEstrellas : 0}
             loading={isLoading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <KpiCard
+          <KpiProgressCard
             title="Intentos Totales"
             value={progress ? progress.totalIntentos : 0}
             loading={isLoading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <KpiCard
+          <KpiProgressCard
             title="Última Actividad"
             value={ultimaActividadFormateada}
             loading={isLoading}
@@ -170,7 +170,7 @@ export default function MyProgressPage() {
       <Divider sx={{ my: 4 }} />
 
       {/* --- B. Grilla de Misiones --- */}
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h5" gutterBottom>
         Estado de Misiones
       </Typography>
 

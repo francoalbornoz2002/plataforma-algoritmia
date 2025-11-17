@@ -22,7 +22,11 @@ interface KpiCardProps {
   loading: boolean;
 }
 
-export default function KpiCard({ title, value, loading }: KpiCardProps) {
+export default function KpiProgressCard({
+  title,
+  value,
+  loading,
+}: KpiCardProps) {
   /**
    * Esta función decide cómo renderizar el valor.
    * 1. Si está cargando, muestra un spinner.

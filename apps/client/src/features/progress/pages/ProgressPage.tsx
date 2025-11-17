@@ -47,7 +47,7 @@ import {
   StarsRange,
 } from "../../../types/progress-filters";
 import StudentProgressDetailModal from "../components/StudentProgressDetailModal";
-import KpiCard from "../components/KpiCard";
+import KpiProgressCard from "../components/KpiProgressCard";
 
 type StudentRow = ProgresoAlumnoDetallado;
 
@@ -264,35 +264,35 @@ export default function ProgressPage() {
         columns={{ xs: 12, sm: 12, md: 10 }}
       >
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <KpiCard
+          <KpiProgressCard
             title="Misiones Completadas"
             value={overview ? overview.misionesCompletadas : 0}
             loading={overviewLoading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <KpiCard
+          <KpiProgressCard
             title="Progreso Total"
             value={overview ? overview.pctMisionesCompletadas.toFixed(1) : 0}
             loading={overviewLoading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <KpiCard
+          <KpiProgressCard
             title="Estrellas (Prom.)"
             value={overview ? overview.promEstrellas.toFixed(1) : 0}
             loading={overviewLoading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <KpiCard
+          <KpiProgressCard
             title="Intentos (Prom.)"
             value={overview ? overview.promIntentos.toFixed(1) : 0}
             loading={overviewLoading}
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <KpiCard
+          <KpiProgressCard
             title="EXP Total"
             value={overview ? `${overview.totalExp} EXP` : 0}
             loading={overviewLoading}
