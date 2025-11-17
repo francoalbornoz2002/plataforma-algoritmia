@@ -253,50 +253,60 @@ export default function ProgressPage() {
   return (
     <Box>
       {/* --- A. Resumen (KPIs) --- */}
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h5" gutterBottom>
         Resumen de Progreso
       </Typography>
       {overviewError && <Alert severity="error">{overviewError}</Alert>}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+      <Grid
+        container
+        spacing={3}
+        sx={{ mb: 3 }}
+        columns={{ xs: 12, sm: 12, md: 10 }}
+      >
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <KpiCard
+            title="Misiones Completadas"
+            value={overview ? overview.misionesCompletadas : 0}
+            loading={overviewLoading}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <KpiCard
             title="Progreso Total"
-            value={
-              overview ? `${overview.pctMisionesCompletadas.toFixed(1)}%` : 0
-            }
+            value={overview ? overview.pctMisionesCompletadas.toFixed(1) : 0}
             loading={overviewLoading}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <KpiCard
             title="Estrellas (Prom.)"
-            value={overview ? `⭐ ${overview.promEstrellas.toFixed(1)}` : 0}
+            value={overview ? overview.promEstrellas.toFixed(1) : 0}
             loading={overviewLoading}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <KpiCard
             title="Intentos (Prom.)"
             value={overview ? overview.promIntentos.toFixed(1) : 0}
             loading={overviewLoading}
           />
         </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
           <KpiCard
             title="EXP Total"
-            value={overview ? overview.totalExp : 0}
+            value={overview ? `${overview.totalExp} EXP` : 0}
             loading={overviewLoading}
           />
         </Grid>
       </Grid>
 
       {/* --- B. Filtros --- */}
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h5" gutterBottom>
         Progreso de Alumnos
       </Typography>
       <Accordion sx={{ mb: 2 }}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography>Filtros</Typography>
+          <Typography>Filtros de búsqueda</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>

@@ -117,7 +117,7 @@ export default function MyProgressPage() {
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <KpiCard
             title="Estrellas (Prom.)"
-            value={progress ? `⭐ ${progress.promEstrellas.toFixed(1)}` : 0}
+            value={progress ? progress.promEstrellas.toFixed(1) : 0}
             loading={isLoading}
           />
         </Grid>
@@ -147,7 +147,7 @@ export default function MyProgressPage() {
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <KpiCard
             title="Estrellas Totales"
-            value={progress ? `⭐ ${progress.totalEstrellas}` : 0}
+            value={progress ? progress.totalEstrellas : 0}
             loading={isLoading}
           />
         </Grid>
