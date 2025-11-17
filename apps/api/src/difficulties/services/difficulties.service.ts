@@ -268,16 +268,97 @@ export class DifficultiesService {
   /**
    * Registra o actualiza la dificultad de un alumno y recalcula los KPIs del curso.
    */
-  async submitDifficulty(dto: SubmitDifficultyDto) {
-    const { idAlumno, idDificultad, grado } = dto;
+  // async submitDifficulty(dto: SubmitDifficultyDto) {
+  //   const { idAlumno, idDificultad, grado } = dto;
+  //
+  //   try {
+  //     // 1. Validar que el alumno esté activo en un curso
+  //     const inscripcion = await this.prisma.alumnoCurso.findFirst({
+  //       where: {
+  //         idAlumno: idAlumno,
+  //         estado: 'Activo',
+  //       },
+  //       select: { idCurso: true },
+  //     });
+  //
+  //     if (!inscripcion) {
+  //       throw new NotFoundException(
+  //         'No se encontró una inscripción activa para este alumno.',
+  //       );
+  //     }
+  //     const { idCurso } = inscripcion;
+  //
+  //     // 2. Ejecutar todo como una transacción
+  //     return await this.prisma.$transaction(async (tx) => {
+  //       // --- Paso A: Usamos UPSERT (Tu lógica) ---
+  //       await tx.dificultadAlumno.upsert({
+  //         // Dónde buscar: la clave única
+  //         where: {
+  //           idAlumno_idCurso_idDificultad: {
+  //             idAlumno,
+  //             idCurso,
+  //             idDificultad,
+  //           },
+  //         },
+  //         // Qué hacer si SÍ existe (UPDATE)
+  //         update: {
+  //           grado: grado,
+  //         },
+  //         // Qué hacer si NO existe (CREATE)
+  //         create: {
+  //           idAlumno,
+  //           idCurso,
+  //           idDificultad,
+  //           grado: grado,
+  //         },
+  //       });
+  //
+  //       // --- Paso B: Recalcular los KPIs del curso ---
+  //       await this.recalculateCourseDifficulties(tx, idCurso);
+  //
+  //       return { message: 'Dificultad registrada/actualizada con éxito' };
+  //     });
+  //   } catch (error) {
+  //     if (error instanceof NotFoundException) throw error;
+  //     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+  //       if (error.code === 'P2003') {
+  //         // Foreign key constraint failed
+  //         throw new BadRequestException(
+  //           'El idDificultad o idAlumno no existen.',
+  //         );
+  //       }
+  //     }
+  //     console.error('Error en submitDifficulty:', error);
+  //     throw new InternalServerErrorException(
+  //       'Error al registrar la dificultad.',
+  //     );
+  //   }
+  // }
+
+  /**
+   * Registra o actualiza una o varias de dificultades de alumno y recalcula los KPIs del curso.
+   */
+  async submitDifficulties(dtos: SubmitDifficultyDto[]) {
+    // 1. Validación de entrada
+    if (!dtos || dtos.length === 0) {
+      throw new BadRequestException(
+        'El lote de dificultades no puede estar vacío.',
+      );
+    }
+
+    // 2. Todos los DTOs deben ser del MISMO alumno
+    const idAlumno = dtos[0].idAlumno;
+    const todosDelMismoAlumno = dtos.every((dto) => dto.idAlumno === idAlumno);
+    if (!todosDelMismoAlumno) {
+      throw new BadRequestException(
+        'Todas las dificultades del lote deben pertenecer al mismo alumno.',
+      );
+    }
 
     try {
-      // 1. Validar que el alumno esté activo en un curso
+      // 3. Validar que el alumno esté activo (UNA SOLA VEZ)
       const inscripcion = await this.prisma.alumnoCurso.findFirst({
-        where: {
-          idAlumno: idAlumno,
-          estado: 'Activo',
-        },
+        where: { idAlumno: idAlumno, estado: 'Activo' },
         select: { idCurso: true },
       });
 
@@ -288,49 +369,51 @@ export class DifficultiesService {
       }
       const { idCurso } = inscripcion;
 
-      // 2. Ejecutar todo como una transacción
-      return await this.prisma.$transaction(async (tx) => {
-        // --- Paso A: Usamos UPSERT (Tu lógica) ---
-        await tx.dificultadAlumno.upsert({
-          // Dónde buscar: la clave única
-          where: {
-            idAlumno_idCurso_idDificultad: {
-              idAlumno,
-              idCurso,
-              idDificultad,
-            },
-          },
-          // Qué hacer si SÍ existe (UPDATE)
-          update: {
-            grado: grado,
-          },
-          // Qué hacer si NO existe (CREATE)
-          create: {
-            idAlumno,
-            idCurso,
-            idDificultad,
-            grado: grado,
-          },
-        });
+      // 4. Ejecutar todo como UNA transacción
+      return await this.prisma.$transaction(
+        async (tx: Prisma.TransactionClient) => {
+          // --- Paso A: Iterar y hacer UPSERT para cada dificultad ---
+          for (const dto of dtos) {
+            await tx.dificultadAlumno.upsert({
+              where: {
+                idAlumno_idCurso_idDificultad: {
+                  idAlumno: idAlumno,
+                  idCurso: idCurso,
+                  idDificultad: dto.idDificultad,
+                },
+              },
+              create: {
+                idAlumno: idAlumno,
+                idCurso: idCurso,
+                idDificultad: dto.idDificultad,
+                grado: dto.grado,
+              },
+              update: {
+                grado: dto.grado,
+              },
+            });
+          } // Fin del bucle
 
-        // --- Paso B: Recalcular los KPIs del curso ---
-        await this.recalculateCourseDifficulties(tx, idCurso);
+          // --- Paso B: Recalcular los KPIs del curso (UNA SOLA VEZ) ---
+          await this.recalculateCourseDifficulties(tx, idCurso);
 
-        return { message: 'Dificultad registrada/actualizada con éxito' };
-      });
+          return { message: 'Lote de dificultades registrado con éxito' };
+        },
+      ); // Fin de la transacción
     } catch (error) {
+      // Manejo de errores
       if (error instanceof NotFoundException) throw error;
+      if (error instanceof BadRequestException) throw error;
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2003') {
-          // Foreign key constraint failed
           throw new BadRequestException(
-            'El idDificultad o idAlumno no existen.',
+            'El idDificultad o idAlumno no existen en el lote.',
           );
         }
       }
-      console.error('Error en submitDifficulty:', error);
+      console.error('Error en submitBatchDifficulties:', error);
       throw new InternalServerErrorException(
-        'Error al registrar la dificultad.',
+        'Error al registrar el lote de dificultades.',
       );
     }
   }
