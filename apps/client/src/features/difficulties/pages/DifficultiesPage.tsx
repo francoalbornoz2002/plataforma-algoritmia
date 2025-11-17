@@ -32,6 +32,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useCourseContext } from "../../../context/CourseContext";
 import { useDebounce } from "../../../hooks/useDebounce";
 import {
+  getAllDifficulties,
   getCourseDifficultiesOverview,
   getStudentDifficultyList,
 } from "../../users/services/docentes.service";
@@ -41,6 +42,7 @@ import type {
   DificultadesCurso,
   FindStudentDifficultiesParams,
   AlumnoDificultadResumen,
+  DificultadSimple,
 } from "../../../types";
 import { temas, grado_dificultad } from "../../../types";
 
@@ -128,10 +130,9 @@ export default function DifficultiesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  // Lista de dificultades (para el filtro) - (podríamos hacer un fetch, por ahora manual)
-  const [allDifficulties, setAllDifficulties] = useState<
-    { id: string; nombre: string }[]
-  >([]);
+  const [allDifficulties, setAllDifficulties] = useState<DificultadSimple[]>(
+    []
+  );
 
   // --- DATA FETCHING (KPIs) ---
   useEffect(() => {
@@ -146,6 +147,17 @@ export default function DifficultiesPage() {
 
     // (Aquí podrías hacer un fetch para poblar el filtro 'dificultadId')
   }, [selectedCourse]);
+
+  // Para poblar el filtro de dificultades
+  useEffect(() => {
+    getAllDifficulties()
+      .then((data) => {
+        setAllDifficulties(data);
+      })
+      .catch((err) => {
+        console.error("Error al cargar lista de dificultades:", err);
+      });
+  }, []); // Array vacío, se ejecuta solo al montar
 
   // --- DATA FETCHING (DataGrid) ---
   useEffect(() => {
@@ -275,7 +287,7 @@ export default function DifficultiesPage() {
   return (
     <Box>
       {/* --- A. Resumen (KPIs) --- */}
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h5" gutterBottom>
         Resumen de Dificultades
       </Typography>
       {overviewError && <Alert severity="error">{overviewError}</Alert>}
@@ -325,12 +337,12 @@ export default function DifficultiesPage() {
       </Grid>
 
       {/* --- B. Filtros --- */}
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h5" gutterBottom>
         Dificultades por Alumno
       </Typography>
       <Accordion sx={{ mb: 2 }}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography>Filtros</Typography>
+          <Typography>Filtros de búsqueda</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
@@ -358,6 +370,23 @@ export default function DifficultiesPage() {
                       {t}
                     </MenuItem>
                   ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 260 }}>
+              <InputLabel>Dificultad</InputLabel>
+              <Select
+                name="dificultadId"
+                value={queryOptions.dificultadId}
+                label="Dificultad"
+                onChange={handleFilterChange}
+                disabled={allDifficulties.length === 0} // Deshabilitar si aún no carga
+              >
+                <MenuItem value="">Todas</MenuItem>
+                {allDifficulties.map((d) => (
+                  <MenuItem key={d.id} value={d.id}>
+                    {d.nombre}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
             <FormControl size="small" sx={{ minWidth: 160 }}>
