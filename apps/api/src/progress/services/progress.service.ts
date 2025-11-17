@@ -631,9 +631,9 @@ export class ProgressService {
     });
     if (!curso) return; // El curso no existe
 
-    // 2. Hacemos una agregación de TODOS los progresos de alumnos
-    // que pertenecen a este curso
-    const agregados = await tx.progresoAlumno.aggregate({
+    // 2. AGREGACIÓN 1: Para TODOS los alumnos activos
+    // (Para las SUMAS totales y el PROMEDIO de PCT Completado)
+    const agregadosTodos = await tx.progresoAlumno.aggregate({
       _sum: {
         cantMisionesCompletadas: true,
         totalEstrellas: true,
@@ -641,32 +641,49 @@ export class ProgressService {
         totalIntentos: true,
       },
       _avg: {
-        pctMisionesCompletadas: true,
-        promEstrellas: true,
-        promIntentos: true,
+        pctMisionesCompletadas: true, // <-- KPI #1
       },
       where: {
         alumnoCurso: {
           idCurso: idCurso,
           estado: 'Activo', // Solo de alumnos activos
         },
+      },
+    });
+
+    // 3. AGREGACIÓN 2: Para alumnos que SÍ JUGARON
+    // (Para los PROMEDIOS de Estrellas e Intentos)
+    const agregadosJugadores = await tx.progresoAlumno.aggregate({
+      _avg: {
+        promEstrellas: true, // <-- KPI #2
+        promIntentos: true, // <-- KPI #3
+      },
+      where: {
+        alumnoCurso: {
+          idCurso: idCurso,
+          estado: 'Activo',
+        },
+        // ¡La clave está aquí!
         ultimaActividad: {
           not: null,
         },
       },
     });
 
-    // 3. Actualizamos la tabla ProgresoCurso
+    // 4. Actualizamos la tabla ProgresoCurso combinando ambas agregaciones
     await tx.progresoCurso.update({
       where: { id: curso.idProgreso },
       data: {
-        misionesCompletadas: agregados._sum.cantMisionesCompletadas || 0,
-        totalEstrellas: agregados._sum.totalEstrellas || 0,
-        totalExp: agregados._sum.totalExp || 0,
-        totalIntentos: agregados._sum.totalIntentos || 0,
-        pctMisionesCompletadas: agregados._avg.pctMisionesCompletadas || 0,
-        promEstrellas: agregados._avg.promEstrellas || 0,
-        promIntentos: agregados._avg.promIntentos || 0,
+        // --- Datos de la Agregación 1 (Todos) ---
+        misionesCompletadas: agregadosTodos._sum.cantMisionesCompletadas || 0,
+        totalEstrellas: agregadosTodos._sum.totalEstrellas || 0,
+        totalExp: agregadosTodos._sum.totalExp || 0,
+        totalIntentos: agregadosTodos._sum.totalIntentos || 0,
+        pctMisionesCompletadas: agregadosTodos._avg.pctMisionesCompletadas || 0,
+
+        // --- Datos de la Agregación 2 (Solo Jugadores) ---
+        promEstrellas: agregadosJugadores._avg.promEstrellas || 0,
+        promIntentos: agregadosJugadores._avg.promIntentos || 0,
       },
     });
   }
