@@ -419,6 +419,28 @@ export class DifficultiesService {
   }
 
   /**
+   * Obtiene una lista simple de todas las dificultades para poblar filtros.
+   */
+  async findAllForFilter() {
+    try {
+      return this.prisma.dificultad.findMany({
+        select: {
+          id: true,
+          nombre: true,
+        },
+        orderBy: {
+          nombre: 'asc',
+        },
+      });
+    } catch (error) {
+      console.error('Error en findAllForFilter:', error);
+      throw new InternalServerErrorException(
+        'Error al obtener la lista de dificultades.',
+      );
+    }
+  }
+
+  /**
    * HELPER: Recalcula los KPIs de DificultadesCurso
    * (Esta es la lógica que discutimos)
    */

@@ -2,15 +2,21 @@ import {
   Body,
   Controller,
   ForbiddenException,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { SubmitDifficultyDto } from '../dto/submit-difficulty.dto';
 import { DifficultiesService } from '../services/difficulties.service';
 import { Public } from 'src/auth/decorators/public.decorator';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { roles } from '@prisma/client';
+import { Roles } from 'src/auth/decorators/roles.decorator';
 
 @Controller('difficulties')
+@UseGuards(RolesGuard)
 export class DifficultiesController {
   constructor(private readonly difficultiesService: DifficultiesService) {}
 
@@ -29,6 +35,15 @@ export class DifficultiesController {
   //     throw error;
   //   }
   // }
+
+  /**
+   * Endpoint para obtener la lista de dificultades para filtros.
+   */
+  @Roles(roles.Docente, roles.Administrador)
+  @Get('all')
+  findAllForFilter() {
+    return this.difficultiesService.findAllForFilter();
+  }
 
   /**
    * Endpoint para que el videojuego registre/actualice una o varias dificultades.
