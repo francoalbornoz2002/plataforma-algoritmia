@@ -332,7 +332,9 @@ export default function AuditPage() {
             <MenuItem value="institucion">institucion</MenuItem>
             <MenuItem value="alumno_curso">alumno_curso</MenuItem>
             <MenuItem value="docente_curso">docente_curso</MenuItem>
-            <MenuItem value="mision_completada">misiones_completadas</MenuItem>
+            <MenuItem value="misiones_completadas">
+              misiones_completadas
+            </MenuItem>
             <MenuItem value="dificultad_alumno">dificultad_alumno</MenuItem>
           </Select>
         </FormControl>
