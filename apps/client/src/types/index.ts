@@ -307,9 +307,11 @@ export interface FindStudentDifficultiesParams extends BaseFilterParams {
 export interface PaginatedStudentDifficultiesResponse
   extends PaginatedResponse<AlumnoDificultadResumen> {}
 
-export interface DificultadAlumnoDetallada {
+export interface DificultadSimple {
   id: string;
   nombre: string;
+}
+export interface DificultadAlumnoDetallada extends DificultadSimple {
   descripcion: string;
   tema: temas;
   grado: grado_dificultad; // El grado del alumno

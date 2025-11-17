@@ -6,6 +6,7 @@ import type {
   CursoParaEditar,
   DificultadAlumnoDetallada,
   DificultadesCurso,
+  DificultadSimple,
   DocenteBasico,
   estado_simple,
   FindConsultasParams,
@@ -131,6 +132,22 @@ export const getCourseDifficultiesOverview = async (
     );
   }
 };
+
+// Un tipo simple para la respuesta del filtro
+
+/**
+ * Obtiene la lista completa de dificultades para los filtros.
+ */
+export async function getAllDifficulties(): Promise<DificultadSimple[]> {
+  try {
+    // (Asegúrate de que 'apiClient' esté configurado)
+    const response = await apiClient.get("/difficulties/all");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching all difficulties:", error);
+    throw new Error("No se pudo cargar la lista de dificultades.");
+  }
+}
 
 /**
  * Obtiene la lista paginada de alumnos para la DataGrid de Dificultades
