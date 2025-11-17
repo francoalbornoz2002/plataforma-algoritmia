@@ -650,6 +650,9 @@ export class ProgressService {
           idCurso: idCurso,
           estado: 'Activo', // Solo de alumnos activos
         },
+        ultimaActividad: {
+          not: null,
+        },
       },
     });
 
