@@ -13,6 +13,7 @@ import { Prisma, roles, Usuario } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { FindAllUsersDto } from '../dto/find-all-users.dto';
 import { LoginDto } from 'src/auth/dto/login.dto';
+import { MailService } from 'src/mail/services/mail.service';
 
 // Defino el tipo de usuario sin password a devolver
 type SafeUser = Omit<Usuario, 'password'>;
@@ -27,17 +28,22 @@ export interface PaginatedUsersResponse {
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<Usuario> {
+    const { password, email, nombre, dni, ...resto } = createUserDto;
+
     // 1. Verifica si el email o dni ya existen en los usuarios registrados
     const existingUser = await this.prisma.usuario.findFirst({
       where: {
-        OR: [{ email: createUserDto.email }, { dni: createUserDto.dni }],
+        OR: [{ email: email }, { dni: dni }],
       },
     });
     if (existingUser) {
-      if (existingUser.email === createUserDto.email) {
+      if (existingUser.email === email) {
         throw new ConflictException('El correo electrónico ya está en uso.');
       } else {
         throw new ConflictException('El DNI ya está registrado.');
@@ -45,17 +51,31 @@ export class UsersService {
     }
 
     // 2. Hashea la contraseña antes de guardarla
-    createUserDto.password = await bcrypt.hash(
-      createUserDto.password,
-      +process.env.HASH_SALT,
-    );
+    const hashedPassword = await bcrypt.hash(password, +process.env.HASH_SALT);
 
-    // 3. Crea el usuario con la contraseña hasheada
-    return await this.prisma.usuario.create({
+    // 3. Guardar usuario en la Base de Datos
+    const nuevoUsuario = await this.prisma.usuario.create({
       data: {
-        ...createUserDto,
+        email,
+        nombre,
+        password: hashedPassword,
+        dni,
+        ...resto,
       },
     });
+
+    // 4. Enviar correo de bienvenida (INTENTO SEGURO)
+    try {
+      // Pasamos la contraseña original sin hashear
+      await this.mailService.enviarBienvenida(email, nombre, password);
+      console.log(`📧 Correo enviado exitosamente a ${email}`);
+    } catch (emailError) {
+      // Si falla el correo, NO fallamos el registro del usuario.
+      // Solo lo registramos en la consola para revisarlo.
+      console.error('❌ Error enviando correo de bienvenida:', emailError);
+    }
+
+    return nuevoUsuario;
   }
 
   async findAll(
