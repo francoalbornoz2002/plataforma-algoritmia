@@ -14,6 +14,8 @@ import { InstitucionModule } from './institucion/institucion.module';
 import { AuditoriaModule } from './auditoria/auditoria.module';
 import { ConsultasModule } from './consultas/consultas.module';
 import { ClasesConsultaModule } from './clases-consulta/clases-consulta.module';
+import { MailService } from './mail/services/mail.service';
+import { MailModule } from './mail/mail.module';
 
 const UPLOADS_PATH = join(process.cwd(), 'uploads');
 
@@ -42,8 +44,9 @@ const UPLOADS_PATH = join(process.cwd(), 'uploads');
     AuditoriaModule,
     ConsultasModule,
     ClasesConsultaModule,
+    MailModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [MailService],
 })
 export class AppModule {}
