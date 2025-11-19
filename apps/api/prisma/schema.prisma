@@ -25,7 +25,7 @@ model AlumnoCurso {
 
 model ClaseConsulta {
   id                 String                @id @default(uuid()) @db.Uuid
-  idDocente          String                @map("id_docente") @db.Uuid
+  idDocente          String?               @map("id_docente") @db.Uuid
   idCurso            String                @map("id_curso") @db.Uuid
   nombre             String                @db.VarChar(255)
   descripcion        String                @db.VarChar(255)
@@ -39,7 +39,7 @@ model ClaseConsulta {
   updatedAt          DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt          DateTime?             @map("deleted_at") @db.Timestamptz(6)
   curso              Curso                 @relation("ClasesConsultaCurso", fields: [idCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  docenteResponsable Usuario               @relation("ClasesACargo", fields: [idDocente], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  docenteResponsable Usuario?              @relation("ClasesACargo", fields: [idDocente], references: [id], onDelete: NoAction, onUpdate: NoAction)
   consultasEnClase   ConsultaClase[]       @relation("ClaseDeConsultas")
 
   @@index([idCurso], map: "idx_clases_consulta_curso")
@@ -485,8 +485,9 @@ enum dificultad_mision {
 enum estado_clase_consulta {
   Programada
   Realizada
-  No_realizada @map("No realizada")
+  No_realizada         @map("No realizada")
   Cancelada
+  Pendiente_Asignacion @map("Pendiente de Asignación")
 }
 
 enum estado_consulta {
