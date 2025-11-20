@@ -6,10 +6,9 @@ export function timeToDate(time: string): Date {
   if (!time) return new Date(0);
 
   const [hours, minutes] = time.split(':').map(Number);
-  const date = new Date(0); // Fecha epoch (1970-01-01T00:00:00.000Z)
+  const date = new Date(0); // Fecha epoch
 
-  // TRUCO: Sumamos 3 horas.
-  // "08:00" Argentina se convierte en "11:00" UTC.
+  // Sumamos 3 horas.
   date.setUTCHours(hours + 3);
   date.setUTCMinutes(minutes);
 
@@ -44,6 +43,20 @@ const MAPA_DIAS: Record<dias_semana, number> = {
   Sabado: 6,
 };
 
+// Helper para mapear JS Date day (0-6) a Enum Prisma
+export function getDiaSemanaEnum(date: Date): dias_semana | null {
+  const dayIndex = date.getUTCDay(); // Usamos UTC day para coincidir con la fecha enviada
+  const map: Record<number, dias_semana> = {
+    1: dias_semana.Lunes,
+    2: dias_semana.Martes,
+    3: dias_semana.Miercoles,
+    4: dias_semana.Jueves,
+    5: dias_semana.Viernes,
+    6: dias_semana.Sabado,
+  };
+  return map[dayIndex] || null; // Domingo devuelve null (no hay clases)
+}
+
 /**
  * Calcula la fecha y hora para la próxima clase de consulta automática.
  * Regla: 1 hora antes del inicio de la próxima clase del curso.
@@ -58,9 +71,8 @@ export function calcularFechaProximaClase(diasClase: DiaClase[]): Date | null {
   const ahora = new Date();
   let candidatos: Date[] = [];
 
-  // Iteramos los próximos 14 días para encontrar la ocurrencia más cercana
-  // (14 días cubre casos donde la clase sea quincenal o feriados, por seguridad)
-  for (let i = 0; i < 14; i++) {
+  // Iteramos los próximos 7 días para encontrar la ocurrencia más cercana
+  for (let i = 0; i < 7; i++) {
     const fechaFutura = new Date(ahora);
     fechaFutura.setDate(ahora.getDate() + i);
 
@@ -72,14 +84,13 @@ export function calcularFechaProximaClase(diasClase: DiaClase[]): Date | null {
     );
 
     for (const clase of clasesDelDia) {
-      // Prisma devuelve DateTime, pero solo nos importa la HORA y MINUTO.
       // Extraemos la hora de inicio de la clase.
       const horaInicioClase = new Date(clase.horaInicio);
 
       // Creamos la fecha candidata combinando el Día Futuro + Hora Clase
       const fechaCandidata = new Date(fechaFutura);
       fechaCandidata.setHours(
-        horaInicioClase.getHours() - 1, // <--- REGLA: 1 hora antes
+        horaInicioClase.getHours() - 1, // <--- 1 hora antes
         horaInicioClase.getMinutes(),
         0,
         0,

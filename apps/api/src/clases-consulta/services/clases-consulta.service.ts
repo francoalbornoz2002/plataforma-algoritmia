@@ -14,75 +14,18 @@ import {
   dias_semana,
   estado_clase_consulta,
   estado_consulta,
-  estado_revision,
   Prisma,
   roles,
 } from '@prisma/client';
-import { timeToDate } from 'src/helpers';
+import { getDiaSemanaEnum, timeToDate } from 'src/helpers';
 import { FinalizarClaseDto } from '../dto/finalizar-clase.dto';
-
-// --- HELPER LOCAL EXPLÍCITO (Ponlo fuera de la clase o al final) ---
-function timeToDateLocal(time: string): Date {
-  if (!time) return new Date(0);
-  const [hours, minutes] = time.split(':').map(Number);
-  const date = new Date(0);
-  date.setUTCHours(hours + 3);
-  date.setUTCMinutes(minutes);
-
-  console.log(
-    `[DEBUG] timeToDateLocal: Input=${time} -> OutputUTC=${date.toISOString()}`,
-  );
-  return date;
-}
-
-// NUEVO: Helper para obtener minutos desde medianoche (para comparaciones fáciles)
-function getMinutesFromMidnight(timeInput: Date | string): number {
-  if (typeof timeInput === 'string') {
-    const [hours, minutes] = timeInput.split(':').map(Number);
-    return hours * 60 + minutes;
-  } else {
-    // Asumimos que es un Date de Prisma (UTC o ajustado), extraemos UTCHours
-    // OJO: Depende de cómo Prisma te devuelva el 'Time'.
-    // Normalmente Prisma devuelve un Date con fecha 1970-01-01.
-    // Para evitar líos de timezone del Date object, usamos getUTCHours si guardaste con timeToDateLocal
-    // Pero si viene directo de la BD (DiaClase), Prisma suele devolverlo "crudo".
-    // Para mayor seguridad con tu configuración actual:
-    const hours = timeInput.getUTCHours();
-    const minutes = timeInput.getUTCMinutes();
-    // Ajuste inverso si es necesario, pero para comparar duraciones relativas:
-    // Si tus dias_clase en BD están guardados igual que clases_consulta, usamos UTC.
-    // Si dias_clase se guardaron directo, podrían ser horas "reales".
-    // Vamos a usar getHours/Minutes locales del objeto Date si asumimos que el driver de PG lo parsea bien.
-    // MEJOR ESTRATEGIA: Usar getUTCHours asumiendo consistencia en tu BD.
-    // Como tu timeToDateLocal suma +3, aquí restamos o usamos directo si todo está en la misma base.
-    // Asumiremos que ambos objetos Date (DiaClase y el generado) son comparables via getTime o UTC.
-    return timeInput.getUTCHours() * 60 + timeInput.getUTCMinutes();
-  }
-}
-
-// NUEVO: Helper para mapear JS Date day (0-6) a Enum Prisma
-function getDiaSemanaEnum(date: Date): dias_semana | null {
-  // getDay(): 0 = Domingo, 1 = Lunes, ...
-  const dayIndex = date.getUTCDay(); // Usamos UTC day para coincidir con la fecha enviada
-  const map: Record<number, dias_semana> = {
-    1: dias_semana.Lunes,
-    2: dias_semana.Martes,
-    3: dias_semana.Miercoles,
-    4: dias_semana.Jueves,
-    5: dias_semana.Viernes,
-    6: dias_semana.Sabado,
-  };
-  return map[dayIndex] || null; // Domingo devuelve null (no hay clases)
-}
 
 @Injectable()
 export class ClasesConsultaService {
   constructor(private prisma: PrismaService) {}
 
   /**
-   * TAREA: Implementar servicio para crear la clase de consulta.
-   * REGLA: Consultas deben estar 'Pendiente'.
-   * REGLA: Docente a cargo debe pertenecer al curso.
+   * Servicio para crear una clase de consulta.
    */
   async create(dto: CreateClasesConsultaDto, user: UserPayload) {
     const {
@@ -108,11 +51,9 @@ export class ClasesConsultaService {
     // El 'user.userId' es el docente QUE ESTÁ CREANDO la clase
     const idDocenteCreador = user.userId;
 
-    // --- NUEVO: Validación de superposición con horario de cursada ---
+    // --- Validación de superposición con horario de cursada ---
     // Convertimos fechaClase (string o Date) a objeto Date real para sacar el día
     const fechaObj = new Date(fechaClase);
-    // Importante: Asegurar que fechaObj no tenga offset indeseado que cambie el día.
-    // Si viene "2025-11-20", new Date() lo toma UTC.
 
     await this.validarSuperposicionConClaseCurso(
       idCurso,
@@ -125,7 +66,7 @@ export class ClasesConsultaService {
     try {
       // --- TRANSACCIÓN ---
       return await this.prisma.$transaction(async (tx: PrismaService) => {
-        // --- 1. Validación de Seguridad (Reglas de Negocio) ---
+        // --- 1. Validación de Seguridad ---
 
         // a. Validar que el docente creador pertenece al curso
         await this.checkDocenteAccess(tx, idDocenteCreador, idCurso);
@@ -163,10 +104,9 @@ export class ClasesConsultaService {
             idCurso,
             idDocente,
             fechaClase: new Date(fechaClase),
-            horaInicio: timeToDateLocal(horaInicio),
-            horaFin: timeToDateLocal(horaFin),
+            horaInicio: timeToDate(horaInicio),
+            horaFin: timeToDate(horaFin),
             estadoClase: estado_clase_consulta.Programada,
-            estadoRevision: estado_revision.Pendiente,
           },
         });
 
@@ -201,11 +141,9 @@ export class ClasesConsultaService {
   }
 
   /**
-   * TAREA: Implementar servicio para obtener todas las clases.
-   * REGLA: Se ven todas (incluyendo canceladas).
+   * Servicio para obtener todas las clases de consulta de un curso.
    */
   async findAll(idCurso: string, user: UserPayload) {
-    // (Añadí validación de que el usuario pertenezca al curso para verlas)
     const idUsuario = user.userId;
     if (user.rol === roles.Docente) {
       await this.checkDocenteAccess(this.prisma, idUsuario, idCurso);
@@ -227,7 +165,6 @@ export class ClasesConsultaService {
         },
         consultasEnClase: {
           select: {
-            revisadaEnClase: true,
             consulta: {
               // Seleccionamos el objeto 'consulta'
               include: {
@@ -237,6 +174,8 @@ export class ClasesConsultaService {
                 },
               },
             },
+            // Obtenemos si están revisadas o no (para frontend)
+            revisadaEnClase: true,
           },
         },
         motivoClaseNoRealizada: {
@@ -248,24 +187,19 @@ export class ClasesConsultaService {
     // Mapeamos las clases para agregar el "estadoActual" calculado
     return clases.map((clase) => ({
       ...clase,
-      estadoActual: this.getEstadoTemporal(clase), // <--- Campo Mágico
+      estadoActual: this.getEstadoTemporal(clase),
       motivo: clase.motivoClaseNoRealizada?.descripcion || null,
-      motivoClaseNoRealizada: undefined, // Opcional: quitamos el objeto anidado para no ensuciar
+      motivoClaseNoRealizada: undefined, // Quitamos el objeto anidado para no ensuciar
     }));
   }
 
   /**
-   * TAREA: Implementar servicio para editar.
-   * REGLA: Solo se puede editar si está 'Programada'.
-   */
-  /**
-   * TAREA: Implementar servicio para editar.
-   * REGLA: Sincronizar consultas.
+   * Servicio para editar una clase de consulta
    */
   async update(id: string, dto: UpdateClasesConsultaDto, user: UserPayload) {
     const { consultasIds, fechaClase, horaInicio, horaFin, ...restDto } = dto;
 
-    // --- Recuperar datos actuales si no vienen todos en el DTO ---
+    // --- Obtemos la clase de consulta ---
     const actual = await this.prisma.claseConsulta.findUnique({
       where: { id },
     });
@@ -287,14 +221,14 @@ export class ClasesConsultaService {
       : toTimeStr(actual.horaInicio);
     const finParaValidar = horaFin ? horaFin : toTimeStr(actual.horaFin);
 
-    // 1. Validación básica
+    // Validamos que la hora de inicio sea menor a la hora de fin.
     if (inicioParaValidar >= finParaValidar) {
       throw new BadRequestException(
         'La hora de fin debe ser mayor a la de inicio.',
       );
     }
 
-    // --- NUEVO: Validación de superposición en Update ---
+    // --- Validación de superposición en Update ---
     // Si cambiaron la fecha o las horas, validamos de nuevo
     if (fechaClase || horaInicio || horaFin) {
       await this.validarSuperposicionConClaseCurso(
@@ -304,7 +238,6 @@ export class ClasesConsultaService {
         finParaValidar,
       );
     }
-    // ----------------------------------------------------
 
     try {
       // Validaciones de acceso y estado
@@ -328,22 +261,22 @@ export class ClasesConsultaService {
       const dataToUpdate: Prisma.ClaseConsultaUpdateInput = {
         ...restDto,
         ...(fechaClase && { fechaClase: new Date(fechaClase) }),
-        ...(horaInicio && { horaInicio: timeToDateLocal(horaInicio) }),
-        ...(horaFin && { horaFin: timeToDateLocal(horaFin) }),
+        ...(horaInicio && { horaInicio: timeToDate(horaInicio) }),
+        ...(horaFin && { horaFin: timeToDate(horaFin) }),
       };
 
-      // --- 5. INICIAR TRANSACCIÓN PARA SINCRONIZAR ---
+      // --- Iniciamos la transacción para actualizar la clase ---
       return await this.prisma.$transaction(
         async (tx: Prisma.TransactionClient) => {
-          // 5a. Actualizar los datos simples de la clase
+          // Actualizamos los datos simples de la clase
           await tx.claseConsulta.update({
             where: { id },
             data: dataToUpdate,
           });
 
-          // 5b. Sincronizar consultas (SI el DTO las incluyó)
+          // Sincronizamos consultas
           if (consultasIds) {
-            // b.1. OBTENER ESTADO ACTUAL
+            // Obtenemos las consultas actuales de la clase
             const consultasActuales = await tx.consultaClase.findMany({
               where: { idClaseConsulta: id },
               select: { idConsulta: true },
@@ -353,15 +286,17 @@ export class ClasesConsultaService {
             );
             const idsNuevos = new Set(consultasIds);
 
-            // b.2. CALCULAR "DIFF"
+            // Calculamos "diff" (las que debemos agregar)
             const idsParaAgregar = consultasIds.filter(
               (id) => !idsActuales.has(id),
             );
+
+            // Calculamos cuales debemos quitar
             const idsParaQuitar = consultasActuales
               .filter((c) => !idsNuevos.has(c.idConsulta))
               .map((c) => c.idConsulta);
 
-            // b.3. VALIDAR 'idsParaAgregar' (deben estar 'Pendiente')
+            // Validamos que las que vamos a agregar sean pendientes.
             if (idsParaAgregar.length > 0) {
               const consultasNuevas = await tx.consulta.findMany({
                 where: { id: { in: idsParaAgregar } },
@@ -376,7 +311,7 @@ export class ClasesConsultaService {
               }
             }
 
-            // b.4. PROCESAR 'idsParaQuitar'
+            // Eliminamos los registros en la tabla consulta_clase y las devolvemos a estado Pendiente.
             if (idsParaQuitar.length > 0) {
               await tx.consultaClase.deleteMany({
                 where: {
@@ -390,7 +325,7 @@ export class ClasesConsultaService {
               });
             }
 
-            // b.5. PROCESAR 'idsParaAgregar'
+            // Creamos los registros en la tabla consulta_clase y la colocamos en estado A revisar.
             if (idsParaAgregar.length > 0) {
               await tx.consultaClase.createMany({
                 data: idsParaAgregar.map((idConsulta) => ({
@@ -403,9 +338,9 @@ export class ClasesConsultaService {
                 data: { estado: estado_consulta.A_revisar }, // Poner en A revisar
               });
             }
-          } // Fin del 'if (consultasIds)'
+          }
 
-          // 5c. Devolver la clase actualizada (con relaciones)
+          // Devolvemos la clase actualizada con sus relaciones
           return tx.claseConsulta.findUnique({
             where: { id },
             include: {
@@ -416,7 +351,7 @@ export class ClasesConsultaService {
             },
           });
         },
-      ); // --- FIN DE LA TRANSACCIÓN ---
+      );
     } catch (error) {
       if (
         error instanceof BadRequestException ||
@@ -433,7 +368,7 @@ export class ClasesConsultaService {
   }
 
   /**
-   * NUEVO: Aceptar clase modificando fecha y hora manualmente.
+   * Servicio para aceptar clase modificando fecha y hora manualmente (proceso automatizado).
    * Solo permite cambiar fecha/hora, asigna al docente y cambia estado a Programada.
    */
   async aceptarYReprogramar(
@@ -442,6 +377,7 @@ export class ClasesConsultaService {
     datos: { fechaClase: string; horaInicio: string; horaFin: string },
   ) {
     try {
+      // Obtenemos la clase de consulta
       const clase = await this.prisma.claseConsulta.findUnique({
         where: { id: idClase },
       });
@@ -462,8 +398,8 @@ export class ClasesConsultaService {
           idDocente: idDocente, // Se asigna
           estadoClase: estado_clase_consulta.Programada, // Se confirma
           fechaClase: new Date(datos.fechaClase),
-          horaInicio: timeToDate(datos.horaInicio), // Usa tu helper timeToDate
-          horaFin: timeToDate(datos.horaFin), // Usa tu helper timeToDate
+          horaInicio: timeToDate(datos.horaInicio),
+          horaFin: timeToDate(datos.horaFin),
         },
         include: {
           docenteResponsable: { select: { nombre: true, apellido: true } },
@@ -476,6 +412,7 @@ export class ClasesConsultaService {
   }
 
   /**
+   * Servicio para aceptar una clase de consulta automática.
    * Permite a un docente asignarse una clase automática pendiente.
    */
   async asignarDocente(
@@ -484,7 +421,7 @@ export class ClasesConsultaService {
     nuevaFecha?: string,
   ) {
     try {
-      // 1. Buscar la clase y verificar estado
+      // Obtenemos la clase y verificamos el estado
       const clase = await this.prisma.claseConsulta.findUnique({
         where: { id: idClase },
       });
@@ -493,7 +430,7 @@ export class ClasesConsultaService {
         throw new NotFoundException('Clase no encontrada.');
       }
 
-      // 2. Validaciones de Negocio
+      // Validamos que la clase no tenga otro docente asignado
       if (clase.estadoClase !== estado_clase_consulta.Pendiente_Asignacion) {
         throw new BadRequestException(
           'Esta clase ya tiene un docente asignado o no requiere asignación.',
@@ -509,16 +446,16 @@ export class ClasesConsultaService {
         estadoClase: estado_clase_consulta.Programada,
       };
 
-      // Si nos pasaron una nueva fecha (Botón 2), la aplicamos
+      // Si nos pasaron una nueva fecha, la aplicamos
       if (nuevaFecha) {
         const fechaObj = new Date(nuevaFecha);
         dataUpdate.fechaClase = fechaObj;
         dataUpdate.horaInicio = fechaObj;
-        // Recalculamos fin (asumiendo 1 hora de duración)
+        // Recalculamos fin (1 hora de duración de la clase)
         dataUpdate.horaFin = new Date(fechaObj.getTime() + 60 * 60 * 1000);
       }
 
-      // 3. Actualizar la clase
+      // Actualizamos la clase
       const claseActualizada = await this.prisma.claseConsulta.update({
         where: { id: idClase },
         data: dataUpdate,
@@ -541,10 +478,14 @@ export class ClasesConsultaService {
     }
   }
 
+  /**
+   * Servicio para finalizar una clase de consulta.
+   * Si se realizó, se indican las consultas revisadas y si no se realizó se indica un motivo
+   */
   async finalizar(idClase: string, dto: FinalizarClaseDto, user: UserPayload) {
     const { realizada, motivo, consultasRevisadasIds } = dto;
 
-    // 1. Verificar existencia y traer relaciones
+    // Obtenemos la clase y sus relaciones.
     const clase = await this.prisma.claseConsulta.findUnique({
       where: { id: idClase },
       include: { consultasEnClase: true },
@@ -552,12 +493,12 @@ export class ClasesConsultaService {
 
     if (!clase) throw new NotFoundException('Clase no encontrada.');
 
-    // 2. Validar permisos (Docente responsable o Admin)
+    // Validamos los permisos
     if (clase.idDocente !== user.userId && user.rol !== roles.Administrador) {
       throw new ForbiddenException('No eres el responsable de esta clase.');
     }
 
-    // 3. Validar que no esté ya finalizada
+    // Validamos que no esté finalizada
     if (
       clase.estadoClase === estado_clase_consulta.Realizada ||
       clase.estadoClase === estado_clase_consulta.No_realizada ||
@@ -568,25 +509,24 @@ export class ClasesConsultaService {
       );
     }
 
-    // 4. Ejecutar Transacción
+    // Ejecutamos la transacción
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       if (realizada) {
-        // --- CAMINO A: LA CLASE SE REALIZÓ ---
+        // --- CASO A: LA CLASE SE REALIZÓ ---
 
-        // A. Actualizar estado de la clase
+        // A. Actualizamos el estado de la clase
         await tx.claseConsulta.update({
           where: { id: idClase },
           data: {
             estadoClase: estado_clase_consulta.Realizada,
-            estadoRevision: estado_revision.Revisadas,
           },
         });
 
-        // B. Procesar Consultas
+        // B. Procesamos las consultas
         const idsAgendadas = clase.consultasEnClase.map((c) => c.idConsulta);
         const idsRevisadasSet = new Set(consultasRevisadasIds || []);
 
-        // B.1. Marcar las REVISADAS
+        // B.1. Marcamos las REVISADAS
         if (idsRevisadasSet.size > 0) {
           // Tabla intermedia
           await tx.consultaClase.updateMany({
@@ -603,7 +543,7 @@ export class ClasesConsultaService {
           });
         }
 
-        // B.2. Devolver las NO REVISADAS a Pendiente
+        // B.2. Devolvemos las NO REVISADAS a Pendiente
         const idsNoRevisadas = idsAgendadas.filter(
           (id) => !idsRevisadasSet.has(id),
         );
@@ -614,16 +554,16 @@ export class ClasesConsultaService {
           });
         }
       } else {
-        // --- CAMINO B: NO SE REALIZÓ ---
+        // --- CASO B: NO SE REALIZÓ ---
 
-        // A. Validar motivo
+        // A. Validamos motivo
         if (!motivo) {
           throw new BadRequestException(
             'Debe indicar un motivo si la clase no se realizó.',
           );
         }
 
-        // B. Actualizar estado de la clase
+        // B. Actualizamos el estado de la clase
         await tx.claseConsulta.update({
           where: { id: idClase },
           data: {
@@ -631,7 +571,7 @@ export class ClasesConsultaService {
           },
         });
 
-        // C. GUARDAR EL MOTIVO EN LA NUEVA TABLA
+        // C. Guardamos el motivo en la tabla
         await tx.motivoClaseNoRealizada.create({
           data: {
             idClaseConsulta: idClase,
@@ -639,7 +579,7 @@ export class ClasesConsultaService {
           },
         });
 
-        // D. Liberar TODAS las consultas (Vuelven a Pendiente)
+        // D. Devolvemos todas las consultas a Pendiente.
         const idsTodas = clase.consultasEnClase.map((c) => c.idConsulta);
         if (idsTodas.length > 0) {
           await tx.consulta.updateMany({
@@ -654,11 +594,10 @@ export class ClasesConsultaService {
   }
 
   /**
-   * TAREA: Implementar "baja lógica".
-   * REGLA: Solo se puede cancelar si está 'Programada'.
+   * Servicio para dar de baja (cancelar) una clase de consulta
    */
   async remove(id: string, user: UserPayload) {
-    // 1. Validar que el docente puede borrar
+    // Obtenemos la clase a cancelar
     const clase = await this.prisma.claseConsulta.findUnique({
       where: { id },
     });
@@ -666,7 +605,7 @@ export class ClasesConsultaService {
 
     await this.checkDocenteAccess(this.prisma, user.userId, clase.idCurso);
 
-    // 2. REGLA: Validar estado 'Programada'
+    // Validamos que la clase a cancelar esté programada.
     if (clase.estadoClase !== estado_clase_consulta.Programada) {
       throw new ForbiddenException(
         'Solo puedes cancelar clases en estado "Programada".',
@@ -675,8 +614,7 @@ export class ClasesConsultaService {
 
     this.validarBloqueoPorTiempo(clase);
 
-    // 3. Hacer el "soft delete" (que en tu schema es un UPDATE)
-    // Usamos $transaction para revertir el estado de las consultas
+    // Hacemos la baja lógica
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // a. Actualizar la clase a 'Cancelada' y marcar 'deletedAt'
       const claseCancelada = await tx.claseConsulta.update({
@@ -687,20 +625,20 @@ export class ClasesConsultaService {
         },
       });
 
-      // b. Buscar las consultas que estaban "A revisar" por esta clase
+      // Obtenemos las consultas que estaban realicionadas a esa clase
       const consultasVinculadas = await tx.consultaClase.findMany({
         where: { idClaseConsulta: id },
         select: { idConsulta: true },
       });
       const idsConsultas = consultasVinculadas.map((c) => c.idConsulta);
 
-      // c. Devolver esas consultas a "Pendiente"
+      // Devolvemos todas las consultas a Pendiente.
       await tx.consulta.updateMany({
         where: { id: { in: idsConsultas } },
         data: { estado: estado_consulta.Pendiente },
       });
 
-      // d. (Opcional: Borrar los vínculos en 'ConsultaClase')
+      // d. Eliminamos los registros de la tabla
       await tx.consultaClase.deleteMany({
         where: { idClaseConsulta: id },
       });
@@ -709,7 +647,11 @@ export class ClasesConsultaService {
     });
   }
 
-  // --- Helpers de Seguridad ---
+  // --------------- HELPERS PRIVADOS --------------- //
+
+  /**
+   * Helper para verificar el acceso del docente
+   */
   private async checkDocenteAccess(
     tx: PrismaService,
     idDocente: string,
@@ -727,6 +669,9 @@ export class ClasesConsultaService {
     }
   }
 
+  /**
+   * Helper para verificar el acceso del alumno
+   */
   private async checkAlumnoAccess(
     tx: Prisma.TransactionClient | PrismaService,
     idAlumno: string,
@@ -744,7 +689,9 @@ export class ClasesConsultaService {
     }
   }
 
-  // Función Helper para validar superposición considerando UTC-3 (Argentina)
+  /**
+   * Helper para validar superposición considerando UTC-3 (Argentina)
+   */
   private async validarSuperposicionConClaseCurso(
     idCurso: string,
     fechaClase: Date,
@@ -806,7 +753,9 @@ export class ClasesConsultaService {
     }
   }
 
-  // --- Helper para combinar Fecha del día + Hora del horario ---
+  /**
+   * Helper para combinar Fecha del día + Hora del horario
+   */
   private construirFechaCompleta(
     fechaDia: Date | string,
     horaTime: Date | string,
@@ -827,7 +776,9 @@ export class ClasesConsultaService {
     return fechaFinal;
   }
 
-  // --- Helper para calcular el estado temporal basado en la hora ---
+  /**
+   * Helper para calcular el estado temporal basado en la hora
+   */
   private getEstadoTemporal(clase: ClaseConsulta) {
     // Si la clase ya tiene un estado definitivo (Cancelada, Realizada, etc.), respetarlo.
     if (
@@ -855,7 +806,9 @@ export class ClasesConsultaService {
     return clase.estadoClase; // 'Programada'
   }
 
-  // --- Helper para validar si se puede editar/borrar ---
+  /**
+   * Helper para validar si se puede editar/borrar (SI NO ESTÁ EN CURSO)
+   */
   private validarBloqueoPorTiempo(clase: ClaseConsulta) {
     const ahora = new Date();
     // Usamos la fecha combinada
