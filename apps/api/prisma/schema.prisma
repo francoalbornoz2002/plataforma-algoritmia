@@ -34,7 +34,6 @@ model ClaseConsulta {
   horaFin                DateTime                @map("hora_fin") @db.Time(6)
   modalidad              modalidad
   estadoClase            estado_clase_consulta   @map("estado_clase")
-  estadoRevision         estado_revision         @map("estado_revision")
   createdAt              DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt              DateTime?               @map("deleted_at") @db.Timestamptz(6)
@@ -46,7 +45,6 @@ model ClaseConsulta {
   @@index([idCurso], map: "idx_clases_consulta_curso")
   @@index([idDocente], map: "idx_clases_consulta_docente")
   @@index([estadoClase], map: "idx_clases_consulta_estadoc")
-  @@index([estadoRevision], map: "idx_clases_consulta_estador")
   @@index([fechaClase], map: "idx_clases_consulta_fecha")
   @@map("clases_consulta")
 }
@@ -508,11 +506,6 @@ enum estado_consulta {
   A_revisar @map("A revisar")
   Revisada
   Resuelta
-}
-
-enum estado_revision {
-  Pendiente
-  Revisadas
 }
 
 enum estado_sesion {
