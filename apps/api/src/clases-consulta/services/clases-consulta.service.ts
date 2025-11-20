@@ -10,6 +10,7 @@ import { UpdateClasesConsultaDto } from '../dto/update-clases-consulta.dto';
 import { UserPayload } from 'src/interfaces/authenticated-user.interface';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
+  dias_semana,
   estado_clase_consulta,
   estado_consulta,
   estado_revision,
@@ -23,9 +24,6 @@ function timeToDateLocal(time: string): Date {
   if (!time) return new Date(0);
   const [hours, minutes] = time.split(':').map(Number);
   const date = new Date(0);
-
-  // ¡AQUÍ ESTÁ EL +3 HARDCODEADO PARA ASEGURARNOS!
-  // 15:00 ARG -> 18:00 UTC
   date.setUTCHours(hours + 3);
   date.setUTCMinutes(minutes);
 
@@ -33,6 +31,46 @@ function timeToDateLocal(time: string): Date {
     `[DEBUG] timeToDateLocal: Input=${time} -> OutputUTC=${date.toISOString()}`,
   );
   return date;
+}
+
+// NUEVO: Helper para obtener minutos desde medianoche (para comparaciones fáciles)
+function getMinutesFromMidnight(timeInput: Date | string): number {
+  if (typeof timeInput === 'string') {
+    const [hours, minutes] = timeInput.split(':').map(Number);
+    return hours * 60 + minutes;
+  } else {
+    // Asumimos que es un Date de Prisma (UTC o ajustado), extraemos UTCHours
+    // OJO: Depende de cómo Prisma te devuelva el 'Time'.
+    // Normalmente Prisma devuelve un Date con fecha 1970-01-01.
+    // Para evitar líos de timezone del Date object, usamos getUTCHours si guardaste con timeToDateLocal
+    // Pero si viene directo de la BD (DiaClase), Prisma suele devolverlo "crudo".
+    // Para mayor seguridad con tu configuración actual:
+    const hours = timeInput.getUTCHours();
+    const minutes = timeInput.getUTCMinutes();
+    // Ajuste inverso si es necesario, pero para comparar duraciones relativas:
+    // Si tus dias_clase en BD están guardados igual que clases_consulta, usamos UTC.
+    // Si dias_clase se guardaron directo, podrían ser horas "reales".
+    // Vamos a usar getHours/Minutes locales del objeto Date si asumimos que el driver de PG lo parsea bien.
+    // MEJOR ESTRATEGIA: Usar getUTCHours asumiendo consistencia en tu BD.
+    // Como tu timeToDateLocal suma +3, aquí restamos o usamos directo si todo está en la misma base.
+    // Asumiremos que ambos objetos Date (DiaClase y el generado) son comparables via getTime o UTC.
+    return timeInput.getUTCHours() * 60 + timeInput.getUTCMinutes();
+  }
+}
+
+// NUEVO: Helper para mapear JS Date day (0-6) a Enum Prisma
+function getDiaSemanaEnum(date: Date): dias_semana | null {
+  // getDay(): 0 = Domingo, 1 = Lunes, ...
+  const dayIndex = date.getUTCDay(); // Usamos UTC day para coincidir con la fecha enviada
+  const map: Record<number, dias_semana> = {
+    1: dias_semana.Lunes,
+    2: dias_semana.Martes,
+    3: dias_semana.Miercoles,
+    4: dias_semana.Jueves,
+    5: dias_semana.Viernes,
+    6: dias_semana.Sabado,
+  };
+  return map[dayIndex] || null; // Domingo devuelve null (no hay clases)
 }
 
 @Injectable()
@@ -55,8 +93,7 @@ export class ClasesConsultaService {
       ...restDto // nombre, descripcion, modalidad
     } = dto;
 
-    // 1. Validación de Strings (Antes de convertir)
-    console.log(`[DEBUG] Create Validando: ${horaInicio} vs ${horaFin}`);
+    // 1. Validación básica de horas
     if (horaInicio >= horaFin) {
       throw new BadRequestException(
         'La hora de fin debe ser mayor a la de inicio.',
@@ -68,6 +105,20 @@ export class ClasesConsultaService {
 
     // El 'user.userId' es el docente QUE ESTÁ CREANDO la clase
     const idDocenteCreador = user.userId;
+
+    // --- NUEVO: Validación de superposición con horario de cursada ---
+    // Convertimos fechaClase (string o Date) a objeto Date real para sacar el día
+    const fechaObj = new Date(fechaClase);
+    // Importante: Asegurar que fechaObj no tenga offset indeseado que cambie el día.
+    // Si viene "2025-11-20", new Date() lo toma UTC.
+
+    await this.validarSuperposicionConClaseCurso(
+      idCurso,
+      fechaObj,
+      horaInicio,
+      horaFin,
+    );
+    // --------------------------------------------------------------
 
     try {
       // --- TRANSACCIÓN ---
@@ -200,68 +251,63 @@ export class ClasesConsultaService {
   async update(id: string, dto: UpdateClasesConsultaDto, user: UserPayload) {
     const { consultasIds, fechaClase, horaInicio, horaFin, ...restDto } = dto;
 
-    // 1. Validación Completa en Update
-    // Si viene SOLO uno, tenemos que buscar el otro en la BD para comparar
-    let inicioParaValidar = horaInicio;
-    let finParaValidar = horaFin;
+    // --- Recuperar datos actuales si no vienen todos en el DTO ---
+    const actual = await this.prisma.claseConsulta.findUnique({
+      where: { id },
+    });
+    if (!actual) throw new NotFoundException('Clase no encontrada');
 
-    if (!inicioParaValidar || !finParaValidar) {
-      const actual = await this.prisma.claseConsulta.findUnique({
-        where: { id },
-      });
-      // Convertimos la fecha UTC guardada a HH:mm (-3 horas) para comparar
-      if (!actual) throw new NotFoundException('Clase no encontrada');
+    // Helper para recuperar string HH:mm de la BD (reversión del hack +3)
+    const toTimeStr = (d: Date) => {
+      const date = new Date(d);
+      date.setUTCHours(date.getUTCHours() - 3);
+      return date.toISOString().substring(11, 16);
+    };
 
-      const toTimeStr = (d: Date) => {
-        const date = new Date(d);
-        date.setUTCHours(date.getUTCHours() - 3);
-        return date.toISOString().substring(11, 16);
-      };
+    // Variables finales para validar
+    const fechaParaValidar = fechaClase
+      ? new Date(fechaClase)
+      : actual.fechaClase;
+    const inicioParaValidar = horaInicio
+      ? horaInicio
+      : toTimeStr(actual.horaInicio);
+    const finParaValidar = horaFin ? horaFin : toTimeStr(actual.horaFin);
 
-      if (!inicioParaValidar) inicioParaValidar = toTimeStr(actual.horaInicio);
-      if (!finParaValidar) finParaValidar = toTimeStr(actual.horaFin);
-    }
-
-    console.log(
-      `[DEBUG] Update Validando: ${inicioParaValidar} vs ${finParaValidar}`,
-    );
-
+    // 1. Validación básica
     if (inicioParaValidar >= finParaValidar) {
       throw new BadRequestException(
         'La hora de fin debe ser mayor a la de inicio.',
       );
     }
-    if (finParaValidar > '23:00') {
-      throw new BadRequestException('Hora fin inválida.');
+
+    // --- NUEVO: Validación de superposición en Update ---
+    // Si cambiaron la fecha o las horas, validamos de nuevo
+    if (fechaClase || horaInicio || horaFin) {
+      await this.validarSuperposicionConClaseCurso(
+        actual.idCurso,
+        fechaParaValidar,
+        inicioParaValidar,
+        finParaValidar,
+      );
     }
+    // ----------------------------------------------------
 
     try {
-      // 1. Validar que el docente puede editar
-      const clase = await this.prisma.claseConsulta.findUnique({
-        where: { id: id, deletedAt: null }, // No se puede editar una borrada
-      });
-      if (!clase)
-        throw new NotFoundException('Clase no encontrada o ya fue cancelada.');
-
-      await this.checkDocenteAccess(this.prisma, user.userId, clase.idCurso);
-
-      // 2. REGLA: Validar estado 'Programada'
-      if (clase.estadoClase !== estado_clase_consulta.Programada) {
+      // Validaciones de acceso y estado
+      await this.checkDocenteAccess(this.prisma, user.userId, actual.idCurso);
+      if (actual.estadoClase !== estado_clase_consulta.Programada) {
         throw new ForbiddenException(
-          'Solo puedes editar clases en estado "Programada".',
+          'Solo puedes editar clases "Programadas".',
         );
       }
-
-      // 3. Validar si el docente a cargo cambió
       if (dto.idDocente) {
         await this.checkDocenteAccess(
           this.prisma,
           dto.idDocente,
-          clase.idCurso,
+          actual.idCurso,
         );
       }
 
-      // 4. Mapear DTO (convertir horas y fechas)
       const dataToUpdate: Prisma.ClaseConsultaUpdateInput = {
         ...restDto,
         ...(fechaClase && { fechaClase: new Date(fechaClase) }),
@@ -564,6 +610,68 @@ export class ClasesConsultaService {
     });
     if (!inscripcion) {
       throw new ForbiddenException('El alumno no está activo en este curso.');
+    }
+  }
+
+  // Función Helper para validar superposición considerando UTC-3 (Argentina)
+  private async validarSuperposicionConClaseCurso(
+    idCurso: string,
+    fechaClase: Date,
+    horaInicioStr: string,
+    horaFinStr: string,
+  ) {
+    const diaEnum = getDiaSemanaEnum(fechaClase);
+    if (!diaEnum) return;
+
+    // 1. Buscamos los horarios de cursada para ese día
+    const diasDeClase = await this.prisma.diaClase.findMany({
+      where: {
+        idCurso: idCurso,
+        dia: diaEnum,
+      },
+    });
+
+    if (!diasDeClase.length) return;
+
+    // 2. Convertir el INPUT (Hora Local) a minutos
+    // Ejemplo: "09:00" -> 9 * 60 = 540 minutos
+    const consultaInicioMin =
+      parseInt(horaInicioStr.split(':')[0]) * 60 +
+      parseInt(horaInicioStr.split(':')[1]);
+    const consultaFinMin =
+      parseInt(horaFinStr.split(':')[0]) * 60 +
+      parseInt(horaFinStr.split(':')[1]);
+
+    // 3. Iterar y comparar, ajustando la BD a Hora Local (-3)
+    for (const claseCurso of diasDeClase) {
+      // BD tiene 12:00 (UTC). Restamos 3 para tener 09:00 (Local)
+      const offsetArg = 3;
+
+      let horaInicioDb = claseCurso.horaInicio.getUTCHours() - offsetArg;
+      let horaFinDb = claseCurso.horaFin.getUTCHours() - offsetArg;
+
+      // Manejo básico por si la resta da negativo (ej: 02:00 UTC - 3 = -1 -> 23:00 del dia anterior),
+      // aunque en tu esquema de "DiaClase" esto es raro.
+      if (horaInicioDb < 0) horaInicioDb += 24;
+      if (horaFinDb < 0) horaFinDb += 24;
+
+      const cursoInicioMin =
+        horaInicioDb * 60 + claseCurso.horaInicio.getUTCMinutes();
+      const cursoFinMin = horaFinDb * 60 + claseCurso.horaFin.getUTCMinutes();
+
+      // Lógica de solapamiento
+      const noSeSolapa =
+        consultaFinMin <= cursoInicioMin || consultaInicioMin >= cursoFinMin;
+
+      if (!noSeSolapa) {
+        // Formateamos la hora para mostrarla amigablemente en el error
+        const inicioLegible = `${horaInicioDb}:${claseCurso.horaInicio.getUTCMinutes().toString().padStart(2, '0')}`;
+        const finLegible = `${horaFinDb}:${claseCurso.horaFin.getUTCMinutes().toString().padStart(2, '0')}`;
+
+        throw new BadRequestException(
+          `Conflicto de horario: El curso tiene clase regular los ${diaEnum} de ${inicioLegible} a ${finLegible}.`,
+        );
+      }
     }
   }
 }
