@@ -10,7 +10,6 @@ import {
   Prisma,
   estado_clase_consulta,
   estado_consulta,
-  estado_revision,
   temas,
 } from '@prisma/client';
 
@@ -466,7 +465,6 @@ export class ConsultasService {
             horaFin: horaFin, // 09:00 (Empalme perfecto con la cursada)
             modalidad: curso.modalidadPreferencial,
             estadoClase: estado_clase_consulta.Pendiente_Asignacion,
-            estadoRevision: estado_revision.Pendiente,
           },
         });
 
