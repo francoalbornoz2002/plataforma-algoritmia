@@ -227,6 +227,7 @@ export class ClasesConsultaService {
         },
         consultasEnClase: {
           select: {
+            revisadaEnClase: true,
             consulta: {
               // Seleccionamos el objeto 'consulta'
               include: {

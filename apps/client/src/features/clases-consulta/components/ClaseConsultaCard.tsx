@@ -103,7 +103,22 @@ export default function ClaseConsultaCard({
     ? `${docenteResponsable.nombre} ${docenteResponsable.apellido}`
     : "Sin asignar (Pendiente)";
 
-  const totalConsultas = consultasEnClase.length;
+  // --- NUEVO: Lógica de Conteo ---
+  const totalConsultas = consultasEnClase?.length || 0;
+
+  // Contamos las que el backend nos dice que fueron revisadas
+  const revisadasCount =
+    consultasEnClase?.filter((c: any) => c.revisadaEnClase).length || 0;
+
+  // Definimos el texto a mostrar
+  let textoConsultas = `${totalConsultas} consultas para revisar`;
+
+  if (estadoClase === estado_clase_consulta.Realizada) {
+    textoConsultas = `${revisadasCount} de ${totalConsultas} consultas revisadas`;
+  } else if (estadoClase === estado_clase_consulta.No_realizada) {
+    textoConsultas = `Clase no realizada (${totalConsultas} pendientes)`;
+  }
+  // --------------------------------
 
   return (
     <Card
@@ -196,6 +211,7 @@ export default function ClaseConsultaCard({
               {nombreDocente}
             </Typography>
           </Stack>
+          {/* --- NUEVO: Renderizado del texto dinámico --- */}
           <Stack
             direction="row"
             spacing={1}
@@ -203,10 +219,16 @@ export default function ClaseConsultaCard({
             color="text.secondary"
           >
             <QuestionAnswerIcon fontSize="small" />
-            <Typography variant="body2">
-              {totalConsultas} consultas para revisar
+            <Typography
+              variant="body2"
+              // Si está realizada, la ponemos en negrita o un color sutilmente distinto
+              fontWeight={estadoClase === "Realizada" ? "bold" : "normal"}
+              color={estadoClase === "Realizada" ? "primary.main" : "inherit"}
+            >
+              {textoConsultas}
             </Typography>
           </Stack>
+          {/* --------------------------------------------- */}
         </Stack>
       </CardContent>
 
