@@ -24,23 +24,24 @@ model AlumnoCurso {
 }
 
 model ClaseConsulta {
-  id                 String                @id @default(uuid()) @db.Uuid
-  idDocente          String?               @map("id_docente") @db.Uuid
-  idCurso            String                @map("id_curso") @db.Uuid
-  nombre             String                @db.VarChar(255)
-  descripcion        String                @db.VarChar(255)
-  fechaClase         DateTime              @map("fecha_clase") @db.Date
-  horaInicio         DateTime              @map("hora_inicio") @db.Time(6)
-  horaFin            DateTime              @map("hora_fin") @db.Time(6)
-  modalidad          modalidad
-  estadoClase        estado_clase_consulta @map("estado_clase")
-  estadoRevision     estado_revision       @map("estado_revision")
-  createdAt          DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt          DateTime?             @map("deleted_at") @db.Timestamptz(6)
-  curso              Curso                 @relation("ClasesConsultaCurso", fields: [idCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  docenteResponsable Usuario?              @relation("ClasesACargo", fields: [idDocente], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  consultasEnClase   ConsultaClase[]       @relation("ClaseDeConsultas")
+  id                     String                  @id @default(uuid()) @db.Uuid
+  idDocente              String?                 @map("id_docente") @db.Uuid
+  idCurso                String                  @map("id_curso") @db.Uuid
+  nombre                 String                  @db.VarChar(255)
+  descripcion            String                  @db.VarChar(255)
+  fechaClase             DateTime                @map("fecha_clase") @db.Date
+  horaInicio             DateTime                @map("hora_inicio") @db.Time(6)
+  horaFin                DateTime                @map("hora_fin") @db.Time(6)
+  modalidad              modalidad
+  estadoClase            estado_clase_consulta   @map("estado_clase")
+  estadoRevision         estado_revision         @map("estado_revision")
+  createdAt              DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt              DateTime?               @map("deleted_at") @db.Timestamptz(6)
+  curso                  Curso                   @relation("ClasesConsultaCurso", fields: [idCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  docenteResponsable     Usuario?                @relation("ClasesACargo", fields: [idDocente], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  consultasEnClase       ConsultaClase[]         @relation("ClaseDeConsultas")
+  motivoClaseNoRealizada MotivoClaseNoRealizada?
 
   @@index([idCurso], map: "idx_clases_consulta_curso")
   @@index([idDocente], map: "idx_clases_consulta_docente")
@@ -272,6 +273,16 @@ model MisionCompletada {
   @@map("misiones_completadas")
 }
 
+model MotivoClaseNoRealizada {
+  id              String        @id @default(uuid()) @db.Uuid
+  descripcion     String        @db.VarChar(255)
+  fechaRegistro   DateTime      @default(now()) @map("fecha_registro")
+  idClaseConsulta String        @unique @map("id_clase_consulta") @db.Uuid
+  claseConsulta   ClaseConsulta @relation(fields: [idClaseConsulta], references: [id], onDelete: Cascade)
+
+  @@map("motivos_clase_no_realizada")
+}
+
 model OpcionRespuesta {
   id                String            @id @default(uuid()) @db.Uuid
   idPregunta        String            @map("id_pregunta") @db.Uuid
@@ -488,6 +499,8 @@ enum estado_clase_consulta {
   No_realizada         @map("No realizada")
   Cancelada
   Pendiente_Asignacion @map("Pendiente de Asignación")
+  En_curso             @map("En curso")
+  Finalizada           @map("Finalizada")
 }
 
 enum estado_consulta {
