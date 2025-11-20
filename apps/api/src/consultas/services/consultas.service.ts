@@ -421,13 +421,21 @@ export class ConsultasService {
       return;
     }
 
-    // 3. Calcular fecha usando el helper
-    const fechaProxima = calcularFechaProximaClase(curso.diasClase);
+    // 3. Calcular fecha de la consulta automática
+    // El helper ya devuelve la fecha de INICIO de la consulta (1 hora antes de la clase)
+    const fechaInicioConsulta = calcularFechaProximaClase(curso.diasClase);
 
-    if (!fechaProxima) {
+    if (!fechaInicioConsulta) {
       this.logger.warn('No se pudo calcular una fecha próxima válida.');
       return;
     }
+
+    // --- CORRECCIÓN DE HORARIOS (Spec: 1 hora antes de la cursada) ---
+    // Si la cursada es a las 09:00, la consulta debe ser 08:00 - 09:00
+    const horaInicio = new Date(fechaInicioConsulta);
+    const horaFin = new Date(fechaInicioConsulta);
+    horaFin.setHours(horaFin.getHours() + 1);
+    // ----------------------------------------------------------------
 
     // 4. Obtener las 10 consultas más antiguas para asignar
     const consultasAAtender = await this.prisma.consulta.findMany({
@@ -443,20 +451,19 @@ export class ConsultasService {
 
     if (consultasAAtender.length < 10) return; // Doble check
 
-    // 5. Crear la Clase Automática. Creamos la clase sin 'idDocente'.
+    // 5. Crear la Clase Automática
     const claseCreada = await this.prisma.$transaction(
       async (tx: Prisma.TransactionClient) => {
-        // A. Crear la Clase (Sin docente asignado)
         const nuevaClase = await tx.claseConsulta.create({
           data: {
             idCurso: idCurso,
-            // idDocente: null
+            // idDocente: null (Pendiente)
             nombre: 'Clase de Consulta Automática',
             descripcion:
               'Generada automáticamente por acumulación de consultas.',
-            fechaClase: fechaProxima,
-            horaInicio: fechaProxima,
-            horaFin: new Date(fechaProxima.getTime() + 60 * 60 * 1000), // 1 hora
+            fechaClase: horaInicio, // Fecha correcta (Inicio Consulta)
+            horaInicio: horaInicio, // Hora correcta
+            horaFin: horaFin, // 09:00 (Empalme perfecto con la cursada)
             modalidad: curso.modalidadPreferencial,
             estadoClase: estado_clase_consulta.Pendiente_Asignacion,
             estadoRevision: estado_revision.Pendiente,
@@ -505,7 +512,7 @@ export class ConsultasService {
         this.mailService
           .enviarAvisoClaseAutomatica(destinatarios, {
             nombreCurso: curso.nombre,
-            fechaOriginal: fechaProxima,
+            fechaOriginal: horaInicio,
             cantidadConsultas: consultasAAtender.length,
             idClase: claseCreada.id,
             diasClaseConfig: curso.diasClase,
