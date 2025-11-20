@@ -17,6 +17,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { roles } from '@prisma/client';
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
+import { FinalizarClaseDto } from '../dto/finalizar-clase.dto';
 
 @UseGuards(RolesGuard) // JwtGuard se aplica globalmente.
 @Controller('clases-consulta')
@@ -85,5 +86,15 @@ export class ClasesConsultaController {
       idDocente,
       nuevaFecha,
     );
+  }
+
+  @Patch(':id/finalizar')
+  @Roles(roles.Docente, roles.Administrador) // Protegido para docentes y admin
+  finalizar(
+    @Param('id') id: string,
+    @Body() dto: FinalizarClaseDto,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    return this.clasesConsultaService.finalizar(id, dto, req.user);
   }
 }

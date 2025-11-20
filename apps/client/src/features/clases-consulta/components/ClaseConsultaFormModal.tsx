@@ -315,6 +315,7 @@ export default function ClaseConsultaFormModal({
                     <TimePicker
                       label="Hora Inicio (HH:mm)"
                       ampm={false}
+                      disablePast
                       value={field.value ? timeToDate(field.value) : null}
                       onChange={(newDate) =>
                         field.onChange(newDate ? format(newDate, "HH:mm") : "")
@@ -337,6 +338,7 @@ export default function ClaseConsultaFormModal({
                     <TimePicker
                       label="Hora Fin (HH:mm)"
                       ampm={false}
+                      disablePast
                       value={field.value ? timeToDate(field.value) : null}
                       onChange={(newDate) =>
                         field.onChange(newDate ? format(newDate, "HH:mm") : "")

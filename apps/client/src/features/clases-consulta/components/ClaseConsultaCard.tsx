@@ -21,9 +21,11 @@ import QuestionAnswerIcon from "@mui/icons-material/QuestionAnswer";
 // Tipos y Componentes
 import type { ClaseConsulta } from "../../../types";
 import { estado_clase_consulta } from "../../../types";
-import EstadoClaseChip from "../../../components/EstadoClaseChip"; // El chip que acabamos de crear
 import { CheckCircle } from "@mui/icons-material";
+import FactCheckIcon from "@mui/icons-material/FactCheck"; // Para finalizar
+import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline"; // Para en curso
 import { format } from "date-fns";
+import { EstadoClaseChip } from "../../../components/EstadoClaseChip";
 
 interface ClaseConsultaCardProps {
   clase: ClaseConsulta;
@@ -31,6 +33,7 @@ interface ClaseConsultaCardProps {
   onDelete: (clase: ClaseConsulta) => void;
   onViewDetails: (clase: ClaseConsulta) => void;
   onAccept?: (clase: ClaseConsulta) => void;
+  onFinalize?: (clase: ClaseConsulta) => void;
 }
 
 export default function ClaseConsultaCard({
@@ -39,6 +42,7 @@ export default function ClaseConsultaCard({
   onDelete,
   onViewDetails,
   onAccept,
+  onFinalize,
 }: ClaseConsultaCardProps) {
   const {
     nombre,
@@ -48,12 +52,20 @@ export default function ClaseConsultaCard({
     horaFin,
     modalidad,
     estadoClase,
+    estadoActual,
     docenteResponsable,
     consultasEnClase,
     deletedAt,
   } = clase;
 
   // --- Reglas de Negocio (UI) ---
+
+  // Determinamos qué estado mostrar: El calculado (tiempo) o el de la BD
+  const estadoVisual = estadoActual || estadoClase;
+
+  // Banderas de estado temporal
+  const isEnCurso = estadoVisual === estado_clase_consulta.En_curso;
+  const isPorCerrar = estadoVisual === estado_clase_consulta.Finalizada;
 
   // 1. Detectar si está pendiente de asignación
   const isPendienteAsignacion =
@@ -63,6 +75,11 @@ export default function ClaseConsultaCard({
   const isProgramada = estadoClase === estado_clase_consulta.Programada;
   // 'deletedAt' es el 'soft delete' (que también la pone en estado 'Cancelada')
   const isCanceled = !!deletedAt;
+
+  // 2. Bloqueo de Edición:
+  // Solo se edita si está programada Y NO ha empezado ni terminado por horario.
+  const canEditOrDelete =
+    isProgramada && !isEnCurso && !isPorCerrar && !isCanceled;
 
   // 1. Formateo de Fecha (el "hack" anti-UTC)
   const fechaString = fechaClase.split("T")[0]; // "2025-11-11"
@@ -97,9 +114,13 @@ export default function ClaseConsultaCard({
         flexDirection: "column",
         // La hacemos opaca si fue cancelada/borrada
         opacity: isCanceled ? 0.6 : 1,
-        // Borde especial si está pendiente para destacarla
-        borderColor: isPendienteAsignacion ? "warning.main" : undefined,
-        borderWidth: isPendienteAsignacion ? 2 : 1,
+        // Borde especial: Naranja si pendiente, Verde si En Curso
+        borderColor: isPendienteAsignacion
+          ? "warning.main"
+          : isEnCurso
+            ? "success.main"
+            : undefined,
+        borderWidth: isPendienteAsignacion || isEnCurso ? 2 : 1,
       }}
     >
       <CardContent sx={{ flexGrow: 1 }}>
@@ -115,13 +136,31 @@ export default function ClaseConsultaCard({
           <Typography variant="h6" component="div">
             {nombre}
           </Typography>
-          <EstadoClaseChip estado={estadoClase} />
+          <EstadoClaseChip estado={estadoVisual} />
         </Box>
 
         {/* Fila 2: Descripción */}
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           {descripcion}
         </Typography>
+
+        {/* --- NUEVO: Aviso visual extra si está En Curso --- */}
+        {isEnCurso && (
+          <Box
+            sx={{
+              mb: 2,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              color: "success.main",
+            }}
+          >
+            <PlayCircleOutlineIcon fontSize="small" />
+            <Typography variant="caption" fontWeight="bold">
+              CLASE TRANSCURRIENDO AHORA
+            </Typography>
+          </Box>
+        )}
 
         {/* Fila 3: Detalles (Iconos) */}
         <Stack spacing={1.5}>
@@ -179,7 +218,7 @@ export default function ClaseConsultaCard({
 
         {/* DERECHA: Acciones */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          {/* Botón Común */}
+          {/* Botón de Ver Detalles (Siempre visible salvo cancelada) */}
           <Button
             size="small"
             onClick={() => onViewDetails(clase)}
@@ -191,8 +230,8 @@ export default function ClaseConsultaCard({
           {/* Lógica Condicional de Botones de Acción */}
           {!isCanceled && (
             <>
-              {isPendienteAsignacion ? (
-                // CASO 1: Pendiente de Asignación -> Mostrar "Aceptar"
+              {/* CASO 1: PENDIENTE -> ACEPTAR */}
+              {isPendienteAsignacion && (
                 <Tooltip title="Aceptar y tomar esta clase">
                   <Button
                     size="small"
@@ -204,8 +243,10 @@ export default function ClaseConsultaCard({
                     Aceptar
                   </Button>
                 </Tooltip>
-              ) : isProgramada ? (
-                // CASO 2: Programada -> Mostrar Editar/Borrar
+              )}
+
+              {/* CASO 2: PROGRAMADA (Y NO EMPEZADA) -> EDITAR/BORRAR */}
+              {canEditOrDelete && (
                 <>
                   <Tooltip title="Editar Clase">
                     <IconButton size="small" onClick={() => onEdit(clase)}>
@@ -222,7 +263,19 @@ export default function ClaseConsultaCard({
                     </IconButton>
                   </Tooltip>
                 </>
-              ) : null}
+              )}
+
+              {/* CASO 3: POR CERRAR -> FINALIZAR */}
+              {isPorCerrar && (
+                <Button
+                  size="small"
+                  variant="contained"
+                  onClick={() => onFinalize && onFinalize(clase)}
+                  startIcon={<FactCheckIcon />}
+                >
+                  Finalizar
+                </Button>
+              )}
             </>
           )}
         </Box>

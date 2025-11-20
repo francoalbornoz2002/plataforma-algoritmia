@@ -1,58 +1,62 @@
-import { Chip, type ChipProps } from "@mui/material";
-import { estado_clase_consulta } from "../types"; // Ajusta la ruta a 'types'
+import { Chip } from "@mui/material";
 
-// 1. Importamos los íconos
-import EventAvailableIcon from "@mui/icons-material/EventAvailable"; // Programada
-import CheckCircleIcon from "@mui/icons-material/CheckCircle"; // Realizada
-import CancelIcon from "@mui/icons-material/Cancel"; // Cancelada
-import WarningIcon from "@mui/icons-material/Warning"; // No realizada
+import {
+  AccessTime as ProgramadaIcon,
+  CheckCircle as RealizadaIcon,
+  Cancel as CanceladaIcon,
+  PlayCircle as EnCursoIcon, // Icono para En Curso
+  FactCheck as PorCerrarIcon, // Icono para Por Cerrar
+} from "@mui/icons-material";
+import { estado_clase_consulta } from "../types";
 import { EstadoClaseLabels } from "../types/traducciones";
 
 interface EstadoClaseChipProps {
   estado: estado_clase_consulta;
 }
 
-export default function EstadoClaseChip({ estado }: EstadoClaseChipProps) {
-  let icon: React.ReactElement;
-  let color: ChipProps["color"] = "default";
+export const EstadoClaseChip = ({ estado }: EstadoClaseChipProps) => {
+  let color:
+    | "default"
+    | "primary"
+    | "secondary"
+    | "error"
+    | "info"
+    | "success"
+    | "warning" = "default";
+  let icon = <ProgramadaIcon />;
 
-  // 2. Switch para asignar ícono y color
   switch (estado) {
     case estado_clase_consulta.Programada:
-      icon = <EventAvailableIcon />;
-      color = "info"; // Azul
+      color = "secondary";
+      icon = <ProgramadaIcon />;
       break;
     case estado_clase_consulta.Realizada:
-      icon = <CheckCircleIcon />;
-      color = "success"; // Verde
-      break;
-    case estado_clase_consulta.Cancelada:
-      icon = <CancelIcon />;
-      color = "error"; // Rojo
+      color = "success";
+      icon = <RealizadaIcon />;
       break;
     case estado_clase_consulta.No_realizada:
-      icon = <WarningIcon />;
-      color = "warning"; // Amarillo
+    case "Cancelada":
+      color = "error";
+      icon = <CanceladaIcon />;
+      break;
+    case estado_clase_consulta.En_curso:
+      color = "success";
+      icon = <EnCursoIcon />;
+      break;
+    case estado_clase_consulta.Finalizada:
+      color = "info";
+      icon = <PorCerrarIcon />;
       break;
     default:
-      icon = <WarningIcon />;
       color = "default";
   }
 
   return (
     <Chip
-      icon={icon}
       label={EstadoClaseLabels[estado]}
       color={color}
+      icon={icon}
       size="small"
-      variant="filled"
-      sx={{
-        // Arreglamos el color del texto 'warning' (como hicimos antes)
-        ...(color === "warning" && {
-          color: "#fff",
-          "& .MuiChip-icon": { color: "#fff" },
-        }),
-      }}
     />
   );
-}
+};

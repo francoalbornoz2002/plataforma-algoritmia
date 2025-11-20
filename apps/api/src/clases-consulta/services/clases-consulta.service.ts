@@ -10,6 +10,7 @@ import { UpdateClasesConsultaDto } from '../dto/update-clases-consulta.dto';
 import { UserPayload } from 'src/interfaces/authenticated-user.interface';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
+  ClaseConsulta,
   dias_semana,
   estado_clase_consulta,
   estado_consulta,
@@ -18,6 +19,7 @@ import {
   roles,
 } from '@prisma/client';
 import { timeToDate } from 'src/helpers';
+import { FinalizarClaseDto } from '../dto/finalizar-clase.dto';
 
 // --- HELPER LOCAL EXPLÍCITO (Ponlo fuera de la clase o al final) ---
 function timeToDateLocal(time: string): Date {
@@ -211,7 +213,7 @@ export class ClasesConsultaService {
       await this.checkAlumnoAccess(this.prisma, idUsuario, idCurso);
     }
 
-    return this.prisma.claseConsulta.findMany({
+    const clases = await this.prisma.claseConsulta.findMany({
       where: {
         idCurso,
       },
@@ -236,8 +238,19 @@ export class ClasesConsultaService {
             },
           },
         },
+        motivoClaseNoRealizada: {
+          select: { descripcion: true },
+        },
       },
     });
+
+    // Mapeamos las clases para agregar el "estadoActual" calculado
+    return clases.map((clase) => ({
+      ...clase,
+      estadoActual: this.getEstadoTemporal(clase), // <--- Campo Mágico
+      motivo: clase.motivoClaseNoRealizada?.descripcion || null,
+      motivoClaseNoRealizada: undefined, // Opcional: quitamos el objeto anidado para no ensuciar
+    }));
   }
 
   /**
@@ -300,6 +313,9 @@ export class ClasesConsultaService {
           'Solo puedes editar clases "Programadas".',
         );
       }
+
+      this.validarBloqueoPorTiempo(actual);
+
       if (dto.idDocente) {
         await this.checkDocenteAccess(
           this.prisma,
@@ -524,6 +540,118 @@ export class ClasesConsultaService {
     }
   }
 
+  async finalizar(idClase: string, dto: FinalizarClaseDto, user: UserPayload) {
+    const { realizada, motivo, consultasRevisadasIds } = dto;
+
+    // 1. Verificar existencia y traer relaciones
+    const clase = await this.prisma.claseConsulta.findUnique({
+      where: { id: idClase },
+      include: { consultasEnClase: true },
+    });
+
+    if (!clase) throw new NotFoundException('Clase no encontrada.');
+
+    // 2. Validar permisos (Docente responsable o Admin)
+    if (clase.idDocente !== user.userId && user.rol !== roles.Administrador) {
+      throw new ForbiddenException('No eres el responsable de esta clase.');
+    }
+
+    // 3. Validar que no esté ya finalizada
+    if (
+      clase.estadoClase === estado_clase_consulta.Realizada ||
+      clase.estadoClase === estado_clase_consulta.No_realizada ||
+      clase.estadoClase === estado_clase_consulta.Cancelada
+    ) {
+      throw new BadRequestException(
+        'La clase ya fue finalizada anteriormente.',
+      );
+    }
+
+    // 4. Ejecutar Transacción
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      if (realizada) {
+        // --- CAMINO A: LA CLASE SE REALIZÓ ---
+
+        // A. Actualizar estado de la clase
+        await tx.claseConsulta.update({
+          where: { id: idClase },
+          data: {
+            estadoClase: estado_clase_consulta.Realizada,
+            estadoRevision: estado_revision.Revisadas,
+          },
+        });
+
+        // B. Procesar Consultas
+        const idsAgendadas = clase.consultasEnClase.map((c) => c.idConsulta);
+        const idsRevisadasSet = new Set(consultasRevisadasIds || []);
+
+        // B.1. Marcar las REVISADAS
+        if (idsRevisadasSet.size > 0) {
+          // Tabla intermedia
+          await tx.consultaClase.updateMany({
+            where: {
+              idClaseConsulta: idClase,
+              idConsulta: { in: Array.from(idsRevisadasSet) },
+            },
+            data: { revisadaEnClase: true },
+          });
+          // Tabla consultas (Estado)
+          await tx.consulta.updateMany({
+            where: { id: { in: Array.from(idsRevisadasSet) } },
+            data: { estado: estado_consulta.Revisada },
+          });
+        }
+
+        // B.2. Devolver las NO REVISADAS a Pendiente
+        const idsNoRevisadas = idsAgendadas.filter(
+          (id) => !idsRevisadasSet.has(id),
+        );
+        if (idsNoRevisadas.length > 0) {
+          await tx.consulta.updateMany({
+            where: { id: { in: idsNoRevisadas } },
+            data: { estado: estado_consulta.Pendiente },
+          });
+        }
+      } else {
+        // --- CAMINO B: NO SE REALIZÓ ---
+
+        // A. Validar motivo
+        if (!motivo) {
+          throw new BadRequestException(
+            'Debe indicar un motivo si la clase no se realizó.',
+          );
+        }
+
+        // B. Actualizar estado de la clase
+        await tx.claseConsulta.update({
+          where: { id: idClase },
+          data: {
+            estadoClase: estado_clase_consulta.No_realizada,
+          },
+        });
+
+        // C. GUARDAR EL MOTIVO EN LA NUEVA TABLA
+        await tx.motivoClaseNoRealizada.create({
+          data: {
+            idClaseConsulta: idClase,
+            descripcion: motivo,
+          },
+        });
+
+        // D. Liberar TODAS las consultas (Vuelven a Pendiente)
+        const idsTodas = clase.consultasEnClase.map((c) => c.idConsulta);
+        if (idsTodas.length > 0) {
+          await tx.consulta.updateMany({
+            where: { id: { in: idsTodas } },
+            data: { estado: estado_consulta.Pendiente },
+          });
+        }
+      }
+
+      return { message: 'Clase finalizada correctamente' };
+    });
+  }
+
   /**
    * TAREA: Implementar "baja lógica".
    * REGLA: Solo se puede cancelar si está 'Programada'.
@@ -543,6 +671,8 @@ export class ClasesConsultaService {
         'Solo puedes cancelar clases en estado "Programada".',
       );
     }
+
+    this.validarBloqueoPorTiempo(clase);
 
     // 3. Hacer el "soft delete" (que en tu schema es un UPDATE)
     // Usamos $transaction para revertir el estado de las consultas
@@ -672,6 +802,72 @@ export class ClasesConsultaService {
           `Conflicto de horario: El curso tiene clase regular los ${diaEnum} de ${inicioLegible} a ${finLegible}.`,
         );
       }
+    }
+  }
+
+  // --- Helper para combinar Fecha del día + Hora del horario ---
+  private construirFechaCompleta(
+    fechaDia: Date | string,
+    horaTime: Date | string,
+  ): Date {
+    // Aseguramos objetos Date
+    const fechaBase = new Date(fechaDia);
+    const horaBase = new Date(horaTime);
+
+    // Creamos una nueva fecha usando el AÑO-MES-DIA de la clase
+    const fechaFinal = new Date(fechaBase);
+
+    // Le inyectamos la HORA-MINUTO del horario guardado
+    fechaFinal.setUTCHours(horaBase.getUTCHours());
+    fechaFinal.setUTCMinutes(horaBase.getUTCMinutes());
+    fechaFinal.setUTCSeconds(0);
+    fechaFinal.setUTCMilliseconds(0);
+
+    return fechaFinal;
+  }
+
+  // --- Helper para calcular el estado temporal basado en la hora ---
+  private getEstadoTemporal(clase: ClaseConsulta) {
+    // Si la clase ya tiene un estado definitivo (Cancelada, Realizada, etc.), respetarlo.
+    if (
+      clase.estadoClase !== estado_clase_consulta.Programada &&
+      clase.estadoClase !== estado_clase_consulta.Pendiente_Asignacion
+    ) {
+      return clase.estadoClase;
+    }
+
+    const ahora = new Date();
+    // Usamos la fecha combinada (2025 + Hora)
+    const inicio = this.construirFechaCompleta(
+      clase.fechaClase,
+      clase.horaInicio,
+    );
+    const fin = this.construirFechaCompleta(clase.fechaClase, clase.horaFin);
+
+    // Lógica de estados temporales
+    if (ahora >= inicio && ahora < fin) {
+      return estado_clase_consulta.En_curso;
+    } else if (ahora >= fin) {
+      return estado_clase_consulta.Finalizada;
+    }
+
+    return clase.estadoClase; // 'Programada'
+  }
+
+  // --- Helper para validar si se puede editar/borrar ---
+  private validarBloqueoPorTiempo(clase: ClaseConsulta) {
+    const ahora = new Date();
+    // Usamos la fecha combinada
+    const inicio = this.construirFechaCompleta(
+      clase.fechaClase,
+      clase.horaInicio,
+    );
+
+    // Si la clase ya empezó (ahora >= inicio), bloqueamos edición/borrado
+    if (ahora >= inicio) {
+      throw new ForbiddenException(
+        'No se puede editar, cancelar o eliminar una clase que ya está en curso o finalizó.',
+      );
     }
   }
 }

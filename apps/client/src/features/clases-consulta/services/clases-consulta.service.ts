@@ -119,3 +119,25 @@ export const aceptarClaseAutomatica = async (
     throw new Error("No se pudo aceptar la clase.");
   }
 };
+
+export const finalizarClase = async (
+  idClase: string,
+  data: {
+    realizada: boolean;
+    motivo?: string;
+    consultasRevisadasIds?: string[];
+  }
+) => {
+  // Preparamos el payload que espera el DTO
+  const payload = {
+    realizada: data.realizada,
+    motivo: data.motivo, // El backend lo guardará en la tabla nueva
+    consultasRevisadasIds: data.consultasRevisadasIds,
+  };
+
+  const response = await apiClient.patch(
+    `/clases-consulta/${idClase}/finalizar`,
+    payload
+  );
+  return response.data;
+};

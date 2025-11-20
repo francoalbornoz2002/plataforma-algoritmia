@@ -6,6 +6,8 @@ export const EstadoClaseLabels: Record<estado_clase_consulta, string> = {
   [estado_clase_consulta.No_realizada]: "No realizada",
   [estado_clase_consulta.Cancelada]: "Cancelada",
   [estado_clase_consulta.Pendiente_Asignacion]: "Pendiente de Asignación",
+  [estado_clase_consulta.En_curso]: "En Curso",
+  [estado_clase_consulta.Finalizada]: "Finalizada",
 };
 
 export const EstadoConsultaLabels: Record<estado_consulta, string> = {

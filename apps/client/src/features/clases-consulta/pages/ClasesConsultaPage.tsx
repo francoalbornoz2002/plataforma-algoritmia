@@ -24,6 +24,7 @@ import {
 } from "../../users/services/docentes.service";
 import {
   aceptarClaseAutomatica,
+  finalizarClase,
   findAllClasesByCurso,
 } from "../services/clases-consulta.service";
 import {
@@ -42,6 +43,7 @@ import { useSearchParams } from "react-router";
 import AceptarManualModal from "../components/AceptarManualModal";
 import { enqueueSnackbar } from "notistack";
 import ActionConfirmationDialog from "../components/ActionConfirmationDialog";
+import { FinalizarClaseModal } from "../components/FinalizarClaseModal";
 
 // Tipos para los filtros
 type OrdenFiltro =
@@ -97,6 +99,12 @@ export default function ClasesConsultaPage() {
   // Estado local de carga para el diálogo
   const [actionLoading, setActionLoading] = useState(false);
 
+  const [finalizeModalOpen, setFinalizeModalOpen] = useState(false);
+  const [claseToFinalize, setClaseToFinalize] = useState<ClaseConsulta | null>(
+    null
+  );
+  const [isFinalizing, setIsFinalizing] = useState(false);
+
   useEffect(() => {
     const action = searchParams.get("action");
     const idClase = searchParams.get("id");
@@ -110,6 +118,33 @@ export default function ClasesConsultaPage() {
       handleDeepLinkAction(action, claseTarget, nextDateIso);
     }
   }, [searchParams, allClases]); // Se ejecuta al cargar las clases
+
+  // Handler para ABRIR el modal (se pasa al Card)
+  const handleOpenFinalize = (clase: ClaseConsulta) => {
+    setClaseToFinalize(clase);
+    setFinalizeModalOpen(true);
+  };
+
+  // Handler para CONFIRMAR (se pasa al Modal)
+  const handleConfirmFinalize = async (data: any) => {
+    if (!claseToFinalize) return;
+    setIsFinalizing(true);
+    try {
+      await finalizarClase(claseToFinalize.id, data);
+      enqueueSnackbar("Clase finalizada correctamente", {
+        variant: "success",
+      });
+      fetchData(); // ¡Importante! Recargar para ver el cambio de estado y chip
+      setFinalizeModalOpen(false);
+    } catch (error) {
+      console.error(error);
+      enqueueSnackbar("Error al finalizar la clase", {
+        variant: "error",
+      });
+    } finally {
+      setIsFinalizing(false);
+    }
+  };
 
   const handleDeepLinkAction = async (
     action: string,
@@ -422,6 +457,7 @@ export default function ClasesConsultaPage() {
                     onDelete={setClaseToDelete}
                     onViewDetails={setClaseToView}
                     onAccept={handleAcceptClass}
+                    onFinalize={handleOpenFinalize}
                   />
                 </Grid>
               ))}
@@ -478,6 +514,14 @@ export default function ClasesConsultaPage() {
         message={actionDialog.message}
         loading={actionLoading}
         confirmText="Confirmar"
+      />
+
+      <FinalizarClaseModal
+        open={finalizeModalOpen}
+        onClose={() => setFinalizeModalOpen(false)}
+        onConfirm={handleConfirmFinalize}
+        clase={claseToFinalize}
+        isLoading={isFinalizing}
       />
     </Box>
   );

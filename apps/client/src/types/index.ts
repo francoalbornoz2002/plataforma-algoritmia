@@ -67,6 +67,8 @@ export enum estado_clase_consulta {
   No_realizada = "No_realizada",
   Cancelada = "Cancelada",
   Pendiente_Asignacion = "Pendiente_Asignacion",
+  En_curso = "En_curso",
+  Finalizada = "Finalizada",
 }
 
 /* ---------------------- INTERFACES ---------------------- */
@@ -468,6 +470,7 @@ export interface ClaseConsulta {
   horaFin: string; // Llega como string
   modalidad: modalidad;
   estadoClase: estado_clase_consulta;
+  estadoActual?: estado_clase_consulta;
   deletedAt: string | null; // Llega como string ISO
 
   // Relaciones (del 'include')
