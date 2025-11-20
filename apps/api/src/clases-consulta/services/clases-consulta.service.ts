@@ -16,13 +16,22 @@ import {
   Prisma,
   roles,
 } from '@prisma/client';
+import { timeToDate } from 'src/helpers';
 
-// Helper para convertir "HH:mm" a un objeto Date (con fecha 'epoch' 1970)
-function timeToDate(timeString: string): Date {
-  const [hours, minutes] = timeString.split(':').map(Number);
-  const date = new Date(0); // 1970-01-01T00:00:00.000Z
-  date.setUTCHours(hours);
+// --- HELPER LOCAL EXPLÍCITO (Ponlo fuera de la clase o al final) ---
+function timeToDateLocal(time: string): Date {
+  if (!time) return new Date(0);
+  const [hours, minutes] = time.split(':').map(Number);
+  const date = new Date(0);
+
+  // ¡AQUÍ ESTÁ EL +3 HARDCODEADO PARA ASEGURARNOS!
+  // 15:00 ARG -> 18:00 UTC
+  date.setUTCHours(hours + 3);
   date.setUTCMinutes(minutes);
+
+  console.log(
+    `[DEBUG] timeToDateLocal: Input=${time} -> OutputUTC=${date.toISOString()}`,
+  );
   return date;
 }
 
@@ -46,75 +55,84 @@ export class ClasesConsultaService {
       ...restDto // nombre, descripcion, modalidad
     } = dto;
 
+    // 1. Validación de Strings (Antes de convertir)
+    console.log(`[DEBUG] Create Validando: ${horaInicio} vs ${horaFin}`);
+    if (horaInicio >= horaFin) {
+      throw new BadRequestException(
+        'La hora de fin debe ser mayor a la de inicio.',
+      );
+    }
+    if (horaFin > '23:00') {
+      throw new BadRequestException('Hora fin inválida (> 23:00).');
+    }
+
     // El 'user.userId' es el docente QUE ESTÁ CREANDO la clase
     const idDocenteCreador = user.userId;
 
     try {
       // --- TRANSACCIÓN ---
-      return await this.prisma.$transaction(
-        async (tx: Prisma.TransactionClient) => {
-          // --- 1. Validación de Seguridad (Reglas de Negocio) ---
+      return await this.prisma.$transaction(async (tx: PrismaService) => {
+        // --- 1. Validación de Seguridad (Reglas de Negocio) ---
 
-          // a. Validar que el docente creador pertenece al curso
-          await this.checkDocenteAccess(tx, idDocenteCreador, idCurso);
+        // a. Validar que el docente creador pertenece al curso
+        await this.checkDocenteAccess(tx, idDocenteCreador, idCurso);
 
-          // b. Validar que el docente ELEGIDO (idDocente) pertenece al curso
-          await this.checkDocenteAccess(tx, idDocente, idCurso);
+        // b. Validar que el docente ELEGIDO (idDocente) pertenece al curso
+        await this.checkDocenteAccess(tx, idDocente, idCurso);
 
-          // c. Validar que TODAS las consultas estén 'Pendiente'
-          const consultas = await tx.consulta.findMany({
-            where: {
-              id: { in: consultasIds },
-              idCurso: idCurso, // Asegurarnos de que sean de este curso
-            },
-          });
+        // c. Validar que TODAS las consultas estén 'Pendiente'
+        const consultas = await tx.consulta.findMany({
+          where: {
+            id: { in: consultasIds },
+            idCurso: idCurso, // Asegurarnos de que sean de este curso
+          },
+        });
 
-          if (consultas.length !== consultasIds.length) {
-            throw new BadRequestException(
-              'Una o más consultas no se encontraron o no pertenecen a este curso.',
-            );
-          }
-
-          const noPendientes = consultas.filter(
-            (c) => c.estado !== estado_consulta.Pendiente,
+        if (consultas.length !== consultasIds.length) {
+          throw new BadRequestException(
+            'Una o más consultas no se encontraron o no pertenecen a este curso.',
           );
-          if (noPendientes.length > 0) {
-            throw new BadRequestException(
-              'Solo puedes seleccionar consultas con estado "Pendiente".',
-            );
-          }
+        }
 
-          // --- 2. Crear la Clase de Consulta ---
-          const nuevaClase = await tx.claseConsulta.create({
-            data: {
-              ...restDto,
-              idCurso,
-              idDocente,
-              fechaClase: new Date(fechaClase),
-              horaInicio: timeToDate(horaInicio),
-              horaFin: timeToDate(horaFin),
-              estadoClase: estado_clase_consulta.Programada,
-              estadoRevision: estado_revision.Pendiente,
-            },
-          });
+        const noPendientes = consultas.filter(
+          (c) => c.estado !== estado_consulta.Pendiente,
+        );
+        if (noPendientes.length > 0) {
+          throw new BadRequestException(
+            'Solo puedes seleccionar consultas con estado "Pendiente".',
+          );
+        }
 
-          // --- 3. Vincular las consultas a la clase (Tabla ConsultaClase) ---
-          await tx.consultaClase.createMany({
-            data: consultasIds.map((idConsulta) => ({
-              idClaseConsulta: nuevaClase.id,
-              idConsulta: idConsulta,
-            })),
-          });
+        // --- 2. Crear la Clase de Consulta ---
+        const nuevaClase = await tx.claseConsulta.create({
+          data: {
+            ...restDto,
+            idCurso,
+            idDocente,
+            fechaClase: new Date(fechaClase),
+            horaInicio: timeToDateLocal(horaInicio),
+            horaFin: timeToDateLocal(horaFin),
+            estadoClase: estado_clase_consulta.Programada,
+            estadoRevision: estado_revision.Pendiente,
+          },
+        });
 
-          // --- 4. Actualizar el estado de esas consultas ---
-          await tx.consulta.updateMany({
-            where: { id: { in: consultasIds } },
-            data: { estado: estado_consulta.A_revisar },
-          });
+        // --- 3. Vincular las consultas a la clase (Tabla ConsultaClase) ---
+        await tx.consultaClase.createMany({
+          data: consultasIds.map((idConsulta) => ({
+            idClaseConsulta: nuevaClase.id,
+            idConsulta: idConsulta,
+          })),
+        });
 
-          return nuevaClase;
-        },
-      );
+        // --- 4. Actualizar el estado de esas consultas ---
+        await tx.consulta.updateMany({
+          where: { id: { in: consultasIds } },
+          data: { estado: estado_consulta.A_revisar },
+        });
+
+        return nuevaClase;
+      });
     } catch (error) {
       if (
         error instanceof BadRequestException ||
@@ -182,6 +200,41 @@ export class ClasesConsultaService {
   async update(id: string, dto: UpdateClasesConsultaDto, user: UserPayload) {
     const { consultasIds, fechaClase, horaInicio, horaFin, ...restDto } = dto;
 
+    // 1. Validación Completa en Update
+    // Si viene SOLO uno, tenemos que buscar el otro en la BD para comparar
+    let inicioParaValidar = horaInicio;
+    let finParaValidar = horaFin;
+
+    if (!inicioParaValidar || !finParaValidar) {
+      const actual = await this.prisma.claseConsulta.findUnique({
+        where: { id },
+      });
+      // Convertimos la fecha UTC guardada a HH:mm (-3 horas) para comparar
+      if (!actual) throw new NotFoundException('Clase no encontrada');
+
+      const toTimeStr = (d: Date) => {
+        const date = new Date(d);
+        date.setUTCHours(date.getUTCHours() - 3);
+        return date.toISOString().substring(11, 16);
+      };
+
+      if (!inicioParaValidar) inicioParaValidar = toTimeStr(actual.horaInicio);
+      if (!finParaValidar) finParaValidar = toTimeStr(actual.horaFin);
+    }
+
+    console.log(
+      `[DEBUG] Update Validando: ${inicioParaValidar} vs ${finParaValidar}`,
+    );
+
+    if (inicioParaValidar >= finParaValidar) {
+      throw new BadRequestException(
+        'La hora de fin debe ser mayor a la de inicio.',
+      );
+    }
+    if (finParaValidar > '23:00') {
+      throw new BadRequestException('Hora fin inválida.');
+    }
+
     try {
       // 1. Validar que el docente puede editar
       const clase = await this.prisma.claseConsulta.findUnique({
@@ -212,8 +265,8 @@ export class ClasesConsultaService {
       const dataToUpdate: Prisma.ClaseConsultaUpdateInput = {
         ...restDto,
         ...(fechaClase && { fechaClase: new Date(fechaClase) }),
-        ...(horaInicio && { horaInicio: timeToDate(horaInicio) }),
-        ...(horaFin && { horaFin: timeToDate(horaFin) }),
+        ...(horaInicio && { horaInicio: timeToDateLocal(horaInicio) }),
+        ...(horaFin && { horaFin: timeToDateLocal(horaFin) }),
       };
 
       // --- 5. INICIAR TRANSACCIÓN PARA SINCRONIZAR ---
@@ -317,6 +370,115 @@ export class ClasesConsultaService {
   }
 
   /**
+   * NUEVO: Aceptar clase modificando fecha y hora manualmente.
+   * Solo permite cambiar fecha/hora, asigna al docente y cambia estado a Programada.
+   */
+  async aceptarYReprogramar(
+    idClase: string,
+    idDocente: string,
+    datos: { fechaClase: string; horaInicio: string; horaFin: string },
+  ) {
+    try {
+      const clase = await this.prisma.claseConsulta.findUnique({
+        where: { id: idClase },
+      });
+
+      if (!clase) throw new NotFoundException('Clase no encontrada.');
+
+      // Validación estricta de estado
+      if (clase.estadoClase !== estado_clase_consulta.Pendiente_Asignacion) {
+        throw new BadRequestException(
+          'Esta clase ya no está pendiente de asignación.',
+        );
+      }
+
+      // Actualizamos solo lo necesario
+      return await this.prisma.claseConsulta.update({
+        where: { id: idClase },
+        data: {
+          idDocente: idDocente, // Se asigna
+          estadoClase: estado_clase_consulta.Programada, // Se confirma
+          fechaClase: new Date(datos.fechaClase),
+          horaInicio: timeToDate(datos.horaInicio), // Usa tu helper timeToDate
+          horaFin: timeToDate(datos.horaFin), // Usa tu helper timeToDate
+        },
+        include: {
+          docenteResponsable: { select: { nombre: true, apellido: true } },
+        },
+      });
+    } catch (error) {
+      console.error('Error en aceptarYReprogramar:', error);
+      throw new InternalServerErrorException('Error al reprogramar la clase.');
+    }
+  }
+
+  /**
+   * Permite a un docente asignarse una clase automática pendiente.
+   */
+  async asignarDocente(
+    idClase: string,
+    idDocente: string,
+    nuevaFecha?: string,
+  ) {
+    try {
+      // 1. Buscar la clase y verificar estado
+      const clase = await this.prisma.claseConsulta.findUnique({
+        where: { id: idClase },
+      });
+
+      if (!clase) {
+        throw new NotFoundException('Clase no encontrada.');
+      }
+
+      // 2. Validaciones de Negocio
+      if (clase.estadoClase !== estado_clase_consulta.Pendiente_Asignacion) {
+        throw new BadRequestException(
+          'Esta clase ya tiene un docente asignado o no requiere asignación.',
+        );
+      }
+
+      if (clase.idDocente) {
+        throw new BadRequestException('Otro docente ya tomó esta clase.');
+      }
+
+      const dataUpdate: any = {
+        idDocente: idDocente,
+        estadoClase: estado_clase_consulta.Programada,
+      };
+
+      // Si nos pasaron una nueva fecha (Botón 2), la aplicamos
+      if (nuevaFecha) {
+        const fechaObj = new Date(nuevaFecha);
+        dataUpdate.fechaClase = fechaObj;
+        dataUpdate.horaInicio = fechaObj;
+        // Recalculamos fin (asumiendo 1 hora de duración)
+        dataUpdate.horaFin = new Date(fechaObj.getTime() + 60 * 60 * 1000);
+      }
+
+      // 3. Actualizar la clase
+      const claseActualizada = await this.prisma.claseConsulta.update({
+        where: { id: idClase },
+        data: dataUpdate,
+        include: {
+          docenteResponsable: {
+            select: { nombre: true, apellido: true },
+          },
+        },
+      });
+
+      return claseActualizada;
+    } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      )
+        throw error;
+      console.error('Error en asignarDocente:', error);
+      throw new InternalServerErrorException('Error al asignar la clase.');
+    }
+  }
+
+  /**
    * TAREA: Implementar "baja lógica".
    * REGLA: Solo se puede cancelar si está 'Programada'.
    */
@@ -372,7 +534,7 @@ export class ClasesConsultaService {
 
   // --- Helpers de Seguridad ---
   private async checkDocenteAccess(
-    tx: Prisma.TransactionClient | PrismaService,
+    tx: PrismaService,
     idDocente: string,
     idCurso: string,
   ) {

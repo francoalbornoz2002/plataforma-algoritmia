@@ -3,9 +3,16 @@ import {
   InternalServerErrorException,
   NotFoundException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Prisma, estado_consulta, temas } from '@prisma/client';
+import {
+  Prisma,
+  estado_clase_consulta,
+  estado_consulta,
+  estado_revision,
+  temas,
+} from '@prisma/client';
 
 // DTOs
 import type { CreateConsultaDto } from '../dto/create-consulta.dto';
@@ -13,12 +20,18 @@ import type { CreateRespuestaDto } from '../dto/create-respuesta.dto';
 import type { ValorarConsultaDto } from '../dto/valorar-consulta.dto';
 import { FindConsultasDto } from '../dto/find-consultas.dto';
 import { UpdateConsultaDto } from '../dto/update-consulta.dto';
+import { calcularFechaProximaClase } from 'src/helpers';
+import { MailService } from 'src/mail/services/mail.service';
 
 @Injectable()
 export class ConsultasService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(ConsultasService.name);
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
-  // --- 1. SERVICIO DE CREACIÓN (ALUMNO) (Corregido) ---
+  // --- 1. SERVICIO DE CREACIÓN (ALUMNO) ---
   async createConsulta(
     idAlumno: string,
     idCurso: string,
@@ -27,6 +40,7 @@ export class ConsultasService {
     const { titulo, descripcion, tema, fechaConsulta } = dto;
 
     try {
+      // 1. Crear la consulta
       const nuevaConsulta = await this.prisma.consulta.create({
         data: {
           titulo: titulo,
@@ -38,6 +52,28 @@ export class ConsultasService {
           estado: estado_consulta.Pendiente,
         },
       });
+
+      // --- INICIO PROCESO AUTOMATIZADO ---
+      // Verificamos si llegamos al umbral para disparar la clase automática
+      const conteoPendientes = await this.prisma.consulta.count({
+        where: {
+          idCurso: idCurso,
+          estado: estado_consulta.Pendiente,
+          deletedAt: null,
+        },
+      });
+
+      // 3. Verificar Umbral (10 consultas)
+      if (conteoPendientes >= 10) {
+        this.logger.log(
+          `Umbral alcanzado (${conteoPendientes} consultas) en curso ${idCurso}. Disparando proceso automático...`,
+        );
+        // Ejecutamos sin await para no bloquear la respuesta al alumno
+        this.generarClaseAutomatica(idCurso).catch((err) =>
+          this.logger.error('Error generando clase automática', err),
+        );
+      }
+      // --- FIN PROCESO AUTOMATIZADO ---
 
       return nuevaConsulta;
     } catch (error) {
@@ -350,6 +386,134 @@ export class ConsultasService {
       throw new ForbiddenException(
         'No puedes modificar una consulta que ya fue respondida o está resuelta.',
       );
+    }
+  }
+
+  private async generarClaseAutomatica(idCurso: string) {
+    // 1. Evitar duplicados: Verificar si ya existe una clase pendiente de asignación
+    // o programada futura para no spammear.
+    const clasePendiente = await this.prisma.claseConsulta.findFirst({
+      where: {
+        idCurso: idCurso,
+        estadoClase: { in: ['Pendiente_Asignacion', 'Programada'] },
+        fechaClase: { gte: new Date() }, // Futura
+        deletedAt: null,
+      },
+    });
+
+    if (clasePendiente) {
+      this.logger.log(
+        'Ya existe una clase pendiente/programada. Se omite creación.',
+      );
+      return;
+    }
+
+    // 2. Obtener configuración del curso (Días de clase y modalidad pref)
+    const curso = await this.prisma.curso.findUnique({
+      where: { id: idCurso },
+      include: { diasClase: true },
+    });
+
+    if (!curso || !curso.diasClase.length) {
+      this.logger.warn(
+        'El curso no tiene días de clase configurados. No se puede agendar.',
+      );
+      return;
+    }
+
+    // 3. Calcular fecha usando el helper
+    const fechaProxima = calcularFechaProximaClase(curso.diasClase);
+
+    if (!fechaProxima) {
+      this.logger.warn('No se pudo calcular una fecha próxima válida.');
+      return;
+    }
+
+    // 4. Obtener las 10 consultas más antiguas para asignar
+    const consultasAAtender = await this.prisma.consulta.findMany({
+      where: {
+        idCurso: idCurso,
+        estado: estado_consulta.Pendiente,
+        deletedAt: null,
+      },
+      orderBy: { createdAt: 'asc' }, // Prioridad a las viejas
+      take: 10,
+      select: { id: true },
+    });
+
+    if (consultasAAtender.length < 10) return; // Doble check
+
+    // 5. Crear la Clase Automática. Creamos la clase sin 'idDocente'.
+    const claseCreada = await this.prisma.$transaction(
+      async (tx: Prisma.TransactionClient) => {
+        // A. Crear la Clase (Sin docente asignado)
+        const nuevaClase = await tx.claseConsulta.create({
+          data: {
+            idCurso: idCurso,
+            // idDocente: null
+            nombre: 'Clase de Consulta Automática',
+            descripcion:
+              'Generada automáticamente por acumulación de consultas.',
+            fechaClase: fechaProxima,
+            horaInicio: fechaProxima,
+            horaFin: new Date(fechaProxima.getTime() + 60 * 60 * 1000), // 1 hora
+            modalidad: curso.modalidadPreferencial,
+            estadoClase: estado_clase_consulta.Pendiente_Asignacion,
+            estadoRevision: estado_revision.Pendiente,
+          },
+        });
+
+        // B. Vincular y actualizar consultas
+        for (const consulta of consultasAAtender) {
+          // Relación N-M
+          await tx.consultaClase.create({
+            data: { idClaseConsulta: nuevaClase.id, idConsulta: consulta.id },
+          });
+
+          // Cambiar estado de la consulta
+          await tx.consulta.update({
+            where: { id: consulta.id },
+            data: { estado: estado_consulta.A_revisar },
+          });
+        }
+
+        this.logger.log(
+          `Clase automática creada con éxito: ${nuevaClase.id} (Sin docente asignado)`,
+        );
+        return nuevaClase;
+      },
+    );
+
+    // 6. Usamos 'claseCreada' para los emails
+    // --- AGREGAMOS EL ENVÍO DE EMAILS ---
+    if (claseCreada) {
+      // Fuera de la transacción para no bloquearla si el SMTP tarda
+
+      // A. Buscamos a TODOS los docentes activos del curso
+      const docentesDelCurso = await this.prisma.docenteCurso.findMany({
+        where: { idCurso: idCurso, estado: 'Activo' },
+        include: { docente: true }, // Traemos usuario para email y nombre
+      });
+
+      if (docentesDelCurso.length > 0) {
+        const destinatarios = docentesDelCurso.map((d) => ({
+          email: d.docente.email,
+          nombre: d.docente.nombre,
+        }));
+
+        // B. Llamamos al servicio de mail
+        this.mailService
+          .enviarAvisoClaseAutomatica(destinatarios, {
+            nombreCurso: curso.nombre,
+            fechaOriginal: fechaProxima,
+            cantidadConsultas: consultasAAtender.length,
+            idClase: claseCreada.id,
+            diasClaseConfig: curso.diasClase,
+          })
+          .catch((err) =>
+            this.logger.error('Error enviando notificaciones', err),
+          );
+      }
     }
   }
 }

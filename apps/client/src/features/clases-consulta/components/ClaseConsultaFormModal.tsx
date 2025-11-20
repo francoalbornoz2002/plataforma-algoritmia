@@ -46,6 +46,18 @@ import { timeToDate } from "../../../utils/dateHelpers"; // El helper que creamo
 import ConsultaSelectionModal from "./ConsultaSelectionModal";
 import { enqueueSnackbar } from "notistack";
 
+// Helper para crear una fecha LOCAL desde "YYYY-MM-DD"
+// Evita el problema de UTC que resta un día en América
+const parseLocalDate = (dateStr: string) => {
+  if (!dateStr) return null;
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return new Date(year, month - 1, day); // Mes es 0-indexado
+};
+
+// Límite para TimePicker: 23:00 hs
+const maxTimeValue = new Date();
+maxTimeValue.setHours(23, 0, 0, 0);
+
 interface ClaseConsultaFormModalProps {
   open: boolean;
   onClose: () => void;
@@ -104,13 +116,17 @@ export default function ClaseConsultaFormModal({
   // 2. useEffect de 'reset' (Corregido)
   useEffect(() => {
     if (isEditMode && claseToEdit) {
+      const fechaRaw = claseToEdit.fechaClase.split("T")[0];
+      const horaInicioObj = new Date(claseToEdit.horaInicio);
+      const horaFinObj = new Date(claseToEdit.horaFin);
+
       // Modo Edición
       reset({
         nombre: claseToEdit.nombre,
         descripcion: claseToEdit.descripcion,
-        fechaClase: new Date(claseToEdit.fechaClase).toISOString(),
-        horaInicio: format(new Date(claseToEdit.horaInicio), "HH:mm"),
-        horaFin: format(new Date(claseToEdit.horaFin), "HH:mm"),
+        fechaClase: fechaRaw,
+        horaInicio: format(horaInicioObj, "HH:mm"),
+        horaFin: format(horaFinObj, "HH:mm"),
         idDocente: claseToEdit.idDocente,
         modalidad: claseToEdit.modalidad,
         // Guardamos solo los IDs (string[])
@@ -134,8 +150,10 @@ export default function ClaseConsultaFormModal({
   // Handler para cerrar el modal principal
   const handleClose = () => {
     onClose();
-    reset();
-    setApiError(null);
+    setTimeout(() => {
+      reset();
+      setApiError(null);
+    }, 300);
   };
 
   // 3. onSubmit (Corregido)
@@ -270,15 +288,15 @@ export default function ClaseConsultaFormModal({
                   render={({ field }) => (
                     <DatePicker
                       label="Fecha de la Clase"
-                      value={field.value ? new Date(field.value) : null}
+                      value={field.value ? parseLocalDate(field.value) : null}
                       onChange={
                         (newDate) =>
                           field.onChange(
                             newDate ? format(newDate, "yyyy-MM-dd") : ""
                           ) // Guardamos string
                       }
-                      maxDate={maxDate} // <-- Feature
-                      disablePast // <-- Feature
+                      maxDate={maxDate}
+                      disablePast
                       slotProps={{
                         textField: {
                           fullWidth: true,
@@ -323,6 +341,7 @@ export default function ClaseConsultaFormModal({
                       onChange={(newDate) =>
                         field.onChange(newDate ? format(newDate, "HH:mm") : "")
                       }
+                      maxTime={maxTimeValue}
                       slotProps={{
                         textField: {
                           fullWidth: true,

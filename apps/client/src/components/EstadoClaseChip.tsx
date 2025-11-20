@@ -6,6 +6,7 @@ import EventAvailableIcon from "@mui/icons-material/EventAvailable"; // Programa
 import CheckCircleIcon from "@mui/icons-material/CheckCircle"; // Realizada
 import CancelIcon from "@mui/icons-material/Cancel"; // Cancelada
 import WarningIcon from "@mui/icons-material/Warning"; // No realizada
+import { EstadoClaseLabels } from "../types/traducciones";
 
 interface EstadoClaseChipProps {
   estado: estado_clase_consulta;
@@ -41,8 +42,7 @@ export default function EstadoClaseChip({ estado }: EstadoClaseChipProps) {
   return (
     <Chip
       icon={icon}
-      // Reemplazamos '_' por ' ' para que se lea mejor
-      label={estado.replace("_", " ")}
+      label={EstadoClaseLabels[estado]}
       color={color}
       size="small"
       variant="filled"

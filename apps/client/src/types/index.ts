@@ -56,7 +56,7 @@ export enum dificultad_mision {
 
 export enum estado_consulta {
   Pendiente = "Pendiente",
-  A_revisar = "A revisar",
+  A_revisar = "A_revisar",
   Revisada = "Revisada",
   Resuelta = "Resuelta",
 }
@@ -64,8 +64,9 @@ export enum estado_consulta {
 export enum estado_clase_consulta {
   Programada = "Programada",
   Realizada = "Realizada",
-  No_realizada = "No realizada",
+  No_realizada = "No_realizada",
   Cancelada = "Cancelada",
+  Pendiente_Asignacion = "Pendiente_Asignacion",
 }
 
 /* ---------------------- INTERFACES ---------------------- */
@@ -458,7 +459,7 @@ export interface PaginatedConsultasDocenteResponse
 // (Basado en el 'include' que definimos en el servicio 'findAll')
 export interface ClaseConsulta {
   id: string;
-  idDocente: string;
+  idDocente: string | undefined;
   idCurso: string;
   nombre: string;
   descripcion: string;
@@ -473,7 +474,7 @@ export interface ClaseConsulta {
   docenteResponsable: {
     nombre: string;
     apellido: string;
-  };
+  } | null;
   consultasEnClase: {
     consulta: ConsultaSimple & { id: string };
   }[];

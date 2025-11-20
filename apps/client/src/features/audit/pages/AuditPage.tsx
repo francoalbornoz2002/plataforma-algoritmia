@@ -300,82 +300,87 @@ export default function AuditPage() {
       </Typography>
 
       {/* --- B. Filtros --- */}
-      <Stack
-        direction="row"
-        spacing={1.5}
-        alignItems="center"
-        sx={{
-          mb: 2,
-          flexWrap: "wrap", // Permite que los filtros bajen si no hay espacio
-          gap: 1, // Espacio vertical si 'wrap' ocurre
-        }}
-      >
-        <TextField
-          label="Buscar (Tabla o ID Fila)..."
-          variant="outlined"
-          size="small"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{ minWidth: 250, flexGrow: 1 }} // El buscador crece
-        />
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel>Tabla Afectada</InputLabel>
-          <Select
-            name="tablaAfectada"
-            value={filters.tablaAfectada}
-            label="Tabla Afectada"
-            onChange={handleFilterChange}
-          >
-            <MenuItem value="">Todas</MenuItem>
-            <MenuItem value="usuarios">usuarios</MenuItem>
-            <MenuItem value="cursos">cursos</MenuItem>
-            <MenuItem value="institucion">institucion</MenuItem>
-            <MenuItem value="alumno_curso">alumno_curso</MenuItem>
-            <MenuItem value="docente_curso">docente_curso</MenuItem>
-            <MenuItem value="misiones_completadas">
-              misiones_completadas
-            </MenuItem>
-            <MenuItem value="dificultad_alumno">dificultad_alumno</MenuItem>
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Operación</InputLabel>
-          <Select
-            name="operacion"
-            value={filters.operacion}
-            label="Operación"
-            onChange={handleFilterChange}
-          >
-            <MenuItem value="">Todas</MenuItem>
-            <MenuItem value="INSERT">INSERT</MenuItem>
-            <MenuItem value="UPDATE">UPDATE</MenuItem>
-            <MenuItem value="DELETE">DELETE (Lógico)</MenuItem>
-          </Select>
-        </FormControl>
-        <DatePicker
-          label="Fecha Desde"
-          value={filters.fechaDesde ? new Date(filters.fechaDesde) : null}
-          onChange={(newDate) => handleDateChange("fechaDesde", newDate)}
-          slotProps={{
-            textField: {
-              size: "small",
-              sx: { width: 170 }, // Ancho fijo para la fecha
-            },
+      <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
+        <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
+          Filtros de búsqueda
+        </Typography>
+        <Stack
+          direction="row"
+          spacing={1.5}
+          alignItems="center"
+          sx={{
+            mb: 2,
+            flexWrap: "wrap", // Permite que los filtros bajen si no hay espacio
+            gap: 1, // Espacio vertical si 'wrap' ocurre
           }}
-        />
-        <DatePicker
-          label="Fecha Hasta"
-          value={filters.fechaHasta ? new Date(filters.fechaHasta) : null}
-          onChange={(newDate) => handleDateChange("fechaHasta", newDate)}
-          slotProps={{
-            textField: {
-              size: "small",
-              sx: { width: 170 }, // Ancho fijo para la fecha
-            },
-          }}
-          disableFuture={true}
-        />
-      </Stack>
+        >
+          <TextField
+            label="Buscar (Tabla o ID Fila)..."
+            variant="outlined"
+            size="small"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{ minWidth: 250, flexGrow: 1 }} // El buscador crece
+          />
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel>Tabla Afectada</InputLabel>
+            <Select
+              name="tablaAfectada"
+              value={filters.tablaAfectada}
+              label="Tabla Afectada"
+              onChange={handleFilterChange}
+            >
+              <MenuItem value="">Todas</MenuItem>
+              <MenuItem value="usuarios">usuarios</MenuItem>
+              <MenuItem value="cursos">cursos</MenuItem>
+              <MenuItem value="institucion">institucion</MenuItem>
+              <MenuItem value="alumno_curso">alumno_curso</MenuItem>
+              <MenuItem value="docente_curso">docente_curso</MenuItem>
+              <MenuItem value="misiones_completadas">
+                misiones_completadas
+              </MenuItem>
+              <MenuItem value="dificultad_alumno">dificultad_alumno</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Operación</InputLabel>
+            <Select
+              name="operacion"
+              value={filters.operacion}
+              label="Operación"
+              onChange={handleFilterChange}
+            >
+              <MenuItem value="">Todas</MenuItem>
+              <MenuItem value="INSERT">INSERT</MenuItem>
+              <MenuItem value="UPDATE">UPDATE</MenuItem>
+              <MenuItem value="DELETE">DELETE (Lógico)</MenuItem>
+            </Select>
+          </FormControl>
+          <DatePicker
+            label="Fecha Desde"
+            value={filters.fechaDesde ? new Date(filters.fechaDesde) : null}
+            onChange={(newDate) => handleDateChange("fechaDesde", newDate)}
+            slotProps={{
+              textField: {
+                size: "small",
+                sx: { width: 170 }, // Ancho fijo para la fecha
+              },
+            }}
+          />
+          <DatePicker
+            label="Fecha Hasta"
+            value={filters.fechaHasta ? new Date(filters.fechaHasta) : null}
+            onChange={(newDate) => handleDateChange("fechaHasta", newDate)}
+            slotProps={{
+              textField: {
+                size: "small",
+                sx: { width: 170 }, // Ancho fijo para la fecha
+              },
+            }}
+            disableFuture={true}
+          />
+        </Stack>
+      </Paper>
 
       {/* --- C. DataGrid --- */}
       {gridError && <Alert severity="error">{gridError}</Alert>}

@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Req,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ClasesConsultaService } from '../services/clases-consulta.service';
 import { CreateClasesConsultaDto } from '../dto/create-clases-consulta.dto';
@@ -54,5 +55,35 @@ export class ClasesConsultaController {
   @Roles(roles.Docente)
   remove(@Param('id') id: string, @Req() req: AuthenticatedUserRequest) {
     return this.clasesConsultaService.remove(id, req.user);
+  }
+
+  @Patch(':id/aceptar-reprogramar')
+  @Roles(roles.Docente)
+  async aceptarYReprogramar(
+    @Param('id', ParseUUIDPipe) idClase: string,
+    @Body() body: { fechaClase: string; horaInicio: string; horaFin: string },
+    @Req() req: any,
+  ) {
+    const idDocente = req.user.userId; // Tu ID de usuario
+    return this.clasesConsultaService.aceptarYReprogramar(
+      idClase,
+      idDocente,
+      body,
+    );
+  }
+
+  @Patch(':id/asignar')
+  @Roles(roles.Docente)
+  async asignarDocente(
+    @Param('id', ParseUUIDPipe) idClase: string,
+    @Body('nuevaFecha') nuevaFecha: string | undefined, // <--- Leemos del body
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const idDocente = req.user.userId;
+    return this.clasesConsultaService.asignarDocente(
+      idClase,
+      idDocente,
+      nuevaFecha,
+    );
   }
 }

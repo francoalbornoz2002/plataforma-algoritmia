@@ -22,7 +22,10 @@ import {
   findActiveDocentes,
   findPendingConsultas,
 } from "../../users/services/docentes.service";
-import { findAllClasesByCurso } from "../services/clases-consulta.service";
+import {
+  aceptarClaseAutomatica,
+  findAllClasesByCurso,
+} from "../services/clases-consulta.service";
 import {
   type ClaseConsulta,
   type DocenteBasico,
@@ -35,6 +38,10 @@ import ClaseConsultaCard from "../components/ClaseConsultaCard";
 import ClaseConsultaFormModal from "../components/ClaseConsultaFormModal";
 import DeleteClaseDialog from "../components/DeleteClaseDialog";
 import ClaseDetailModal from "../components/ClaseDetailModal";
+import { useSearchParams } from "react-router";
+import AceptarManualModal from "../components/AceptarManualModal";
+import { enqueueSnackbar } from "notistack";
+import ActionConfirmationDialog from "../components/ActionConfirmationDialog";
 
 // Tipos para los filtros
 type OrdenFiltro =
@@ -69,6 +76,109 @@ export default function ClasesConsultaPage() {
     null
   );
   const [claseToView, setClaseToView] = useState<ClaseConsulta | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Estado para controlar el nuevo modal
+  const [manualModalOpen, setManualModalOpen] = useState(false);
+  const [selectedClaseForManual, setSelectedClaseForManual] =
+    useState<ClaseConsulta | null>(null);
+  // 2. ESTADO PARA EL DIÁLOGO DE ACCIÓN
+  const [actionDialog, setActionDialog] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => Promise<void>; // Función asíncrona
+  }>({
+    open: false,
+    title: "",
+    message: "",
+    onConfirm: async () => {},
+  });
+
+  // Estado local de carga para el diálogo
+  const [actionLoading, setActionLoading] = useState(false);
+
+  useEffect(() => {
+    const action = searchParams.get("action");
+    const idClase = searchParams.get("id");
+    const nextDateIso = searchParams.get("date");
+
+    // Solo ejecutamos si tenemos la clase cargada en 'allClases'
+    if (action && idClase && allClases.length > 0) {
+      const claseTarget = allClases.find((c) => c.id === idClase);
+      if (!claseTarget) return;
+
+      handleDeepLinkAction(action, claseTarget, nextDateIso);
+    }
+  }, [searchParams, allClases]); // Se ejecuta al cargar las clases
+
+  const handleDeepLinkAction = async (
+    action: string,
+    clase: ClaseConsulta,
+    nextDateIso: string | null
+  ) => {
+    // Limpiamos URL
+    setSearchParams({});
+
+    try {
+      // --- CASO 1: ACEPTAR ORIGINAL ---
+      if (action === "accept") {
+        // Formateo de fecha para el mensaje
+        const [year, month, day] = clase.fechaClase.split("T")[0].split("-");
+        const fechaVisual = `${day}/${month}/${year}`;
+
+        // Abrimos el diálogo en lugar de window.confirm
+        setActionDialog({
+          open: true,
+          title: "Confirmar Asignación",
+          message: `¿Deseas aceptar y asignarte la clase de consulta automática para el ${fechaVisual}?`,
+          onConfirm: async () => {
+            // Llamamos a tu lógica existente
+            await handleAcceptClass(clase);
+          },
+        });
+      }
+
+      // --- CASO 2: REPROGRAMAR (SIGUIENTE) ---
+      else if (action === "reschedule" && nextDateIso) {
+        const fechaObj = new Date(nextDateIso);
+        const fechaVisual = fechaObj.toLocaleDateString("es-AR");
+        const horaVisual = fechaObj.toLocaleTimeString("es-AR", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+        setActionDialog({
+          open: true,
+          title: "Confirmar Reprogramación",
+          message: `¿Aceptar la clase pero reprogramarla al ${fechaVisual} a las ${horaVisual}?`,
+          onConfirm: async () => {
+            try {
+              // Llamamos al servicio de reprogramar (usando el endpoint que acepta fecha)
+              await aceptarClaseAutomatica(clase.id, nextDateIso);
+              enqueueSnackbar("Clase reprogramada y aceptada correctamente.", {
+                variant: "success",
+              }); // O usar enqueueSnackbar
+              fetchData();
+            } catch (e: any) {
+              enqueueSnackbar(e.message || "Error al reprogramar", {
+                variant: "error",
+              });
+            }
+          },
+        });
+      }
+
+      // --- CASO 3: MANUAL (Abrir Modal) ---
+      else if (action === "edit_manual") {
+        setSelectedClaseForManual(clase);
+        setManualModalOpen(true);
+      }
+    } catch (error) {
+      enqueueSnackbar("Ocurrió un error al procesar la acción.", {
+        variant: "error",
+      });
+    }
+  };
 
   // --- Data Fetching (Cliente) ---
   const fetchData = () => {
@@ -155,6 +265,47 @@ export default function ClasesConsultaPage() {
 
   const handleSaveSuccess = () => {
     fetchData(); // Refresca toda la data
+  };
+
+  // Handler para el botón "Aceptar Clase"
+  const handleAcceptClass = async (clase: ClaseConsulta) => {
+    try {
+      await aceptarClaseAutomatica(clase.id);
+
+      // Feedback de éxito
+      enqueueSnackbar(
+        `¡Has aceptado la clase "${clase.nombre}" exitosamente!`,
+        {
+          variant: "success",
+        }
+      );
+
+      // Recargamos la lista para que se actualice la UI (cambie de botón verde a botones normales)
+      fetchData();
+    } catch (error: any) {
+      enqueueSnackbar(error.message, {
+        variant: "error",
+      });
+      fetchData(); // Recargamos por si el estado cambió
+    }
+  };
+
+  // 4. Wrapper para ejecutar la acción del diálogo y manejar loading/cerrar
+  const handleConfirmAction = async () => {
+    if (!actionDialog.onConfirm) return;
+
+    setActionLoading(true);
+    try {
+      await actionDialog.onConfirm();
+      // Si todo sale bien, cerramos
+      setActionDialog((prev) => ({ ...prev, open: false }));
+    } catch (error) {
+      console.error(error);
+      // El error ya debería haber sido manejado (alert) dentro de onConfirm,
+      // o puedes mostrarlo aquí si prefieres.
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   if (!selectedCourse) {
@@ -270,6 +421,7 @@ export default function ClasesConsultaPage() {
                     onEdit={handleOpenEdit}
                     onDelete={setClaseToDelete}
                     onViewDetails={setClaseToView}
+                    onAccept={handleAcceptClass}
                   />
                 </Grid>
               ))}
@@ -305,6 +457,28 @@ export default function ClasesConsultaPage() {
           clase={claseToView}
         />
       )}
+      {/* Renderizas el nuevo modal al final */}
+      <AceptarManualModal
+        open={manualModalOpen}
+        clase={selectedClaseForManual}
+        onClose={() => {
+          setManualModalOpen(false);
+          setSelectedClaseForManual(null);
+        }}
+        onSuccess={() => {
+          fetchData(); // Refrescar la lista al terminar
+        }}
+      />
+      {/* 5. RENDERIZAR EL NUEVO DIÁLOGO AL FINAL */}
+      <ActionConfirmationDialog
+        open={actionDialog.open}
+        onClose={() => setActionDialog((prev) => ({ ...prev, open: false }))}
+        onConfirm={handleConfirmAction}
+        title={actionDialog.title}
+        message={actionDialog.message}
+        loading={actionLoading}
+        confirmText="Confirmar"
+      />
     </Box>
   );
 }

@@ -342,7 +342,6 @@ export default function CourseFormDialog({
                             placeholder="Buscar docente..."
                             error={!!errors.docentes}
                             helperText={errors.docentes?.message}
-                            required
                           />
                         )}
                       />

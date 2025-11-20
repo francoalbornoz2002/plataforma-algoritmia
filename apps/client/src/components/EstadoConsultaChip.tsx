@@ -6,6 +6,7 @@ import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty"; // Pendient
 import VisibilityIcon from "@mui/icons-material/Visibility"; // Revisada
 import CheckCircleIcon from "@mui/icons-material/CheckCircle"; // Resuelta
 import { HelpOutline } from "@mui/icons-material";
+import { EstadoConsultaLabels } from "../types/traducciones";
 
 interface EstadoConsultaChipProps {
   estado: estado_consulta;
@@ -40,7 +41,7 @@ export default function EstadoConsultaChip({
   return (
     <Chip
       icon={icon}
-      label={estado}
+      label={EstadoConsultaLabels[estado]}
       color={color}
       size="small"
       variant="filled" // Usamos filled para que se destaque

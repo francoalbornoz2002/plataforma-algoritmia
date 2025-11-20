@@ -1,15 +1,34 @@
 import { dias_semana, DiaClase } from '@prisma/client';
 
-// Función helper para convertir "HH:mm" a un objeto Date (que Prisma espera para Time)
+// Función helper para convertir "HH:mm" (hora Argentina) a un objeto Date UTC
 export function timeToDate(time: string): Date {
-  // Usamos una fecha dummy, solo la hora importa
-  return new Date(`1970-01-01T${time}:00Z`);
+  // Validación por seguridad
+  if (!time) return new Date(0);
+
+  const [hours, minutes] = time.split(':').map(Number);
+  const date = new Date(0); // Fecha epoch (1970-01-01T00:00:00.000Z)
+
+  // TRUCO: Sumamos 3 horas.
+  // "08:00" Argentina se convierte en "11:00" UTC.
+  date.setUTCHours(hours + 3);
+  date.setUTCMinutes(minutes);
+
+  return date;
 }
 
 // Función helper para convertir Date a "HH:mm"
 export function dateToTime(date: Date): string {
   if (!date) return '00:00';
-  return date.toISOString().substr(11, 5);
+
+  // Creamos una copia para no mutar el objeto original
+  const d = new Date(date);
+
+  // Restamos las 3 horas para volver a la hora local "humana"
+  // "11:00" UTC se convierte en "08:00" para mostrarse
+  d.setUTCHours(d.getUTCHours() - 3);
+
+  // Extraemos HH:mm
+  return d.toISOString().substring(11, 16);
 }
 
 /**

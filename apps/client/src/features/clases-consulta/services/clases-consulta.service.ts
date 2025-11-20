@@ -100,3 +100,22 @@ export const deleteClaseConsulta = async (
     throw err.response?.data || new Error("Error al cancelar la clase.");
   }
 };
+
+// Método para aceptar/tomar una clase automática
+export const aceptarClaseAutomatica = async (
+  idClase: string,
+  nuevaFecha?: string // <--- Opcional
+): Promise<void> => {
+  try {
+    // Enviamos la fecha en el body si existe
+    await apiClient.patch(`/clases-consulta/${idClase}/asignar`, {
+      nuevaFecha,
+    });
+  } catch (error: any) {
+    // Manejo de errores (ej: si ya la tomó otro)
+    if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    }
+    throw new Error("No se pudo aceptar la clase.");
+  }
+};

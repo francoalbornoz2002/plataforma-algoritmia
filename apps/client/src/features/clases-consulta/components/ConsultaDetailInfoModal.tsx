@@ -34,7 +34,7 @@ export default function ConsultaDetailInfoModal({
   if (!consulta) return null;
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>
         <Typography variant="body2" color="text.secondary">
           Consulta de {consulta.alumno.nombre} {consulta.alumno.apellido} (
