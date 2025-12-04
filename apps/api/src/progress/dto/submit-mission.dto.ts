@@ -1,11 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  IsBoolean,
   IsDateString,
   IsInt,
+  IsNotEmpty,
+  IsOptional,
   IsPositive,
+  IsString,
   IsUUID,
   Max,
   Min,
+  ValidateIf,
 } from 'class-validator';
 
 export class SubmitMissionDto {
@@ -54,4 +59,22 @@ export class SubmitMissionDto {
   })
   @IsDateString()
   fechaCompletado: string;
+
+  // --- NUEVOS CAMPOS PARA MISIONES ESPECIALES ---
+
+  @IsOptional()
+  @IsBoolean()
+  esMisionEspecial?: boolean;
+
+  // 'nombre' es obligatorio solo si esMisionEspecial es true
+  @ValidateIf((o) => o.esMisionEspecial === true)
+  @IsString()
+  @IsNotEmpty()
+  nombre?: string;
+
+  // 'descripcion' es obligatorio solo si esMisionEspecial es true
+  @ValidateIf((o) => o.esMisionEspecial === true)
+  @IsString()
+  @IsNotEmpty()
+  descripcion?: string;
 }

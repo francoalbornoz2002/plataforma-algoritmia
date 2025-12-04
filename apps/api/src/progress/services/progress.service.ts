@@ -312,11 +312,16 @@ export class ProgressService {
 
       const { idProgreso, idCurso } = inscripcion;
 
-      // 4. Agregar los totales del lote
+      // --- SEPARACIÓN DE LOTES ---
+      const misionesNormales = dtos.filter((m) => !m.esMisionEspecial);
+      const misionesEspeciales = dtos.filter((m) => m.esMisionEspecial);
+
+      // 4. Calcular Totales (Normales + Especiales)
+      // Las especiales SÍ suman XP, Estrellas e Intentos al global.
       let totalEstrellas = 0;
       let totalExp = 0;
       let totalIntentos = 0;
-      const cantMisiones = dtos.length;
+
       let ultimaActividad = new Date(0); // Fecha mínima (Epoch)
 
       for (const mision of dtos) {
@@ -331,43 +336,87 @@ export class ProgressService {
         }
       }
 
-      // 5. Ejecutar todo como una transacción
+      // 5. Calcular Cantidad para Avance (SOLO Normales)
+      // Las especiales NO suman al porcentaje de completitud del curso.
+      const cantidadNormalesNuevas = misionesNormales.length;
+
+      // 6. Ejecutar todo como una transacción
       return await this.prisma.$transaction(
         async (tx: Prisma.TransactionClient) => {
-          // --- Paso A: Registrar TODAS las misiones ---
-          const misionesData = dtos.map((mision) => ({
-            idMision: mision.idMision,
-            idProgreso: idProgreso,
-            estrellas: mision.estrellas,
-            exp: mision.exp,
-            intentos: mision.intentos,
-            fechaCompletado: new Date(mision.fechaCompletado),
-          }));
+          // --- Paso A: Insertar Misiones NORMALES ---
+          if (misionesNormales.length > 0) {
+            const dataNormales = misionesNormales.map((mision) => ({
+              idMision: mision.idMision, // FK al catálogo
+              idProgreso: idProgreso,
+              estrellas: mision.estrellas,
+              exp: mision.exp,
+              intentos: mision.intentos,
+              fechaCompletado: new Date(mision.fechaCompletado),
+            }));
 
-          await tx.misionCompletada.createMany({
-            data: misionesData,
-            skipDuplicates: true, // Por si acaso el cliente envía una misión dos veces
-          });
+            await tx.misionCompletada.createMany({
+              data: dataNormales,
+              skipDuplicates: true,
+            });
+          }
 
-          // --- Paso B: Actualizar ProgresoAlumno (Atómicamente con los totales) ---
+          // --- Paso B: Insertar Misiones ESPECIALES ---
+          if (misionesEspeciales.length > 0) {
+            const dataEspeciales = misionesEspeciales.map((mision) => ({
+              id: mision.idMision, // El UUID generado por Godot va al ID primario
+              idProgreso: idProgreso,
+              // Si por alguna razón es undefined, pondrá el texto de la derecha.
+              nombre: mision.nombre ?? 'Misión Especial Sin Nombre',
+              descripcion: mision.descripcion ?? 'Sin descripción disponible',
+              estrellas: mision.estrellas,
+              exp: mision.exp,
+              intentos: mision.intentos,
+              fechaCompletado: new Date(mision.fechaCompletado),
+            }));
+
+            await tx.misionEspecialCompletada.createMany({
+              data: dataEspeciales,
+              skipDuplicates: true,
+            });
+          }
+
+          // --- Paso C: Actualizar ProgresoAlumno ---
           const progAlumnoActualizado = await tx.progresoAlumno.update({
             where: { id: idProgreso },
             data: {
+              // Sumamos los totales de AMBOS tipos
               totalEstrellas: { increment: totalEstrellas },
               totalExp: { increment: totalExp },
               totalIntentos: { increment: totalIntentos },
-              cantMisionesCompletadas: { increment: cantMisiones },
+
+              // Incrementamos el contador SOLO con las normales
+              cantMisionesCompletadas: { increment: cantidadNormalesNuevas },
+
               ultimaActividad: ultimaActividad,
             },
           });
 
-          // --- Paso C: Recalcular Promedios ---
-          const nuevoPromEstrellas =
-            progAlumnoActualizado.totalEstrellas /
-            progAlumnoActualizado.cantMisionesCompletadas;
-          const nuevoPromIntentos =
-            progAlumnoActualizado.totalIntentos /
-            progAlumnoActualizado.cantMisionesCompletadas;
+          // --- Paso D: Recalcular Porcentajes y Promedios ---
+          // NOTA: Al sumar estrellas de especiales pero no aumentar la cantidad,
+          // el 'promEstrellas' podría matemáticamente superar 3.0.
+          // Si deseas evitar esto, habría que cambiar la fórmula, pero por ahora
+          // mantengo la lógica estricta de "Especiales no suman al % de avance".
+
+          let nuevoPromEstrellas = 0;
+          let nuevoPromIntentos = 0;
+
+          if (progAlumnoActualizado.cantMisionesCompletadas > 0) {
+            nuevoPromEstrellas =
+              progAlumnoActualizado.totalEstrellas /
+              progAlumnoActualizado.cantMisionesCompletadas;
+
+            nuevoPromIntentos =
+              progAlumnoActualizado.totalIntentos /
+              progAlumnoActualizado.cantMisionesCompletadas;
+          }
+
+          // El porcentaje siempre se basa en el total de misiones "oficiales" del juego
+          // Asegúrate de tener la constante TOTAL_MISIONES_JUEGO importada o definida
           const nuevoPctCompletadas =
             (progAlumnoActualizado.cantMisionesCompletadas /
               TOTAL_MISIONES_JUEGO) *
