@@ -27,8 +27,8 @@ model ClaseConsulta {
   id                     String                  @id @default(uuid()) @db.Uuid
   idDocente              String?                 @map("id_docente") @db.Uuid
   idCurso                String                  @map("id_curso") @db.Uuid
-  nombre                 String                  @db.VarChar(255)
-  descripcion            String                  @db.VarChar(255)
+  nombre                 String                  @unique @db.VarChar(255)
+  descripcion            String                  @unique @db.VarChar(255)
   fechaClase             DateTime                @map("fecha_clase") @db.Date
   horaInicio             DateTime                @map("hora_inicio") @db.Time(6)
   horaFin                DateTime                @map("hora_fin") @db.Time(6)
@@ -53,9 +53,9 @@ model Consulta {
   id                   String             @id @default(uuid()) @db.Uuid
   idAlumno             String             @map("id_alumno") @db.Uuid
   idCurso              String             @map("id_curso") @db.Uuid
-  titulo               String             @db.VarChar(255)
+  titulo               String             @unique @db.VarChar(255)
   tema                 temas
-  descripcion          String             @db.VarChar(255)
+  descripcion          String             @unique @db.VarChar(255)
   fechaConsulta        DateTime           @map("fecha_consulta") @db.Date
   estado               estado_consulta
   valoracionAlumno     Int?               @map("valoracion_alumno") @db.SmallInt
@@ -94,8 +94,8 @@ model Curso {
   id                    String             @id @default(uuid()) @db.Uuid
   idProgreso            String             @map("id_progreso") @db.Uuid
   idDificultadesCurso   String             @map("id_dificultades_curso") @db.Uuid
-  nombre                String             @db.VarChar(255)
-  descripcion           String             @db.VarChar(255)
+  nombre                String             @unique @db.VarChar(255)
+  descripcion           String             @unique @db.VarChar(255)
   imagenUrl             String?            @map("imagen_url")
   contrasenaAcceso      String             @map("contraseña_acceso") @db.VarChar(255)
   modalidadPreferencial modalidad          @default(Presencial) @map("modalidad_preferencial")
@@ -152,8 +152,8 @@ model DificultadAlumno {
 
 model Dificultad {
   id                 String              @id @default(uuid()) @db.Uuid
-  nombre             String              @db.VarChar(255)
-  descripcion        String              @db.VarChar(255)
+  nombre             String              @unique @db.VarChar(255)
+  descripcion        String              @unique @db.VarChar(255)
   tema               temas
   dificultadesAlumno DificultadAlumno[]
   dificultadesCursos DificultadesCurso[]
@@ -234,6 +234,8 @@ model LogAuditoria {
 model MisionEspecialCompletada {
   id              String         @id @default(uuid()) @db.Uuid
   idProgreso      String         @map("id_progreso") @db.Uuid
+  nombre          String         @db.VarChar(255)
+  descripcion     String         @db.VarChar(255)
   estrellas       Int            @db.SmallInt
   exp             Int            @db.SmallInt
   intentos        Int            @db.SmallInt
@@ -247,8 +249,8 @@ model MisionEspecialCompletada {
 
 model Mision {
   id                  String             @id @default(uuid()) @db.Uuid
-  nombre              String             @db.VarChar(255)
-  descripcion         String             @db.VarChar(255)
+  nombre              String             @unique @db.VarChar(255)
+  descripcion         String             @unique @db.VarChar(255)
   dificultadMision    dificultad_mision  @map("dificultad_mision")
   misionesCompletadas MisionCompletada[]
 
@@ -297,7 +299,7 @@ model Pregunta {
   id                String            @id @default(uuid()) @db.Uuid
   idDificultad      String            @map("id_dificultad") @db.Uuid
   gradoDificultad   grado_dificultad  @map("grado_dificultad")
-  enunciado         String            @db.VarChar(255)
+  enunciado         String            @unique @db.VarChar(255)
   idDocente         String?           @map("id_docente") @db.Uuid
   createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -470,7 +472,7 @@ model Usuario {
 
 model Valoracion {
   valor       Int        @id @db.SmallInt
-  descripcion String     @db.VarChar(255)
+  descripcion String     @unique @db.VarChar(255)
   consultas   Consulta[]
 
   @@map("valoraciones")
@@ -545,9 +547,9 @@ enum roles {
 }
 
 enum temas {
-  Secuencia
-  Logica
-  Estructuras
+  Secuencia      @map("Secuencia y Lógica Básica")
+  Logica         @map("Lógica Proposicional")
+  Estructuras    @map("Estructuras de Control")
   Variables
   Procedimientos
   Ninguno
