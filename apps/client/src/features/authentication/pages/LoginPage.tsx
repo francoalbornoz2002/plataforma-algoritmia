@@ -17,6 +17,7 @@ import {
   Paper,
   Stack,
   InputAdornment,
+  IconButton,
 } from "@mui/material";
 import { useForm, type SubmitHandler, Controller } from "react-hook-form";
 import { useSnackbar } from "notistack";
@@ -25,12 +26,16 @@ import { useAuth } from "../context/AuthProvider";
 // --- Importamos el Schema y el Resolver ---
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginFormInputs } from "../validations/login.schema";
-import { Lock, Mail } from "@mui/icons-material";
+import { Lock, Mail, Visibility, VisibilityOff } from "@mui/icons-material";
 
 export default function LoginPage() {
   const [openDialog, setOpenDialog] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const { login } = useAuth();
+
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleClickShowPassword = () => setShowPassword((show) => !show);
 
   // --- Inicialización de RHF (actualizada con Zod) ---
   const {
@@ -65,7 +70,13 @@ export default function LoginPage() {
         "Error al iniciar sesión.";
 
       // Llamamos al snackbar directamente
-      enqueueSnackbar(message, { variant: "error" });
+      enqueueSnackbar(message, {
+        variant: "error",
+        anchorOrigin: {
+          vertical: "top",
+          horizontal: "center",
+        },
+      });
     }
     // (Ya no necesitamos 'finally')
   };
@@ -105,7 +116,7 @@ export default function LoginPage() {
           component="form"
           onSubmit={handleSubmit(onSubmit)}
           noValidate
-          spacing={2} // Usamos 'spacing' de Stack
+          spacing={1.5} // Usamos 'spacing' de Stack
         >
           <Typography
             variant="h5"
@@ -141,9 +152,10 @@ export default function LoginPage() {
 
           <TextField
             required
+            sx={{ mb: -2 }}
             fullWidth
             label="Contraseña"
-            type="password"
+            type={showPassword ? "text" : "password"}
             id="password"
             autoComplete="current-password"
             variant="outlined"
@@ -158,6 +170,21 @@ export default function LoginPage() {
                     <Lock />
                   </InputAdornment>
                 ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label={
+                        showPassword
+                          ? "hide the password"
+                          : "display the password"
+                      }
+                      onClick={handleClickShowPassword}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
               },
             }}
           />
@@ -166,7 +193,6 @@ export default function LoginPage() {
             direction="row"
             justifyContent="space-between"
             alignItems="center"
-            sx={{ mt: -1 }}
           >
             <Controller
               name="remember"
@@ -195,7 +221,7 @@ export default function LoginPage() {
             fullWidth
             variant="contained"
             disabled={isSubmitting}
-            sx={{ mt: 2, py: 1.5 }}
+            sx={{ mt: 2, py: 1 }}
           >
             {isSubmitting ? <CircularProgress size={24} /> : "Ingresar"}
           </Button>

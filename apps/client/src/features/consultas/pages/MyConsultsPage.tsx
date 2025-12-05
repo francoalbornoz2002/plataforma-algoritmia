@@ -24,12 +24,11 @@ import {
 } from "../../../types";
 
 // Importamos el modal que acabamos de crear
-import CreateConsultaModal from "../components/CreateConsultaModal";
+import ConsultaFormDialog from "../components/ConsultaFormDialog";
 import { useCourseContext } from "../../../context/CourseContext";
 import { useDebounce } from "../../../hooks/useDebounce";
 import { getMyConsultas } from "../../users/services/alumnos.service";
-import ValorarConsultaModal from "../components/ValorarConsultaModal";
-import EditConsultaModal from "../components/EditConsultaModal";
+import ValorarConsultaModal from "../components/ValorarConsultaModal"; // <-- Nuevo
 import DeleteConsultaDialog from "../components/DeleteConsultaDialog";
 import ConsultaAccordionAlumno from "../components/ConsultaAccordionAlumno";
 
@@ -44,16 +43,16 @@ export default function MyConsultsPage() {
   const [error, setError] = useState<string | null>(null);
 
   // Estado del modal
-  // --- 2. Estados de los Modales ---
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [editingConsulta, setEditingConsulta] = useState<Consulta | null>(null);
+
   // Guarda la consulta que se va a valorar
   const [consultaToValorar, setConsultaToValorar] = useState<Consulta | null>(
     null
   );
-  const [consultaToEdit, setConsultaToEdit] = useState<Consulta | null>(null); // <-- Nuevo
   const [consultaToDelete, setConsultaToDelete] = useState<Consulta | null>(
     null
-  ); //
+  );
 
   // Estados para filtros y paginación
   const [page, setPage] = useState(1);
@@ -136,7 +135,7 @@ export default function MyConsultsPage() {
         <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
           Filtros de búsqueda
         </Typography>
-        <Stack direction="row" spacing={1.5} sx={{ mb: 2 }}>
+        <Stack direction="row" spacing={2}>
           <TextField
             label="Buscar por título o descripción..."
             variant="outlined"
@@ -179,20 +178,21 @@ export default function MyConsultsPage() {
               ))}
             </Select>
           </FormControl>
-        </Stack>
-        <Stack direction="row" spacing={1}>
           <Box sx={{ flexGrow: 1 }} />
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={() => {
+              setEditingConsulta(null);
+              setIsFormModalOpen(true);
+            }}
           >
             Nueva Consulta
           </Button>
         </Stack>
       </Paper>
 
-      {/* --- 2. Lista de Consultas (Cards) (ACTUALIZADO) --- */}
+      {/* --- 2. Lista de Consultas (Cards) --- */}
       <Typography variant="h5" gutterBottom sx={{ mb: 1 }}>
         Consultas realizadas
       </Typography>
@@ -215,7 +215,10 @@ export default function MyConsultsPage() {
                   key={c.id}
                   consulta={c}
                   onValorar={() => setConsultaToValorar(c)}
-                  onEdit={() => setConsultaToEdit(c)}
+                  onEdit={() => {
+                    setEditingConsulta(c);
+                    setIsFormModalOpen(true);
+                  }}
                   onDelete={() => setConsultaToDelete(c)}
                 />
               ))}
@@ -237,12 +240,13 @@ export default function MyConsultsPage() {
 
       {/* --- 4. Modales --- */}
 
-      {/* Modal de Crear */}
-      <CreateConsultaModal
-        open={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
+      {/* Modal de Crear/Editar */}
+      <ConsultaFormDialog
+        open={isFormModalOpen}
+        onClose={() => setIsFormModalOpen(false)}
         onSave={handleSaveSuccess}
         idCurso={selectedCourse.id}
+        consultaToEdit={editingConsulta}
       />
 
       {/* Modal de Valorar */}
@@ -252,16 +256,6 @@ export default function MyConsultsPage() {
           onClose={() => setConsultaToValorar(null)}
           onSave={handleSaveSuccess}
           consulta={consultaToValorar}
-        />
-      )}
-
-      {/* Modal de Editar */}
-      {consultaToEdit && (
-        <EditConsultaModal
-          open={!!consultaToEdit}
-          onClose={() => setConsultaToEdit(null)}
-          onSave={handleSaveSuccess}
-          consultaToEdit={consultaToEdit}
         />
       )}
 

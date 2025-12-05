@@ -4,6 +4,8 @@ import {
   NotFoundException,
   ForbiddenException,
   Logger,
+  ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
@@ -37,6 +39,31 @@ export class ConsultasService {
     dto: CreateConsultaDto,
   ) {
     const { titulo, descripcion, tema, fechaConsulta } = dto;
+
+    // Validar que el título y la descripción no sean iguales
+    if (titulo.toLowerCase() === descripcion.toLowerCase()) {
+      throw new BadRequestException(
+        'El título y la descripción no pueden ser idénticos.',
+      );
+    }
+
+    // Validar que el título o la descripción no se repitan en otras consultas
+    const existingConsulta = await this.prisma.consulta.findFirst({
+      where: {
+        OR: [{ titulo: titulo }, { descripcion: descripcion }],
+      },
+    });
+
+    if (existingConsulta) {
+      if (existingConsulta.titulo === titulo) {
+        throw new ConflictException('Ya existe una consulta con ese título.');
+      }
+      if (existingConsulta.descripcion === descripcion) {
+        throw new ConflictException(
+          'Ya existe una consulta con esa descripción.',
+        );
+      }
+    }
 
     try {
       // 1. Crear la consulta
@@ -292,6 +319,44 @@ export class ConsultasService {
     idAlumno: string,
     dto: UpdateConsultaDto,
   ) {
+    // Validar que el título y la descripción no sean iguales si ambos están presentes
+    if (
+      dto.titulo &&
+      dto.descripcion &&
+      dto.titulo.toLowerCase() === dto.descripcion.toLowerCase()
+    ) {
+      throw new BadRequestException(
+        'El título y la descripción no pueden ser idénticos.',
+      );
+    }
+
+    // Validar que el título o la descripción no se repitan en OTRAS consultas
+    const orConditions: Prisma.ConsultaWhereInput[] = [];
+    if (dto.titulo) {
+      orConditions.push({ titulo: dto.titulo });
+    }
+    if (dto.descripcion) {
+      orConditions.push({ descripcion: dto.descripcion });
+    }
+
+    if (orConditions.length > 0) {
+      const existingConsulta = await this.prisma.consulta.findFirst({
+        where: {
+          id: { not: idConsulta }, // Excluimos la consulta actual
+          OR: orConditions,
+        },
+      });
+
+      if (existingConsulta) {
+        const field =
+          dto.titulo && existingConsulta.titulo === dto.titulo
+            ? 'título'
+            : 'descripción';
+        throw new ConflictException(
+          `Ya existe otra consulta con ese ${field}.`,
+        );
+      }
+    }
     try {
       // 1. Validar permisos (dueño, pendiente y no borrado)
       await this.checkConsultaOwnershipAndState(idConsulta, idAlumno);

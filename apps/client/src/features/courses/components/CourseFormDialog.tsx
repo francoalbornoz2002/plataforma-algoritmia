@@ -241,32 +241,35 @@ export default function CourseFormDialog({
         });
       }
       onSave(); // Notifica a la página principal
-    } catch (err: any) {
-      if (isEditMode) {
-        setError(err.message || "Ocurrió un error al guardar.");
-        enqueueSnackbar("Error al actualizar el curso", {
-          variant: "error",
-          autoHideDuration: 3000,
-        });
-      } else {
-        setError(err.message || "Ocurrió un error al guardar.");
-        enqueueSnackbar("Error al crear el curso", {
-          variant: "error",
-          autoHideDuration: 3000,
-        });
-      }
+    } catch (error: any) {
+      console.error("Error al guardar el curso:", error);
+      setError(
+        error?.response?.data?.message ||
+          error.message ||
+          "Error al guardar el curso."
+      );
     }
-    // 'isSubmitting' se pone en 'false' automáticamente
   };
 
+  if (error) {
+    enqueueSnackbar(error, {
+      variant: "error",
+      anchorOrigin: {
+        vertical: "top",
+        horizontal: "center",
+      },
+    });
+    setError(null);
+  }
+
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle align="center">
-        {isEditMode ? "Editar Curso" : "Añadir Nuevo Curso"}
+        {isEditMode ? "Editar Curso" : "Crear Nuevo Curso"}
       </DialogTitle>
       <Divider variant="middle" />
 
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
         <DialogContent>
           {isLoading ? (
             <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
@@ -435,7 +438,7 @@ export default function CourseFormDialog({
 
               {/* --- Fila Inferior: Días de Clase (con useFieldArray) --- */}
               <Grid size={{ xs: 12 }}>
-                <Box sx={{ mt: 2 }}>
+                <Box>
                   <Typography variant="h6" gutterBottom>
                     Días de Clase
                   </Typography>
@@ -541,11 +544,6 @@ export default function CourseFormDialog({
               </Grid>
             </Grid>
           )}
-          {error && (
-            <Alert severity="error" sx={{ mt: 2 }}>
-              {error}
-            </Alert>
-          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} disabled={isSubmitting}>
@@ -557,7 +555,7 @@ export default function CourseFormDialog({
             {isSubmitting ? <CircularProgress size={24} sx={{ ml: 1 }} /> : ""}
           </Button>
         </DialogActions>
-      </form>
+      </Box>
     </Dialog>
   );
 }

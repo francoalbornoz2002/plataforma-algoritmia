@@ -353,7 +353,7 @@ export default function UsersPage() {
         flexDirection: "column",
       }}
     >
-      <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
+      <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
         <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
           Filtros de búsqueda
         </Typography>
@@ -399,16 +399,13 @@ export default function UsersPage() {
             </Select>
           </FormControl>
           <Box sx={{ flexGrow: 1 }} />
-        </Stack>
-        <Stack direction="row" spacing={1}>
-          <Box sx={{ flexGrow: 1 }} />
           <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={handleAddUserClick}
             disabled={isLoading}
           >
-            Añadir Usuario
+            Crear Usuario
           </Button>
         </Stack>
       </Paper>

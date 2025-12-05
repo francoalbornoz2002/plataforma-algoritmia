@@ -15,15 +15,9 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useForm, Controller, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 
 // Tipos, Schemas y Servicios
-import {
-  type Consulta,
-  type ConsultaDocente,
-  estado_consulta,
-} from "../../../types";
+import { type ConsultaDocente, estado_consulta } from "../../../types";
 import {
   createRespuestaSchema,
   type CreateRespuestaFormValues,
@@ -109,17 +103,24 @@ export default function ConsultaAccordion({
         >
           {/* Columna Izquierda: Alumno y Título */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography
+              sx={{ mb: 1 }}
+              variant="overline"
+              color="text.secondary"
+            >
               Consulta de {consulta.alumno.nombre} {consulta.alumno.apellido} (
               {fechaConsultaFormateada})
             </Typography>
-            <Typography variant="h6" noWrap>
-              {consulta.titulo}
-            </Typography>
+            <Stack direction="row" spacing={1}>
+              <Typography variant="h6" noWrap>
+                {consulta.titulo}
+              </Typography>
+              <Divider orientation="vertical" flexItem />
+              <TemaChip tema={consulta.tema} />
+            </Stack>
           </Box>
           {/* Columna Derecha: Tema y Estado */}
           <Stack direction="row" spacing={1} alignItems="center">
-            <TemaChip tema={consulta.tema} />
             <EstadoConsultaChip estado={consulta.estado} />
           </Stack>
         </Stack>
@@ -158,7 +159,7 @@ export default function ConsultaAccordion({
                       multiline
                       rows={4}
                       error={!!errors.descripcion}
-                      helperText={errors.descripcion?.message}
+                      helperText={errors.descripcion?.message || " "}
                       disabled={isSubmitting}
                     />
                   )}

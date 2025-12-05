@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   InternalServerErrorException,
@@ -46,6 +47,56 @@ export class ClasesConsultaService {
     }
     if (horaFin > '23:00') {
       throw new BadRequestException('Hora fin inválida (> 23:00).');
+    }
+
+    // Validar que no exista otra clase con la misma fecha, hora inicio y hora fin
+    const dbFechaClase = new Date(fechaClase);
+    const dbHoraInicio = this.construirFechaCompleta(
+      dbFechaClase,
+      timeToDate(horaInicio),
+    );
+    const dbHoraFin = this.construirFechaCompleta(
+      dbFechaClase,
+      timeToDate(horaFin),
+    );
+
+    const overlappingClase = await this.prisma.claseConsulta.findFirst({
+      where: {
+        idCurso: idCurso,
+        deletedAt: null,
+        fechaClase: dbFechaClase,
+        // Condición de solapamiento: (InicioA < FinB) y (FinA > InicioB)
+        horaInicio: {
+          lt: dbHoraFin,
+        },
+        horaFin: {
+          gt: dbHoraInicio,
+        },
+      },
+    });
+
+    if (overlappingClase) {
+      throw new ConflictException(
+        'El horario se solapa con otra clase de consulta ya programada para el mismo día.',
+      );
+    } // Validar que el nombre o la descripción no se repitan en otras clases
+    const existingClase = await this.prisma.claseConsulta.findFirst({
+      where: {
+        OR: [{ nombre: restDto.nombre }, { descripcion: restDto.descripcion }],
+      },
+    });
+
+    if (existingClase) {
+      if (existingClase.nombre === restDto.nombre) {
+        throw new ConflictException(
+          'Ya existe una clase de consulta con ese nombre.',
+        );
+      }
+      if (existingClase.descripcion === restDto.descripcion) {
+        throw new ConflictException(
+          'Ya existe una clase de consulta con esa descripción.',
+        );
+      }
     }
 
     // El 'user.userId' es el docente QUE ESTÁ CREANDO la clase
@@ -103,9 +154,9 @@ export class ClasesConsultaService {
             ...restDto,
             idCurso,
             idDocente,
-            fechaClase: new Date(fechaClase),
-            horaInicio: timeToDate(horaInicio),
-            horaFin: timeToDate(horaFin),
+            fechaClase: dbFechaClase,
+            horaInicio: dbHoraInicio,
+            horaFin: dbHoraFin,
             estadoClase: estado_clase_consulta.Programada,
           },
         });
@@ -239,6 +290,69 @@ export class ClasesConsultaService {
       );
     }
 
+    // Validar que no exista otra clase con la misma fecha, hora inicio y hora fin
+    const fechaParaValidarStr =
+      fechaClase || actual.fechaClase.toISOString().split('T')[0];
+    const inicioParaValidarStr = horaInicio || toTimeStr(actual.horaInicio);
+    const finParaValidarStr = horaFin || toTimeStr(actual.horaFin);
+
+    const dbFechaClaseForUpdate = new Date(fechaParaValidarStr);
+    const dbHoraInicioForUpdate = this.construirFechaCompleta(
+      dbFechaClaseForUpdate,
+      timeToDate(inicioParaValidarStr),
+    );
+    const dbHoraFinForUpdate = this.construirFechaCompleta(
+      dbFechaClaseForUpdate,
+      timeToDate(finParaValidarStr),
+    );
+
+    const overlappingClase = await this.prisma.claseConsulta.findFirst({
+      where: {
+        id: { not: id }, // Excluir la clase actual
+        idCurso: actual.idCurso,
+        fechaClase: dbFechaClaseForUpdate,
+        // Condición de solapamiento: (InicioA < FinB) y (FinA > InicioB)
+        horaInicio: {
+          lt: dbHoraFinForUpdate,
+        },
+        horaFin: {
+          gt: dbHoraInicioForUpdate,
+        },
+      },
+    });
+    if (overlappingClase) {
+      throw new ConflictException(
+        'El horario se solapa con otra clase de consulta ya programada para el mismo día.',
+      );
+    } // Validar que el nombre o la descripción no se repitan en OTRAS clases
+    const orConditions: Prisma.ClaseConsultaWhereInput[] = [];
+    if (restDto.nombre) {
+      orConditions.push({ nombre: restDto.nombre });
+    }
+    if (restDto.descripcion) {
+      orConditions.push({ descripcion: restDto.descripcion });
+    }
+
+    if (orConditions.length > 0) {
+      const existingClase = await this.prisma.claseConsulta.findFirst({
+        where: {
+          id: { not: id }, // Excluimos la clase actual
+          deletedAt: null, // Solo consideramos clases activas
+          OR: orConditions,
+        },
+      });
+
+      if (existingClase) {
+        const field =
+          restDto.nombre && existingClase.nombre === restDto.nombre
+            ? 'nombre'
+            : 'descripción';
+        throw new ConflictException(
+          `Ya existe otra clase de consulta con ese ${field}.`,
+        );
+      }
+    }
+
     try {
       // Validaciones de acceso y estado
       await this.checkDocenteAccess(this.prisma, user.userId, actual.idCurso);
@@ -263,6 +377,9 @@ export class ClasesConsultaService {
         ...(fechaClase && { fechaClase: new Date(fechaClase) }),
         ...(horaInicio && { horaInicio: timeToDate(horaInicio) }),
         ...(horaFin && { horaFin: timeToDate(horaFin) }),
+        ...(fechaClase && { fechaClase: dbFechaClaseForUpdate }),
+        ...(horaInicio && { horaInicio: dbHoraInicioForUpdate }),
+        ...(horaFin && { horaFin: dbHoraFinForUpdate }),
       };
 
       // --- Iniciamos la transacción para actualizar la clase ---

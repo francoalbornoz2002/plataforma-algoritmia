@@ -47,7 +47,7 @@ export const createUser = async (
     // Llama al endpoint POST /users/create
     const response = await apiClient.post<UserData>("/users/create", userData);
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error al crear usuario:", error);
     throw error;
   }

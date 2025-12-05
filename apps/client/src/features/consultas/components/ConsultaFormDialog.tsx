@@ -12,43 +12,56 @@ import {
   FormHelperText,
   Stack,
   CircularProgress,
-  Alert,
+  Box,
+  Divider,
 } from "@mui/material";
 import { useForm, Controller, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
-import { temas } from "../../../types"; // Ajusta la ruta a 'types'
+import { useState, useEffect } from "react";
+import { temas, type Consulta } from "../../../types"; // Ajusta la ruta a 'types'
 import {
   createConsultaSchema,
+  updateConsultaSchema,
   type CreateConsultaFormValues,
+  type UpdateConsultaFormValues,
 } from "../validations/consulta.schema"; // El schema que ya creamos
 
-interface CreateConsultaModalProps {
+interface ConsultaFormDialogProps {
   open: boolean;
   onClose: () => void;
   onSave: () => void; // Para refrescar la lista
-  idCurso: string; // El curso actual
+  idCurso?: string; // El curso actual, opcional para edición
+  consultaToEdit: Consulta | null; // null si es creación
 }
 
 // (Importamos el servicio)
-import { createConsulta } from "../../users/services/alumnos.service";
+import {
+  createConsulta,
+  updateConsulta,
+} from "../../users/services/alumnos.service";
 import { enqueueSnackbar } from "notistack";
 
-export default function CreateConsultaModal({
+export default function ConsultaFormDialog({
   open,
   onClose,
   onSave,
   idCurso,
-}: CreateConsultaModalProps) {
+  consultaToEdit,
+}: ConsultaFormDialogProps) {
+  const isEditMode = Boolean(consultaToEdit);
   const [apiError, setApiError] = useState<string | null>(null);
+
+  const currentSchema = isEditMode
+    ? updateConsultaSchema
+    : createConsultaSchema;
 
   const {
     control,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<CreateConsultaFormValues>({
-    resolver: zodResolver(createConsultaSchema),
+  } = useForm<CreateConsultaFormValues | UpdateConsultaFormValues>({
+    resolver: zodResolver(currentSchema),
     defaultValues: {
       titulo: "",
       descripcion: "",
@@ -56,35 +69,75 @@ export default function CreateConsultaModal({
     },
   });
 
+  useEffect(() => {
+    if (open) {
+      if (isEditMode && consultaToEdit) {
+        reset({
+          titulo: consultaToEdit.titulo,
+          descripcion: consultaToEdit.descripcion,
+          tema: consultaToEdit.tema,
+        });
+      } else {
+        reset({
+          titulo: "",
+          descripcion: "",
+          tema: undefined,
+        });
+      }
+    }
+    setApiError(null);
+  }, [open, consultaToEdit, isEditMode, reset]);
+
   // Limpiamos el form cuando se cierra
   const handleClose = () => {
     onClose();
-    reset();
     setApiError(null);
   };
 
-  const onSubmit: SubmitHandler<CreateConsultaFormValues> = async (data) => {
+  const onSubmit: SubmitHandler<
+    CreateConsultaFormValues | UpdateConsultaFormValues
+  > = async (data) => {
     setApiError(null);
     try {
-      // Llamamos al servicio (con la ruta /create que definiste)
-      await createConsulta(idCurso, data);
-      enqueueSnackbar("Consulta creada correctamente", {
-        variant: "success",
-      });
+      if (isEditMode && consultaToEdit) {
+        await updateConsulta(consultaToEdit.id, data);
+        enqueueSnackbar("Consulta actualizada correctamente", {
+          variant: "success",
+        });
+      } else {
+        if (!idCurso) {
+          throw new Error(
+            "El ID del curso es requerido para crear una consulta."
+          );
+        }
+        await createConsulta(idCurso, data as CreateConsultaFormValues);
+        enqueueSnackbar("Consulta creada correctamente", {
+          variant: "success",
+        });
+      }
       onSave(); // Avisa a la página que refresque
       handleClose(); // Cierra el modal
     } catch (err: any) {
-      setApiError(err.message || "Error al crear la consulta.");
-      enqueueSnackbar(err.message || "Error al crear la consulta.", {
+      const message =
+        err.message ||
+        (isEditMode
+          ? "Error al actualizar la consulta."
+          : "Error al crear la consulta.");
+      setApiError(message);
+      enqueueSnackbar(message, {
         variant: "error",
+        anchorOrigin: { vertical: "top", horizontal: "center" },
       });
     }
   };
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Realizar una Nueva Consulta</DialogTitle>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <DialogTitle align="center">
+        {isEditMode ? "Editar Consulta" : "Realizar una Nueva Consulta"}
+      </DialogTitle>
+      <Divider variant="middle" />
+      <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
         <DialogContent>
           <Stack spacing={3} sx={{ mt: 1 }}>
             {/* Título */}
@@ -98,7 +151,7 @@ export default function CreateConsultaModal({
                   fullWidth
                   required
                   error={!!errors.titulo}
-                  helperText={errors.titulo?.message}
+                  helperText={errors.titulo?.message || " "}
                   disabled={isSubmitting}
                 />
               )}
@@ -126,7 +179,9 @@ export default function CreateConsultaModal({
                   </Select>
                 )}
               />
-              <FormHelperText>{errors.tema?.message as string}</FormHelperText>
+              <FormHelperText sx={{ minHeight: "1.25em" }}>
+                {errors.tema?.message || " "}
+              </FormHelperText>
             </FormControl>
             {/* Descripción */}
             <Controller
@@ -135,18 +190,17 @@ export default function CreateConsultaModal({
               render={({ field }) => (
                 <TextField
                   {...field}
-                  label="Describe tu duda..."
+                  label="Describe tu consulta..."
                   fullWidth
                   required
                   multiline
                   rows={4}
                   error={!!errors.descripcion}
-                  helperText={errors.descripcion?.message}
+                  helperText={errors.descripcion?.message || " "}
                   disabled={isSubmitting}
                 />
               )}
             />
-            {apiError && <Alert severity="error">{apiError}</Alert>}
           </Stack>
         </DialogContent>
         <DialogActions>
@@ -154,10 +208,16 @@ export default function CreateConsultaModal({
             Cancelar
           </Button>
           <Button type="submit" variant="contained" disabled={isSubmitting}>
-            {isSubmitting ? <CircularProgress size={24} /> : "Enviar Consulta"}
+            {isSubmitting ? (
+              <CircularProgress size={24} />
+            ) : isEditMode ? (
+              "Guardar Cambios"
+            ) : (
+              "Enviar Consulta"
+            )}
           </Button>
         </DialogActions>
-      </form>
+      </Box>
     </Dialog>
   );
 }

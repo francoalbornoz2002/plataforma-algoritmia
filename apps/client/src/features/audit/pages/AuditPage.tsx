@@ -294,13 +294,15 @@ export default function AuditPage() {
   );
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        Logs de Auditoría
-      </Typography>
-
+    <Box
+      sx={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       {/* --- B. Filtros --- */}
-      <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
+      <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
         <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
           Filtros de búsqueda
         </Typography>

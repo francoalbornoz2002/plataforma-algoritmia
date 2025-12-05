@@ -19,10 +19,7 @@ const docenteSchema = z.object({
 
 // --- Esquema Principal del Formulario ---
 export const courseFormSchema = z.object({
-  nombre: z
-    .string()
-    .min(3, "El nombre debe tener al menos 3 caracteres")
-    .max(255),
+  nombre: z.string().min(1, "El nombre del curso es obligatorio").max(255),
   descripcion: z
     .string()
     .min(10, "La descripción debe tener al menos 10 caracteres")

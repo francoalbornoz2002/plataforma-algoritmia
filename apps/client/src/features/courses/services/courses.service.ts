@@ -100,9 +100,9 @@ export const createCourse = async (
       },
     });
     return response.data;
-  } catch (err: any) {
-    console.error("Error creating course:", err.response?.data || err.message);
-    throw err.response?.data || new Error("Error al crear el curso.");
+  } catch (error: any) {
+    console.error("Error al crear el curso:", error);
+    throw error;
   }
 };
 

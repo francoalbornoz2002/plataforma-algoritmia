@@ -24,8 +24,6 @@ import { estado_consulta } from "../../../types";
 
 import TemaChip from "../../../components/TemaChip";
 import EstadoConsultaChip from "../../../components/EstadoConsultaChip";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 
 interface ConsultaAccordionAlumnoProps {
   consulta: Consulta;
@@ -85,15 +83,16 @@ export default function ConsultaAccordionAlumno({
         >
           {/* Columna Izquierda: Título y Tema */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="overline" noWrap>
+              {fechaConsultaFormateada}
+            </Typography>
             <Stack direction="row" spacing={1}>
-              <Typography variant="overline" noWrap>
-                {fechaConsultaFormateada}
-              </Typography>
               <Typography variant="h6" noWrap>
                 {titulo}
               </Typography>
+              <Divider orientation="vertical" flexItem />
+              <TemaChip tema={tema} />
             </Stack>
-            <TemaChip tema={tema} />
           </Box>
           {/* Columna Derecha: Estado */}
           <Box>
@@ -118,7 +117,7 @@ export default function ConsultaAccordionAlumno({
           {/* Descripción (pregunta) */}
           <Box>
             <Typography variant="overline" color="text.secondary">
-              Tu Pregunta
+              Tu Consulta
             </Typography>
             <Typography variant="body2">{descripcion}</Typography>
           </Box>

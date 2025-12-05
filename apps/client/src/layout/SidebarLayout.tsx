@@ -57,12 +57,12 @@ export default function SidebarLayout() {
       path: "/course/sessions", // (Ruta futura)
     },
     {
-      text: "Consultas",
+      text: "Consultas del curso",
       icon: <MarkUnreadChatAltIcon />,
       path: "/course/consults",
     },
     {
-      text: "Clases de consulta",
+      text: "Clases de consulta del curso",
       icon: <Class />,
       path: "/course/consult-classes",
     },

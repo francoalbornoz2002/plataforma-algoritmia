@@ -17,6 +17,7 @@ import {
   Autocomplete,
   Checkbox,
   ListItemText,
+  Paper,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import CourseCard, { type CourseData } from "../components/CourseCard";
@@ -286,113 +287,116 @@ export default function CoursesPage() {
         flexDirection: "column",
       }}
     >
-      <Typography variant="h4" gutterBottom>
-        Gestión de Cursos
-      </Typography>
-
-      {/* --- Filter and Action Bar (ACTUALIZADO) --- */}
-      <Stack direction="row" spacing={2} alignItems="center">
-        <TextField
-          size="small"
-          label="Buscar curso..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{ minWidth: 300 }}
-          variant="outlined"
-        />
-        {/* --- Filtro por ordenamiento --- */}
-        <FormControl
-          size="small"
-          sx={{ minWidth: 180, width: { xs: "100%", sm: "auto" } }}
-        >
-          <InputLabel>Ordenar por</InputLabel>
-          <Select
-            value={sortField}
-            label="Ordenar por"
-            onChange={handleSortChange}
+      {/* --- Filtros y botón de añadir curso --- */}
+      <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
+        <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
+          Filtros de búsqueda
+        </Typography>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <TextField
+            size="small"
+            label="Buscar curso..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{ minWidth: 300 }}
+            variant="outlined"
+          />
+          {/* --- Filtro por ordenamiento --- */}
+          <FormControl
+            size="small"
+            sx={{ minWidth: 180, width: { xs: "100%", sm: "auto" } }}
           >
-            {sortOptions.map((option) => (
-              <MenuItem key={option.field} value={option.field}>
-                {option.label}{" "}
-                {sortField === option.field
-                  ? sortOrder === "asc"
-                    ? "↑"
-                    : "↓"
-                  : ""}
+            <InputLabel>Ordenar por</InputLabel>
+            <Select
+              value={sortField}
+              label="Ordenar por"
+              onChange={handleSortChange}
+            >
+              {sortOptions.map((option) => (
+                <MenuItem key={option.field} value={option.field}>
+                  {option.label}{" "}
+                  {sortField === option.field
+                    ? sortOrder === "asc"
+                      ? "↑"
+                      : "↓"
+                    : ""}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {/* --- Filtro de Docentes --- */}
+          <Autocomplete
+            multiple
+            id="docentes-filter"
+            options={allDocentes}
+            loading={docentesLoading}
+            value={selectedDocentes}
+            onChange={handleDocentesChange}
+            disableCloseOnSelect
+            getOptionLabel={(option) => `${option.nombre} ${option.apellido}`}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            renderOption={(props, option, { selected }) => {
+              // Extraemos la key que React y MUI ponen en 'props'
+              const { key, ...liProps } = props as any;
+              return (
+                <li key={key} {...liProps}>
+                  {" "}
+                  {/* Pasamos la key por separado */}
+                  <Checkbox style={{ marginRight: 8 }} checked={selected} />
+                  <ListItemText
+                    primary={`${option.nombre} ${option.apellido}`}
+                  />
+                </li>
+              );
+            }}
+            style={{ minWidth: 250 }}
+            sx={{ width: { xs: "100%", sm: "auto" } }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                size="small"
+                label="Docentes"
+                placeholder="Buscar docente..."
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: (
+                    <>
+                      {docentesLoading ? (
+                        <CircularProgress color="inherit" size={20} />
+                      ) : null}
+                      {params.InputProps.endAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
+          />
+          {/* --- Filtro de Estado --- */}
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Estado</InputLabel>
+            <Select value={estado} label="Estado" onChange={handleEstadoChange}>
+              <MenuItem value="">
+                <em>Todos</em>
               </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        {/* --- AÑADIDO: Filtro de Docentes --- */}
-        <Autocomplete
-          multiple
-          id="docentes-filter"
-          options={allDocentes}
-          loading={docentesLoading}
-          value={selectedDocentes}
-          onChange={handleDocentesChange}
-          disableCloseOnSelect
-          getOptionLabel={(option) => `${option.nombre} ${option.apellido}`}
-          isOptionEqualToValue={(option, value) => option.id === value.id}
-          renderOption={(props, option, { selected }) => {
-            // Extraemos la key que React y MUI ponen en 'props'
-            const { key, ...liProps } = props as any;
-            return (
-              <li key={key} {...liProps}>
-                {" "}
-                {/* Pasamos la key por separado */}
-                <Checkbox style={{ marginRight: 8 }} checked={selected} />
-                <ListItemText primary={`${option.nombre} ${option.apellido}`} />
-              </li>
-            );
-          }}
-          style={{ minWidth: 250 }}
-          sx={{ width: { xs: "100%", sm: "auto" } }}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              size="small"
-              label="Docentes"
-              placeholder="Buscar docente..."
-              InputProps={{
-                ...params.InputProps,
-                endAdornment: (
-                  <>
-                    {docentesLoading ? (
-                      <CircularProgress color="inherit" size={20} />
-                    ) : null}
-                    {params.InputProps.endAdornment}
-                  </>
-                ),
-              }}
-            />
-          )}
-        />
-        {/* --- AÑADIDO: Filtro de Estado --- */}
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Estado</InputLabel>
-          <Select value={estado} label="Estado" onChange={handleEstadoChange}>
-            <MenuItem value="">
-              <em>Todos</em>
-            </MenuItem>
-            <MenuItem value={EstadoSimpleEnum.Activo}>Activo</MenuItem>
-            <MenuItem value={EstadoSimpleEnum.Inactivo}>Inactivo</MenuItem>
-          </Select>
-        </FormControl>
-        <Box
-          sx={{ flexGrow: { sm: 1 }, display: { xs: "none", sm: "block" } }}
-        />{" "}
-        {/* Spacer */}
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleAddCourseClick}
-          disabled={isLoading}
-          sx={{ width: { xs: "100%", sm: "auto" }, mt: { xs: 1, sm: 0 } }}
-        >
-          Añadir Curso
-        </Button>
-      </Stack>
+              <MenuItem value={EstadoSimpleEnum.Activo}>Activo</MenuItem>
+              <MenuItem value={EstadoSimpleEnum.Inactivo}>Inactivo</MenuItem>
+            </Select>
+          </FormControl>
+          <Box
+            sx={{ flexGrow: { sm: 1 }, display: { xs: "none", sm: "block" } }}
+          />{" "}
+          {/* Spacer */}
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleAddCourseClick}
+            disabled={isLoading}
+            sx={{ width: { xs: "100%", sm: "auto" }, mt: { xs: 1, sm: 0 } }}
+          >
+            Crear Curso
+          </Button>
+        </Stack>
+      </Paper>
 
       {/* --- Loading / Error / Content --- */}
       {isLoading ? (
@@ -413,7 +417,7 @@ export default function CoursesPage() {
       ) : (
         <>
           {/* --- Grid for Cards --- */}
-          <Box sx={{ flexGrow: 1, mt: 2 }}>
+          <Box sx={{ flexGrow: 1 }}>
             <Grid container spacing={3}>
               {cursos.length > 0 ? (
                 cursos.map((curso) => (

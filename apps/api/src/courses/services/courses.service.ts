@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException, // Para permisos
   Injectable,
   InternalServerErrorException, // Para errores genéricos
@@ -26,20 +27,38 @@ export class CoursesService {
    * Solo accesible por Administradores.
    */
   async create(dto: CreateCourseDto, imagen: Express.Multer.File) {
+    const {
+      nombre,
+      descripcion,
+      contrasenaAcceso,
+      modalidadPreferencial,
+      docenteIds,
+      diasClase,
+    } = dto;
+
+    // VALIDACIÓN DE DÍAS DE CLASE
+    this.validateDiasClase(diasClase);
+
+    // 1. Verificamos si el nombre o descripción ya existen en los cursos registrados
+    const cursoExistente = await this.prisma.curso.findFirst({
+      where: {
+        OR: [{ nombre: nombre }, { descripcion: descripcion }],
+      },
+    });
+
+    if (cursoExistente) {
+      if (cursoExistente.nombre === nombre) {
+        throw new ConflictException('Ya existe un curso con ese nombre.');
+      } else {
+        throw new ConflictException('Ya existe un curso con esa descripción.');
+      }
+    }
+
+    // Manejo de imagen
+    const imagenUrl =
+      imagen && imagen.filename ? `/uploads/${imagen.filename}` : null;
+
     try {
-      const {
-        nombre,
-        descripcion,
-        contrasenaAcceso,
-        modalidadPreferencial,
-        docenteIds,
-        diasClase,
-      } = dto;
-
-      // Manejo de imagen
-      const imagenUrl =
-        imagen && imagen.filename ? `/uploads/${imagen.filename}` : null;
-
       return await this.prisma.$transaction(async (tx) => {
         // 1. Crear dependencias
         const progreso = await tx.progresoCurso.create({ data: {} });
@@ -216,55 +235,78 @@ export class CoursesService {
     imagen: Express.Multer.File,
     user: UserPayload, // El usuario autenticado (desde el Controller)
   ) {
-    try {
-      // 1. Verificar que el curso existe y obtener imagen antigua
-      const cursoExistente = await this.prisma.curso.findUnique({
-        where: { id },
-        select: { imagenUrl: true },
+    // 1. Verificar que el curso existe y obtener imagen antigua
+    const cursoExistente = await this.prisma.curso.findUnique({
+      where: { id },
+      select: { imagenUrl: true },
+    });
+    if (!cursoExistente) {
+      throw new NotFoundException(`Curso con ID '${id}' no encontrado.`);
+    }
+    const oldImagenUrl = cursoExistente.imagenUrl;
+
+    // 2. Preparar los datos a actualizar
+    const dataToUpdate: Prisma.CursoUpdateInput = {};
+    const { docenteIds, diasClase, ...dataBasica } = dto;
+
+    if (diasClase) {
+      this.validateDiasClase(diasClase);
+    }
+
+    const diasClaseToSync: DiaClaseDto[] | undefined = diasClase;
+    const newImageUploaded = imagen && imagen.filename;
+
+    // 3. Lógica de Permisos
+    if (user.rol === roles.Administrador) {
+      Object.assign(dataToUpdate, dataBasica);
+      if (newImageUploaded) {
+        dataToUpdate.imagenUrl = `/uploads/${imagen.filename}`; // <-- Se guarda con prefijo
+      }
+    } else if (user.rol === roles.Docente) {
+      const isDocenteOfCourse = await this.prisma.docenteCurso.findFirst({
+        where: { idCurso: id, idDocente: user.userId, estado: 'Activo' },
       });
-      if (!cursoExistente) {
-        throw new NotFoundException(`Curso con ID '${id}' no encontrado.`);
+      if (!isDocenteOfCourse) {
+        throw new ForbiddenException(
+          'No tienes permiso para editar este curso.',
+        );
       }
-      const oldImagenUrl = cursoExistente.imagenUrl;
+      if (dto.nombre || dto.docenteIds) {
+        throw new ForbiddenException(
+          'Los docentes solo pueden modificar: descripción, imagen, días de clase, contraseña y modalidad preferencial.',
+        );
+      }
+      if (dto.descripcion) dataToUpdate.descripcion = dto.descripcion;
+      if (dto.contrasenaAcceso)
+        dataToUpdate.contrasenaAcceso = dto.contrasenaAcceso;
+      if (dto.modalidadPreferencial)
+        dataToUpdate.modalidadPreferencial = dto.modalidadPreferencial;
+      if (newImageUploaded) {
+        dataToUpdate.imagenUrl = `/uploads/${imagen.filename}`; // <-- Se guarda con prefijo
+      }
+    } else {
+      throw new ForbiddenException('No tienes permisos para esta acción.');
+    }
 
-      // 2. Preparar los datos a actualizar
-      const dataToUpdate: Prisma.CursoUpdateInput = {};
-      const { docenteIds, diasClase, ...dataBasica } = dto;
-      const diasClaseToSync: DiaClaseDto[] | undefined = diasClase;
-      const newImageUploaded = imagen && imagen.filename;
+    // 1. Verificamos si el nombre o descripción ya existen en los cursos registrados
+    const otroCurso = await this.prisma.curso.findFirst({
+      where: {
+        OR: [
+          { nombre: dataBasica.nombre },
+          { descripcion: dataBasica.descripcion },
+        ],
+      },
+    });
 
-      // 3. Lógica de Permisos
-      if (user.rol === roles.Administrador) {
-        Object.assign(dataToUpdate, dataBasica);
-        if (newImageUploaded) {
-          dataToUpdate.imagenUrl = `/uploads/${imagen.filename}`; // <-- Se guarda con prefijo
-        }
-      } else if (user.rol === roles.Docente) {
-        const isDocenteOfCourse = await this.prisma.docenteCurso.findFirst({
-          where: { idCurso: id, idDocente: user.userId, estado: 'Activo' },
-        });
-        if (!isDocenteOfCourse) {
-          throw new ForbiddenException(
-            'No tienes permiso para editar este curso.',
-          );
-        }
-        if (dto.nombre || dto.docenteIds) {
-          throw new ForbiddenException(
-            'Los docentes solo pueden modificar: descripción, imagen, días de clase, contraseña y modalidad preferencial.',
-          );
-        }
-        if (dto.descripcion) dataToUpdate.descripcion = dto.descripcion;
-        if (dto.contrasenaAcceso)
-          dataToUpdate.contrasenaAcceso = dto.contrasenaAcceso;
-        if (dto.modalidadPreferencial)
-          dataToUpdate.modalidadPreferencial = dto.modalidadPreferencial;
-        if (newImageUploaded) {
-          dataToUpdate.imagenUrl = `/uploads/${imagen.filename}`; // <-- Se guarda con prefijo
-        }
+    if (otroCurso?.id !== id) {
+      if (otroCurso?.nombre === dataBasica.nombre) {
+        throw new ConflictException('Ya existe un curso con ese nombre.');
       } else {
-        throw new ForbiddenException('No tienes permisos para esta acción.');
+        throw new ConflictException('Ya existe un curso con esa descripción.');
       }
+    }
 
+    try {
       // 4. Ejecutar la transacción
       const cursoActualizado = await this.prisma.$transaction(async (tx) => {
         const cursoActualizadoTx = await tx.curso.update({
@@ -489,6 +531,44 @@ export class CoursesService {
           horaFin: timeToDate(dia.horaFin),
         },
       });
+    }
+  }
+
+  private validateDiasClase(diasClase: DiaClaseDto[]) {
+    // 1. Validar que horaInicio < horaFin para cada día
+    for (const dia of diasClase) {
+      if (dia.horaInicio >= dia.horaFin) {
+        throw new BadRequestException(
+          `En el día ${dia.dia}, la hora de inicio (${dia.horaInicio}) debe ser anterior a la hora de fin (${dia.horaFin}).`,
+        );
+      }
+    }
+
+    // 2. Validar que no haya solapamientos en el mismo día
+    const diasAgrupados = diasClase.reduce(
+      (acc, dia) => {
+        if (!acc[dia.dia]) {
+          acc[dia.dia] = [];
+        }
+        acc[dia.dia].push(dia);
+        return acc;
+      },
+      {} as Record<string, DiaClaseDto[]>,
+    );
+
+    for (const diaSemana in diasAgrupados) {
+      const clasesDelDia = diasAgrupados[diaSemana];
+      // Ordenar por hora de inicio
+      clasesDelDia.sort((a, b) => a.horaInicio.localeCompare(b.horaInicio));
+
+      // Comprobar solapamientos
+      for (let i = 0; i < clasesDelDia.length - 1; i++) {
+        if (clasesDelDia[i].horaFin > clasesDelDia[i + 1].horaInicio) {
+          throw new ConflictException(
+            `Hay un solapamiento de horarios el día ${diaSemana}.`,
+          );
+        }
+      }
     }
   }
 }

@@ -252,7 +252,7 @@ export const FinalizarClaseModal = ({
                 error={realizada === "no" && !motivo.trim()}
                 helperText={
                   realizada === "no" && !motivo.trim()
-                    ? "El motivo es obligatorio"
+                    ? "El motivo es obligatorio" // No necesita || " " porque siempre hay un mensaje aquí
                     : "Este motivo quedará registrado en el historial"
                 }
               />

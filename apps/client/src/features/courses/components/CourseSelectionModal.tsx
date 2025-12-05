@@ -9,6 +9,7 @@ import {
   CircularProgress,
   Alert,
   Grid,
+  Tooltip,
   Typography,
 } from "@mui/material";
 
@@ -88,15 +89,31 @@ export default function CourseSelectionModal({
     return new Set(ids);
   }, [myCourses]); // Se recalcula solo si 'myCourses' cambia
 
+  // Verificamos si el alumno ya está inscripto en CUALQUIER curso.
+  const isEnrolledInAnyCourse = useMemo(() => {
+    if (!isStudent) return false;
+    // Si la lista de "Mis Cursos" tiene al menos un elemento, está inscripto.
+    return myCourses.length > 0;
+  }, [myCourses, isStudent]);
+
   // --- EFECTO: Cargar datos al abrir el modal ---
   useEffect(() => {
     if (open) {
       // 1. Cargar "Mis Cursos"
       setMyCoursesLoading(true);
       setMyCoursesError(null);
+      // Reseteamos al tab 0 por defecto mientras carga
+      setTabValue(0);
 
       fetchMyData()
-        .then((data) => setMyCourses(data as MyCourseEntry[]))
+        .then((data) => {
+          const courses = data as MyCourseEntry[];
+          setMyCourses(courses);
+          // Si es alumno y no tiene cursos, lo mandamos a inscribirse
+          if (isStudent && courses.length === 0) {
+            setTabValue(1);
+          }
+        })
         .catch((err) => setMyCoursesError(err.message))
         .finally(() => setMyCoursesLoading(false));
 
@@ -117,10 +134,18 @@ export default function CourseSelectionModal({
           .catch((err) => setAllCoursesError(err.message))
           .finally(() => setAllCoursesLoading(false));
       }
+    } else {
+      // Al cerrar, reseteamos el tab para la próxima vez que se abra
+      setTabValue(0);
     }
   }, [open, isStudent, fetchMyData]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    // Si se intenta cambiar a la pestaña "Inscribirse" (índice 1) y el alumno ya está inscripto,
+    // no hacemos nada para prevenir la navegación.
+    if (newValue === 1 && isEnrolledInAnyCourse) {
+      return;
+    }
     setTabValue(newValue);
   };
 
@@ -150,13 +175,29 @@ export default function CourseSelectionModal({
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Tabs value={tabValue} onChange={handleTabChange} centered>
             <Tab label="Mis Cursos" />
-            {isStudent && <Tab label="Inscribirse a un Curso" />}
+            {isStudent && (
+              <Tooltip
+                title={
+                  isEnrolledInAnyCourse
+                    ? "Ya estás inscripto en un curso. Solo puedes tener una inscripción a la vez."
+                    : ""
+                }
+              >
+                <Tab
+                  label="Inscribirse a un Curso"
+                  sx={{
+                    cursor: isEnrolledInAnyCourse ? "not-allowed" : "pointer",
+                    opacity: isEnrolledInAnyCourse ? 0.6 : 1,
+                  }}
+                />
+              </Tooltip>
+            )}
           </Tabs>
         </Box>
 
         {/* --- Pestaña 0: "Mis Cursos" --- */}
-        <DialogContent sx={{ minHeight: "400px", bgcolor: "#f9f9f9" }}>
-          <Box hidden={tabValue !== 0}>
+        {tabValue === 0 && (
+          <DialogContent sx={{ minHeight: "400px", bgcolor: "#f9f9f9" }}>
             {myCoursesLoading ? (
               <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
                 <CircularProgress />
@@ -176,7 +217,6 @@ export default function CourseSelectionModal({
                     size={{ xs: 12, sm: 6, md: 4 }}
                     key={inscripcion.curso.id}
                   >
-                    {/* Usamos el nuevo componente MyCoursesCard */}
                     <MyCoursesCard
                       inscripcion={inscripcion}
                       onClick={handleSelectCourse}
@@ -185,39 +225,36 @@ export default function CourseSelectionModal({
                 ))}
               </Grid>
             )}
-          </Box>
+          </DialogContent>
+        )}
 
-          {/* --- Pestaña 1: "Inscribirse a un Curso" (Solo Alumno) --- */}
-          {isStudent && (
-            <Box hidden={tabValue !== 1}>
-              {allCoursesLoading ? (
-                <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
-                  <CircularProgress />
-                </Box>
-              ) : allCoursesError ? (
-                <Alert severity="error">{allCoursesError}</Alert>
-              ) : (
-                <Grid container spacing={2}>
-                  {allCourses.map((curso) => {
-                    // --- ¡CAMBIO AQUÍ! ---
-                    // Comprobamos si el ID de este curso está en nuestro Set
-                    const isEnrolled = enrolledCourseIds.has(curso.id);
-
-                    return (
-                      <Grid size={{ xs: 12, sm: 6, md: 4 }} key={curso.id}>
-                        <JoinCourseCard
-                          course={curso}
-                          onJoin={setJoiningCourse}
-                          isEnrolled={isEnrolled} // <-- Pasamos la nueva prop
-                        />
-                      </Grid>
-                    );
-                  })}
-                </Grid>
-              )}
-            </Box>
-          )}
-        </DialogContent>
+        {/* --- Pestaña 1: "Inscribirse a un Curso" (Solo Alumno) --- */}
+        {tabValue === 1 && isStudent && (
+          <DialogContent sx={{ minHeight: "400px", bgcolor: "#f9f9f9" }}>
+            {allCoursesLoading ? (
+              <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : allCoursesError ? (
+              <Alert severity="error">{allCoursesError}</Alert>
+            ) : (
+              <Grid container spacing={2}>
+                {allCourses.map((curso) => {
+                  const isEnrolled = enrolledCourseIds.has(curso.id);
+                  return (
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={curso.id}>
+                      <JoinCourseCard
+                        course={curso}
+                        onJoin={setJoiningCourse}
+                        isEnrolled={isEnrolled}
+                      />
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            )}
+          </DialogContent>
+        )}
       </Dialog>
 
       {/* --- El Modal "Chiquito" (de Contraseña) --- */}

@@ -73,12 +73,23 @@ export default function JoinCourseModal({
     }
   };
 
+  if (error) {
+    enqueueSnackbar(error, {
+      variant: "error",
+      anchorOrigin: {
+        vertical: "top",
+        horizontal: "center",
+      },
+    });
+    setError(null);
+  }
+
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Inscribirse a "{course.nombre}"</DialogTitle>
+      <DialogTitle>Inscribirse a {course.nombre}</DialogTitle>
       <form onSubmit={handleSubmit}>
         <DialogContent>
-          <DialogContentText sx={{ mb: 2 }}>
+          <DialogContentText sx={{ mb: 3, mt: -3 }}>
             Por favor, introduce la contraseña de acceso para unirte a este
             curso.
           </DialogContentText>
@@ -93,11 +104,6 @@ export default function JoinCourseModal({
             onChange={(e) => setPassword(e.target.value)}
             disabled={isJoining}
           />
-          {error && (
-            <Alert severity="error" sx={{ mt: 2 }}>
-              {error}
-            </Alert>
-          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} disabled={isJoining}>

@@ -108,7 +108,13 @@ export default function AceptarManualModal({
             minDate={minDate}
             maxDate={maxDate}
             disablePast
-            slotProps={{ textField: { fullWidth: true } }}
+            slotProps={{
+              textField: {
+                fullWidth: true,
+                helperText: " ",
+                InputProps: { readOnly: true }, // Deshabilita la escritura directa
+              },
+            }}
           />
 
           <Stack direction="row" spacing={2}>
@@ -118,14 +124,26 @@ export default function AceptarManualModal({
               ampm={false} // Formato 24hs
               value={horaInicio}
               onChange={(newValue) => setHoraInicio(newValue)}
-              slotProps={{ textField: { fullWidth: true } }}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  helperText: " ",
+                  InputProps: { readOnly: true }, // Deshabilita la escritura directa
+                },
+              }}
             />
             <TimePicker
               label="Hora Fin"
               ampm={false}
               value={horaFin}
               onChange={(newValue) => setHoraFin(newValue)}
-              slotProps={{ textField: { fullWidth: true } }}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  helperText: " ",
+                  InputProps: { readOnly: true }, // Deshabilita la escritura directa
+                },
+              }}
             />
           </Stack>
 

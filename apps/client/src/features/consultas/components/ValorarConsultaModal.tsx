@@ -98,8 +98,8 @@ export default function ValorarConsultaModal({
                   />
                 )}
               />
-              <FormHelperText>
-                {errors.valoracion?.message as string}
+              <FormHelperText sx={{ minHeight: "1.25em" }}>
+                {errors.valoracion?.message || " "}
               </FormHelperText>
             </FormControl>
 
@@ -115,7 +115,7 @@ export default function ValorarConsultaModal({
                   multiline
                   rows={3}
                   error={!!errors.comentarioValoracion}
-                  helperText={errors.comentarioValoracion?.message}
+                  helperText={errors.comentarioValoracion?.message || " "}
                   disabled={isSubmitting}
                 />
               )}

@@ -162,12 +162,11 @@ export default function UserFormDialog({
   }
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle align="center">
         {isEditMode ? "Editar Usuario" : "Crear Nuevo Usuario"}
       </DialogTitle>
       <Divider variant="middle" />
-      {/* Usamos handleSubmit aquí */}
       <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
         <DialogContent>
           <Stack spacing={2}>
@@ -266,7 +265,9 @@ export default function UserFormDialog({
                         </MenuItem>
                       ))}
                     </Select>
-                    {error && <FormHelperText>{error.message}</FormHelperText>}
+                    <FormHelperText sx={{ minHeight: "1.25em" }}>
+                      {error?.message || " "}
+                    </FormHelperText>
                   </FormControl>
                 )}
               />
@@ -348,7 +349,9 @@ export default function UserFormDialog({
                       </MenuItem>
                     ))}
                   </Select>
-                  {error && <FormHelperText>{error.message}</FormHelperText>}
+                  <FormHelperText sx={{ minHeight: "1.25em" }}>
+                    {error?.message || " "}
+                  </FormHelperText>
                 </FormControl>
               )}
             />

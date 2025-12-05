@@ -13,8 +13,9 @@ import {
   FormHelperText,
   Stack,
   CircularProgress,
-  Alert,
   Typography,
+  Box,
+  Divider,
 } from "@mui/material";
 import { useForm, Controller, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -113,6 +114,20 @@ export default function ClaseConsultaFormModal({
   // "Escuchamos" el campo consultasIds para mostrar el contador
   const consultasIdsValue = watch("consultasIds") || [];
 
+  // Observamos la fecha de la clase para la lógica de deshabilitar el pasado en los TimePickers
+  const fechaClaseValue = watch("fechaClase");
+
+  const isTodaySelected = useMemo(() => {
+    if (!fechaClaseValue) return false;
+
+    const today = new Date();
+    const selectedDate = parseLocalDate(fechaClaseValue);
+
+    if (!selectedDate) return false;
+
+    return selectedDate.toDateString() === today.toDateString();
+  }, [fechaClaseValue]);
+
   // 2. useEffect de 'reset' (Corregido)
   useEffect(() => {
     if (isEditMode && claseToEdit) {
@@ -193,6 +208,10 @@ export default function ClaseConsultaFormModal({
       setApiError(err.message || "Error al guardar la clase.");
       enqueueSnackbar(err.message || "Error al guardar la clase.", {
         variant: "error",
+        anchorOrigin: {
+          vertical: "top",
+          horizontal: "center",
+        },
       });
     }
   };
@@ -234,12 +253,13 @@ export default function ClaseConsultaFormModal({
   return (
     <>
       <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-        <DialogTitle>
+        <DialogTitle align="center">
           {isEditMode ? "Editar" : "Crear"} Clase de Consulta
         </DialogTitle>
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <Divider variant="middle" />
+        <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
           <DialogContent>
-            <Stack spacing={3} sx={{ mt: 1 }}>
+            <Stack spacing={2} sx={{ mt: 1 }}>
               {/* Fila 1: Nombre y Docente */}
               <Stack direction="row" spacing={2}>
                 <Controller
@@ -252,7 +272,7 @@ export default function ClaseConsultaFormModal({
                       fullWidth
                       required
                       error={!!errors.nombre}
-                      helperText={errors.nombre?.message}
+                      helperText={errors.nombre?.message || " "}
                     />
                   )}
                 />
@@ -274,8 +294,9 @@ export default function ClaseConsultaFormModal({
                       </Select>
                     )}
                   />
-                  <FormHelperText>
-                    {errors.idDocente?.message as string}
+                  <FormHelperText sx={{ minHeight: "1.25em" }}>
+                    {/* Siempre renderizamos un espacio para evitar saltos */}
+                    {errors.idDocente?.message || " "}
                   </FormHelperText>
                 </FormControl>
               </Stack>
@@ -299,10 +320,11 @@ export default function ClaseConsultaFormModal({
                       disablePast
                       slotProps={{
                         textField: {
+                          InputProps: { readOnly: true }, // Deshabilita la escritura directa
                           fullWidth: true,
                           required: true,
                           error: !!errors.fechaClase,
-                          helperText: errors.fechaClase?.message as string,
+                          helperText: errors.fechaClase?.message || " ",
                         },
                       }}
                     />
@@ -313,19 +335,20 @@ export default function ClaseConsultaFormModal({
                   control={control}
                   render={({ field }) => (
                     <TimePicker
-                      label="Hora Inicio (HH:mm)"
+                      label="Hora Inicio"
                       ampm={false}
-                      disablePast
+                      disablePast={isTodaySelected} // Condicionalmente deshabilitar pasado
                       value={field.value ? timeToDate(field.value) : null}
                       onChange={(newDate) =>
                         field.onChange(newDate ? format(newDate, "HH:mm") : "")
                       }
                       slotProps={{
                         textField: {
+                          InputProps: { readOnly: true },
                           fullWidth: true,
                           required: true,
                           error: !!errors.horaInicio,
-                          helperText: errors.horaInicio?.message as string,
+                          helperText: errors.horaInicio?.message || " ",
                         },
                       }}
                     />
@@ -336,9 +359,9 @@ export default function ClaseConsultaFormModal({
                   control={control}
                   render={({ field }) => (
                     <TimePicker
-                      label="Hora Fin (HH:mm)"
+                      label="Hora Fin"
                       ampm={false}
-                      disablePast
+                      disablePast={isTodaySelected} // Condicionalmente deshabilitar pasado
                       value={field.value ? timeToDate(field.value) : null}
                       onChange={(newDate) =>
                         field.onChange(newDate ? format(newDate, "HH:mm") : "")
@@ -346,10 +369,11 @@ export default function ClaseConsultaFormModal({
                       maxTime={maxTimeValue}
                       slotProps={{
                         textField: {
+                          InputProps: { readOnly: true },
                           fullWidth: true,
                           required: true,
                           error: !!errors.horaFin,
-                          helperText: errors.horaFin?.message as string,
+                          helperText: errors.horaFin?.message || " ",
                         },
                       }}
                     />
@@ -373,8 +397,9 @@ export default function ClaseConsultaFormModal({
                       </Select>
                     )}
                   />
-                  <FormHelperText>
-                    {errors.modalidad?.message as string}
+                  <FormHelperText sx={{ minHeight: "1.25em" }}>
+                    {/* Siempre renderizamos un espacio para evitar saltos */}
+                    {errors.modalidad?.message || " "}
                   </FormHelperText>
                 </FormControl>
               </Stack>
@@ -392,7 +417,7 @@ export default function ClaseConsultaFormModal({
                     rows={3}
                     required
                     error={!!errors.descripcion}
-                    helperText={errors.descripcion?.message}
+                    helperText={errors.descripcion?.message || " "}
                   />
                 )}
               />
@@ -409,12 +434,11 @@ export default function ClaseConsultaFormModal({
                   Seleccionar Consultas ({consultasIdsValue.length}{" "}
                   seleccionadas)
                 </Button>
-                <FormHelperText>
-                  {errors.consultasIds?.message as string}
+                <FormHelperText sx={{ minHeight: "1.25em" }}>
+                  {/* Siempre renderizamos un espacio para evitar saltos */}
+                  {errors.consultasIds?.message || " "}
                 </FormHelperText>
               </FormControl>
-
-              {apiError && <Alert severity="error">{apiError}</Alert>}
             </Stack>
           </DialogContent>
           <DialogActions>
@@ -431,7 +455,7 @@ export default function ClaseConsultaFormModal({
               )}
             </Button>
           </DialogActions>
-        </form>
+        </Box>
       </Dialog>
 
       {/* --- RENDERIZAMOS EL MODAL DE SELECCIÓN --- */}

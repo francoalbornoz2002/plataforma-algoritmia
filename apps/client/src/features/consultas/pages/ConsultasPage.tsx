@@ -26,6 +26,7 @@ import {
 
 // Importamos el acordeón que acabamos de crear
 import ConsultaAccordion from "../components/ConsultaAccordion";
+import { EstadoConsultaLabels } from "../../../types/traducciones";
 
 // Constante para la paginación
 const PAGE_SIZE = 10;
@@ -116,18 +117,18 @@ export default function ConsultasPage() {
   return (
     <Box>
       {/* --- 1. Filtros y Orden --- */}
-      <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
+      <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
         <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
           Filtros de búsqueda
         </Typography>
-        <Stack direction="row" spacing={1.5} sx={{ mb: 2 }}>
+        <Stack direction="row" spacing={2}>
           <TextField
             label="Buscar por título o descripción..."
             variant="outlined"
             size="small"
             value={searchTerm}
             onChange={handleSearchChange}
-            sx={{ minWidth: 250, flexGrow: 1 }}
+            sx={{ minWidth: 200, flexGrow: 1 }}
           />
           <FormControl size="small" sx={{ minWidth: 180 }}>
             <InputLabel>Tema</InputLabel>
@@ -136,6 +137,7 @@ export default function ConsultasPage() {
               value={filters.tema}
               label="Tema"
               onChange={handleFilterChange}
+              sx={{ minWidth: 300 }}
             >
               <MenuItem value="">Todos</MenuItem>
               {Object.values(temas)
@@ -156,7 +158,7 @@ export default function ConsultasPage() {
               onChange={handleFilterChange}
             >
               <MenuItem value="">Todos</MenuItem>
-              {Object.values(estado_consulta).map((e) => (
+              {Object.values(EstadoConsultaLabels).map((e) => (
                 <MenuItem key={e} value={e}>
                   {e}
                 </MenuItem>
@@ -165,10 +167,6 @@ export default function ConsultasPage() {
           </FormControl>
         </Stack>
       </Paper>
-      <Typography variant="h5" gutterBottom>
-        Consultas del curso
-      </Typography>
-
       {/* --- 2. Lista de Consultas (Acordeones) --- */}
       {loading ? (
         <CircularProgress sx={{ display: "block", margin: "auto", mt: 4 }} />

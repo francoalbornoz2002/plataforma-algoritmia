@@ -43,7 +43,6 @@ export default function EstadoConsultaChip({
       icon={icon}
       label={EstadoConsultaLabels[estado]}
       color={color}
-      size="small"
       variant="filled" // Usamos filled para que se destaque
       sx={{ ml: 1, flexShrink: 0 }}
     />

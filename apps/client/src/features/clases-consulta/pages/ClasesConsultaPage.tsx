@@ -354,7 +354,7 @@ export default function ClasesConsultaPage() {
   return (
     <Box>
       {/* --- 1. Filtros y Orden --- */}
-      <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
+      <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
         <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
           Filtros de búsqueda
         </Typography>
@@ -421,8 +421,6 @@ export default function ClasesConsultaPage() {
               ))}
             </Select>
           </FormControl>
-        </Stack>
-        <Stack direction="row">
           <Box sx={{ flexGrow: 1 }} />
           <Button
             variant="contained"
