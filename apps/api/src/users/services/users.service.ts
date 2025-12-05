@@ -43,10 +43,10 @@ export class UsersService {
       },
     });
     if (existingUser) {
-      if (existingUser.email === email) {
-        throw new ConflictException('El correo electrónico ya está en uso.');
-      } else {
+      if (existingUser.dni === dni) {
         throw new ConflictException('El DNI ya está registrado.');
+      } else {
+        throw new ConflictException('El correo electrónico ya está en uso.');
       }
     }
 

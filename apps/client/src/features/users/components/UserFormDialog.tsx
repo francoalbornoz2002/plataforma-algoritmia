@@ -141,9 +141,6 @@ export default function UserFormDialog({
       }
       await onSave(); // Llama a la función para refrescar la tabla
     } catch (error: any) {
-      enqueueSnackbar("Error al guardar el usuario", {
-        variant: "error",
-      });
       console.error("Error saving user:", error);
       setSubmitError(
         error?.response?.data?.message ||
@@ -154,7 +151,13 @@ export default function UserFormDialog({
   };
 
   if (submitError) {
-    enqueueSnackbar(submitError, { variant: "error" });
+    enqueueSnackbar(submitError, {
+      variant: "error",
+      anchorOrigin: {
+        vertical: "top",
+        horizontal: "center",
+      },
+    });
     setSubmitError(null);
   }
 
