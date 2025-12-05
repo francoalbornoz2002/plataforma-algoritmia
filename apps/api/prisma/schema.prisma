@@ -235,7 +235,7 @@ model MisionEspecialCompletada {
   id              String         @id @default(uuid()) @db.Uuid
   idProgreso      String         @map("id_progreso") @db.Uuid
   nombre          String         @db.VarChar(255)
-  descripcion     String         @db.VarChar(255)
+  descripcion     String         @db.Text
   estrellas       Int            @db.SmallInt
   exp             Int            @db.SmallInt
   intentos        Int            @db.SmallInt
@@ -250,7 +250,7 @@ model MisionEspecialCompletada {
 model Mision {
   id                  String             @id @default(uuid()) @db.Uuid
   nombre              String             @unique @db.VarChar(255)
-  descripcion         String             @unique @db.VarChar(255)
+  descripcion         String             @unique @db.Text
   dificultadMision    dificultad_mision  @map("dificultad_mision")
   misionesCompletadas MisionCompletada[]
 
