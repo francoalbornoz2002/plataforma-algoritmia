@@ -100,7 +100,21 @@ export class ProgressService {
             alumno: {
               select: { nombre: true, apellido: true },
             },
-            progresoAlumno: true, // Incluimos todos los datos de progreso
+            // --- CAMBIO AQUÍ ---
+            progresoAlumno: {
+              include: {
+                // Traemos las especiales
+                misionesEspeciales: {
+                  orderBy: { fechaCompletado: 'desc' },
+                },
+                // Y las normales con sus detalles
+                misionesCompletadas: {
+                  include: { mision: true },
+                  orderBy: { fechaCompletado: 'desc' },
+                },
+              },
+            },
+            // -------------------
           },
         }),
         // Consulta para obtener el conteo total
@@ -146,9 +160,19 @@ export class ProgressService {
             idCurso: idCurso,
           },
         },
-        // 2. Incluimos el progreso de esa inscripción
+        // 2. Incluimos el progreso de esa inscripción y misiones
         include: {
-          progresoAlumno: true,
+          progresoAlumno: {
+            include: {
+              misionesEspeciales: {
+                orderBy: { fechaCompletado: 'desc' },
+              },
+              misionesCompletadas: {
+                include: { mision: true },
+                orderBy: { fechaCompletado: 'desc' },
+              },
+            },
+          },
         },
       });
 

@@ -418,10 +418,7 @@ export default function ProgressPage() {
         <StudentProgressDetailModal
           open={!!viewingStudent}
           onClose={() => setViewingStudent(null)}
-          idCurso={selectedCourse.id}
-          // Usamos el 'idAlumno' que acabamos de añadir
-          idAlumno={viewingStudent.idAlumno}
-          nombreAlumno={`${viewingStudent.nombre} ${viewingStudent.apellido}`}
+          studentData={viewingStudent}
         />
       )}
     </Box>

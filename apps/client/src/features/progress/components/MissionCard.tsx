@@ -13,15 +13,21 @@ import StarIcon from "@mui/icons-material/Star"; // Estrellas
 import BoltIcon from "@mui/icons-material/Bolt"; // EXP
 import ReplayIcon from "@mui/icons-material/Replay"; // Intentos
 import LockIcon from "@mui/icons-material/Lock"; // Pendiente
-import type { MisionCompletada, MisionConEstado } from "../../../types";
+import type {
+  MisionCompletada,
+  MisionConEstado,
+  MisionEspecial,
+} from "../../../types";
 import MissionDifficultyChip from "../../../components/MissionDifficultyChip";
 
+type MissionItem = MisionConEstado | MisionCompletada | MisionEspecial;
+
 interface MissionCardProps {
-  missionData: MisionConEstado;
+  missionData: MissionItem;
 }
 
 // --- Helper para mostrar los Stats si está completada ---
-function CompletedStats({ data }: { data: MisionCompletada }) {
+function CompletedStats({ data }: { data: MisionCompletada | MisionEspecial }) {
   return (
     <Stack direction="row" spacing={2} justifyContent="space-around">
       <Chip
@@ -51,21 +57,57 @@ function CompletedStats({ data }: { data: MisionCompletada }) {
 
 // --- Componente Principal ---
 export default function MissionCard({ missionData }: MissionCardProps) {
-  const { mision, completada } = missionData;
-  const isCompleted = completada !== null;
+  // LÓGICA DE NORMALIZACIÓN
+  let nombre = "";
+  let descripcion = "";
+  let dificultad = null;
+
+  // Definimos explícitamente el tipo de la variable para que TS no se queje
+  let completedData: MisionCompletada | MisionEspecial | null = null;
+
+  let isSpecial = false;
+
+  // CASO A: MisionEspecial (Tiene 'nombre' en la raíz y NO tiene 'mision')
+  if ("nombre" in missionData && !("mision" in missionData)) {
+    const m = missionData as MisionEspecial;
+    nombre = m.nombre;
+    descripcion = m.descripcion;
+    completedData = m; // MisionEspecial cumple con la estructura de stats
+    isSpecial = true;
+  }
+  // CASO B: MisionConEstado (Tiene objeto 'mision' y propiedad 'completada')
+  else if ("mision" in missionData && "completada" in missionData) {
+    const m = missionData as MisionConEstado;
+    nombre = m.mision.nombre;
+    descripcion = m.mision.descripcion;
+    dificultad = m.mision.dificultadMision;
+    completedData = m.completada;
+  }
+  // CASO C: MisionCompletada (Tiene objeto 'mision' y stats en la raíz)
+  else if ("mision" in missionData) {
+    const m = missionData as MisionCompletada;
+    nombre = m.mision.nombre;
+    descripcion = m.mision.descripcion;
+    dificultad = m.mision.dificultadMision;
+    completedData = m;
+  }
+
+  const isCompleted = completedData !== null;
 
   return (
     <Card
       sx={{
         height: "100%",
         variant: "outlined",
-        opacity: isCompleted ? 1.0 : 0.6, // Opaco si está pendiente
+        opacity: isCompleted ? 1.0 : 0.6,
         display: "flex",
         flexDirection: "column",
+        // Borde especial si es misión especial
+        borderColor: isSpecial ? "purple" : undefined,
+        borderWidth: isSpecial ? 2 : 1,
       }}
     >
       <CardContent sx={{ flexGrow: 1 }}>
-        {/* Fila 1: Título y Dificultad */}
         <Box
           sx={{
             display: "flex",
@@ -77,27 +119,43 @@ export default function MissionCard({ missionData }: MissionCardProps) {
           <Typography
             variant="h6"
             component="div"
-            sx={{ mb: 0, lineHeight: 1.3 }}
+            sx={{
+              mb: 0,
+              lineHeight: 1.3,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+            }}
           >
-            {mision.nombre}
+            {nombre}
+            {isSpecial && (
+              <Chip label="Especial" color="secondary" size="small" />
+            )}
           </Typography>
-          <MissionDifficultyChip dif={mision.dificultadMision} />
+
+          {/* Solo mostramos chip de dificultad si existe (Normales) */}
+          {dificultad && <MissionDifficultyChip dif={dificultad} />}
         </Box>
 
-        {/* Fila 2: Descripción */}
         <Typography variant="body2" color="text.secondary">
-          {mision.descripcion}
+          {descripcion}
         </Typography>
       </CardContent>
 
-      {/* Fila 3: Stats (Condicional) */}
       <Divider sx={{ mt: "auto" }} />
-      <Box sx={{ p: 2, bgcolor: isCompleted ? "#f5fff5" : "#fafafa" }}>
+      <Box
+        sx={{
+          p: 2,
+          bgcolor: isCompleted
+            ? isSpecial
+              ? "#f3e5f5"
+              : "#f5fff5"
+            : "#fafafa",
+        }}
+      >
         {isCompleted ? (
-          // Si está completada, muestra los stats
-          <CompletedStats data={completada} />
+          <CompletedStats data={completedData!} />
         ) : (
-          // Si está pendiente, muestra un chip
           <Chip
             icon={<LockIcon />}
             label="Pendiente"

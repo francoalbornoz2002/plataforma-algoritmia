@@ -9,54 +9,50 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  Typography,
+  Divider,
 } from "@mui/material";
-import { getStudentMissions } from "../../users/services/docentes.service";
-import type { MisionConEstado } from "../../../types";
+import type { ProgresoAlumnoDetallado } from "../../../types";
 import MissionCard from "./MissionCard";
 
 interface StudentProgressDetailModalProps {
   open: boolean;
   onClose: () => void;
-  idCurso: string;
-  idAlumno: string;
-  nombreAlumno: string;
+  studentData: ProgresoAlumnoDetallado;
 }
 
 export default function StudentProgressDetailModal({
   open,
   onClose,
-  idCurso,
-  idAlumno,
-  nombreAlumno,
+  studentData,
 }: StudentProgressDetailModalProps) {
-  const [missions, setMissions] = useState<MisionConEstado[]>([]);
+  const [normalMissions, setNormalMissions] = useState<any[]>([]);
+  const [specialMissions, setSpecialMissions] = useState<any[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Efecto de Fetch (se activa cuando el modal se abre)
   useEffect(() => {
-    if (open) {
-      setLoading(true);
-      setError(null);
-      setMissions([]);
+    if (studentData) {
+      try {
+        setNormalMissions(studentData.misionesCompletadas || []);
+        setSpecialMissions(studentData.misionesEspeciales || []);
 
-      // Llamamos al servicio del docente
-      getStudentMissions(idCurso, idAlumno)
-        .then((data) => {
-          setMissions(data);
-        })
-        .catch((err) => {
-          setError(err.message);
-        })
-        .finally(() => {
-          setLoading(false);
-        });
+        // --- CORRECCIÓN AQUÍ ---
+        setLoading(false);
+      } catch (err) {
+        console.error(err);
+        setError("Error al procesar los datos del alumno.");
+        setLoading(false);
+      }
     }
-  }, [open, idCurso, idAlumno]);
+  }, [studentData]);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
-      <DialogTitle>Misiones de {nombreAlumno}</DialogTitle>
+      <DialogTitle>
+        Progreso de {studentData.nombre} {studentData.apellido}
+      </DialogTitle>
       <DialogContent>
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
@@ -67,18 +63,63 @@ export default function StudentProgressDetailModal({
             {error}
           </Alert>
         ) : (
-          <Box sx={{ mt: 2 }}>
-            {missions.length === 0 ? (
-              <Alert severity="info">
-                Este alumno aún no tiene misiones asignadas.
+          <Box sx={{ mt: 1 }}>
+            {/* --- SECCIÓN 1: CAMPAÑA --- */}
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ display: "flex", alignItems: "center", gap: 1 }}
+            >
+              🎮 Misiones de Campaña
+            </Typography>
+
+            {normalMissions.length === 0 ? (
+              <Alert severity="info" sx={{ mb: 4 }}>
+                Este alumno no tiene misiones de campaña completadas.
               </Alert>
             ) : (
+              <Grid container spacing={2} sx={{ mb: 4 }}>
+                {normalMissions.map((m) => (
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={m.mision.id}>
+                    <MissionCard missionData={m} />
+                  </Grid>
+                ))}
+              </Grid>
+            )}
+
+            {/* --- DIVISOR --- */}
+            {specialMissions.length > 0 && <Divider sx={{ my: 3 }} />}
+
+            {/* --- SECCIÓN 2: ESPECIALES --- */}
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                color: "purple",
+              }}
+            >
+              🌟 Misiones Especiales
+            </Typography>
+
+            {specialMissions.length === 0 ? (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ fontStyle: "italic", mb: 2 }}
+              >
+                Sin misiones especiales completadas.
+              </Typography>
+            ) : (
               <Grid container spacing={2}>
-                {missions.map((missionData) => (
+                {specialMissions.map((missionData) => (
                   <Grid
                     size={{ xs: 12, sm: 6, md: 4 }}
-                    key={missionData.mision.id}
+                    key={missionData.id} // UUID
                   >
+                    {/* MissionCard ya es polimórfico y acepta MisionEspecial */}
                     <MissionCard missionData={missionData} />
                   </Grid>
                 ))}
@@ -88,7 +129,9 @@ export default function StudentProgressDetailModal({
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cerrar</Button>
+        <Button onClick={onClose} variant="contained">
+          Cerrar
+        </Button>
       </DialogActions>
     </Dialog>
   );

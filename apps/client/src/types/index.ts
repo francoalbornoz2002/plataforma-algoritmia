@@ -246,6 +246,8 @@ export interface ProgresoAlumnoDetallado {
   // Campos añadidos por el servicio:
   nombre: string;
   apellido: string;
+  misionesCompletadas?: MisionCompletada[];
+  misionesEspeciales?: MisionEspecial[];
 }
 
 export type ProgresoAlumno = Omit<
@@ -338,12 +340,25 @@ export interface MisionCompletada {
   exp: number;
   intentos: number;
   fechaCompletado: string | null; // Llega como string ISO
+  mision: Mision;
 }
 
 // 3. Tipo para la respuesta "fusionada" del backend
 export interface MisionConEstado {
   mision: Mision;
   completada: MisionCompletada | null; // null si está pendiente
+}
+
+// 4. Tipo para Misión Especial (NUEVO)
+export interface MisionEspecial {
+  id: string; // UUID
+  idProgreso: string;
+  nombre: string;
+  descripcion: string;
+  estrellas: number;
+  exp: number;
+  intentos: number;
+  fechaCompletado: string;
 }
 
 // ---------- INSTITUCIÓN ---------- //

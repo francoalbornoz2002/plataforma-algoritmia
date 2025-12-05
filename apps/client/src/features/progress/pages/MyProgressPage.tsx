@@ -12,13 +12,10 @@ import { es } from "date-fns/locale";
 
 // 1. Hooks y Servicios
 import { useCourseContext } from "../../../context/CourseContext";
-import {
-  getMyMissions,
-  getMyProgress,
-} from "../../users/services/alumnos.service";
+import { getMyProgress } from "../../users/services/alumnos.service";
 
 // 2. Tipos
-import type { MisionConEstado, ProgresoAlumno } from "../../../types";
+import type { ProgresoAlumno } from "../../../types";
 import MissionCard from "../components/MissionCard";
 import KpiProgressCard from "../components/KpiProgressCard";
 
@@ -31,51 +28,21 @@ export default function MyProgressPage() {
   const [loadingProgress, setLoadingProgress] = useState(true);
   const [errorProgress, setErrorProgress] = useState<string | null>(null);
 
-  const [missions, setMissions] = useState<MisionConEstado[]>([]);
-  const [loadingMissions, setLoadingMissions] = useState(true);
-  const [errorMissions, setErrorMissions] = useState<string | null>(null);
+  //const [missions, setMissions] = useState<MisionConEstado[]>([]);
+  //const [loadingMissions, setLoadingMissions] = useState(true);
+  //const [errorMissions, setErrorMissions] = useState<string | null>(null);
 
   // --- 3. DATA FETCHING ---
   useEffect(() => {
-    // Solo buscamos si hay un curso seleccionado
-    if (!selectedCourse) {
-      setLoadingProgress(false);
-      setLoadingMissions(false);
-      setErrorProgress(null);
-      setErrorMissions(null);
-      setProgress(null);
-      setMissions([]);
-      return;
-    }
+    if (!selectedCourse) return;
 
-    // --- Fetch 1: KPIs de Progreso ---
     setLoadingProgress(true);
-    setErrorProgress(null);
+    // Solo llamamos a getMyProgress
     getMyProgress(selectedCourse.id)
-      .then((data) => {
-        setProgress(data);
-      })
-      .catch((err) => {
-        setErrorProgress(err.message);
-      })
-      .finally(() => {
-        setLoadingProgress(false);
-      });
-
-    // --- Fetch 2: Lista de Misiones ---
-    setLoadingMissions(true);
-    setErrorMissions(null);
-    getMyMissions(selectedCourse.id)
-      .then((data) => {
-        setMissions(data);
-      })
-      .catch((err) => {
-        setErrorMissions(err.message);
-      })
-      .finally(() => {
-        setLoadingMissions(false);
-      });
-  }, [selectedCourse]); // Se re-ejecuta cada vez que el curso cambia
+      .then((data) => setProgress(data))
+      .catch((err) => setErrorProgress(err.message))
+      .finally(() => setLoadingProgress(false));
+  }, [selectedCourse]);
 
   // --- 4. RENDERIZADO ---
 
@@ -169,28 +136,59 @@ export default function MyProgressPage() {
 
       <Divider sx={{ my: 4 }} />
 
-      {/* --- B. Grilla de Misiones --- */}
-      <Typography variant="h5" gutterBottom>
-        Estado de Misiones
+      {/* --- SECCIÓN 1: MISIONES DE CAMPAÑA (Normales) --- */}
+      <Typography
+        variant="h5"
+        gutterBottom
+        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+      >
+        🎮 Misiones de Campaña
       </Typography>
 
-      {loadingMissions ? (
-        <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
-          <CircularProgress />
-        </Box>
-      ) : errorMissions ? (
-        <Alert severity="error">{errorMissions}</Alert>
-      ) : missions.length === 0 ? (
-        <Alert severity="info">
-          Aún no hay misiones cargadas para este curso.
-        </Alert>
+      {isLoading ? (
+        <CircularProgress />
       ) : (
-        <Grid container spacing={2} sx={{ mt: 2 }}>
-          {missions.map((missionData) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={missionData.mision.id}>
-              <MissionCard missionData={missionData} />
+        <Grid container spacing={2} sx={{ mt: 2, mb: 4 }}>
+          {progress?.misionesCompletadas?.map((m) => (
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={m.idMision}>
+              {/* Pasamos el objeto directamente, MissionCard lo detectará como Caso C */}
+              <MissionCard missionData={m} />
             </Grid>
           ))}
+          {!progress?.misionesCompletadas?.length && (
+            <Alert severity="info" sx={{ width: "100%" }}>
+              No hay misiones completadas aún.
+            </Alert>
+          )}
+        </Grid>
+      )}
+      {/* --- SECCIÓN 2: MISIONES ESPECIALES --- */}
+      <Typography
+        variant="h5"
+        gutterBottom
+        sx={{ display: "flex", alignItems: "center", gap: 1, color: "purple" }}
+      >
+        🌟 Misiones Especiales
+      </Typography>
+
+      {isLoading ? (
+        <CircularProgress />
+      ) : (
+        <Grid container spacing={2} sx={{ mt: 2 }}>
+          {progress?.misionesEspeciales?.map((m) => (
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={m.id}>
+              {/* Pasamos el objeto, MissionCard lo detectará como Caso A */}
+              <MissionCard missionData={m} />
+            </Grid>
+          ))}
+          {!progress?.misionesEspeciales?.length && (
+            <Alert
+              severity="info"
+              sx={{ width: "100%", bgcolor: "#f3e5f5", color: "#6a1b9a" }}
+            >
+              No tienes misiones especiales registradas.
+            </Alert>
+          )}
         </Grid>
       )}
     </Box>
