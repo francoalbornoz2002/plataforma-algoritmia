@@ -46,10 +46,6 @@ export default function SettingsPage() {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
-        Configuración de la Institución
-      </Typography>
-
       {/* --- Manejo de Carga Inicial --- */}
       {isLoading ? (
         <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
@@ -61,7 +57,7 @@ export default function SettingsPage() {
         // --- El Layout de 2 Columnas ---
         <Grid container spacing={4} sx={{ mt: 2 }}>
           {/* Columna Izquierda: El Formulario */}
-          <Grid size={{ xs: 12, md: 7 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <InstitutionForm
               initialData={institucion} // Le pasa los datos (o null)
               onSave={handleSave} // Le pasa el callback de éxito
@@ -69,7 +65,7 @@ export default function SettingsPage() {
           </Grid>
 
           {/* Columna Derecha: La Info */}
-          <Grid size={{ xs: 12, md: 5 }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <InstitutionInfo
               institucion={institucion} // Le pasa los datos (o null)
               isLoading={isLoading}
