@@ -18,7 +18,7 @@ export class FindPreguntasDto extends PaginationDto {
   tema?: temas;
 
   @IsOptional()
-  @IsUUID()
+  @IsString()
   idDificultad?: string;
 
   @IsOptional()

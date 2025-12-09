@@ -3,7 +3,7 @@ import { OpcionRespuestaDto } from './opcion-respuesta.dto';
 import { IsArray, IsEnum, IsString, IsUUID } from 'class-validator';
 
 export class CreatePreguntaDto {
-  @IsUUID()
+  @IsString()
   idDificultad: string;
 
   @IsEnum(grado_dificultad)
