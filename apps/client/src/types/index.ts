@@ -322,6 +322,11 @@ export interface DificultadAlumnoDetallada extends DificultadSimple {
   grado: grado_dificultad; // El grado del alumno
 }
 
+// Para el filtrado de dificultades por tema en formularios
+export interface DificultadConTema extends DificultadSimple {
+  tema: temas;
+}
+
 // ---------- MISIONES ---------- //
 // 1. Tipo para la Misión Maestra (de la tabla 'misiones')
 export interface Mision {
@@ -521,8 +526,15 @@ export interface FindPreguntasParams extends BaseFilterParams {
 }
 
 // 6. Para la respuesta paginada
-export interface PaginatedPreguntasResponse
-  extends PaginatedResponse<PreguntaConDetalles> {}
+export interface PaginatedPreguntasResponse {
+  data: PreguntaConDetalles[];
+  meta: {
+    total: number;
+    page: number;
+    totalPages: number;
+    limit: number;
+  };
+}
 
 // 7. Para buscar preguntas de sistema para una sesión
 export interface FindSystemPreguntasParams {

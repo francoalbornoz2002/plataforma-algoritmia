@@ -42,7 +42,7 @@ import type {
   DificultadesCurso,
   FindStudentDifficultiesParams,
   AlumnoDificultadResumen,
-  DificultadSimple,
+  DificultadConTema,
 } from "../../../types";
 import { temas, grado_dificultad } from "../../../types";
 
@@ -130,7 +130,7 @@ export default function DifficultiesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  const [allDifficulties, setAllDifficulties] = useState<DificultadSimple[]>(
+  const [allDifficulties, setAllDifficulties] = useState<DificultadConTema[]>(
     []
   );
 

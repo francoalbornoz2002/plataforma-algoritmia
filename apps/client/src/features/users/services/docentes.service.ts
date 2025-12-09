@@ -4,9 +4,9 @@ import type {
   Consulta,
   ConsultaSimple,
   CursoParaEditar,
+  DificultadConTema,
   DificultadAlumnoDetallada,
   DificultadesCurso,
-  DificultadSimple,
   DocenteBasico,
   estado_simple,
   FindConsultasParams,
@@ -138,7 +138,7 @@ export const getCourseDifficultiesOverview = async (
 /**
  * Obtiene la lista completa de dificultades para los filtros.
  */
-export async function getAllDifficulties(): Promise<DificultadSimple[]> {
+export async function getAllDifficulties(): Promise<DificultadConTema[]> {
   try {
     // (Asegúrate de que 'apiClient' esté configurado)
     const response = await apiClient.get("/difficulties/all");
