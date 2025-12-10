@@ -12,7 +12,7 @@ import {
   Class,
   Insights,
   LocationCity,
-  QuestionAnswer,
+  Quiz,
   SwitchAccessShortcutAdd,
 } from "@mui/icons-material";
 import type { MenuItemType, UserData } from "../types";
@@ -58,14 +58,14 @@ export default function SidebarLayout() {
       path: "/course/sessions", // (Ruta futura)
     },
     {
+      text: "Preguntas para sesiones",
+      icon: <Quiz />,
+      path: "/course/questions",
+    },
+    {
       text: "Consultas del curso",
       icon: <MarkUnreadChatAltIcon />,
       path: "/course/consults",
-    },
-    {
-      text: "Preguntas para sesiones",
-      icon: <QuestionAnswer />,
-      path: "/course/questions",
     },
     {
       text: "Clases de consulta del curso",
