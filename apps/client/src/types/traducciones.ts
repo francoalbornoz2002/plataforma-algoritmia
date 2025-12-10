@@ -1,4 +1,4 @@
-import { estado_clase_consulta, estado_consulta } from ".";
+import { estado_clase_consulta, estado_consulta, temas } from ".";
 
 export const EstadoClaseLabels: Record<estado_clase_consulta, string> = {
   [estado_clase_consulta.Programada]: "Programada",
@@ -15,4 +15,13 @@ export const EstadoConsultaLabels: Record<estado_consulta, string> = {
   [estado_consulta.A_revisar]: "A Revisar",
   [estado_consulta.Revisada]: "Revisada",
   [estado_consulta.Resuelta]: "Resuelta",
+};
+
+export const TemasLabels: Record<temas, string> = {
+  [temas.Ninguno]: "Ninguno",
+  [temas.Secuencia]: "Secuencia y Lógica Básica",
+  [temas.Logica]: "Lógica Proposicional",
+  [temas.Estructuras]: "Estructuras de Control",
+  [temas.Variables]: "Variables",
+  [temas.Procedimientos]: "Procedimientos",
 };

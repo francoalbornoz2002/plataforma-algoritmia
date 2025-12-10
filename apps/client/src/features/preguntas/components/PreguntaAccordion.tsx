@@ -23,7 +23,8 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import ComputerIcon from "@mui/icons-material/Computer";
 import PersonIcon from "@mui/icons-material/Person";
-import { grado_dificultad, type PreguntaConDetalles } from "../../../types";
+import type { PreguntaConDetalles } from "../../../types";
+import GradeChip from "../../../components/GradeChip";
 import TemaChip from "../../../components/TemaChip";
 
 interface PreguntaAccordionProps {
@@ -31,23 +32,6 @@ interface PreguntaAccordionProps {
   onEdit: (pregunta: PreguntaConDetalles) => void;
   onDelete: (pregunta: PreguntaConDetalles) => void;
 }
-
-// Componente helper para mostrar el grado de dificultad con un color distintivo.
-const GradoDificultadChip = ({ grado }: { grado: grado_dificultad }) => {
-  const colorMap: Record<
-    grado_dificultad,
-    "success" | "warning" | "error" | "default"
-  > = {
-    [grado_dificultad.Bajo]: "success",
-    [grado_dificultad.Medio]: "warning",
-    [grado_dificultad.Alto]: "error",
-    [grado_dificultad.Ninguno]: "default",
-  };
-
-  return (
-    <Chip label={`Grado: ${grado}`} color={colorMap[grado]} size="small" />
-  );
-};
 
 export default function PreguntaAccordion({
   pregunta,
@@ -102,13 +86,13 @@ export default function PreguntaAccordion({
               />
             ) : (
               <Stack direction="row" spacing={1}>
-                <TemaChip tema={dificultad.tema} />
-                <GradoDificultadChip grado={gradoDificultad} />
+                <TemaChip tema={dificultad.tema} small />
+                <GradeChip grado={gradoDificultad} texto="Grado" small />
                 <Chip
                   icon={isSistema ? <ComputerIcon /> : <PersonIcon />}
                   label={isSistema ? "Sistema" : "Docente"}
-                  size="small"
                   variant="outlined"
+                  size="small"
                 />
               </Stack>
             )}

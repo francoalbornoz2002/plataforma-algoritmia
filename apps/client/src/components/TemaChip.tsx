@@ -9,9 +9,10 @@ import BlockIcon from "@mui/icons-material/Block"; // Ninguno
 
 interface TemaChipProps {
   tema: temas;
+  small?: boolean;
 }
 
-export default function TemaChip({ tema }: TemaChipProps) {
+export default function TemaChip({ tema, small }: TemaChipProps) {
   let icon: React.ReactElement;
 
   // Hacemos un switch para asignar el ícono correcto
@@ -38,5 +39,12 @@ export default function TemaChip({ tema }: TemaChipProps) {
   }
 
   // Renderizamos el Chip
-  return <Chip icon={icon} label={tema} variant="outlined" />;
+  return (
+    <Chip
+      icon={icon}
+      label={tema}
+      variant="outlined"
+      size={small ? "small" : "medium"}
+    />
+  );
 }

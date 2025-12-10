@@ -8,9 +8,10 @@ import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
 interface GradeChipProps {
   texto?: string;
   grado: grado_dificultad;
+  small?: boolean;
 }
 
-export default function GradeChip({ texto, grado }: GradeChipProps) {
+export default function GradeChip({ texto, grado, small }: GradeChipProps) {
   let icon: React.ReactElement | undefined = undefined;
   let color: ChipProps["color"] = "default";
 
@@ -45,6 +46,7 @@ export default function GradeChip({ texto, grado }: GradeChipProps) {
       label={textoRender}
       color={color}
       icon={icon}
+      size={small ? "small" : "medium"}
       variant="filled" // 'filled' resalta más que 'outlined' para el grado
       sx={{
         ml: 1,

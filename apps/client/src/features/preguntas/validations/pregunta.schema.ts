@@ -10,10 +10,11 @@ const opcionRespuestaSchema = z.object({
 // Esquema principal para el formulario de creación/edición de preguntas
 export const preguntaFormSchema = z
   .object({
+    tema: z.string().min(1, "Debe seleccionar un tema."),
     enunciado: z
       .string()
       .min(10, "El enunciado debe tener al menos 10 caracteres."),
-    idDificultad: z.string().uuid("Debe seleccionar una dificultad válida."),
+    idDificultad: z.string().min(1, "Debe seleccionar una dificultad"),
     gradoDificultad: z
       .nativeEnum(grado_dificultad)
       .refine((val) => val !== grado_dificultad.Ninguno, {
@@ -29,15 +30,41 @@ export const preguntaFormSchema = z
         { message: "Debe marcar exactamente una respuesta como correcta." }
       ),
   })
-  .refine(
-    (data) => {
-      const textos = data.opcionesRespuesta.map((op) => op.textoOpcion);
-      return new Set(textos).size === textos.length;
-    },
-    {
-      message: "Las opciones de respuesta no pueden tener el mismo texto.",
-      path: ["opcionesRespuesta"],
+  .superRefine((data, ctx) => {
+    // Lógica para detectar opciones de respuesta duplicadas.
+    // Esta validación es más compleja para poder asignar el error
+    // a cada campo individual que está duplicado, y no a todo el array.
+
+    const textos = data.opcionesRespuesta.map((op) => op.textoOpcion.trim());
+
+    // No validamos duplicados si hay campos vacíos, para que el error
+    // de "campo requerido" tenga prioridad.
+    if (textos.some((t) => t === "")) {
+      return;
     }
-  );
+
+    const seen = new Set<string>();
+    const duplicates = new Set<string>();
+
+    for (const texto of textos) {
+      if (seen.has(texto)) {
+        duplicates.add(texto);
+      } else {
+        seen.add(texto);
+      }
+    }
+
+    if (duplicates.size > 0) {
+      data.opcionesRespuesta.forEach((opcion, index) => {
+        if (duplicates.has(opcion.textoOpcion.trim())) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Esta opción de respuesta está duplicada.",
+            path: [`opcionesRespuesta`, index, `textoOpcion`],
+          });
+        }
+      });
+    }
+  });
 
 export type PreguntaFormValues = z.infer<typeof preguntaFormSchema>;

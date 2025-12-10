@@ -121,7 +121,7 @@ export default function ConsultaAccordion({
           </Box>
           {/* Columna Derecha: Tema y Estado */}
           <Stack direction="row" spacing={1} alignItems="center">
-            <EstadoConsultaChip estado={consulta.estado} />
+            <EstadoConsultaChip estado={consulta.estado} small />
           </Stack>
         </Stack>
       </AccordionSummary>

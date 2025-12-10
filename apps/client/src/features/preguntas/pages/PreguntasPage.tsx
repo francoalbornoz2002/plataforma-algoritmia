@@ -62,6 +62,9 @@ export default function PreguntasPage() {
   const [allDifficulties, setAllDifficulties] = useState<DificultadConTema[]>(
     []
   );
+  const [filteredDifficulties, setFilteredDifficulties] = useState<
+    DificultadConTema[]
+  >([]);
 
   // --- Data Fetching para filtros ---
   useEffect(() => {
@@ -71,6 +74,17 @@ export default function PreguntasPage() {
         console.error("Error al cargar dificultades para filtro", err)
       );
   }, []);
+
+  // Efecto para filtrar las dificultades según el tema seleccionado
+  useEffect(() => {
+    if (filters.tema) {
+      setFilteredDifficulties(
+        allDifficulties.filter((d) => d.tema === filters.tema)
+      );
+    } else {
+      setFilteredDifficulties(allDifficulties); // Mostrar todas si no hay tema
+    }
+  }, [filters.tema, allDifficulties]);
 
   // --- Data Fetching ---
   const fetchPreguntas = (currentPage: number) => {
@@ -104,17 +118,25 @@ export default function PreguntasPage() {
       .finally(() => setLoading(false));
   };
 
-  // Efecto que reacciona a los filtros
+  // Efecto que reacciona a los filtros, búsqueda y paginación
   useEffect(() => {
-    fetchPreguntas(1); // Siempre vuelve a la página 1 al cambiar un filtro
+    fetchPreguntas(page);
   }, [debouncedSearchTerm, filters, page]);
 
   // --- Handlers ---
   const handleFilterChange = (e: SelectChangeEvent<string>) => {
-    setFilters((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    const { name, value } = e.target;
+    setFilters((prev) => {
+      const newFilters = {
+        ...prev,
+        [name]: value,
+      };
+      // Si el tema cambia, reseteamos la dificultad seleccionada
+      if (name === "tema") {
+        newFilters.idDificultad = "";
+      }
+      return newFilters;
+    });
     setPage(1);
   };
 
@@ -186,7 +208,7 @@ export default function PreguntasPage() {
               disabled={allDifficulties.length === 0}
             >
               <MenuItem value="">Todas</MenuItem>
-              {allDifficulties.map((d) => (
+              {filteredDifficulties.map((d) => (
                 <MenuItem key={d.id} value={d.id}>
                   {d.nombre}
                 </MenuItem>

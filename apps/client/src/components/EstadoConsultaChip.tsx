@@ -10,10 +10,12 @@ import { EstadoConsultaLabels } from "../types/traducciones";
 
 interface EstadoConsultaChipProps {
   estado: estado_consulta;
+  small?: boolean;
 }
 
 export default function EstadoConsultaChip({
   estado,
+  small,
 }: EstadoConsultaChipProps) {
   let icon: React.ReactElement;
   let color: ChipProps["color"] = "default";
@@ -44,7 +46,7 @@ export default function EstadoConsultaChip({
       label={EstadoConsultaLabels[estado]}
       color={color}
       variant="filled" // Usamos filled para que se destaque
-      sx={{ ml: 1, flexShrink: 0 }}
+      size={small ? "small" : "medium"}
     />
   );
 }

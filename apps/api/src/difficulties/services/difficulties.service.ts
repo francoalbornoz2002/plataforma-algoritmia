@@ -427,6 +427,7 @@ export class DifficultiesService {
         select: {
           id: true,
           nombre: true,
+          tema: true,
         },
         orderBy: {
           nombre: 'asc',

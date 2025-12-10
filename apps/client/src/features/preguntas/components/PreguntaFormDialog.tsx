@@ -52,6 +52,7 @@ interface PreguntaFormDialogProps {
 }
 
 const defaultValues: PreguntaFormValues = {
+  tema: "",
   enunciado: "",
   idDificultad: "",
   gradoDificultad: grado_dificultad.Bajo,
@@ -76,7 +77,6 @@ export default function PreguntaFormDialog({
   const [filteredDificultades, setFilteredDificultades] = useState<
     DificultadConTema[]
   >([]);
-  const [selectedTema, setSelectedTema] = useState<temas | "">("");
   const [isLoading, setIsLoading] = useState(false);
 
   const {
@@ -85,11 +85,15 @@ export default function PreguntaFormDialog({
     reset,
     setValue,
     watch,
+    trigger,
     formState: { errors, isSubmitting },
   } = useForm<PreguntaFormValues>({
     resolver: zodResolver(preguntaFormSchema),
     defaultValues,
+    mode: "onTouched",
   });
+
+  const selectedTema = watch("tema");
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -119,22 +123,30 @@ export default function PreguntaFormDialog({
 
   // Efecto para filtrar dificultades cuando cambia el tema seleccionado
   useEffect(() => {
-    if (selectedTema) {
-      setFilteredDificultades(
-        allDificultades.filter((d) => d.tema === selectedTema)
-      );
-    } else {
-      setFilteredDificultades([]);
+    const newFiltered = selectedTema
+      ? allDificultades.filter((d) => d.tema === selectedTema)
+      : [];
+    setFilteredDificultades(newFiltered);
+
+    // Si la dificultad seleccionada actualmente ya no es válida para el tema
+    // elegido (o si se deseleccionó el tema), la reseteamos.
+    // Esto es crucial para que al cambiar de tema, el campo de dificultad se limpie,
+    // pero no al cargar el formulario en modo edición.
+    const currentDificultadId = watch("idDificultad");
+    if (
+      currentDificultadId &&
+      !newFiltered.some((d) => d.id === currentDificultadId)
+    ) {
+      setValue("idDificultad", "", { shouldValidate: true });
     }
-    setValue("idDificultad", "", { shouldValidate: true });
-  }, [selectedTema, allDificultades, setValue]);
+  }, [selectedTema, allDificultades, setValue, watch]);
 
   // Efecto para resetear el formulario al abrir/cerrar o si cambia el objeto a editar
   useEffect(() => {
     if (open) {
       if (isEditMode && preguntaToEdit) {
-        setSelectedTema(preguntaToEdit.dificultad.tema);
         reset({
+          tema: preguntaToEdit.dificultad.tema,
           enunciado: preguntaToEdit.enunciado,
           idDificultad: preguntaToEdit.idDificultad,
           gradoDificultad: preguntaToEdit.gradoDificultad,
@@ -144,7 +156,6 @@ export default function PreguntaFormDialog({
           })),
         });
       } else {
-        setSelectedTema("");
         reset(defaultValues);
       }
     }
@@ -200,7 +211,7 @@ export default function PreguntaFormDialog({
               <CircularProgress />
             </Box>
           ) : (
-            <Stack spacing={3} sx={{ mt: 1 }}>
+            <Stack spacing={1} sx={{ mt: 1 }}>
               <Controller
                 name="enunciado"
                 control={control}
@@ -213,30 +224,33 @@ export default function PreguntaFormDialog({
                     multiline
                     rows={2}
                     error={!!errors.enunciado}
-                    helperText={errors.enunciado?.message}
+                    helperText={errors.enunciado?.message || " "}
                     disabled={isSubmitting}
                   />
                 )}
               />
               <Stack direction="row" spacing={2}>
-                <FormControl fullWidth>
-                  <InputLabel>Tema</InputLabel>
-                  <Select
-                    value={selectedTema}
-                    label="Tema"
-                    onChange={(e) => setSelectedTema(e.target.value as temas)}
-                    disabled={isSubmitting}
-                  >
-                    {Object.values(temas)
-                      .filter((t) => t !== temas.Ninguno)
-                      .map((tema) => (
-                        <MenuItem key={tema} value={tema}>
-                          {tema}
-                        </MenuItem>
-                      ))}
-                  </Select>
-                  <FormHelperText>Filtro para las dificultades</FormHelperText>
-                </FormControl>
+                <Controller
+                  name="tema"
+                  control={control}
+                  render={({ field }) => (
+                    <FormControl fullWidth error={!!errors.tema}>
+                      <InputLabel>Tema</InputLabel>
+                      <Select {...field} label="Tema" disabled={isSubmitting}>
+                        {Object.values(temas)
+                          .filter((t) => t !== temas.Ninguno)
+                          .map((tema) => (
+                            <MenuItem key={tema} value={tema}>
+                              {tema}
+                            </MenuItem>
+                          ))}
+                      </Select>
+                      <FormHelperText>
+                        {errors.tema?.message || "Filtro para las dificultades"}
+                      </FormHelperText>
+                    </FormControl>
+                  )}
+                />
                 <Controller
                   name="idDificultad"
                   control={control}
@@ -255,7 +269,7 @@ export default function PreguntaFormDialog({
                         ))}
                       </Select>
                       <FormHelperText>
-                        {errors.idDificultad?.message}
+                        {errors.idDificultad?.message || " "}
                       </FormHelperText>
                     </FormControl>
                   )}
@@ -276,7 +290,7 @@ export default function PreguntaFormDialog({
                           ))}
                       </Select>
                       <FormHelperText>
-                        {errors.gradoDificultad?.message}
+                        {errors.gradoDificultad?.message || " "}
                       </FormHelperText>
                     </FormControl>
                   )}
@@ -314,13 +328,21 @@ export default function PreguntaFormDialog({
                         control={control}
                         render={({ field }) => (
                           <TextField
-                            {...field}
+                            {...field} // Mantiene las props originales (value, onBlur, etc.)
+                            onChange={(e) => {
+                              field.onChange(e); // Actualiza el valor del campo
+                              trigger("opcionesRespuesta"); // Dispara la validación de todo el array de opciones
+                            }}
                             label={`Opción ${index + 1}`}
                             fullWidth
                             size="small"
                             disabled={isSubmitting}
                             error={
                               !!errors.opcionesRespuesta?.[index]?.textoOpcion
+                            }
+                            helperText={
+                              errors.opcionesRespuesta?.[index]?.textoOpcion
+                                ?.message || " "
                             }
                           />
                         )}
@@ -339,7 +361,8 @@ export default function PreguntaFormDialog({
                 </Stack>
                 <FormHelperText sx={{ mt: 1, ml: 2 }}>
                   {errors.opcionesRespuesta?.message ||
-                    errors.opcionesRespuesta?.root?.message}
+                    errors.opcionesRespuesta?.root?.message ||
+                    " "}
                 </FormHelperText>
                 {fields.length < 4 && (
                   <Button
