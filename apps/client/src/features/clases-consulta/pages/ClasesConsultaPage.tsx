@@ -431,9 +431,6 @@ export default function ClasesConsultaPage() {
           </Button>
         </Stack>
       </Paper>
-      <Typography variant="h5" gutterBottom>
-        Clases de consultas del curso
-      </Typography>
       {/* --- 2. Lista de Clases (Cards) --- */}
       {loading ? (
         <CircularProgress sx={{ display: "block", margin: "auto", mt: 4 }} />

@@ -167,7 +167,7 @@ export default function PreguntasPage() {
   return (
     <Box>
       {/* --- 1. Filtros y Acción Principal --- */}
-      <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
+      <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
         <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
           Filtros de búsqueda
         </Typography>
@@ -178,9 +178,9 @@ export default function PreguntasPage() {
             size="small"
             value={searchTerm}
             onChange={handleSearchChange}
-            sx={{ flexGrow: 1 }}
+            sx={{ minWidth: 400 }}
           />
-          <FormControl size="small" sx={{ minWidth: 150 }}>
+          <FormControl size="small" sx={{ minWidth: 160 }}>
             <InputLabel>Tema</InputLabel>
             <Select
               name="tema"
@@ -198,7 +198,7 @@ export default function PreguntasPage() {
                 ))}
             </Select>
           </FormControl>
-          <FormControl size="small" sx={{ minWidth: 200 }}>
+          <FormControl size="small" sx={{ width: 300 }}>
             <InputLabel>Dificultad</InputLabel>
             <Select
               name="idDificultad"
@@ -215,7 +215,7 @@ export default function PreguntasPage() {
               ))}
             </Select>
           </FormControl>
-          <FormControl size="small" sx={{ minWidth: 150 }}>
+          <FormControl size="small" sx={{ minWidth: 100 }}>
             <InputLabel>Grado</InputLabel>
             <Select
               name="gradoDificultad"
@@ -233,7 +233,7 @@ export default function PreguntasPage() {
                 ))}
             </Select>
           </FormControl>
-          <FormControl size="small" sx={{ minWidth: 150 }}>
+          <FormControl size="small" sx={{ minWidth: 110 }}>
             <InputLabel>Tipo</InputLabel>
             <Select
               name="tipo"

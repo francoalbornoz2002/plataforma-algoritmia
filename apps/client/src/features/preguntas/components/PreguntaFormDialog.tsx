@@ -215,31 +215,19 @@ export default function PreguntaFormDialog({
             </Box>
           ) : (
             <Stack spacing={1} sx={{ mt: 1 }}>
-              <Controller
-                name="enunciado"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label="Enunciado de la pregunta"
-                    fullWidth
-                    required
-                    multiline
-                    rows={2}
-                    error={!!errors.enunciado}
-                    helperText={errors.enunciado?.message || " "}
-                    disabled={isSubmitting}
-                  />
-                )}
-              />
               <Stack direction="row" spacing={2}>
                 <Controller
                   name="tema"
                   control={control}
                   render={({ field }) => (
                     <FormControl fullWidth error={!!errors.tema}>
-                      <InputLabel>Tema</InputLabel>
-                      <Select {...field} label="Tema" disabled={isSubmitting}>
+                      <InputLabel>Tema *</InputLabel>
+                      <Select
+                        {...field}
+                        label="Tema"
+                        disabled={isSubmitting}
+                        required
+                      >
                         {Object.values(temas)
                           .filter((t) => t !== temas.Ninguno)
                           .map((tema) => (
@@ -259,11 +247,12 @@ export default function PreguntaFormDialog({
                   control={control}
                   render={({ field }) => (
                     <FormControl fullWidth error={!!errors.idDificultad}>
-                      <InputLabel>Dificultad</InputLabel>
+                      <InputLabel>Dificultad *</InputLabel>
                       <Select
                         {...field}
                         label="Dificultad"
                         disabled={isSubmitting || !selectedTema}
+                        required
                       >
                         {filteredDificultades.map((d) => (
                           <MenuItem key={d.id} value={d.id}>
@@ -282,7 +271,7 @@ export default function PreguntaFormDialog({
                   control={control}
                   render={({ field }) => (
                     <FormControl fullWidth error={!!errors.gradoDificultad}>
-                      <InputLabel>Grado</InputLabel>
+                      <InputLabel>Grado *</InputLabel>
                       <Select {...field} label="Grado" disabled={isSubmitting}>
                         {Object.values(grado_dificultad)
                           .filter((g) => g !== grado_dificultad.Ninguno)
@@ -299,9 +288,24 @@ export default function PreguntaFormDialog({
                   )}
                 />
               </Stack>
-
+              <Controller
+                name="enunciado"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Enunciado de la pregunta"
+                    fullWidth
+                    required
+                    multiline
+                    rows={2}
+                    error={!!errors.enunciado}
+                    helperText={errors.enunciado?.message || " "}
+                    disabled={isSubmitting}
+                  />
+                )}
+              />
               <Divider />
-
               <FormControl
                 component="fieldset"
                 error={!!errors.opcionesRespuesta}

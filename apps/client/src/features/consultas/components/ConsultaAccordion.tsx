@@ -91,7 +91,7 @@ export default function ConsultaAccordion({
 
   return (
     // Deshabilitamos el acordeón si ya está resuelta
-    <Accordion>
+    <Accordion variant="outlined">
       {/* --- 1. El Resumen (lo que se ve siempre) --- */}
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Stack
@@ -111,16 +111,16 @@ export default function ConsultaAccordion({
               Consulta de {consulta.alumno.nombre} {consulta.alumno.apellido} (
               {fechaConsultaFormateada})
             </Typography>
-            <Stack direction="row" spacing={1}>
+            <Stack direction="row" spacing={1} alignItems="center">
               <Typography variant="h6" noWrap>
                 {consulta.titulo}
               </Typography>
               <Divider orientation="vertical" flexItem />
-              <TemaChip tema={consulta.tema} />
             </Stack>
           </Box>
           {/* Columna Derecha: Tema y Estado */}
           <Stack direction="row" spacing={1} alignItems="center">
+            <TemaChip tema={consulta.tema} small />
             <EstadoConsultaChip estado={consulta.estado} small />
           </Stack>
         </Stack>
