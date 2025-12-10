@@ -66,11 +66,11 @@ export default function PreguntaAccordion({
         >
           {/* Columna Izquierda: Enunciado y nombre de la dificultad */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="overline" color="text.secondary" noWrap>
+              {dificultad.nombre}
+            </Typography>
             <Typography variant="h6" noWrap>
               {enunciado}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" noWrap>
-              {dificultad.nombre}
             </Typography>
           </Box>
 
@@ -135,7 +135,7 @@ export default function PreguntaAccordion({
           </Box>
 
           {/* Acciones */}
-          {!isDeleted && (
+          {!isDeleted && !isSistema && (
             <>
               <Divider />
               <CardActions sx={{ justifyContent: "flex-end", p: 0, pt: 1 }}>
