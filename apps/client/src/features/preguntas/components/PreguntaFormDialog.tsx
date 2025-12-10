@@ -171,14 +171,17 @@ export default function PreguntaFormDialog({
   };
 
   const onSubmit: SubmitHandler<PreguntaFormValues> = async (data) => {
+    // Omitimos el campo 'tema' que solo se usa en el frontend para filtrar.
+    const { tema, ...dataToSend } = data;
+
     try {
       if (isEditMode && preguntaToEdit) {
-        await preguntasService.update(preguntaToEdit.id, data);
+        await preguntasService.update(preguntaToEdit.id, dataToSend);
         enqueueSnackbar("Pregunta actualizada correctamente", {
           variant: "success",
         });
       } else {
-        await preguntasService.create(data);
+        await preguntasService.create(dataToSend);
         enqueueSnackbar("Pregunta creada correctamente", {
           variant: "success",
         });

@@ -12,7 +12,7 @@ export class FindStudentDifficultiesDto extends PaginationDto {
   tema?: temas;
 
   @IsOptional()
-  @IsUUID() // Asumimos que el filtro de dificultad específica usa el ID
+  @IsString()
   dificultadId?: string;
 
   @IsOptional()
