@@ -246,4 +246,52 @@ export class AlumnosService {
     // El servicio "cerebro" hace todo el trabajo
     return this.consultasService.valorarConsulta(idConsulta, idAlumno, dto);
   }
+
+  async findActiveAlumnosByCurso(idCurso: string, idDocente: string) {
+    // 1. Validamos que el docente que pide tenga acceso
+    await this.checkDocenteAccess(idDocente, idCurso);
+
+    // 2. Buscamos los alumnos activos
+    const inscripciones = await this.prisma.alumnoCurso.findMany({
+      where: {
+        idCurso: idCurso,
+        estado: 'Activo',
+      },
+      include: {
+        alumno: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+          },
+        },
+      },
+    });
+
+    // 3. Mapeamos la respuesta
+    return inscripciones.map((i) => i.alumno);
+  }
+
+  private async checkDocenteAccess(idDocente: string, idCurso: string) {
+    try {
+      const asignacion = await this.prisma.docenteCurso.findFirst({
+        where: {
+          idDocente: idDocente,
+          idCurso: idCurso,
+          estado: 'Activo', // Solo docentes actualmente activos en el curso
+        },
+      });
+
+      if (!asignacion) {
+        throw new ForbiddenException(
+          'No tienes permiso para acceder a este curso.',
+        );
+      }
+    } catch (error) {
+      if (error instanceof ForbiddenException) throw error;
+      // Manejar otros errores si la consulta falla
+      console.error('Error en checkDocenteAccess:', error);
+      throw new InternalServerErrorException('Error al verificar permisos.');
+    }
+  }
 }

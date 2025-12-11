@@ -23,16 +23,17 @@ import { ValorarConsultaDto } from 'src/consultas/dto/valorar-consulta.dto';
 import { UpdateConsultaDto } from 'src/consultas/dto/update-consulta.dto';
 
 @UseGuards(RolesGuard)
-@Roles(roles.Alumno)
 @Controller('alumnos')
 export class AlumnosController {
   constructor(private readonly alumnosService: AlumnosService) {}
 
+  @Roles(roles.Alumno)
   @Get('my/courses')
   findMyCourses(@Req() req: AuthenticatedUserRequest) {
     return this.alumnosService.findMyCourses(req.user.userId);
   }
 
+  @Roles(roles.Alumno)
   @Post('my/join-course')
   joinCourse(
     @Req() req: AuthenticatedUserRequest, // Obtenemos el alumno del token
@@ -42,6 +43,7 @@ export class AlumnosController {
     return this.alumnosService.joinCourse(req.user, joinCourseDto);
   }
 
+  @Roles(roles.Alumno)
   @Get('my/progress')
   findMyProgress(
     @Req() req: AuthenticatedUserRequest,
@@ -51,6 +53,7 @@ export class AlumnosController {
     return this.alumnosService.findMyProgress(idAlumno, idCurso); // Llamamos al servicio
   }
 
+  @Roles(roles.Alumno)
   @Get('my/difficulties')
   findMyDifficulties(
     @Req() req: AuthenticatedUserRequest,
@@ -60,6 +63,7 @@ export class AlumnosController {
     return this.alumnosService.findMyDifficulties(idAlumno, idCurso);
   }
 
+  @Roles(roles.Alumno)
   @Get('my/missions')
   findMyMissions(
     @Req() req: AuthenticatedUserRequest,
@@ -69,6 +73,7 @@ export class AlumnosController {
     return this.alumnosService.findMyMissions(idAlumno, idCurso);
   }
 
+  @Roles(roles.Alumno)
   @Get('my/courses/:idCurso/consults')
   findMyConsultas(
     @Req() req: AuthenticatedUserRequest,
@@ -79,6 +84,7 @@ export class AlumnosController {
     return this.alumnosService.findMyConsultas(idAlumno, idCurso, dto);
   }
 
+  @Roles(roles.Alumno)
   @Post('my/courses/:idCurso/consults/create')
   createConsulta(
     @Req() req: AuthenticatedUserRequest,
@@ -89,6 +95,7 @@ export class AlumnosController {
     return this.alumnosService.createConsulta(idAlumno, idCurso, dto);
   }
 
+  @Roles(roles.Alumno)
   @Patch('my/consults/edit/:idConsulta')
   updateConsulta(
     @Req() req: AuthenticatedUserRequest,
@@ -99,6 +106,7 @@ export class AlumnosController {
     return this.alumnosService.updateConsulta(idConsulta, idAlumno, dto);
   }
 
+  @Roles(roles.Alumno)
   @Delete('my/consults/delete/:idConsulta')
   deleteConsulta(
     @Req() req: AuthenticatedUserRequest,
@@ -108,6 +116,7 @@ export class AlumnosController {
     return this.alumnosService.deleteConsulta(idConsulta, idAlumno);
   }
 
+  @Roles(roles.Alumno)
   @Patch('my/consults/:idConsulta/valorar')
   valorarConsulta(
     @Req() req: AuthenticatedUserRequest,
@@ -116,5 +125,15 @@ export class AlumnosController {
   ) {
     const idAlumno = req.user.userId;
     return this.alumnosService.valorarConsulta(idConsulta, idAlumno, dto);
+  }
+
+  @Roles(roles.Docente)
+  @Get('my/courses/:idCurso/active-alumnos')
+  getActiveAlumnos(
+    @Param('idCurso', ParseUUIDPipe) idCurso: string,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const idDocente = req.user.userId;
+    return this.alumnosService.findActiveAlumnosByCurso(idCurso, idDocente);
   }
 }
