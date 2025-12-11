@@ -17,6 +17,7 @@ import { ClasesConsultaModule } from './clases-consulta/clases-consulta.module';
 import { MailService } from './mail/services/mail.service';
 import { MailModule } from './mail/mail.module';
 import { PreguntasModule } from './preguntas/preguntas.module';
+import { SesionesRefuerzoModule } from './sesiones-refuerzo/sesiones-refuerzo.module';
 
 const UPLOADS_PATH = join(process.cwd(), 'uploads');
 
@@ -47,6 +48,7 @@ const UPLOADS_PATH = join(process.cwd(), 'uploads');
     ClasesConsultaModule,
     MailModule,
     PreguntasModule,
+    SesionesRefuerzoModule,
   ],
   controllers: [],
   providers: [MailService],
