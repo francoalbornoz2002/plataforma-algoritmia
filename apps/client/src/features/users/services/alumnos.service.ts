@@ -256,3 +256,45 @@ export const findActiveAlumnos = async (
     );
   }
 };
+
+/**
+ * Obtiene la lista de alumnos de un curso que son elegibles para una sesión de refuerzo
+ * (es decir, que tienen al menos una dificultad registrada).
+ * @param idCurso - El ID del curso.
+ */
+export const findEligibleAlumnos = async (
+  idCurso: string
+): Promise<DocenteBasico[]> => {
+  try {
+    // NOTA: Asumimos que este endpoint existe para optimizar la carga.
+    const response = await apiClient.get(
+      `/alumnos/courses/${idCurso}/elegibles-refuerzo`
+    );
+    return response.data;
+  } catch (err: any) {
+    console.error(
+      "Error fetching eligible alumnos:",
+      err.response?.data || err.message
+    );
+    throw (
+      err.response?.data ||
+      new Error("Error al obtener la lista de alumnos elegibles.")
+    );
+  }
+};
+
+/**
+ * Obtiene las dificultades detalladas para un alumno específico en un curso.
+ * @param idCurso - El ID del curso.
+ * @param idAlumno - El ID del alumno.
+ */
+export const getStudentDifficulties = async (
+  idCurso: string,
+  idAlumno: string
+): Promise<DificultadAlumnoDetallada[]> => {
+  // Reutiliza el endpoint existente `getMyDifficulties` pero para un alumno específico
+  const response = await apiClient.get(`/alumnos/${idAlumno}/difficulties`, {
+    params: { idCurso },
+  });
+  return response.data;
+};

@@ -16,6 +16,7 @@ import { FindConsultasDto } from 'src/consultas/dto/find-consultas.dto';
 import { CreateConsultaDto } from 'src/consultas/dto/create-consulta.dto';
 import { ValorarConsultaDto } from 'src/consultas/dto/valorar-consulta.dto';
 import { UpdateConsultaDto } from 'src/consultas/dto/update-consulta.dto';
+import { roles } from '@prisma/client';
 
 @Injectable()
 export class AlumnosService {
@@ -270,6 +271,39 @@ export class AlumnosService {
 
     // 3. Mapeamos la respuesta
     return inscripciones.map((i) => i.alumno);
+  }
+
+  async findEligibleForRefuerzo(idCurso: string, idDocente: string) {
+    // 1. Validamos que el docente que pide tenga acceso
+    await this.checkDocenteAccess(idDocente, idCurso);
+
+    // 2. Buscamos los alumnos que están activos en el curso y tienen al menos una dificultad registrada para ese curso.
+    const alumnosElegibles = await this.prisma.usuario.findMany({
+      where: {
+        rol: roles.Alumno,
+        // Filtro para asegurar que el alumno esté activo en el curso
+        cursosDelAlumno: {
+          some: {
+            idCurso: idCurso,
+            estado: 'Activo',
+          },
+        },
+        // Filtro para asegurar que el alumno tenga al menos una dificultad en ese curso
+        dificultades: {
+          some: {
+            idCurso: idCurso,
+          },
+        },
+      },
+      select: {
+        id: true,
+        nombre: true,
+        apellido: true,
+      },
+      orderBy: [{ apellido: 'asc' }, { nombre: 'asc' }],
+    });
+
+    return alumnosElegibles;
   }
 
   private async checkDocenteAccess(idDocente: string, idCurso: string) {

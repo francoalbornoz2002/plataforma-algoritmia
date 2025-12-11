@@ -614,7 +614,7 @@ export type CreateSesionRefuerzoData = {
   idAlumno: string;
   idDificultad: string;
   gradoSesion: grado_dificultad;
-  fechaHoraLimite: string; // ISO string
+  fechaHoraLimite: Date | string;
   tiempoLimite: number; // en minutos
   preguntas: string[]; // array de IDs de preguntas
 };
