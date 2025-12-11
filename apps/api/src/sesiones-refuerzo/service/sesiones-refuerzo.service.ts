@@ -305,12 +305,6 @@ export class SesionesRefuerzoService {
       );
     }
 
-    if (dto.idAlumno) {
-      throw new BadRequestException(
-        'No se puede modificar el alumno de la sesión.',
-      );
-    }
-
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // 1. Obtener la sesión y validar su estado
       const sesion = await tx.sesionRefuerzo.findUnique({
@@ -320,6 +314,14 @@ export class SesionesRefuerzoService {
           deletedAt: null,
         },
       });
+
+      const otroAlumno = sesion?.idAlumno !== dto.idAlumno;
+
+      if (otroAlumno) {
+        throw new BadRequestException(
+          'No se puede modificar el alumno de la sesión.',
+        );
+      }
 
       if (!sesion) {
         throw new NotFoundException('Sesión de refuerzo no encontrada.');
