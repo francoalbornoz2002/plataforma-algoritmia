@@ -4,6 +4,7 @@ import type {
   Consulta,
   CursoParaEditar,
   DificultadAlumnoDetallada,
+  DocenteBasico,
   estado_simple,
   FindConsultasParams,
   MisionConEstado,
@@ -228,5 +229,30 @@ export const valorarConsulta = async (
   } catch (err: any) {
     console.error("Error rating consult:", err.response?.data || err.message);
     throw err.response?.data || new Error("Error al valorar la consulta.");
+  }
+};
+
+/**
+ * Obtiene la lista de alumnos activos de un curso (para filtros).
+ * @param idCurso - El ID del curso.
+ */
+export const findActiveAlumnos = async (
+  idCurso: string
+): Promise<DocenteBasico[]> => {
+  try {
+    // Asumimos que existe un endpoint para esto, similar a active-docentes.
+    const response = await apiClient.get(
+      `/alumnos/my/courses/${idCurso}/active-alumnos`
+    );
+    return response.data;
+  } catch (err: any) {
+    console.error(
+      "Error fetching active alumnos:",
+      err.response?.data || err.message
+    );
+    throw (
+      err.response?.data ||
+      new Error("Error al obtener la lista de alumnos activos.")
+    );
   }
 };
