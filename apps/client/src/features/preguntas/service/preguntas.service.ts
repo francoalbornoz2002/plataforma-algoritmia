@@ -81,7 +81,7 @@ const remove = async (id: string): Promise<PreguntaConDetalles> => {
   }
 };
 
-const findSystemPreguntasForSesion = async (
+export const findSystemPreguntasForSesion = async (
   params: FindSystemPreguntasParams
 ): Promise<PreguntaConDetalles[]> => {
   try {

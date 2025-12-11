@@ -40,10 +40,9 @@ import {
   findActiveDocentes,
   getAllDifficulties,
 } from "../../users/services/docentes.service";
+import SesionFormModal from "../components/SesionFormModal";
 
 // Mock de componentes que se crearán después
-const SesionFormModal = ({ open }: { open: boolean }) =>
-  open ? <div>Form Modal Placeholder</div> : null;
 const SesionDetailModal = ({ open }: { open: boolean }) =>
   open ? <div>Detail Modal Placeholder</div> : null;
 
@@ -308,12 +307,12 @@ export default function SesionesRefuerzoPage() {
       )}
 
       {/* --- 3. Modales --- */}
-      {/* <SesionFormModal
+      <SesionFormModal
         open={isFormModalOpen}
         onClose={() => setIsFormModalOpen(false)}
-        onSave={() => fetchSesiones()}
+        onSave={fetchSesiones}
         sesionToEdit={sesionToEdit}
-      /> */}
+      />
 
       {sesionToDelete && (
         <DeleteSesionDialog

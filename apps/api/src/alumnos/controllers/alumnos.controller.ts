@@ -136,4 +136,23 @@ export class AlumnosController {
     const idDocente = req.user.userId;
     return this.alumnosService.findActiveAlumnosByCurso(idCurso, idDocente);
   }
+
+  @Roles(roles.Docente)
+  @Get('courses/:idCurso/elegibles-refuerzo')
+  findEligibleForRefuerzo(
+    @Param('idCurso', ParseUUIDPipe) idCurso: string,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const idDocente = req.user.userId;
+    return this.alumnosService.findEligibleForRefuerzo(idCurso, idDocente);
+  }
+
+  @Roles(roles.Docente)
+  @Get(':idAlumno/difficulties')
+  getStudentDifficulties(
+    @Param('idAlumno', ParseUUIDPipe) idAlumno: string,
+    @Query('idCurso', ParseUUIDPipe) idCurso: string,
+  ) {
+    return this.alumnosService.findMyDifficulties(idAlumno, idCurso);
+  }
 }
