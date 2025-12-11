@@ -2,7 +2,7 @@ import { z } from "zod";
 import { grado_dificultad } from "../../../types";
 
 export const sesionRefuerzoSchema = z.object({
-  idAlumno: z.string("Debes seleccionar un alumno."),
+  idAlumno: z.uuid("Debes seleccionar un alumno."),
   idDificultad: z.string("Debes seleccionar una dificultad."),
   gradoSesion: z.enum(grado_dificultad, "Grado de sesión no válido."),
   fechaHoraLimite: z

@@ -49,28 +49,15 @@ export const createSesion = async (
   idCurso: string,
   data: CreateSesionRefuerzoData
 ): Promise<SesionRefuerzoConDetalles> => {
-  const formData = new FormData();
-
-  // Nota: El backend debe poder manejar la conversión de string a número para 'tiempoLimite'
-  // y de string a fecha para 'fechaHoraLimite'.
-  Object.entries(data).forEach(([key, value]) => {
-    if (key === "preguntas" && Array.isArray(value)) {
-      formData.append(key, JSON.stringify(value));
-    } else if (value instanceof Date) {
-      formData.append(key, value.toISOString());
-    } else {
-      formData.append(key, String(value));
-    }
-  });
+  // Convertimos la fecha a un string ISO, que es el formato estándar para JSON.
+  const payload = {
+    ...data,
+    fechaHoraLimite: new Date(data.fechaHoraLimite).toISOString(),
+  };
 
   const response = await apiClient.post<SesionRefuerzoConDetalles>(
     `/sesiones-refuerzo/${idCurso}`,
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }
+    payload // Enviamos el objeto JS directamente. Axios lo convierte a JSON.
   );
   return response.data;
 };
@@ -86,9 +73,15 @@ export const updateSesion = async (
   idSesion: string,
   data: UpdateSesionRefuerzoData
 ): Promise<SesionRefuerzoConDetalles> => {
+  const payload = { ...data };
+  // Si fechaHoraLimite se está actualizando, nos aseguramos que esté en formato ISO string.
+  if (payload.fechaHoraLimite && typeof payload.fechaHoraLimite !== "string") {
+    payload.fechaHoraLimite = new Date(payload.fechaHoraLimite).toISOString();
+  }
+
   const response = await apiClient.patch<SesionRefuerzoConDetalles>(
     `/sesiones-refuerzo/${idCurso}/${idSesion}`,
-    data
+    payload
   );
   return response.data;
 };
