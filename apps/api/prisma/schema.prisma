@@ -162,6 +162,7 @@ model Dificultad {
   dificultadesAlumno DificultadAlumno[]
   dificultadesCursos DificultadesCurso[]
   preguntas          Pregunta[]
+  sesionRefuerzos    SesionRefuerzo[]
 
   @@index([tema], map: "idx_dificultades_tema")
   @@map("dificultades")
@@ -424,7 +425,10 @@ model ResultadoSesion {
 model SesionRefuerzo {
   id              String           @id @default(uuid()) @db.Uuid
   idCurso         String           @map("id_curso") @db.Uuid
+  idDocente       String?          @map("id_docente") @db.Uuid
   idAlumno        String           @map("id_alumno") @db.Uuid
+  idDificultad    String           @map("id_dificultad") @db.Uuid
+  gradoSesion     grado_dificultad @default(Ninguno) @map("grado_sesion")
   nroSesion       Int              @map("nro_sesion") @db.Integer
   fechaHoraLimite DateTime         @map("fecha_hora_limite") @db.Timestamptz(6)
   tiempoLimite    Int              @map("tiempo_limite") @db.SmallInt
@@ -434,8 +438,10 @@ model SesionRefuerzo {
   deletedAt       DateTime?        @map("deleted_at") @db.Timestamptz(6)
   preguntas       PreguntaSesion[]
   resultadoSesion ResultadoSesion?
+  dificultad      Dificultad       @relation(fields: [idDificultad], references: [id], onDelete: NoAction, onUpdate: NoAction)
   alumno          Usuario          @relation("SesionesAlumno", fields: [idAlumno], references: [id], onDelete: NoAction, onUpdate: NoAction)
   curso           Curso            @relation(fields: [idCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  docente         Usuario?         @relation("SesionesCreadas", fields: [idDocente], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([idCurso, nroSesion], map: "uq_sesion_curso_numero")
   @@index([idAlumno], map: "idx_sesion_alumno")
@@ -468,6 +474,7 @@ model Usuario {
   preguntasCreadas    Pregunta[]          @relation("PreguntasCreadas")
   respuestasConsultas RespuestaConsulta[] @relation("RespuestasDocente")
   sesionesRefuerzo    SesionRefuerzo[]    @relation("SesionesAlumno")
+  sesionesCreadas     SesionRefuerzo[]    @relation("SesionesCreadas")
 
   @@index([deletedAt], map: "idx_usuario_activo")
   @@index([apellido], map: "idx_usuario_apellido")
