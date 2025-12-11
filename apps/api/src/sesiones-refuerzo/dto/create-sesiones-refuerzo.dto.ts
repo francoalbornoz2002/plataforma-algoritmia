@@ -28,18 +28,6 @@ export class CreateSesionesRefuerzoDto {
   @Type(() => Number) // Transforma el string del FormData a número
   tiempoLimite: number;
 
-  @Transform(({ value }) => {
-    if (typeof value === 'string') {
-      try {
-        // El valor de FormData será un string: '["id1", "id2"]'
-        return JSON.parse(value);
-      } catch (e) {
-        // Si falla el parseo, devuelve el valor original para que el validador falle
-        return value;
-      }
-    }
-    return value;
-  })
   @IsArray({ message: 'Las preguntas deben ser un arreglo.' })
   @IsUUID('4', {
     each: true,

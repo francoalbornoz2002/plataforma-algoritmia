@@ -178,44 +178,48 @@ export class PreguntasService {
     idDificultad: string,
     gradoDificultad: grado_dificultad,
   ) {
-    // 1. Determinar qué grados de dificultad se deben incluir en la búsqueda.
-    let gradosAIncluir: grado_dificultad[];
-
-    switch (gradoDificultad) {
-      case 'Alto':
-        gradosAIncluir = ['Alto', 'Medio', 'Bajo'];
-        break;
-      case 'Medio':
-        gradosAIncluir = ['Medio', 'Bajo'];
-        break;
-      case 'Bajo':
-        gradosAIncluir = ['Bajo'];
-        break;
-      default:
-        // Esta validación previene casos inesperados, aunque el DTO ya lo valida.
-        throw new BadRequestException('Grado de dificultad no válido.');
-    }
-
-    try {
-      // 2. Buscar las preguntas en la base de datos.
-      const preguntas = await this.prisma.pregunta.findMany({
+    // Helper para buscar hasta 5 preguntas de un grado específico.
+    // NOTA: Para obtener preguntas realmente aleatorias, se necesitaría una consulta más compleja
+    // (ej. con ORDER BY RANDOM()), pero para la funcionalidad base, `take: 5` es suficiente.
+    const fetchPreguntasPorGrado = (grado: grado_dificultad) => {
+      return this.prisma.pregunta.findMany({
         where: {
           idDificultad: idDificultad,
-          gradoDificultad: {
-            in: gradosAIncluir,
-          },
+          gradoDificultad: grado,
           idDocente: null, // Solo preguntas de tipo "Sistema".
           deletedAt: null, // Solo preguntas activas.
         },
+        take: 5, // <-- ¡LA CLAVE! Limita a 5 preguntas por grado.
         include: {
           opcionesRespuesta: true, // Incluir las opciones de respuesta.
+          dificultad: { select: { nombre: true, tema: true } }, // <-- IMPORTANTE: Incluir dificultad para el Accordion
         },
         orderBy: {
           createdAt: 'asc', // Ordenar por fecha de creación como criterio base.
         },
       });
+    };
 
-      return preguntas;
+    try {
+      const promises: Promise<any[]>[] = [];
+
+      // 2. Construir las promesas de búsqueda según el grado.
+      switch (gradoDificultad) {
+        case 'Alto':
+          promises.push(fetchPreguntasPorGrado('Alto'));
+        // El fall-through es intencional para acumular los grados inferiores.
+        case 'Medio':
+          promises.push(fetchPreguntasPorGrado('Medio'));
+        case 'Bajo':
+          promises.push(fetchPreguntasPorGrado('Bajo'));
+          break;
+        default:
+          throw new BadRequestException('Grado de dificultad no válido.');
+      }
+
+      // 3. Ejecutar todas las búsquedas en paralelo y aplanar el resultado.
+      const results = await Promise.all(promises);
+      return results.flat();
     } catch (error) {
       console.error(
         'Error al buscar preguntas del sistema para la sesión:',
