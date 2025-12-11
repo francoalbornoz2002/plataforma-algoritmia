@@ -1,4 +1,9 @@
-import { estado_clase_consulta, estado_consulta, temas } from ".";
+import {
+  estado_clase_consulta,
+  estado_consulta,
+  estado_sesion,
+  temas,
+} from ".";
 
 export const EstadoClaseLabels: Record<estado_clase_consulta, string> = {
   [estado_clase_consulta.Programada]: "Programada",
@@ -15,6 +20,14 @@ export const EstadoConsultaLabels: Record<estado_consulta, string> = {
   [estado_consulta.A_revisar]: "A Revisar",
   [estado_consulta.Revisada]: "Revisada",
   [estado_consulta.Resuelta]: "Resuelta",
+};
+
+export const EstadoSesionLabels: Record<estado_sesion, string> = {
+  [estado_sesion.Pendiente]: "Pendiente",
+  [estado_sesion.Cancelada]: "Cancelada",
+  [estado_sesion.Completada]: "Completada",
+  [estado_sesion.Incompleta]: "Incompleta",
+  [estado_sesion.No_realizada]: "No realizada",
 };
 
 export const TemasLabels: Record<temas, string> = {

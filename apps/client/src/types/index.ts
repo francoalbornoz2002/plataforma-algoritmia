@@ -71,6 +71,14 @@ export enum estado_clase_consulta {
   Finalizada = "Finalizada",
 }
 
+export enum estado_sesion {
+  Pendiente = "Pendiente",
+  Cancelada = "Cancelada",
+  Completada = "Completada",
+  Incompleta = "Incompleta",
+  No_realizada = "No_realizada",
+}
+
 /* ---------------------- INTERFACES ---------------------- */
 
 export interface MenuItemType {
@@ -545,6 +553,95 @@ export interface FindSystemPreguntasParams {
 // 4. TIPO PAGINADO (Para el Docente)
 export interface PaginatedConsultasDocenteResponse
   extends PaginatedResponse<ConsultaDocente> {}
+
+// ---------- SESIONES DE REFUERZO ---------- //
+
+// 1. Resultado de una sesión (básico)
+export interface ResultadoSesion {
+  id: string;
+  idSesion: string;
+  puntaje: number;
+  fechaCompletado: string;
+}
+
+// 2. Sesión de refuerzo para vistas de lista/resumen (lo que devuelve `findAll`)
+export interface SesionRefuerzoResumen {
+  id: string;
+  idCurso: string;
+  idAlumno: string;
+  idDocente: string | null;
+  idDificultad: string;
+  nroSesion: number;
+  gradoSesion: grado_dificultad;
+  fechaHoraLimite: string;
+  tiempoLimite: number;
+  estado: estado_sesion;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+
+  // Relaciones
+  alumno: {
+    id: string;
+    nombre: string;
+    apellido: string;
+  };
+  docente: {
+    id: string;
+    nombre: string;
+    apellido: string;
+  } | null;
+  dificultad: {
+    id: string;
+    nombre: string;
+  };
+  resultadoSesion: ResultadoSesion | null;
+}
+
+// 3. Sesión de refuerzo con todos los detalles (lo que devuelve `findOne`)
+export interface SesionRefuerzoConDetalles extends SesionRefuerzoResumen {
+  curso: {
+    id: string;
+    nombre: string;
+  };
+  preguntas: {
+    pregunta: PreguntaConDetalles;
+  }[];
+}
+
+// 4. Para crear una sesión de refuerzo
+export type CreateSesionRefuerzoData = {
+  idAlumno: string;
+  idDificultad: string;
+  gradoSesion: grado_dificultad;
+  fechaHoraLimite: string; // ISO string
+  tiempoLimite: number; // en minutos
+  preguntas: string[]; // array de IDs de preguntas
+};
+
+// 5. Para actualizar una sesión de refuerzo
+export type UpdateSesionRefuerzoData = Partial<CreateSesionRefuerzoData>;
+
+// 6. Para los filtros de búsqueda
+export interface FindSesionesParams extends BaseFilterParams {
+  nroSesion?: number;
+  idAlumno?: string;
+  idDocente?: string;
+  idDificultad?: string;
+  gradoSesion?: grado_dificultad | "";
+  estado?: estado_sesion | "";
+}
+
+// 7. Para la respuesta paginada
+export interface PaginatedSesionesResponse {
+  data: SesionRefuerzoResumen[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
 
 // 1. Para el objeto 'ClaseConsulta' (lo que devuelve el backend)
 // (Basado en el 'include' que definimos en el servicio 'findAll')
