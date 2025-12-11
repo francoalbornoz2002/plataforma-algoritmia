@@ -231,8 +231,8 @@ export class SesionesRefuerzoService {
     ]);
 
     // 4. Devolver la respuesta paginada
-    const lastPage = Math.ceil(total / limit);
-    return { data: sesiones, meta: { total, page, limit, lastPage } };
+    const totalPages = Math.ceil(total / limit);
+    return { data: sesiones, meta: { total, page, limit, totalPages } };
   }
 
   async findOne(idCurso: string, idSesion: string, user: UserPayload) {
