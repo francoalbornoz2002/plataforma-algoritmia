@@ -308,6 +308,7 @@ export default function SesionesRefuerzoPage() {
 
       {/* --- 3. Modales --- */}
       <SesionFormModal
+        key={sesionToEdit?.id || "create-sesion"}
         open={isFormModalOpen}
         onClose={() => setIsFormModalOpen(false)}
         onSave={fetchSesiones}
