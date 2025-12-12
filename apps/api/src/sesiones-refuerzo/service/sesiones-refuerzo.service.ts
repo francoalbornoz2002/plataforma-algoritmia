@@ -12,6 +12,8 @@ import { estado_sesion, grado_dificultad, Prisma, roles } from '@prisma/client';
 import { getDiaSemanaEnum } from 'src/helpers';
 import { FindAllSesionesDto } from '../dto/find-all-sesiones.dto';
 import { UserPayload } from 'src/interfaces/authenticated-user.interface';
+import { ResolverSesionDto } from '../dto/resolver-sesion.dto';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class SesionesRefuerzoService {
@@ -225,7 +227,11 @@ export class SesionesRefuerzoService {
           alumno: { select: { id: true, nombre: true, apellido: true } },
           docente: { select: { id: true, nombre: true, apellido: true } },
           dificultad: { select: { id: true, nombre: true } },
-          resultadoSesion: true,
+          resultadoSesion: {
+            include: {
+              respuestasAlumno: true, // <-- AÑADIDO: Incluye siempre las respuestas del alumno
+            },
+          },
         },
       }),
     ]);
@@ -269,7 +275,11 @@ export class SesionesRefuerzoService {
         docente: { select: { id: true, nombre: true, apellido: true } },
         dificultad: { select: { id: true, nombre: true } },
         curso: { select: { id: true, nombre: true } },
-        resultadoSesion: true,
+        resultadoSesion: {
+          include: {
+            respuestasAlumno: true,
+          },
+        },
       },
     });
 
@@ -525,6 +535,218 @@ export class SesionesRefuerzoService {
           deletedAt: new Date(),
         },
       });
+    });
+  }
+
+  async iniciarSesion(idCurso: string, idSesion: string, idAlumno: string) {
+    const sesion = await this.prisma.sesionRefuerzo.findUnique({
+      where: { id: idSesion, idCurso },
+    });
+
+    if (!sesion) {
+      throw new NotFoundException('Sesión de refuerzo no encontrada.');
+    }
+
+    if (sesion.idAlumno !== idAlumno) {
+      throw new ForbiddenException(
+        'No tienes permiso para acceder a esta sesión.',
+      );
+    }
+
+    if (sesion.estado !== estado_sesion.Pendiente) {
+      throw new BadRequestException('La sesión no está en estado pendiente.');
+    }
+
+    // Si ya se inició previamente, retornamos la sesión tal cual para no reiniciar el contador
+    if (sesion.fechaInicioReal) {
+      return sesion;
+    }
+
+    return this.prisma.sesionRefuerzo.update({
+      where: { id: idSesion },
+      data: { fechaInicioReal: new Date() },
+    });
+  }
+
+  async resolverSesion(
+    idCurso: string,
+    idSesion: string,
+    idAlumno: string,
+    dto: ResolverSesionDto,
+  ) {
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // 1. Obtener la sesión con sus preguntas y opciones correctas
+      const sesion = await tx.sesionRefuerzo.findUnique({
+        where: { id: idSesion, idCurso },
+        include: {
+          preguntas: {
+            include: {
+              pregunta: {
+                include: {
+                  opcionesRespuesta: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!sesion) {
+        throw new NotFoundException('Sesión de refuerzo no encontrada.');
+      }
+
+      if (sesion.idAlumno !== idAlumno) {
+        throw new ForbiddenException(
+          'No tienes permiso para resolver esta sesión.',
+        );
+      }
+
+      if (sesion.estado !== estado_sesion.Pendiente) {
+        throw new BadRequestException(
+          'La sesión ya ha sido completada o cancelada.',
+        );
+      }
+
+      // 2. Procesar Respuestas y Calcular Puntaje
+      let correctas = 0;
+      const respuestasToSave: Prisma.RespuestaAlumnoCreateManyInput[] = [];
+      const preguntasMap = new Map(
+        sesion.preguntas.map((p) => [p.idPregunta, p.pregunta]),
+      );
+
+      // Evitar duplicados en las respuestas enviadas por seguridad
+      const respuestasUnicas = new Map();
+      for (const r of dto.respuestas) {
+        respuestasUnicas.set(r.idPregunta, r.idOpcionElegida);
+      }
+
+      for (const [idPregunta, idOpcionElegida] of respuestasUnicas.entries()) {
+        const pregunta = preguntasMap.get(idPregunta);
+        if (!pregunta) continue; // Ignorar preguntas que no son de esta sesión
+
+        const opcionCorrecta = pregunta.opcionesRespuesta.find(
+          (o) => o.esCorrecta,
+        );
+        const esCorrecta = opcionCorrecta?.id === idOpcionElegida;
+
+        if (esCorrecta) {
+          correctas++;
+        }
+
+        respuestasToSave.push({
+          idSesion,
+          idPregunta,
+          idOpcionElegida,
+          esCorrecta,
+        });
+      }
+
+      const totalPreguntas = sesion.preguntas.length;
+      const incorrectas = totalPreguntas - correctas;
+      const pctAciertos =
+        totalPreguntas > 0 ? (correctas / totalPreguntas) * 100 : 0;
+
+      // 3. Actualizar Dificultad del Alumno (Lógica de Negocio)
+      let nuevoGrado: grado_dificultad = grado_dificultad.Ninguno;
+
+      if (pctAciertos < 40) nuevoGrado = grado_dificultad.Alto;
+      else if (pctAciertos < 60) nuevoGrado = grado_dificultad.Medio;
+      else if (pctAciertos < 85) nuevoGrado = grado_dificultad.Bajo;
+      else nuevoGrado = grado_dificultad.Ninguno;
+
+      if (nuevoGrado === grado_dificultad.Ninguno) {
+        // Si superó la dificultad (>= 85%), eliminamos el registro
+        await tx.dificultadAlumno.deleteMany({
+          where: { idAlumno, idCurso, idDificultad: sesion.idDificultad },
+        });
+      } else {
+        // Actualizamos o creamos la dificultad con el nuevo grado
+        await tx.dificultadAlumno.upsert({
+          where: {
+            idAlumno_idCurso_idDificultad: {
+              idAlumno,
+              idCurso,
+              idDificultad: sesion.idDificultad,
+            },
+          },
+          update: { grado: nuevoGrado },
+          create: {
+            idAlumno,
+            idCurso,
+            idDificultad: sesion.idDificultad,
+            grado: nuevoGrado,
+          },
+        });
+      }
+
+      // 4. Guardar Respuestas y Resultado
+      // IMPORTANTE: Primero creamos el ResultadoSesion porque RespuestaAlumno tiene una FK que apunta a él.
+      await tx.resultadoSesion.create({
+        data: {
+          idSesion,
+          cantCorrectas: correctas,
+          cantIncorrectas: incorrectas,
+          pctAciertos,
+          fechaCompletado: new Date(),
+        },
+      });
+
+      if (respuestasToSave.length > 0) {
+        await tx.respuestaAlumno.createMany({ data: respuestasToSave });
+      }
+
+      // 5. Finalizar Sesión
+      await tx.sesionRefuerzo.update({
+        where: { id: idSesion },
+        data: { estado: estado_sesion.Completada },
+      });
+
+      return {
+        mensaje: 'Sesión completada exitosamente.',
+        resultados: {
+          correctas,
+          incorrectas,
+          pctAciertos,
+          nuevoGrado,
+        },
+      };
+    });
+  }
+
+  /**
+   * CRON JOB: Actualización automática de estados.
+   * Se ejecuta cada minuto para verificar sesiones vencidas.
+   */
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleCronSesionesVencidas() {
+    const now = new Date();
+
+    // 1. Caso: El tiempo límite pasó y el alumno NUNCA inició la sesión.
+    // Estado -> No_realizada
+    await this.prisma.sesionRefuerzo.updateMany({
+      where: {
+        estado: estado_sesion.Pendiente,
+        fechaHoraLimite: { lt: now },
+        fechaInicioReal: null,
+        deletedAt: null,
+      },
+      data: {
+        estado: estado_sesion.No_realizada,
+      },
+    });
+
+    // 2. Caso: El tiempo límite pasó, el alumno inició pero NO envió respuestas (se quedó a medias).
+    // Estado -> Incompleta
+    await this.prisma.sesionRefuerzo.updateMany({
+      where: {
+        estado: estado_sesion.Pendiente,
+        fechaHoraLimite: { lt: now },
+        fechaInicioReal: { not: null },
+        deletedAt: null,
+      },
+      data: {
+        estado: estado_sesion.Incompleta,
+      },
     });
   }
 

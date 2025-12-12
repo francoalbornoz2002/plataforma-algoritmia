@@ -18,6 +18,7 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { roles } from '@prisma/client';
 import { FindAllSesionesDto } from '../dto/find-all-sesiones.dto';
+import { ResolverSesionDto } from '../dto/resolver-sesion.dto';
 
 @UseGuards(RolesGuard)
 @Controller('sesiones-refuerzo')
@@ -70,5 +71,35 @@ export class SesionesRefuerzoController {
   @Roles(roles.Docente)
   remove(@Param('idCurso') idCurso: string, @Param('id') id: string) {
     return this.sesionesRefuerzoService.remove(idCurso, id);
+  }
+
+  @Post(':idCurso/:id/iniciar')
+  @Roles(roles.Alumno)
+  iniciarSesion(
+    @Param('idCurso') idCurso: string,
+    @Param('id') id: string,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    return this.sesionesRefuerzoService.iniciarSesion(
+      idCurso,
+      id,
+      req.user.userId,
+    );
+  }
+
+  @Post(':idCurso/:id/resolver')
+  @Roles(roles.Alumno)
+  resolverSesion(
+    @Param('idCurso') idCurso: string,
+    @Param('id') id: string,
+    @Body() dto: ResolverSesionDto,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    return this.sesionesRefuerzoService.resolverSesion(
+      idCurso,
+      id,
+      req.user.userId,
+      dto,
+    );
   }
 }
