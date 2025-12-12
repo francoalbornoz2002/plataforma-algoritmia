@@ -41,10 +41,7 @@ import {
   getAllDifficulties,
 } from "../../users/services/docentes.service";
 import SesionFormModal from "../components/SesionFormModal";
-
-// Mock de componentes que se crearán después
-const SesionDetailModal = ({ open }: { open: boolean }) =>
-  open ? <div>Detail Modal Placeholder</div> : null;
+import ResultadoSesionModal from "../components/ResultadoSesionModal";
 
 export default function SesionesRefuerzoPage() {
   const { selectedCourse } = useCourseContext();
@@ -324,13 +321,13 @@ export default function SesionesRefuerzoPage() {
         />
       )}
 
-      {/* {sesionToView && (
-        <SesionDetailModal
+      {sesionToView && (
+        <ResultadoSesionModal
           open={!!sesionToView}
           onClose={() => setSesionToView(null)}
-          sesion={sesionToView}
+          sesionResumen={sesionToView}
         />
-      )} */}
+      )}
     </Box>
   );
 }

@@ -25,6 +25,8 @@ import ConsultasPage from "./features/consultas/pages/ConsultasPage";
 import ClasesConsultaPage from "./features/clases-consulta/pages/ClasesConsultaPage";
 import PreguntasPage from "./features/preguntas/pages/PreguntasPage";
 import SesionesRefuerzoPage from "./features/sesiones-refuerzo/pages/SesionesRefuerzoPage";
+import MisSesionesPage from "./features/sesiones-refuerzo/pages/MisSesionesPage";
+import SesionResolverPage from "./features/sesiones-refuerzo/pages/SesionResolverPage";
 
 export const AppRouter: React.FC<{}> = () => {
   return (
@@ -85,6 +87,11 @@ export const AppRouter: React.FC<{}> = () => {
             <Route path="dashboard" element={<AlumnoDashboardPage />} />
             <Route path="progress" element={<MyProgressPage />} />
             <Route path="difficulties" element={<MyDifficultiesPage />} />
+            <Route path="sessions" element={<MisSesionesPage />} />
+            <Route
+              path="sessions/:id/resolver"
+              element={<SesionResolverPage />}
+            />
             <Route path="consults" element={<MyConsultsPage />} />
           </Route>
         </Route>
