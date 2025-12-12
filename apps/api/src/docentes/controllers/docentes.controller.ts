@@ -21,7 +21,8 @@ import { CreateRespuestaDto } from 'src/consultas/dto/create-respuesta.dto';
 import { ConsultasService } from 'src/consultas/services/consultas.service';
 
 @UseGuards(RolesGuard)
-@Roles(roles.Docente)
+//TODO: Quitar alumno de aqui, por el momento lo coloco pero no debería pasar.
+@Roles(roles.Docente, roles.Alumno)
 @Controller('docentes')
 export class DocentesController {
   constructor(
