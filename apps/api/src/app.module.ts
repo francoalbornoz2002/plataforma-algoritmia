@@ -18,11 +18,13 @@ import { MailService } from './mail/services/mail.service';
 import { MailModule } from './mail/mail.module';
 import { PreguntasModule } from './preguntas/preguntas.module';
 import { SesionesRefuerzoModule } from './sesiones-refuerzo/sesiones-refuerzo.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 const UPLOADS_PATH = join(process.cwd(), 'uploads');
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ServeStaticModule.forRoot({
       // 2. Le decimos a Nest que sirva archivos desde esta carpeta exacta
       rootPath: UPLOADS_PATH,
