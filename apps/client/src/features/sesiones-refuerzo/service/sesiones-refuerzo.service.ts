@@ -3,6 +3,8 @@ import type {
   CreateSesionRefuerzoData,
   FindSesionesParams,
   PaginatedSesionesResponse,
+  ResolverSesionPayload,
+  ResolverSesionResponse,
   SesionRefuerzoConDetalles,
   SesionRefuerzoResumen,
   UpdateSesionRefuerzoData,
@@ -20,6 +22,40 @@ export const findAllSesiones = async (
   const response = await apiClient.get<PaginatedSesionesResponse>(
     `/sesiones-refuerzo/${idCurso}`,
     { params }
+  );
+  return response.data;
+};
+
+/**
+ * Marca el inicio de una sesión de refuerzo por parte del alumno.
+ * Esto es importante para validar el tiempo límite en el servidor.
+ * @param idCurso - El ID del curso.
+ * @param idSesion - El ID de la sesión.
+ */
+export const iniciarSesion = async (
+  idCurso: string,
+  idSesion: string
+): Promise<SesionRefuerzoConDetalles> => {
+  const response = await apiClient.post<SesionRefuerzoConDetalles>(
+    `/sesiones-refuerzo/${idCurso}/${idSesion}/iniciar`
+  );
+  return response.data;
+};
+
+/**
+ * Envía las respuestas de una sesión de refuerzo para su calificación.
+ * @param idCurso - El ID del curso.
+ * @param idSesion - El ID de la sesión.
+ * @param data - Las respuestas del alumno.
+ */
+export const resolverSesion = async (
+  idCurso: string,
+  idSesion: string,
+  data: ResolverSesionPayload
+): Promise<ResolverSesionResponse> => {
+  const response = await apiClient.post<ResolverSesionResponse>(
+    `/sesiones-refuerzo/${idCurso}/${idSesion}/resolver`,
+    data
   );
   return response.data;
 };

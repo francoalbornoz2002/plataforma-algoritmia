@@ -560,8 +560,19 @@ export interface PaginatedConsultasDocenteResponse
 export interface ResultadoSesion {
   id: string;
   idSesion: string;
-  puntaje: number;
+  cantCorrectas: number;
+  cantIncorrectas: number;
+  pctAciertos: number | string; // Puede llegar como string (Decimal de Prisma) o number
   fechaCompletado: string;
+  respuestasAlumno?: RespuestaAlumno[];
+}
+
+// NUEVO: Para la respuesta de un alumno a una pregunta específica
+export interface RespuestaAlumno {
+  idSesion: string;
+  idPregunta: string;
+  idOpcionElegida: string;
+  esCorrecta: boolean;
 }
 
 // 2. Sesión de refuerzo para vistas de lista/resumen (lo que devuelve `findAll`)
@@ -574,6 +585,7 @@ export interface SesionRefuerzoResumen {
   nroSesion: number;
   gradoSesion: grado_dificultad;
   fechaHoraLimite: string;
+  fechaInicioReal: string | null; // <-- Agregado
   tiempoLimite: number;
   estado: estado_sesion;
   createdAt: string;
@@ -640,6 +652,25 @@ export interface PaginatedSesionesResponse {
     page: number;
     limit: number;
     totalPages: number;
+  };
+}
+
+// 8. Para resolver una sesión (Payload)
+export interface ResolverSesionPayload {
+  respuestas: {
+    idPregunta: string;
+    idOpcionElegida: string;
+  }[];
+}
+
+// 9. Respuesta al resolver una sesión
+export interface ResolverSesionResponse {
+  mensaje: string;
+  resultados: {
+    correctas: number;
+    incorrectas: number;
+    pctAciertos: number;
+    nuevoGrado: grado_dificultad;
   };
 }
 
