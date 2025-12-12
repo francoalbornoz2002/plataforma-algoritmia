@@ -383,6 +383,7 @@ model RespuestaAlumno {
   idSesion        String          @map("id_sesion") @db.Uuid
   idPregunta      String          @map("id_pregunta") @db.Uuid
   idOpcionElegida String          @map("id_opcion_elegida") @db.Uuid
+  esCorrecta      Boolean         @default(false) @map("es_correcta")
   opcionElegida   OpcionRespuesta @relation(fields: [idOpcionElegida], references: [id], onDelete: NoAction, onUpdate: NoAction)
   pregunta        Pregunta        @relation(fields: [idPregunta], references: [id], onDelete: NoAction, onUpdate: NoAction)
   resultadoSesion ResultadoSesion @relation(fields: [idSesion], references: [idSesion], onDelete: NoAction, onUpdate: NoAction)
@@ -431,6 +432,7 @@ model SesionRefuerzo {
   gradoSesion     grado_dificultad @default(Ninguno) @map("grado_sesion")
   nroSesion       Int              @map("nro_sesion") @db.Integer
   fechaHoraLimite DateTime         @map("fecha_hora_limite") @db.Timestamptz(6)
+  fechaInicioReal DateTime?        @map("fecha_inicio_real") @db.Timestamptz(6)
   tiempoLimite    Int              @map("tiempo_limite") @db.SmallInt
   estado          estado_sesion
   createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
