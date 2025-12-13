@@ -188,7 +188,7 @@ export default function MySesionCard({
         {isCompletada && (
           <Button
             size="small"
-            color="secondary"
+            color="primary"
             onClick={() => onViewDetails(sesion)}
             startIcon={<AssessmentIcon />}
           >

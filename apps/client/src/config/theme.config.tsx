@@ -9,10 +9,10 @@ const theme = createTheme({
   palette: {
     mode: "light",
     primary: {
-      main: "#004d40",
+      main: "#162660",
     },
     secondary: {
-      main: "#00838f",
+      main: "#D0E6FD",
     },
     text: {
       primary: "rgba(4,4,4,0.8)",
