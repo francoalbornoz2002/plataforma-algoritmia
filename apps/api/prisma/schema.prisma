@@ -415,6 +415,8 @@ model ResultadoSesion {
   cantIncorrectas  Int               @map("cant_incorrectas") @db.SmallInt
   pctAciertos      Decimal           @map("pct_aciertos") @db.Decimal(5, 2) // Added precision
   fechaCompletado  DateTime          @map("fecha_completado") @db.Timestamptz(6)
+  gradoAnterior    grado_dificultad  @default(Ninguno) @map("grado_anterior")
+  gradoNuevo       grado_dificultad  @default(Ninguno) @map("grado_nuevo")
   respuestasAlumno RespuestaAlumno[]
   sesionRefuerzo   SesionRefuerzo    @relation(fields: [idSesion], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
