@@ -647,6 +647,7 @@ export class SesionesRefuerzoService {
         totalPreguntas > 0 ? (correctas / totalPreguntas) * 100 : 0;
 
       // 3. Actualizar Dificultad del Alumno (Lógica de Negocio)
+      const gradoAnterior = sesion.gradoSesion;
       let nuevoGrado: grado_dificultad = grado_dificultad.Ninguno;
 
       if (pctAciertos < 40) nuevoGrado = grado_dificultad.Alto;
@@ -654,30 +655,23 @@ export class SesionesRefuerzoService {
       else if (pctAciertos < 85) nuevoGrado = grado_dificultad.Bajo;
       else nuevoGrado = grado_dificultad.Ninguno;
 
-      if (nuevoGrado === grado_dificultad.Ninguno) {
-        // Si superó la dificultad (>= 85%), eliminamos el registro
-        await tx.dificultadAlumno.deleteMany({
-          where: { idAlumno, idCurso, idDificultad: sesion.idDificultad },
-        });
-      } else {
-        // Actualizamos o creamos la dificultad con el nuevo grado
-        await tx.dificultadAlumno.upsert({
-          where: {
-            idAlumno_idCurso_idDificultad: {
-              idAlumno,
-              idCurso,
-              idDificultad: sesion.idDificultad,
-            },
-          },
-          update: { grado: nuevoGrado },
-          create: {
+      // Actualizamos o creamos la dificultad con el nuevo grado (incluso si es Ninguno)
+      await tx.dificultadAlumno.upsert({
+        where: {
+          idAlumno_idCurso_idDificultad: {
             idAlumno,
             idCurso,
             idDificultad: sesion.idDificultad,
-            grado: nuevoGrado,
           },
-        });
-      }
+        },
+        update: { grado: nuevoGrado },
+        create: {
+          idAlumno,
+          idCurso,
+          idDificultad: sesion.idDificultad,
+          grado: nuevoGrado,
+        },
+      });
 
       // 4. Guardar Respuestas y Resultado
       // IMPORTANTE: Primero creamos el ResultadoSesion porque RespuestaAlumno tiene una FK que apunta a él.
@@ -688,6 +682,8 @@ export class SesionesRefuerzoService {
           cantIncorrectas: incorrectas,
           pctAciertos,
           fechaCompletado: new Date(),
+          gradoAnterior,
+          gradoNuevo: nuevoGrado,
         },
       });
 
@@ -757,7 +753,7 @@ export class SesionesRefuerzoService {
     idDocente: string,
     idCurso: string,
   ) {
-    const asignacion = await tx.docenteCurso.findFirst({
+    const asignacion = await (tx as PrismaService).docenteCurso.findFirst({
       where: { idDocente, idCurso, estado: 'Activo' },
     });
     if (!asignacion) {
