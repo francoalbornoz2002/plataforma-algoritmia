@@ -15,6 +15,11 @@ import {
   Card,
   CardContent,
   Container,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import SendIcon from "@mui/icons-material/Send";
@@ -45,6 +50,7 @@ export default function SesionResolverPage() {
   const [sesion, setSesion] = useState<SesionRefuerzoConDetalles | null>(null);
   const [respuestas, setRespuestas] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
 
   // ESTADO REFACTORIZADO: Un solo objeto para el resultado final.
   const [finalResultData, setFinalResultData] = useState<{
@@ -92,6 +98,15 @@ export default function SesionResolverPage() {
     }
   }, [selectedCourse, id, navigate]);
 
+  // --- Scroll to top on result view ---
+  useEffect(() => {
+    // Cuando los resultados finales están listos, la vista cambia.
+    // Hacemos scroll hacia arriba para que el usuario vea el resumen.
+    if (finalResultData) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [finalResultData]);
+
   // --- Lógica del Timer ---
   useEffect(() => {
     if (timeLeft !== null && timeLeft > 0 && !finalResultData) {
@@ -111,6 +126,38 @@ export default function SesionResolverPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft, finalResultData]); // isSubmitting omitido para evitar loops, se controla dentro
+
+  // --- Prevent Accidental Navigation ---
+  const isExamInProgress = timeLeft !== null && !finalResultData;
+
+  useEffect(() => {
+    if (!isExamInProgress) return;
+
+    // 1. Prevenir recarga o cierre de pestaña
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+
+    // 2. Prevenir navegación atrás del navegador
+    const handlePopState = () => {
+      // Empujamos de nuevo el estado actual para anular la acción de "Atrás"
+      window.history.pushState(null, "", window.location.href);
+      alert(
+        "No puedes volver atrás durante la sesión. Si sales, perderás tu progreso."
+      );
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    // Agregamos una entrada al historial para tener un "colchón" que interceptar
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [isExamInProgress]);
 
   // --- Handlers ---
 
@@ -182,6 +229,15 @@ export default function SesionResolverPage() {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  };
+
+  const isTimeCritical = timeLeft !== null && timeLeft < 60;
+
+  // Keyframes para la animación de parpadeo
+  const blinkAnimation = {
+    "@keyframes blink": {
+      "50%": { backgroundColor: "#d32f2f" }, // Un rojo un poco más oscuro para el parpadeo
+    },
   };
 
   if (loading) {
@@ -272,21 +328,27 @@ export default function SesionResolverPage() {
         sx={{
           p: 2,
           mb: 3,
-          position: "sticky",
-          top: 16,
+          position: "sticky", // Mantiene el elemento fijo durante el scroll
+          top: 70, // Aumentado para que sea visible debajo del AppBar principal
           zIndex: 100,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          bgcolor: timeLeft < 60 ? "#fff4f4" : "background.paper",
+          // Estilos condicionales para cuando el tiempo es crítico
+          bgcolor: isTimeCritical ? "error.main" : "background.paper",
+          color: isTimeCritical ? "white" : "text.primary",
+          transition: "background-color 0.5s ease, color 0.5s ease",
+          ...(isTimeCritical && {
+            animation: `blink 1.5s infinite`,
+          }),
+          ...blinkAnimation,
         }}
       >
         <Typography variant="h6">Sesión N° {sesion.nroSesion}</Typography>
         <Stack direction="row" spacing={1} alignItems="center">
-          <AccessTimeIcon color={timeLeft < 60 ? "error" : "action"} />
+          <AccessTimeIcon />
           <Typography
             variant="h5"
-            color={timeLeft < 60 ? "error" : "text.primary"}
             sx={{ fontWeight: "bold", fontFamily: "monospace" }}
           >
             {formatTime(timeLeft)}
@@ -342,12 +404,39 @@ export default function SesionResolverPage() {
               <SendIcon />
             )
           }
-          onClick={handleSubmit}
+          onClick={() => setOpenConfirmDialog(true)}
           disabled={isSubmitting}
         >
           {isSubmitting ? "Enviando..." : "Finalizar y Enviar"}
         </Button>
       </Box>
+
+      {/* Dialogo de Confirmación de Envío */}
+      <Dialog
+        open={openConfirmDialog}
+        onClose={() => setOpenConfirmDialog(false)}
+      >
+        <DialogTitle>Confirmar envío</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            ¿Estás seguro de que deseas finalizar la sesión y enviar tus
+            respuestas? Esta acción no se puede deshacer.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenConfirmDialog(false)}>Cancelar</Button>
+          <Button
+            onClick={() => {
+              setOpenConfirmDialog(false);
+              handleSubmit();
+            }}
+            variant="contained"
+            autoFocus
+          >
+            Enviar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }
