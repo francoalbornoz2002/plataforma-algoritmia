@@ -45,7 +45,12 @@ export default function SesionResolverPage() {
   const [sesion, setSesion] = useState<SesionRefuerzoConDetalles | null>(null);
   const [respuestas, setRespuestas] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [result, setResult] = useState<ResolverSesionResponse | null>(null);
+
+  // ESTADO REFACTORIZADO: Un solo objeto para el resultado final.
+  const [finalResultData, setFinalResultData] = useState<{
+    sesion: SesionRefuerzoConDetalles;
+    nuevoGrado: ResolverSesionResponse["resultados"]["nuevoGrado"];
+  } | null>(null);
 
   // --- Timer ---
   const [timeLeft, setTimeLeft] = useState<number | null>(null); // en segundos
@@ -89,14 +94,14 @@ export default function SesionResolverPage() {
 
   // --- Lógica del Timer ---
   useEffect(() => {
-    if (timeLeft !== null && timeLeft > 0 && !result) {
+    if (timeLeft !== null && timeLeft > 0 && !finalResultData) {
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev === null || prev <= 0) return 0;
           return prev - 1;
         });
       }, 1000);
-    } else if (timeLeft === 0 && !result && !isSubmitting) {
+    } else if (timeLeft === 0 && !finalResultData && !isSubmitting) {
       // Tiempo agotado: Enviar automáticamente
       handleSubmit();
     }
@@ -105,7 +110,7 @@ export default function SesionResolverPage() {
       if (timerRef.current) clearInterval(timerRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeLeft, result]); // isSubmitting omitido para evitar loops, se controla dentro
+  }, [timeLeft, finalResultData]); // isSubmitting omitido para evitar loops, se controla dentro
 
   // --- Handlers ---
 
@@ -143,12 +148,20 @@ export default function SesionResolverPage() {
     };
 
     try {
-      const data = await resolverSesion(selectedCourse.id, sesion.id, payload);
-      setResult(data);
+      const resultResponse = await resolverSesion(
+        selectedCourse.id,
+        sesion.id,
+        payload
+      );
 
       // ¡CLAVE! Volvemos a buscar la sesión para obtener los resultados completos
       const updatedSesion = await findSesionById(selectedCourse.id, sesion.id);
-      setSesion(updatedSesion);
+
+      // Actualizamos el estado final en un solo paso para evitar race conditions
+      setFinalResultData({
+        sesion: updatedSesion,
+        nuevoGrado: resultResponse.resultados.nuevoGrado,
+      });
 
       if (timerRef.current) clearInterval(timerRef.current);
       setTimeLeft(null);
@@ -161,7 +174,7 @@ export default function SesionResolverPage() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [sesion, selectedCourse, respuestas, isSubmitting]);
+  }, [sesion, selectedCourse, respuestas, isSubmitting, navigate]);
 
   // --- Render Helpers ---
 
@@ -182,7 +195,11 @@ export default function SesionResolverPage() {
   if (!sesion) return null;
 
   // VISTA 1: RESULTADOS (Si ya se resolvió)
-  if (result || sesion.estado === estado_sesion.Completada) {
+  if (finalResultData || sesion.estado === estado_sesion.Completada) {
+    // Priorizamos los datos frescos del resultado final, si no, usamos los de la sesión cargada.
+    const sesionData = finalResultData ? finalResultData.sesion : sesion;
+    const nuevoGradoData = finalResultData ? finalResultData.nuevoGrado : null;
+
     return (
       <Container maxWidth="md" sx={{ mt: 4 }}>
         <Paper elevation={3} sx={{ p: 4, textAlign: "center" }}>
@@ -191,8 +208,8 @@ export default function SesionResolverPage() {
           </Typography>
           <Box sx={{ my: 3 }}>
             <ResultadoSesionView
-              sesion={sesion}
-              nuevoGrado={result?.resultados.nuevoGrado}
+              sesion={sesionData}
+              nuevoGrado={nuevoGradoData}
             />
           </Box>
           <Button

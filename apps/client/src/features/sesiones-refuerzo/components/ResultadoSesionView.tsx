@@ -185,43 +185,45 @@ export default function ResultadoSesionView({
                   const esLaElegida = opcion.id === opcionElegidaId;
 
                   let icon = <RadioButtonUncheckedIcon color="disabled" />;
-                  let primaryTextSx: any = { fontWeight: "normal" };
-                  let secondaryText: React.ReactNode | null = null;
+                  let primaryTextSx: any = {};
+                  let secondaryText: React.ReactNode = null;
 
                   if (esLaCorrecta) {
                     icon = <CheckCircleIcon color="success" />;
                     if (esLaElegida) {
                       // El alumno eligió la correcta
-                      primaryTextSx.fontWeight = "bold";
+                      primaryTextSx = { fontWeight: "bold" };
                       secondaryText = (
                         <Typography
                           variant="caption"
                           color="success.main"
                           fontWeight="bold"
                         >
-                          Tu respuesta
+                          Tu respuesta (Correcta)
                         </Typography>
                       );
                     } else {
                       // Esta es la correcta, pero el alumno eligió otra
                       secondaryText = (
                         <Typography variant="caption" color="success.main">
-                          Esta era la respuesta correcta
+                          Respuesta correcta
                         </Typography>
                       );
                     }
                   } else if (esLaElegida) {
                     // esLaCorrecta es false, pero el alumno la eligió
                     icon = <CancelIcon color="error" />;
-                    primaryTextSx.fontWeight = "bold";
-                    primaryTextSx.textDecoration = "line-through";
+                    primaryTextSx = {
+                      fontWeight: "bold",
+                      textDecoration: "line-through",
+                    };
                     secondaryText = (
                       <Typography
                         variant="caption"
                         color="error.main"
                         fontWeight="bold"
                       >
-                        Tu respuesta
+                        Tu respuesta (Incorrecta)
                       </Typography>
                     );
                   }
