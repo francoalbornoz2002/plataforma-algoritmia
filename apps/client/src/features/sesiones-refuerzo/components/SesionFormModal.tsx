@@ -141,7 +141,14 @@ export default function SesionFormModal({
       setAlumnoDificultades([]);
 
       getStudentDifficulties(selectedCourse.id, selectedAlumnoId)
-        .then(setAlumnoDificultades)
+        .then((data) => {
+          // Filtramos las dificultades que ya han sido superadas (Grado Ninguno)
+          // ya que no se pueden generar sesiones para ellas.
+          const filtered = data.filter(
+            (d) => d.grado !== grado_dificultad.Ninguno
+          );
+          setAlumnoDificultades(filtered);
+        })
         .catch(() =>
           enqueueSnackbar("Error al cargar dificultades del alumno.", {
             variant: "error",
