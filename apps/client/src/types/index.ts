@@ -564,6 +564,8 @@ export interface ResultadoSesion {
   cantIncorrectas: number;
   pctAciertos: number | string; // Puede llegar como string (Decimal de Prisma) o number
   fechaCompletado: string;
+  gradoAnterior: grado_dificultad;
+  gradoNuevo: grado_dificultad;
   respuestasAlumno?: RespuestaAlumno[];
 }
 

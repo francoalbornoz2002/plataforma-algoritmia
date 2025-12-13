@@ -36,39 +36,35 @@ export default function ResultadoSesionView({
     return <Typography>Esta sesión aún no tiene resultados.</Typography>;
   }
 
-  const { cantCorrectas, cantIncorrectas, pctAciertos, respuestasAlumno } =
-    sesion.resultadoSesion;
+  const {
+    cantCorrectas,
+    cantIncorrectas,
+    pctAciertos,
+    respuestasAlumno,
+    gradoAnterior,
+    gradoNuevo,
+  } = sesion.resultadoSesion;
 
   const respuestasMap = new Map(
     (respuestasAlumno || []).map((r) => [r.idPregunta, r.idOpcionElegida])
   );
 
-  // Calculamos el nuevo grado si no se proporciona (para el historial)
-  let displayedNuevoGrado = nuevoGrado;
-  if (!displayedNuevoGrado) {
-    const pct = Number(pctAciertos);
-    if (pct < 40) displayedNuevoGrado = grado_dificultad.Alto;
-    else if (pct < 60) displayedNuevoGrado = grado_dificultad.Medio;
-    else if (pct < 85) displayedNuevoGrado = grado_dificultad.Bajo;
-    else displayedNuevoGrado = grado_dificultad.Ninguno;
-  }
-
   const renderGradoChange = () => {
-    if (!displayedNuevoGrado) return null;
+    if (!gradoNuevo) return null;
 
     const grados = [
       grado_dificultad.Bajo,
       grado_dificultad.Medio,
       grado_dificultad.Alto,
     ];
-    const indexAntes = grados.indexOf(sesion.gradoSesion);
-    const indexDespues = grados.indexOf(displayedNuevoGrado);
+    const indexAntes = grados.indexOf(gradoAnterior);
+    const indexDespues = grados.indexOf(gradoNuevo);
 
     let Icon = HorizontalRuleIcon;
     let color = "text.secondary";
     let text = "Tu grado se mantiene.";
 
-    if (displayedNuevoGrado === grado_dificultad.Ninguno) {
+    if (gradoNuevo === grado_dificultad.Ninguno) {
       Icon = CheckCircleIcon;
       color = "success.main";
       text = "¡Superaste esta dificultad!";
@@ -136,11 +132,11 @@ export default function ResultadoSesionView({
             </Typography>
             <Stack direction="row" spacing={1} alignItems="center">
               <Typography variant="body2">Grado anterior:</Typography>
-              <GradeChip grado={sesion.gradoSesion} />
-              {displayedNuevoGrado && (
+              <GradeChip grado={gradoAnterior} small />
+              {gradoNuevo && (
                 <>
                   <Typography variant="body2">Grado nuevo:</Typography>
-                  <GradeChip grado={displayedNuevoGrado} />
+                  <GradeChip grado={gradoNuevo} small />
                 </>
               )}
             </Stack>
