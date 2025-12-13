@@ -26,7 +26,7 @@ import {
 
 // Importamos el acordeón que acabamos de crear
 import ConsultaAccordion from "../components/ConsultaAccordion";
-import { EstadoConsultaLabels } from "../../../types/traducciones";
+import { EstadoConsultaLabels, TemasLabels } from "../../../types/traducciones";
 
 // Constante para la paginación
 const PAGE_SIZE = 10;
@@ -144,7 +144,7 @@ export default function ConsultasPage() {
                 .filter((t) => t !== temas.Ninguno)
                 .map((t) => (
                   <MenuItem key={t} value={t}>
-                    {t}
+                    {TemasLabels[t]}
                   </MenuItem>
                 ))}
             </Select>
@@ -158,9 +158,9 @@ export default function ConsultasPage() {
               onChange={handleFilterChange}
             >
               <MenuItem value="">Todos</MenuItem>
-              {Object.values(EstadoConsultaLabels).map((e) => (
+              {Object.values(estado_consulta).map((e) => (
                 <MenuItem key={e} value={e}>
-                  {e}
+                  {EstadoConsultaLabels[e]}
                 </MenuItem>
               ))}
             </Select>

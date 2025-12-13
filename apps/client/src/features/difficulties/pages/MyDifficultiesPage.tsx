@@ -20,6 +20,7 @@ import {
 } from "../../../types";
 import { getMyDifficulties } from "../../users/services/alumnos.service";
 import DifficultyCard from "../components/DifficultyCard";
+import { TemasLabels } from "../../../types/traducciones";
 
 export default function MyDifficultiesPage() {
   const { selectedCourse } = useCourseContext();
@@ -123,7 +124,7 @@ export default function MyDifficultiesPage() {
               .filter((tema) => tema !== temas.Ninguno)
               .map((tema) => (
                 <MenuItem key={tema} value={tema}>
-                  {tema}
+                  {TemasLabels[tema]}
                 </MenuItem>
               ))}
           </Select>

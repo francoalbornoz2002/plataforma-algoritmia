@@ -31,6 +31,7 @@ import { getMyConsultas } from "../../users/services/alumnos.service";
 import ValorarConsultaModal from "../components/ValorarConsultaModal"; // <-- Nuevo
 import DeleteConsultaDialog from "../components/DeleteConsultaDialog";
 import ConsultaAccordionAlumno from "../components/ConsultaAccordionAlumno";
+import { EstadoConsultaLabels, TemasLabels } from "../../../types/traducciones";
 
 const PAGE_SIZE = 5;
 
@@ -157,7 +158,7 @@ export default function MyConsultsPage() {
                 .filter((t) => t !== temas.Ninguno)
                 .map((t) => (
                   <MenuItem key={t} value={t}>
-                    {t}
+                    {TemasLabels[t]}
                   </MenuItem>
                 ))}
             </Select>
@@ -173,7 +174,7 @@ export default function MyConsultsPage() {
               <MenuItem value="">Todos</MenuItem>
               {Object.values(estado_consulta).map((e) => (
                 <MenuItem key={e} value={e}>
-                  {e}
+                  {EstadoConsultaLabels[e]}
                 </MenuItem>
               ))}
             </Select>

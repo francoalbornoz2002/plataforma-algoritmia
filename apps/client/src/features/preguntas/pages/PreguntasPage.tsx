@@ -34,6 +34,7 @@ import DeletePreguntaDialog from "../components/DeletePreguntaDialog";
 const PAGE_SIZE = 5;
 
 import { getAllDifficulties } from "../../users/services/docentes.service";
+import { TemasLabels } from "../../../types/traducciones";
 export default function PreguntasPage() {
   // Estados de la lista
   const [preguntas, setPreguntas] = useState<PreguntaConDetalles[]>([]);
@@ -193,7 +194,7 @@ export default function PreguntasPage() {
                 .filter((t) => t !== temas.Ninguno)
                 .map((t) => (
                   <MenuItem key={t} value={t}>
-                    {t}
+                    {TemasLabels[t]}
                   </MenuItem>
                 ))}
             </Select>

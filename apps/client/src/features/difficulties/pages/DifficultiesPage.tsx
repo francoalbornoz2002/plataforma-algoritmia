@@ -50,6 +50,7 @@ import { temas, grado_dificultad } from "../../../types";
 import StudentDifficultyDetailModal from "../components/StudentDifficultyDetailModal";
 import GradeChip from "../../../components/GradeChip";
 import TemaChip from "../../../components/TemaChip";
+import { TemasLabels } from "../../../types/traducciones";
 
 // Componente Helper de KPI (copiado de ProgressPage)
 interface KpiCardProps {
@@ -367,7 +368,7 @@ export default function DifficultiesPage() {
                   .filter((t) => t !== "Ninguno")
                   .map((t) => (
                     <MenuItem key={t} value={t}>
-                      {t}
+                      {TemasLabels[t]}
                     </MenuItem>
                   ))}
               </Select>
