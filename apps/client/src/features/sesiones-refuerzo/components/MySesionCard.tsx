@@ -17,6 +17,7 @@ import PsychologyIcon from "@mui/icons-material/Psychology";
 import TimerIcon from "@mui/icons-material/Timer";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import AssessmentIcon from "@mui/icons-material/Assessment";
+import SmartToyIcon from "@mui/icons-material/SmartToy";
 
 // Tipos y Utilidades
 import type { SesionRefuerzoResumen } from "../../../types";
@@ -61,6 +62,7 @@ export default function MySesionCard({
   const fechaLimiteStr = format(deadline, "dd/MM/yyyy");
   const horaLimiteStr = format(deadline, "HH:mm");
 
+  const isAutomatic = !docente;
   const nombreDocente = docente
     ? `${docente.nombre} ${docente.apellido}`
     : "Sistema (Automática)";
@@ -119,8 +121,18 @@ export default function MySesionCard({
           color="text.secondary"
           sx={{ mb: 2 }}
         >
-          <PersonIcon fontSize="small" />
-          <Typography variant="body2">Asignada por: {nombreDocente}</Typography>
+          {isAutomatic ? (
+            <SmartToyIcon fontSize="small" color="primary" />
+          ) : (
+            <PersonIcon fontSize="small" />
+          )}
+          <Typography
+            variant="body2"
+            color={isAutomatic ? "primary.main" : "text.secondary"}
+            fontWeight={isAutomatic ? "medium" : "regular"}
+          >
+            Asignada por: {nombreDocente}
+          </Typography>
         </Stack>
 
         <Stack spacing={1.5}>
