@@ -4,6 +4,7 @@ import { render } from '@react-email/render';
 import { EmailBienvenida } from '../emails/EmailBienvenida';
 import NuevaClaseAutomaticaEmail from '../emails/NuevaClaseAutomaticaEmail';
 import { DiaClase, dias_semana } from '@prisma/client';
+import NuevaSesionAutomaticaEmail from '../emails/NuevaSesionAutomaticaEmail';
 
 // Mapa para convertir Enum Prisma a índice JS (0=Domingo, 1=Lunes...)
 const MAPA_DIAS: Record<dias_semana, number> = {
@@ -97,6 +98,42 @@ export class MailService {
         html: html,
       });
     }
+  }
+
+  // --- 3. AVISO DE SESIÓN AUTOMÁTICA (Alumnos) ---
+  async enviarNotificacionSesionAutomatica(datos: {
+    email: string;
+    nombreAlumno: string;
+    nombreCurso: string;
+    nombreDificultad: string;
+    fechaLimite: Date;
+  }) {
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const linkSesion = `${baseUrl}/my/sessions`;
+
+    const fechaLegible = datos.fechaLimite.toLocaleString('es-AR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    const html = await render(
+      NuevaSesionAutomaticaEmail({
+        nombreAlumno: datos.nombreAlumno,
+        nombreCurso: datos.nombreCurso,
+        nombreDificultad: datos.nombreDificultad,
+        fechaLimite: fechaLegible,
+        linkSesion: linkSesion,
+      }),
+    );
+
+    await this.mailerService.sendMail({
+      to: datos.email,
+      subject: `📚 Nueva Sesión de Refuerzo: ${datos.nombreDificultad}`,
+      html: html,
+    });
   }
 
   /**
