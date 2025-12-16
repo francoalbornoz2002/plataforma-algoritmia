@@ -8,6 +8,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { ApiBody } from '@nestjs/swagger';
 import { SubmitDifficultyDto } from '../dto/submit-difficulty.dto';
 import { DifficultiesService } from '../services/difficulties.service';
 import { Public } from 'src/auth/decorators/public.decorator';
@@ -15,8 +16,8 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { roles } from '@prisma/client';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 
-@Controller('difficulties')
 @UseGuards(RolesGuard)
+@Controller('difficulties')
 export class DifficultiesController {
   constructor(private readonly difficultiesService: DifficultiesService) {}
 
@@ -52,6 +53,7 @@ export class DifficultiesController {
   @Public()
   @Post('submit-difficulties')
   @HttpCode(HttpStatus.OK)
+  @ApiBody({ type: [SubmitDifficultyDto] })
   async submitBatchDifficulties(@Body() dtos: SubmitDifficultyDto[]) {
     return this.difficultiesService.submitDifficulties(dtos);
   }

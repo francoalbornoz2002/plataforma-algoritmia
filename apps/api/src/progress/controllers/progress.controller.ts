@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Post,
 } from '@nestjs/common';
+import { ApiBody } from '@nestjs/swagger';
 import { ProgressService } from '../services/progress.service';
 import { SubmitMissionDto } from '../dto/submit-mission.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
@@ -32,6 +33,7 @@ export class ProgressController {
   @Post('submit-missions')
   @Public()
   @HttpCode(HttpStatus.OK)
+  @ApiBody({ type: [SubmitMissionDto] })
   submitBatchMissions(@Body() dtos: SubmitMissionDto[]) {
     return this.progressService.submitMissions(dtos);
   }
