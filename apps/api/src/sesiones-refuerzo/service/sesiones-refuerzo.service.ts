@@ -2,8 +2,10 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
+  forwardRef,
 } from '@nestjs/common';
 import { CreateSesionesRefuerzoDto } from '../dto/create-sesiones-refuerzo.dto';
 import { UpdateSesionesRefuerzoDto } from '../dto/update-sesiones-refuerzo.dto';
@@ -23,6 +25,7 @@ import { ResolverSesionDto } from '../dto/resolver-sesion.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PreguntasService } from '../../preguntas/services/preguntas.service';
 import { MailService } from '../../mail/services/mail.service';
+import { DifficultiesService } from '../../difficulties/services/difficulties.service';
 
 @Injectable()
 export class SesionesRefuerzoService {
@@ -30,6 +33,8 @@ export class SesionesRefuerzoService {
     private readonly prisma: PrismaService,
     private readonly preguntasService: PreguntasService,
     private readonly mailService: MailService,
+    @Inject(forwardRef(() => DifficultiesService))
+    private readonly difficultiesService: DifficultiesService,
   ) {}
 
   async create(
@@ -53,12 +58,13 @@ export class SesionesRefuerzoService {
         idCurso,
         estado: estado_sesion.Pendiente,
         deletedAt: null,
+        idDocente: { not: null }, // Solo validamos si ya tiene una sesión asignada por DOCENTE
       },
     });
 
     if (sesionPendiente) {
       throw new ConflictException(
-        'El alumno ya tiene una sesión de refuerzo pendiente en este curso.',
+        'El alumno ya tiene una sesión de refuerzo asignada por un docente pendiente en este curso.',
       );
     }
 
@@ -789,6 +795,9 @@ export class SesionesRefuerzoService {
           grado: nuevoGrado,
         },
       });
+
+      // 3.1. Recalcular KPIs del curso (Importante: dentro de la transacción)
+      await this.difficultiesService.recalculateCourseDifficulties(tx, idCurso);
 
       // 4. Guardar Respuestas y Resultado
       // IMPORTANTE: Primero creamos el ResultadoSesion porque RespuestaAlumno tiene una FK que apunta a él.

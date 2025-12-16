@@ -1,8 +1,10 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { FindStudentDifficultiesDto } from '../dto/find-student-difficulties.dto';
@@ -14,6 +16,7 @@ import { SesionesRefuerzoService } from '../../sesiones-refuerzo/service/sesione
 export class DifficultiesService {
   constructor(
     private prisma: PrismaService,
+    @Inject(forwardRef(() => SesionesRefuerzoService))
     private sesionesRefuerzoService: SesionesRefuerzoService,
   ) {}
 
@@ -459,7 +462,7 @@ export class DifficultiesService {
    * HELPER: Recalcula los KPIs de DificultadesCurso
    * (Esta es la lógica que discutimos)
    */
-  private async recalculateCourseDifficulties(
+  public async recalculateCourseDifficulties(
     tx: Prisma.TransactionClient,
     idCurso: string,
   ) {

@@ -4,6 +4,7 @@ import { SesionesRefuerzoController } from './controller/sesiones-refuerzo.contr
 import { PrismaService } from 'src/prisma/prisma.service';
 import { PreguntasService } from 'src/preguntas/services/preguntas.service';
 import { MailService } from 'src/mail/services/mail.service';
+import { DifficultiesService } from 'src/difficulties/services/difficulties.service';
 
 @Module({
   controllers: [SesionesRefuerzoController],
@@ -12,6 +13,7 @@ import { MailService } from 'src/mail/services/mail.service';
     PrismaService,
     PreguntasService,
     MailService,
+    DifficultiesService,
   ],
 })
 export class SesionesRefuerzoModule {}
