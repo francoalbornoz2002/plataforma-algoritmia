@@ -8,16 +8,29 @@ import {
 import { CreateSesionesRefuerzoDto } from '../dto/create-sesiones-refuerzo.dto';
 import { UpdateSesionesRefuerzoDto } from '../dto/update-sesiones-refuerzo.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { estado_sesion, grado_dificultad, Prisma, roles } from '@prisma/client';
+import {
+  DiaClase,
+  dias_semana,
+  estado_sesion,
+  grado_dificultad,
+  Prisma,
+  roles,
+} from '@prisma/client';
 import { getDiaSemanaEnum } from 'src/helpers';
 import { FindAllSesionesDto } from '../dto/find-all-sesiones.dto';
 import { UserPayload } from 'src/interfaces/authenticated-user.interface';
 import { ResolverSesionDto } from '../dto/resolver-sesion.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { PreguntasService } from '../../preguntas/services/preguntas.service';
+import { MailService } from '../../mail/services/mail.service';
 
 @Injectable()
 export class SesionesRefuerzoService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly preguntasService: PreguntasService,
+    private readonly mailService: MailService,
+  ) {}
 
   async create(
     idCurso: string,
@@ -169,6 +182,110 @@ export class SesionesRefuerzoService {
 
       return nuevaSesion;
     });
+  }
+
+  /**
+   * Crea una sesión de refuerzo automática cuando un alumno alcanza grado ALTO.
+   */
+  async createAutomaticSession(
+    idCurso: string,
+    idAlumno: string,
+    idDificultad: string,
+  ) {
+    // 1. Validar si ya existe una sesión pendiente para este alumno y dificultad
+    // para evitar spam de sesiones.
+    const sesionExistente = await this.prisma.sesionRefuerzo.findFirst({
+      where: {
+        idCurso,
+        idAlumno,
+        idDificultad,
+        estado: estado_sesion.Pendiente,
+        deletedAt: null,
+      },
+    });
+
+    if (sesionExistente) {
+      // Ya tiene una sesión pendiente para esta dificultad, no creamos otra.
+      return;
+    }
+
+    // 2. Obtener configuración del curso (Días de clase) para calcular fecha límite
+    const diasClase = await this.prisma.diaClase.findMany({
+      where: { idCurso },
+    });
+
+    const fechaLimite = this.calcularFechaLimiteAutomatica(diasClase);
+
+    // 3. Obtener las 15 preguntas (5 Alto, 5 Medio, 5 Bajo)
+    // Usamos el servicio de preguntas que ya tiene esta lógica.
+    const preguntas = await this.preguntasService.findSystemPreguntasForSesion(
+      idDificultad,
+      grado_dificultad.Alto,
+    );
+
+    if (preguntas.length === 0) {
+      console.warn(
+        `No se pudieron encontrar preguntas para generar sesión automática. Curso: ${idCurso}, Dificultad: ${idDificultad}`,
+      );
+      return;
+    }
+
+    // 4. Crear la sesión
+    const nuevaSesion = await this.prisma.$transaction(async (tx) => {
+      // Calcular nroSesion
+      const ultimaSesion = await tx.sesionRefuerzo.findFirst({
+        where: { idCurso },
+        orderBy: { nroSesion: 'desc' },
+      });
+      const nroSesion = ultimaSesion ? ultimaSesion.nroSesion + 1 : 1;
+
+      const sesion = await tx.sesionRefuerzo.create({
+        data: {
+          idCurso,
+          idAlumno,
+          idDificultad,
+          gradoSesion: grado_dificultad.Alto, // Se genera por alcanzar grado Alto
+          idDocente: null, // Es automática
+          nroSesion,
+          fechaHoraLimite: fechaLimite,
+          tiempoLimite: 20, // 20 minutos fijos según especificación
+          estado: estado_sesion.Pendiente,
+        },
+      });
+
+      // Vincular preguntas
+      await tx.preguntaSesion.createMany({
+        data: preguntas.map((p) => ({
+          idSesion: sesion.id,
+          idPregunta: p.id,
+        })),
+      });
+
+      return sesion;
+    });
+
+    // 5. Enviar notificación por correo
+    const alumno = await this.prisma.usuario.findUnique({
+      where: { id: idAlumno },
+    });
+    const curso = await this.prisma.curso.findUnique({
+      where: { id: idCurso },
+    });
+    const dificultad = await this.prisma.dificultad.findUnique({
+      where: { id: idDificultad },
+    });
+
+    if (alumno && curso && dificultad) {
+      await this.mailService.enviarNotificacionSesionAutomatica({
+        email: alumno.email,
+        nombreAlumno: alumno.nombre,
+        nombreCurso: curso.nombre,
+        nombreDificultad: dificultad.nombre,
+        fechaLimite: fechaLimite,
+      });
+    }
+
+    return nuevaSesion;
   }
 
   async findAll(idCurso: string, user: UserPayload, dto: FindAllSesionesDto) {
@@ -776,6 +893,65 @@ export class SesionesRefuerzoService {
         'El alumno no está inscrito o activo en este curso.',
       );
     }
+  }
+
+  /**
+   * Calcula la fecha límite para una sesión automática.
+   * Regla: Día de la siguiente clase más próxima.
+   * Excepción: Si se genera el mismo día de una clase (antes de su inicio), se pasa a la SIGUIENTE.
+   */
+  private calcularFechaLimiteAutomatica(diasClase: DiaClase[]): Date {
+    const ahora = new Date();
+    // Si no hay días de clase configurados, damos 7 días por defecto
+    if (!diasClase || diasClase.length === 0) {
+      const defaultDate = new Date();
+      defaultDate.setDate(ahora.getDate() + 7);
+      return defaultDate;
+    }
+
+    const mapaDias: Record<dias_semana, number> = {
+      Lunes: 1,
+      Martes: 2,
+      Miercoles: 3,
+      Jueves: 4,
+      Viernes: 5,
+      Sabado: 6,
+    };
+
+    let candidatos: Date[] = [];
+
+    // Buscamos en los próximos 21 días
+    for (let i = 0; i < 21; i++) {
+      const fechaFutura = new Date(ahora);
+      fechaFutura.setDate(ahora.getDate() + i);
+      const diaSemanaJS = fechaFutura.getDay();
+
+      const clasesDelDia = diasClase.filter(
+        (d) => mapaDias[d.dia] === diaSemanaJS,
+      );
+
+      for (const clase of clasesDelDia) {
+        const horaInicio = new Date(clase.horaInicio);
+        const fechaCandidata = new Date(fechaFutura);
+        fechaCandidata.setHours(
+          horaInicio.getHours(),
+          horaInicio.getMinutes(),
+          0,
+          0,
+        );
+
+        // Regla: Debe ser estrictamente mayor a ahora.
+        // Regla especial: Si es el MISMO día que ahora, lo saltamos (porque "antes de su inicio" implica hoy).
+        const esMismoDia = fechaCandidata.getDate() === ahora.getDate();
+
+        if (fechaCandidata > ahora && !esMismoDia) {
+          candidatos.push(fechaCandidata);
+        }
+      }
+    }
+
+    candidatos.sort((a, b) => a.getTime() - b.getTime());
+    return candidatos.length > 0 ? candidatos[0] : candidatos[0]; // Fallback
   }
 
   private async validarSuperposicionConClaseCurso(
