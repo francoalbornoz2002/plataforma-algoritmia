@@ -8,10 +8,14 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { FindStudentDifficultiesDto } from '../dto/find-student-difficulties.dto';
 import { grado_dificultad, Prisma, roles, temas } from '@prisma/client';
 import { SubmitDifficultyDto } from '../dto/submit-difficulty.dto';
+import { SesionesRefuerzoService } from '../../sesiones-refuerzo/service/sesiones-refuerzo.service';
 
 @Injectable()
 export class DifficultiesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private sesionesRefuerzoService: SesionesRefuerzoService,
+  ) {}
 
   /**
    * Obtiene la lista de dificultades y el grado (performance) del alumno
@@ -370,36 +374,46 @@ export class DifficultiesService {
       const { idCurso } = inscripcion;
 
       // 4. Ejecutar todo como UNA transacción
-      return await this.prisma.$transaction(
-        async (tx: Prisma.TransactionClient) => {
-          // --- Paso A: Iterar y hacer UPSERT para cada dificultad ---
-          for (const dto of dtos) {
-            await tx.dificultadAlumno.upsert({
-              where: {
-                idAlumno_idCurso_idDificultad: {
-                  idAlumno: idAlumno,
-                  idCurso: idCurso,
-                  idDificultad: dto.idDificultad,
-                },
-              },
-              create: {
+      await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        // --- Paso A: Iterar y hacer UPSERT para cada dificultad ---
+        for (const dto of dtos) {
+          await tx.dificultadAlumno.upsert({
+            where: {
+              idAlumno_idCurso_idDificultad: {
                 idAlumno: idAlumno,
                 idCurso: idCurso,
                 idDificultad: dto.idDificultad,
-                grado: dto.grado,
               },
-              update: {
-                grado: dto.grado,
-              },
-            });
-          } // Fin del bucle
+            },
+            create: {
+              idAlumno: idAlumno,
+              idCurso: idCurso,
+              idDificultad: dto.idDificultad,
+              grado: dto.grado,
+            },
+            update: {
+              grado: dto.grado,
+            },
+          });
+        } // Fin del bucle
 
-          // --- Paso B: Recalcular los KPIs del curso (UNA SOLA VEZ) ---
-          await this.recalculateCourseDifficulties(tx, idCurso);
+        // --- Paso B: Recalcular los KPIs del curso (UNA SOLA VEZ) ---
+        await this.recalculateCourseDifficulties(tx, idCurso);
+      }); // Fin de la transacción
 
-          return { message: 'Lote de dificultades registrado con éxito' };
-        },
-      ); // Fin de la transacción
+      // 5. PROCESO AUTOMÁTICO: Verificar si alguna dificultad quedó en grado ALTO
+      // y generar sesión de refuerzo. (Fuera de la transacción para no bloquear)
+      for (const dto of dtos) {
+        if (dto.grado === grado_dificultad.Alto) {
+          await this.sesionesRefuerzoService.createAutomaticSession(
+            idCurso,
+            idAlumno,
+            dto.idDificultad,
+          );
+        }
+      }
+
+      return { message: 'Lote de dificultades registrado con éxito' };
     } catch (error) {
       // Manejo de errores
       if (error instanceof NotFoundException) throw error;
