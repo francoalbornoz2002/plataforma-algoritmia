@@ -29,9 +29,6 @@ export class CreateSesionesRefuerzoDto {
   tiempoLimite: number;
 
   @IsArray({ message: 'Las preguntas deben ser un arreglo.' })
-  @IsUUID('4', {
-    each: true,
-    message: 'Cada elemento de preguntas debe ser un UUID válido.',
-  })
+  @IsString({ each: true })
   preguntas: string[];
 }

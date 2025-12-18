@@ -92,7 +92,7 @@ export default function ResultadoSesionView({
     <Stack spacing={3}>
       {/* --- Resumen de Estadísticas --- */}
       <Paper variant="outlined" sx={{ p: 2 }}>
-        <Typography variant="h6" gutterBottom>
+        <Typography variant="h6" gutterBottom align="center">
           Resumen de la Sesión
         </Typography>
         <Stack
@@ -146,7 +146,9 @@ export default function ResultadoSesionView({
       </Paper>
 
       {/* --- Detalle de Preguntas --- */}
-      <Typography variant="h6">Detalle de Respuestas</Typography>
+      <Typography variant="h6" align="center">
+        Detalle de Respuestas
+      </Typography>
       <Stack spacing={2}>
         {sesion.preguntas.map(({ pregunta }, index) => {
           const opcionElegidaId = respuestasMap.get(pregunta.id);
@@ -156,17 +158,27 @@ export default function ResultadoSesionView({
           const esCorrectaLaElegida = opcionElegidaId === opcionCorrecta?.id;
 
           return (
-            <Paper key={pregunta.id} variant="outlined" sx={{ p: 2 }}>
+            <Paper key={pregunta.id} variant="outlined" sx={{ p: 3 }}>
               <Stack
                 direction="row"
                 justifyContent="space-between"
-                alignItems="flex-start"
+                alignItems="center"
                 spacing={2}
                 sx={{ mb: 1 }}
               >
-                <Typography variant="subtitle1">
-                  <strong>Pregunta {index + 1}:</strong> {pregunta.enunciado}
-                </Typography>
+                <Stack direction="column" alignItems="flex-start">
+                  <Typography
+                    variant="subtitle2"
+                    color="text.secondary"
+                    gutterBottom
+                    sx={{ textTransform: "uppercase", letterSpacing: 1 }}
+                  >
+                    <strong>Pregunta {index + 1}</strong>
+                  </Typography>
+                  <Typography variant="subtitle2">
+                    {pregunta.enunciado}
+                  </Typography>
+                </Stack>
                 <Chip
                   label={esCorrectaLaElegida ? "¡Correcta!" : "¡Incorrecta!"}
                   color={esCorrectaLaElegida ? "success" : "error"}
@@ -175,7 +187,7 @@ export default function ResultadoSesionView({
                 />
               </Stack>
 
-              <List dense>
+              <List disablePadding>
                 {pregunta.opcionesRespuesta.map((opcion) => {
                   const esLaCorrecta = opcion.esCorrecta;
                   const esLaElegida = opcion.id === opcionElegidaId;
@@ -225,7 +237,11 @@ export default function ResultadoSesionView({
                   }
 
                   return (
-                    <ListItem key={opcion.id} alignItems="flex-start">
+                    <ListItem
+                      key={opcion.id}
+                      alignItems="flex-start"
+                      disableGutters
+                    >
                       <ListItemIcon sx={{ minWidth: 36, mt: 0.5 }}>
                         {icon}
                       </ListItemIcon>

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router";
 import {
   Box,
@@ -10,22 +10,26 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
-  Stack,
   Divider,
-  Card,
-  CardContent,
   Container,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogContentText,
   DialogActions,
+  Grid,
+  LinearProgress,
+  Avatar,
+  ButtonBase,
+  useTheme,
+  alpha,
+  Stack,
 } from "@mui/material";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import SendIcon from "@mui/icons-material/Send";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
+import Confetti from "react-confetti";
 import { useCourseContext } from "../../../context/CourseContext";
 import {
   findSesionById,
@@ -35,6 +39,7 @@ import {
 import {
   type SesionRefuerzoConDetalles,
   type ResolverSesionResponse,
+  grado_dificultad,
   estado_sesion,
 } from "../../../types";
 import { enqueueSnackbar } from "notistack";
@@ -44,13 +49,17 @@ export default function SesionResolverPage() {
   const { id } = useParams<{ id: string }>();
   const { selectedCourse } = useCourseContext();
   const navigate = useNavigate();
+  const theme = useTheme();
 
   // --- Estados ---
   const [loading, setLoading] = useState(true);
   const [sesion, setSesion] = useState<SesionRefuerzoConDetalles | null>(null);
   const [respuestas, setRespuestas] = useState<Record<string, string>>({});
+  const [currentSelection, setCurrentSelection] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeStep, setActiveStep] = useState(0);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
+  const [openCancelDialog, setOpenCancelDialog] = useState(false);
 
   // ESTADO REFACTORIZADO: Un solo objeto para el resultado final.
   const [finalResultData, setFinalResultData] = useState<{
@@ -97,6 +106,15 @@ export default function SesionResolverPage() {
         .finally(() => setLoading(false));
     }
   }, [selectedCourse, id, navigate]);
+
+  // --- Sync Current Selection on Step Change ---
+  useEffect(() => {
+    if (sesion) {
+      const currentQId = sesion.preguntas[activeStep].pregunta.id;
+      // Load saved answer or empty if none
+      setCurrentSelection(respuestas[currentQId] || "");
+    }
+  }, [activeStep, sesion, respuestas]);
 
   // --- Scroll to top on result view ---
   useEffect(() => {
@@ -161,6 +179,36 @@ export default function SesionResolverPage() {
 
   // --- Handlers ---
 
+  const handleOptionChange = (idPregunta: string, idOpcion: string) => {
+    setCurrentSelection(idOpcion);
+  };
+
+  const handleNext = () => {
+    if (sesion && activeStep < sesion.preguntas.length - 1) {
+      // Save current selection to answers before moving
+      if (currentSelection) {
+        setRespuestas((prev) => ({
+          ...prev,
+          [sesion.preguntas[activeStep].pregunta.id]: currentSelection,
+        }));
+      }
+      setActiveStep((prev) => prev + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    if (activeStep > 0 && sesion) {
+      // Save current selection to answers before moving
+      if (currentSelection && sesion.preguntas[activeStep]) {
+        setRespuestas((prev) => ({
+          ...prev,
+          [sesion.preguntas[activeStep].pregunta.id]: currentSelection,
+        }));
+      }
+      setActiveStep((prev) => prev - 1);
+    }
+  };
+
   const handleStart = async () => {
     if (!sesion || !selectedCourse) return;
     try {
@@ -173,20 +221,20 @@ export default function SesionResolverPage() {
     }
   };
 
-  const handleOptionChange = (idPregunta: string, idOpcion: string) => {
-    setRespuestas((prev) => ({
-      ...prev,
-      [idPregunta]: idOpcion,
-    }));
-  };
-
   const handleSubmit = useCallback(async () => {
     if (!sesion || !selectedCourse || isSubmitting) return;
     setIsSubmitting(true);
 
+    // Merge current selection into answers (for the last question or timer expiry)
+    const finalRespuestas = { ...respuestas };
+    const currentQId = sesion.preguntas[activeStep].pregunta.id;
+    if (currentSelection) {
+      finalRespuestas[currentQId] = currentSelection;
+    }
+
     // Formatear respuestas para el DTO
     const payload = {
-      respuestas: Object.entries(respuestas).map(
+      respuestas: Object.entries(finalRespuestas).map(
         ([idPregunta, idOpcionElegida]) => ({
           idPregunta,
           idOpcionElegida,
@@ -221,7 +269,14 @@ export default function SesionResolverPage() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [sesion, selectedCourse, respuestas, isSubmitting, navigate]);
+  }, [
+    sesion,
+    selectedCourse,
+    respuestas,
+    currentSelection,
+    activeStep,
+    isSubmitting,
+  ]);
 
   // --- Render Helpers ---
 
@@ -230,6 +285,11 @@ export default function SesionResolverPage() {
     const s = seconds % 60;
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
+
+  const progressPercentage = useMemo(() => {
+    if (!sesion) return 0;
+    return (Object.keys(respuestas).length / sesion.preguntas.length) * 100;
+  }, [sesion, respuestas]);
 
   const isTimeCritical = timeLeft !== null && timeLeft < 60;
 
@@ -256,11 +316,43 @@ export default function SesionResolverPage() {
     const sesionData = finalResultData ? finalResultData.sesion : sesion;
     const nuevoGradoData = finalResultData ? finalResultData.nuevoGrado : null;
 
+    // Lógica para determinar si mostrar el confeti
+    const showConfetti = useMemo(() => {
+      if (!finalResultData) return false;
+
+      const { gradoAnterior } = finalResultData.sesion.resultadoSesion!;
+      const nuevoGrado = finalResultData.nuevoGrado;
+
+      if (gradoAnterior === nuevoGrado) return false;
+
+      // Caso 1: Se superó la dificultad por completo (de cualquier grado a Ninguno)
+      if (nuevoGrado === grado_dificultad.Ninguno) {
+        return true;
+      }
+
+      // Caso 2: El grado bajó (ej. Alto -> Medio)
+      const grados = [
+        grado_dificultad.Bajo,
+        grado_dificultad.Medio,
+        grado_dificultad.Alto,
+      ];
+      const indexAntes = grados.indexOf(gradoAnterior);
+      const indexDespues = grados.indexOf(nuevoGrado);
+
+      // Solo comparamos si ambos grados son comparables (no son 'Ninguno' en este punto)
+      if (indexAntes > -1 && indexDespues > -1) {
+        return indexDespues < indexAntes;
+      }
+
+      return false;
+    }, [finalResultData]);
+
     return (
       <Container maxWidth="md" sx={{ mt: 4 }}>
+        {showConfetti && <Confetti recycle={false} />}
         <Paper elevation={3} sx={{ p: 4, textAlign: "center" }}>
           <Typography variant="h4" gutterBottom>
-            ¡Sesión Completada!
+            {showConfetti ? "¡Felicitaciones!" : "¡Sesión Completada!"}
           </Typography>
           <Box sx={{ my: 3 }}>
             <ResultadoSesionView
@@ -321,95 +413,234 @@ export default function SesionResolverPage() {
 
   // VISTA 3: EXAMEN (Si está corriendo)
   return (
-    <Container maxWidth="lg" sx={{ mt: 2, mb: 4 }}>
-      {/* Header Fijo con Timer */}
-      <Paper
-        elevation={4}
-        sx={{
-          p: 2,
-          mb: 3,
-          position: "sticky", // Mantiene el elemento fijo durante el scroll
-          top: 70, // Aumentado para que sea visible debajo del AppBar principal
-          zIndex: 100,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          // Estilos condicionales para cuando el tiempo es crítico
-          bgcolor: isTimeCritical ? "error.main" : "background.paper",
-          color: isTimeCritical ? "white" : "text.primary",
-          transition: "background-color 0.5s ease, color 0.5s ease",
-          ...(isTimeCritical && {
-            animation: `blink 1.5s infinite`,
-          }),
-          ...blinkAnimation,
-        }}
-      >
-        <Typography variant="h6">Sesión N° {sesion.nroSesion}</Typography>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <AccessTimeIcon />
-          <Typography
-            variant="h5"
-            sx={{ fontWeight: "bold", fontFamily: "monospace" }}
-          >
-            {formatTime(timeLeft)}
-          </Typography>
-        </Stack>
-      </Paper>
+    <Container maxWidth="xl" sx={{ mt: 2, mb: 2 }}>
+      {/* --- Botón Volver (Arriba Izquierda) --- */}
+      <Box sx={{ mb: 2 }}>
+        <Button
+          startIcon={<ArrowBackIcon />}
+          variant="text"
+          onClick={() => setOpenCancelDialog(true)}
+        >
+          Volver a mis sesiones
+        </Button>
+      </Box>
 
-      {/* Lista de Preguntas */}
-      <Stack spacing={3}>
-        {sesion.preguntas.map(({ pregunta }, index) => (
-          <Card key={pregunta.id} variant="outlined">
-            <CardContent>
-              <Typography
-                variant="subtitle2"
-                color="text.secondary"
-                gutterBottom
-              >
-                Pregunta {index + 1}
-              </Typography>
-              <Typography variant="h6" gutterBottom>
-                {pregunta.enunciado}
-              </Typography>
-              <Divider sx={{ my: 1.5 }} />
-              <RadioGroup
-                value={respuestas[pregunta.id] || ""}
-                onChange={(e) =>
-                  handleOptionChange(pregunta.id, e.target.value)
-                }
-              >
-                {pregunta.opcionesRespuesta.map((opcion) => (
+      <Grid container spacing={3}>
+        {/* --- Columna Izquierda: Pregunta --- */}
+        <Grid size={{ xs: 12, md: 9 }}>
+          <Paper elevation={2} sx={{ p: 4, minHeight: 400 }}>
+            <Typography
+              variant="subtitle2"
+              color="text.secondary"
+              gutterBottom
+              sx={{ textTransform: "uppercase", letterSpacing: 1 }}
+            >
+              Pregunta {activeStep + 1}
+            </Typography>
+            <Typography variant="h5" gutterBottom sx={{ mt: 2, mb: 4 }}>
+              {sesion.preguntas[activeStep].pregunta.enunciado}
+            </Typography>
+
+            <Divider sx={{ mb: 3 }} />
+
+            <RadioGroup
+              value={currentSelection}
+              onChange={(e) =>
+                handleOptionChange(
+                  sesion.preguntas[activeStep].pregunta.id,
+                  e.target.value
+                )
+              }
+            >
+              {sesion.preguntas[activeStep].pregunta.opcionesRespuesta.map(
+                (opcion) => (
                   <FormControlLabel
                     key={opcion.id}
                     value={opcion.id}
-                    control={<Radio />}
-                    label={opcion.textoOpcion}
+                    control={<Radio sx={{ transform: "scale(1.2)" }} />}
+                    label={
+                      <Typography variant="body1" sx={{ py: 1 }}>
+                        {opcion.textoOpcion}
+                      </Typography>
+                    }
+                    sx={{
+                      mb: 1,
+                      p: 1,
+                      borderRadius: 1,
+                      "&:hover": { bgcolor: "action.hover" },
+                    }}
                   />
-                ))}
-              </RadioGroup>
-            </CardContent>
-          </Card>
-        ))}
-      </Stack>
+                )
+              )}
+            </RadioGroup>
+          </Paper>
 
-      {/* Footer de Acciones */}
-      <Box sx={{ mt: 4, display: "flex", justifyContent: "flex-end", gap: 2 }}>
-        <Button
-          variant="contained"
-          size="large"
-          endIcon={
-            isSubmitting ? (
-              <CircularProgress size={20} color="inherit" />
+          {/* Botones de Navegación */}
+          <Box sx={{ display: "flex", justifyContent: "space-between", mt: 3 }}>
+            <Button
+              variant="outlined"
+              onClick={handlePrev}
+              disabled={activeStep === 0}
+              startIcon={<ArrowBackIcon />}
+            >
+              Anterior pregunta
+            </Button>
+
+            {activeStep === sesion.preguntas.length - 1 ? (
+              <Button
+                variant="contained"
+                sx={{ width: 185 }}
+                onClick={() => {
+                  // Save current selection before opening dialog
+                  if (currentSelection) {
+                    setRespuestas((prev) => ({
+                      ...prev,
+                      [sesion.preguntas[activeStep].pregunta.id]:
+                        currentSelection,
+                    }));
+                  }
+                  setOpenConfirmDialog(true);
+                }}
+                endIcon={<PlayArrowIcon />}
+              >
+                Finalizar Sesión
+              </Button>
             ) : (
-              <SendIcon />
-            )
-          }
-          onClick={() => setOpenConfirmDialog(true)}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? "Enviando..." : "Finalizar y Enviar"}
-        </Button>
-      </Box>
+              <Button
+                variant="contained"
+                sx={{ width: 185 }}
+                onClick={handleNext}
+                endIcon={<PlayArrowIcon />}
+              >
+                Siguiente pregunta
+              </Button>
+            )}
+          </Box>
+        </Grid>
+
+        {/* --- Columna Derecha: Sidebar de Progreso --- */}
+        <Grid size={{ xs: 12, md: 3 }}>
+          <Stack spacing={2} sx={{ position: "sticky", top: 20 }}>
+            {/* 1. Paper de Sesión y Tiempo */}
+            <Paper
+              elevation={3}
+              sx={{
+                p: 2,
+                // Estilos condicionales para cuando el tiempo es crítico
+                bgcolor: isTimeCritical ? "error.main" : "background.paper",
+                color: isTimeCritical ? "white" : "text.primary",
+                transition: "background-color 0.5s ease, color 0.5s ease",
+                ...(isTimeCritical && {
+                  animation: `blink 1.5s infinite`,
+                }),
+                ...blinkAnimation,
+              }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 2,
+                }}
+              >
+                <Typography variant="h6" fontWeight="bold">
+                  Sesión N° {sesion.nroSesion}
+                </Typography>
+                <Divider
+                  orientation="vertical"
+                  flexItem
+                  sx={{
+                    bgcolor: isTimeCritical
+                      ? "rgba(255,255,255,0.5)"
+                      : "divider",
+                  }}
+                />
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <AccessTimeIcon />
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: "bold", fontFamily: "monospace" }}
+                  >
+                    {formatTime(timeLeft)}
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
+
+            {/* 2. Paper de Progreso */}
+            <Paper elevation={2} sx={{ p: 3, borderRadius: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Progreso
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                <Box sx={{ width: "100%", mr: 1 }}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={progressPercentage}
+                    sx={{ height: 10, borderRadius: 5 }}
+                  />
+                </Box>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                >{`${Math.round(progressPercentage)}%`}</Typography>
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Pregunta {activeStep + 1} de {sesion.preguntas.length}
+              </Typography>
+
+              {/* Grid 5 columnas */}
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(5, 1fr)",
+                  gap: 1,
+                  justifyItems: "center",
+                }}
+              >
+                {sesion.preguntas.map((p, index) => {
+                  const isAnswered = !!respuestas[p.pregunta.id];
+                  const isCurrent = index === activeStep;
+
+                  return (
+                    <ButtonBase
+                      key={p.pregunta.id}
+                      onClick={() => setActiveStep(index)}
+                      sx={{ borderRadius: "50%" }}
+                    >
+                      <Avatar
+                        sx={{
+                          width: 36,
+                          height: 36,
+                          fontSize: "0.875rem",
+                          bgcolor: isCurrent
+                            ? "transparent"
+                            : isAnswered
+                              ? "primary.main"
+                              : alpha(theme.palette.grey[400], 0.2),
+                          color: isCurrent
+                            ? "primary.main"
+                            : isAnswered
+                              ? "white"
+                              : "text.primary",
+                          border: isCurrent
+                            ? `2px solid ${theme.palette.primary.main}`
+                            : "none",
+                          fontWeight: isCurrent ? "bold" : "normal",
+                          transition: "all 0.2s",
+                        }}
+                      >
+                        {index + 1}
+                      </Avatar>
+                    </ButtonBase>
+                  );
+                })}
+              </Box>
+            </Paper>
+          </Stack>
+        </Grid>
+      </Grid>
 
       {/* Dialogo de Confirmación de Envío */}
       <Dialog
@@ -434,6 +665,26 @@ export default function SesionResolverPage() {
             autoFocus
           >
             Enviar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialogo de Cancelación (Volver) */}
+      <Dialog
+        open={openCancelDialog}
+        onClose={() => setOpenCancelDialog(false)}
+      >
+        <DialogTitle>¿Salir de la sesión?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Si sales ahora, la sesión quedará registrada como <b>incompleta</b>{" "}
+            y no podrás reanudarla más tarde. ¿Estás seguro de que deseas salir?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenCancelDialog(false)}>Cancelar</Button>
+          <Button onClick={() => navigate("/my/sessions")} color="error">
+            Salir y Cancelar
           </Button>
         </DialogActions>
       </Dialog>
