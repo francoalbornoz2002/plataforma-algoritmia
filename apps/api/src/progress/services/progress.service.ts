@@ -340,92 +340,153 @@ export class ProgressService {
       const misionesNormales = dtos.filter((m) => !m.esMisionEspecial);
       const misionesEspeciales = dtos.filter((m) => m.esMisionEspecial);
 
-      // 4. Calcular Totales (Normales + Especiales)
-      // Las especiales SÍ suman XP, Estrellas e Intentos al global.
-      let totalEstrellas = 0;
-      let totalExp = 0;
-      let totalIntentos = 0;
-
-      let ultimaActividad = new Date(0); // Fecha mínima (Epoch)
-
-      for (const mision of dtos) {
-        totalEstrellas += mision.estrellas;
-        totalExp += mision.exp;
-        totalIntentos += mision.intentos;
-
-        // Encontramos la fecha más reciente del lote
-        const fechaMision = new Date(mision.fechaCompletado);
-        if (fechaMision > ultimaActividad) {
-          ultimaActividad = fechaMision;
-        }
-      }
-
-      // 5. Calcular Cantidad para Avance (SOLO Normales)
-      // Las especiales NO suman al porcentaje de completitud del curso.
-      const cantidadNormalesNuevas = misionesNormales.length;
-
       // 6. Ejecutar todo como una transacción
       return await this.prisma.$transaction(
         async (tx: Prisma.TransactionClient) => {
-          // --- Paso A: Insertar Misiones NORMALES ---
-          if (misionesNormales.length > 0) {
-            const dataNormales = misionesNormales.map((mision) => ({
-              idMision: mision.idMision, // FK al catálogo
-              idProgreso: idProgreso,
-              estrellas: mision.estrellas,
-              exp: mision.exp,
-              intentos: mision.intentos,
-              fechaCompletado: new Date(mision.fechaCompletado),
-            }));
+          let totalEstrellasDelta = 0;
+          let totalExpDelta = 0;
+          let totalIntentosDelta = 0;
+          let cantMisionesCompletadasDelta = 0;
+          let ultimaActividadLote = new Date(0);
 
-            await tx.misionCompletada.createMany({
-              data: dataNormales,
-              skipDuplicates: true,
+          // --- Paso A: Procesar Misiones NORMALES (Upsert manual) ---
+          for (const mision of misionesNormales) {
+            const fechaMision = new Date(mision.fechaCompletado);
+            if (fechaMision > ultimaActividadLote) {
+              ultimaActividadLote = fechaMision;
+            }
+
+            const existing = await tx.misionCompletada.findUnique({
+              where: {
+                idMision_idProgreso: {
+                  idMision: mision.idMision,
+                  idProgreso: idProgreso,
+                },
+              },
             });
+
+            if (existing) {
+              // LOGICA HIGH SCORE: Solo actualizamos si mejora estrellas o exp
+              const esMejorPuntaje =
+                mision.estrellas > existing.estrellas ||
+                (mision.estrellas === existing.estrellas &&
+                  mision.exp > existing.exp);
+
+              if (esMejorPuntaje) {
+                // Sobreescribir solo si es mejor
+                await tx.misionCompletada.update({
+                  where: {
+                    idMision_idProgreso: {
+                      idMision: mision.idMision,
+                      idProgreso: idProgreso,
+                    },
+                  },
+                  data: {
+                    estrellas: mision.estrellas,
+                    exp: mision.exp,
+                    intentos: mision.intentos,
+                    fechaCompletado: fechaMision,
+                  },
+                });
+
+                totalEstrellasDelta += mision.estrellas - existing.estrellas;
+                totalExpDelta += mision.exp - existing.exp;
+                totalIntentosDelta += mision.intentos - existing.intentos;
+              }
+            } else {
+              // Crear
+              await tx.misionCompletada.create({
+                data: {
+                  idMision: mision.idMision,
+                  idProgreso: idProgreso,
+                  estrellas: mision.estrellas,
+                  exp: mision.exp,
+                  intentos: mision.intentos,
+                  fechaCompletado: fechaMision,
+                },
+              });
+
+              totalEstrellasDelta += mision.estrellas;
+              totalExpDelta += mision.exp;
+              totalIntentosDelta += mision.intentos;
+              cantMisionesCompletadasDelta += 1;
+            }
           }
 
-          // --- Paso B: Insertar Misiones ESPECIALES ---
-          if (misionesEspeciales.length > 0) {
-            const dataEspeciales = misionesEspeciales.map((mision) => ({
-              id: mision.idMision, // El UUID generado por Godot va al ID primario
-              idProgreso: idProgreso,
-              // Si por alguna razón es undefined, pondrá el texto de la derecha.
-              nombre: mision.nombre ?? 'Misión Especial Sin Nombre',
-              descripcion: mision.descripcion ?? 'Sin descripción disponible',
-              estrellas: mision.estrellas,
-              exp: mision.exp,
-              intentos: mision.intentos,
-              fechaCompletado: new Date(mision.fechaCompletado),
-            }));
+          // --- Paso B: Procesar Misiones ESPECIALES ---
+          for (const mision of misionesEspeciales) {
+            const fechaMision = new Date(mision.fechaCompletado);
+            if (fechaMision > ultimaActividadLote) {
+              ultimaActividadLote = fechaMision;
+            }
 
-            await tx.misionEspecialCompletada.createMany({
-              data: dataEspeciales,
-              skipDuplicates: true,
+            const existing = await tx.misionEspecialCompletada.findUnique({
+              where: { id: mision.idMision },
             });
+
+            if (existing) {
+              // LOGICA HIGH SCORE
+              const esMejorPuntaje =
+                mision.estrellas > existing.estrellas ||
+                (mision.estrellas === existing.estrellas &&
+                  mision.exp > existing.exp);
+
+              if (esMejorPuntaje) {
+                await tx.misionEspecialCompletada.update({
+                  where: { id: mision.idMision },
+                  data: {
+                    nombre: mision.nombre ?? existing.nombre,
+                    descripcion: mision.descripcion ?? existing.descripcion,
+                    estrellas: mision.estrellas,
+                    exp: mision.exp,
+                    intentos: mision.intentos,
+                    fechaCompletado: fechaMision,
+                  },
+                });
+
+                totalEstrellasDelta += mision.estrellas - existing.estrellas;
+                totalExpDelta += mision.exp - existing.exp;
+                totalIntentosDelta += mision.intentos - existing.intentos;
+              }
+            } else {
+              await tx.misionEspecialCompletada.create({
+                data: {
+                  id: mision.idMision,
+                  idProgreso: idProgreso,
+                  nombre: mision.nombre ?? 'Misión Especial Sin Nombre',
+                  descripcion:
+                    mision.descripcion ?? 'Sin descripción disponible',
+                  estrellas: mision.estrellas,
+                  exp: mision.exp,
+                  intentos: mision.intentos,
+                  fechaCompletado: fechaMision,
+                },
+              });
+
+              totalEstrellasDelta += mision.estrellas;
+              totalExpDelta += mision.exp;
+              totalIntentosDelta += mision.intentos;
+            }
           }
 
           // --- Paso C: Actualizar ProgresoAlumno ---
           const progAlumnoActualizado = await tx.progresoAlumno.update({
             where: { id: idProgreso },
             data: {
-              // Sumamos los totales de AMBOS tipos
-              totalEstrellas: { increment: totalEstrellas },
-              totalExp: { increment: totalExp },
-              totalIntentos: { increment: totalIntentos },
-
-              // Incrementamos el contador SOLO con las normales
-              cantMisionesCompletadas: { increment: cantidadNormalesNuevas },
-
-              ultimaActividad: ultimaActividad,
+              totalEstrellas: { increment: totalEstrellasDelta },
+              totalExp: { increment: totalExpDelta },
+              totalIntentos: { increment: totalIntentosDelta },
+              cantMisionesCompletadas: {
+                increment: cantMisionesCompletadasDelta,
+              },
+              ultimaActividad:
+                ultimaActividadLote.getTime() > 0
+                  ? ultimaActividadLote
+                  : undefined,
             },
           });
 
           // --- Paso D: Recalcular Porcentajes y Promedios ---
-          // NOTA: Al sumar estrellas de especiales pero no aumentar la cantidad,
-          // el 'promEstrellas' podría matemáticamente superar 3.0.
-          // Si deseas evitar esto, habría que cambiar la fórmula, pero por ahora
-          // mantengo la lógica estricta de "Especiales no suman al % de avance".
-
           let nuevoPromEstrellas = 0;
           let nuevoPromIntentos = 0;
 
@@ -439,8 +500,6 @@ export class ProgressService {
               progAlumnoActualizado.cantMisionesCompletadas;
           }
 
-          // El porcentaje siempre se basa en el total de misiones "oficiales" del juego
-          // Asegúrate de tener la constante TOTAL_MISIONES_JUEGO importada o definida
           const nuevoPctCompletadas =
             (progAlumnoActualizado.cantMisionesCompletadas /
               TOTAL_MISIONES_JUEGO) *
@@ -455,7 +514,7 @@ export class ProgressService {
             },
           });
 
-          // --- Paso D: Recalcular ProgresoCurso ---
+          // --- Paso E: Recalcular ProgresoCurso ---
           await this.recalculateCourseProgress(tx, idCurso);
 
           return { message: 'Lote de progreso registrado con éxito' };
