@@ -20,6 +20,11 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { es } from "date-fns/locale/es";
 
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import InputAdornment from "@mui/material/InputAdornment";
+import IconButton from "@mui/material/IconButton";
+import Tooltip from "@mui/material/Tooltip";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 // Esquemas de validación, tipos y el tipo User base
 import {
@@ -56,6 +61,13 @@ export default function UserFormDialog({
 
   const { enqueueSnackbar } = useSnackbar();
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const handleClickShowPassword = () => setShowPassword((show) => !show);
+  const handleClickShowConfirmPassword = () =>
+    setShowConfirmPassword((show) => !show);
+
   // Selecciona el esquema de validación correcto
   const currentSchema = isEditMode ? updateUserSchema : createUserSchema;
 
@@ -78,6 +90,7 @@ export default function UserFormDialog({
       email: "",
       rol: undefined,
       password: "",
+      confirmPassword: "",
     },
   });
 
@@ -97,6 +110,7 @@ export default function UserFormDialog({
           email: userToEdit.email || "", // Email no se edita, pero lo mostramos
           rol: userToEdit.rol,
           password: "", // Limpia password en modo edición
+          confirmPassword: "",
         });
       } else {
         // Resetea a valores por defecto para creación
@@ -109,6 +123,7 @@ export default function UserFormDialog({
           email: "",
           rol: roles.Alumno,
           password: "",
+          confirmPassword: "",
         });
       }
     }
@@ -120,8 +135,9 @@ export default function UserFormDialog({
   > = async (data) => {
     setSubmitError(null);
     try {
+      const { confirmPassword, ...rest } = data;
       const dataToSend = {
-        ...data,
+        ...rest,
         // Asegura no enviar password vacío en update si no se quiere cambiar
         password: isEditMode && !data.password ? undefined : data.password,
       };
@@ -162,7 +178,7 @@ export default function UserFormDialog({
   }
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle align="center">
         {isEditMode ? "Editar Usuario" : "Crear Nuevo Usuario"}
       </DialogTitle>
@@ -293,40 +309,173 @@ export default function UserFormDialog({
             />
             {/* Campo Password (solo al crear) */}
             {!isEditMode && (
-              <TextField
-                label="Contraseña"
-                fullWidth
-                required={!isEditMode} // Requerido solo al crear
-                type="password"
-                {...register("password")}
-                error={!!errors.password}
-                helperText={errors.password?.message || " "}
-                slotProps={{
-                  formHelperText: {
-                    style: { minHeight: "1.25em" },
-                  },
-                }}
-                disabled={isSubmitting}
-              />
+              <Stack direction="row" spacing={2}>
+                <TextField
+                  label="Contraseña"
+                  fullWidth
+                  required={!isEditMode} // Requerido solo al crear
+                  type={showPassword ? "text" : "password"}
+                  {...register("password")}
+                  error={!!errors.password}
+                  helperText={errors.password?.message || " "}
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <Tooltip
+                            title={
+                              showPassword
+                                ? "Ocultar contraseña"
+                                : "Mostrar contraseña"
+                            }
+                          >
+                            <IconButton
+                              aria-label="toggle password visibility"
+                              onClick={handleClickShowPassword}
+                              edge="end"
+                            >
+                              {showPassword ? (
+                                <VisibilityOff />
+                              ) : (
+                                <Visibility />
+                              )}
+                            </IconButton>
+                          </Tooltip>
+                        </InputAdornment>
+                      ),
+                    },
+                    formHelperText: {
+                      style: { minHeight: "1.25em" },
+                    },
+                  }}
+                  disabled={isSubmitting}
+                />
+                <TextField
+                  label="Confirmar Contraseña"
+                  fullWidth
+                  required={!isEditMode}
+                  type={showConfirmPassword ? "text" : "password"}
+                  {...register("confirmPassword")}
+                  error={!!errors.confirmPassword}
+                  helperText={errors.confirmPassword?.message || " "}
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <Tooltip
+                            title={
+                              showConfirmPassword
+                                ? "Ocultar contraseña"
+                                : "Mostrar contraseña"
+                            }
+                          >
+                            <IconButton
+                              aria-label="toggle password visibility"
+                              onClick={handleClickShowConfirmPassword}
+                              edge="end"
+                            >
+                              {showConfirmPassword ? (
+                                <VisibilityOff />
+                              ) : (
+                                <Visibility />
+                              )}
+                            </IconButton>
+                          </Tooltip>
+                        </InputAdornment>
+                      ),
+                    },
+                    formHelperText: {
+                      style: { minHeight: "1.25em" },
+                    },
+                  }}
+                  disabled={isSubmitting}
+                />
+              </Stack>
             )}
             {/* Campo Password (opcional al editar) */}
             {isEditMode && (
-              <TextField
-                label="Nueva Contraseña (opcional)"
-                fullWidth
-                type="password"
-                {...register("password")}
-                error={!!errors.password}
-                helperText={
-                  errors.password?.message || "Dejar vacío para no cambiar"
-                }
-                slotProps={{
-                  formHelperText: {
-                    style: { minHeight: "1.25em" },
-                  },
-                }}
-                disabled={isSubmitting}
-              />
+              <Stack direction="row" spacing={2}>
+                <TextField
+                  label="Nueva Contraseña (opcional)"
+                  fullWidth
+                  type={showPassword ? "text" : "password"}
+                  {...register("password")}
+                  error={!!errors.password}
+                  helperText={
+                    errors.password?.message || "Dejar vacío para no cambiar"
+                  }
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <Tooltip
+                            title={
+                              showPassword
+                                ? "Ocultar contraseña"
+                                : "Mostrar contraseña"
+                            }
+                          >
+                            <IconButton
+                              aria-label="toggle password visibility"
+                              onClick={handleClickShowPassword}
+                              edge="end"
+                            >
+                              {showPassword ? (
+                                <VisibilityOff />
+                              ) : (
+                                <Visibility />
+                              )}
+                            </IconButton>
+                          </Tooltip>
+                        </InputAdornment>
+                      ),
+                    },
+                    formHelperText: {
+                      style: { minHeight: "1.25em" },
+                    },
+                  }}
+                  disabled={isSubmitting}
+                />
+                <TextField
+                  label="Confirmar Contraseña"
+                  fullWidth
+                  type={showConfirmPassword ? "text" : "password"}
+                  {...register("confirmPassword")}
+                  error={!!errors.confirmPassword}
+                  helperText={errors.confirmPassword?.message || " "}
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <Tooltip
+                            title={
+                              showConfirmPassword
+                                ? "Ocultar contraseña"
+                                : "Mostrar contraseña"
+                            }
+                          >
+                            <IconButton
+                              aria-label="toggle password visibility"
+                              onClick={handleClickShowConfirmPassword}
+                              edge="end"
+                            >
+                              {showConfirmPassword ? (
+                                <VisibilityOff />
+                              ) : (
+                                <Visibility />
+                              )}
+                            </IconButton>
+                          </Tooltip>
+                        </InputAdornment>
+                      ),
+                    },
+                    formHelperText: {
+                      style: { minHeight: "1.25em" },
+                    },
+                  }}
+                  disabled={isSubmitting}
+                />
+              </Stack>
             )}
             {/* Selector de Rol */}
             <Controller

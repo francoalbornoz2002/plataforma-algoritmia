@@ -32,23 +32,44 @@ const userBaseSchema = z.object({
 });
 
 // Esquema para CREAR (extiende el base y añade password)
-export const createUserSchema = userBaseSchema.extend({
-  password: z
-    .string()
-    .min(6, "La contraseña debe tener al menos 6 caracteres")
-    .max(100, "La contraseña no puede exceder los 100 caracteres"), // Límite razonable
-});
+export const createUserSchema = userBaseSchema
+  .extend({
+    password: z
+      .string()
+      .min(6, "La contraseña debe tener al menos 6 caracteres")
+      .max(100, "La contraseña no puede exceder los 100 caracteres"), // Límite razonable
+    confirmPassword: z.string().min(1, "Debe confirmar la contraseña"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Las contraseñas no coinciden",
+    path: ["confirmPassword"],
+  });
 
 // Esquema para ACTUALIZAR (hace opcionales los campos base, password opcional con validación si se incluye)
-export const updateUserSchema = userBaseSchema.partial().extend({
-  // Password es opcional, pero si se envía, debe cumplir las reglas
-  password: z
-    .string()
-    .min(6, "La contraseña debe tener al menos 6 caracteres")
-    .max(100, "La contraseña no puede exceder los 100 caracteres")
-    .optional()
-    .or(z.literal("")), // Permite enviar string vacío para no cambiarla
-});
+export const updateUserSchema = userBaseSchema
+  .partial()
+  .extend({
+    // Password es opcional, pero si se envía, debe cumplir las reglas
+    password: z
+      .string()
+      .min(6, "La contraseña debe tener al menos 6 caracteres")
+      .max(100, "La contraseña no puede exceder los 100 caracteres")
+      .optional()
+      .or(z.literal("")), // Permite enviar string vacío para no cambiarla
+    confirmPassword: z.string().optional().or(z.literal("")),
+  })
+  .refine(
+    (data) => {
+      if (data.password) {
+        return data.password === data.confirmPassword;
+      }
+      return true;
+    },
+    {
+      message: "Las contraseñas no coinciden",
+      path: ["confirmPassword"],
+    }
+  );
 
 // Tipos inferidos desde los esquemas Zod
 export type CreateUserFormValues = z.infer<typeof createUserSchema>;
