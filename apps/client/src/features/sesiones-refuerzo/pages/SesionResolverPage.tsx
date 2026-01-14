@@ -291,6 +291,37 @@ export default function SesionResolverPage() {
     return (Object.keys(respuestas).length / sesion.preguntas.length) * 100;
   }, [sesion, respuestas]);
 
+  // Lógica para determinar si mostrar el confeti
+  const showConfetti = useMemo(() => {
+    if (!finalResultData) return false;
+
+    const { gradoAnterior } = finalResultData.sesion.resultadoSesion!;
+    const nuevoGrado = finalResultData.nuevoGrado;
+
+    if (gradoAnterior === nuevoGrado) return false;
+
+    // Caso 1: Se superó la dificultad por completo (de cualquier grado a Ninguno)
+    if (nuevoGrado === grado_dificultad.Ninguno) {
+      return true;
+    }
+
+    // Caso 2: El grado bajó (ej. Alto -> Medio)
+    const grados = [
+      grado_dificultad.Bajo,
+      grado_dificultad.Medio,
+      grado_dificultad.Alto,
+    ];
+    const indexAntes = grados.indexOf(gradoAnterior);
+    const indexDespues = grados.indexOf(nuevoGrado);
+
+    // Solo comparamos si ambos grados son comparables (no son 'Ninguno' en este punto)
+    if (indexAntes > -1 && indexDespues > -1) {
+      return indexDespues < indexAntes;
+    }
+
+    return false;
+  }, [finalResultData]);
+
   const isTimeCritical = timeLeft !== null && timeLeft < 60;
 
   // Keyframes para la animación de parpadeo
@@ -315,37 +346,6 @@ export default function SesionResolverPage() {
     // Priorizamos los datos frescos del resultado final, si no, usamos los de la sesión cargada.
     const sesionData = finalResultData ? finalResultData.sesion : sesion;
     const nuevoGradoData = finalResultData ? finalResultData.nuevoGrado : null;
-
-    // Lógica para determinar si mostrar el confeti
-    const showConfetti = useMemo(() => {
-      if (!finalResultData) return false;
-
-      const { gradoAnterior } = finalResultData.sesion.resultadoSesion!;
-      const nuevoGrado = finalResultData.nuevoGrado;
-
-      if (gradoAnterior === nuevoGrado) return false;
-
-      // Caso 1: Se superó la dificultad por completo (de cualquier grado a Ninguno)
-      if (nuevoGrado === grado_dificultad.Ninguno) {
-        return true;
-      }
-
-      // Caso 2: El grado bajó (ej. Alto -> Medio)
-      const grados = [
-        grado_dificultad.Bajo,
-        grado_dificultad.Medio,
-        grado_dificultad.Alto,
-      ];
-      const indexAntes = grados.indexOf(gradoAnterior);
-      const indexDespues = grados.indexOf(nuevoGrado);
-
-      // Solo comparamos si ambos grados son comparables (no son 'Ninguno' en este punto)
-      if (indexAntes > -1 && indexDespues > -1) {
-        return indexDespues < indexAntes;
-      }
-
-      return false;
-    }, [finalResultData]);
 
     return (
       <Container maxWidth="md" sx={{ mt: 4 }}>
