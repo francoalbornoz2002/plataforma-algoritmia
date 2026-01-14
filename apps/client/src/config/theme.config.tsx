@@ -5,7 +5,7 @@ type ThemeProp = {
   children: JSX.Element;
 };
 
-const theme = createTheme({
+export const theme = createTheme({
   palette: {
     mode: "light",
     primary: {
