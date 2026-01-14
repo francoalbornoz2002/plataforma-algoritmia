@@ -170,7 +170,17 @@ export default function CourseSelectionModal({
 
   return (
     <>
-      <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <Dialog
+        open={open}
+        onClose={(event, reason) => {
+          if (reason !== "backdropClick" && reason !== "escapeKeyDown") {
+            onClose();
+          }
+        }}
+        disableEscapeKeyDown
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle align="center">Selecciona un Curso</DialogTitle>
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Tabs value={tabValue} onChange={handleTabChange} centered>

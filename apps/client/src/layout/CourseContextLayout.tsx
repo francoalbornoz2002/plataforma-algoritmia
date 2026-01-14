@@ -1,6 +1,7 @@
 import { useState, useEffect, type ReactNode } from "react";
 import { Box, CircularProgress } from "@mui/material";
 import { CourseProvider, useCourseContext } from "../context/CourseContext";
+import { useAuth } from "../features/authentication/context/AuthProvider";
 import type { UserData, MenuItemType } from "../types";
 import Sidebar from "./sidebar/Sidebar";
 import CourseSelectionModal from "../features/courses/components/CourseSelectionModal";
@@ -17,17 +18,19 @@ function ContextLayout({
 }) {
   // 1. Nos conectamos al contexto
   const { selectedCourse, isLoading } = useCourseContext();
+  const { mustChangePassword } = useAuth();
 
   // 2. Estado para controlar el modal
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // 3. Efecto "Guardián": Se ejecuta cuando el contexto carga
   useEffect(() => {
-    // Si NO estamos cargando el curso Y AÚN no hay curso seleccionado
-    if (!isLoading && !selectedCourse) {
+    // Si NO estamos cargando, NO hay curso seleccionado
+    // Y NO hay un cambio de contraseña pendiente (mustChangePassword === false)
+    if (!isLoading && !selectedCourse && !mustChangePassword) {
       setIsModalOpen(true); // Forzamos abrir el modal
     }
-  }, [isLoading, selectedCourse]);
+  }, [isLoading, selectedCourse, mustChangePassword]);
 
   // 4. Función para el botón del avatar "Cambiar de curso"
   const openCourseSwitcher = () => {
