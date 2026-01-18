@@ -12,6 +12,8 @@ model AlumnoCurso {
   idCurso        String         @map("id_curso") @db.Uuid
   idProgreso     String         @unique @map("id_progreso") @db.Uuid
   estado         estado_simple
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  deletedAt      DateTime?      @map("deleted_at") @db.Timestamptz(6)
   alumno         Usuario        @relation("CursosDelAlumno", fields: [idAlumno], references: [id], onDelete: NoAction, onUpdate: NoAction)
   curso          Curso          @relation("AlumnosEnCurso", fields: [idCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
   progresoAlumno ProgresoAlumno @relation(fields: [idProgreso], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -95,25 +97,26 @@ model ConsultaClase {
 }
 
 model Curso {
-  id                    String             @id @default(uuid()) @db.Uuid
-  idProgreso            String             @map("id_progreso") @db.Uuid
-  idDificultadesCurso   String             @map("id_dificultades_curso") @db.Uuid
-  nombre                String             @unique @db.VarChar(255)
-  descripcion           String             @unique @db.VarChar(255)
-  imagenUrl             String?            @map("imagen_url")
-  contrasenaAcceso      String             @map("contraseña_acceso") @db.VarChar(255)
-  modalidadPreferencial modalidad          @default(Presencial) @map("modalidad_preferencial")
-  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt             DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt             DateTime?          @map("deleted_at") @db.Timestamptz(6)
-  alumnos               AlumnoCurso[]      @relation("AlumnosEnCurso")
-  clasesConsulta        ClaseConsulta[]    @relation("ClasesConsultaCurso")
-  consultas             Consulta[]         @relation("ConsultasCurso")
-  dificultadesCurso     DificultadesCurso  @relation(fields: [idDificultadesCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  progresoCurso         ProgresoCurso      @relation(fields: [idProgreso], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                    String                @id @default(uuid()) @db.Uuid
+  idProgreso            String                @map("id_progreso") @db.Uuid
+  idDificultadesCurso   String                @map("id_dificultades_curso") @db.Uuid
+  nombre                String                @unique @db.VarChar(255)
+  descripcion           String                @unique @db.VarChar(255)
+  imagenUrl             String?               @map("imagen_url")
+  contrasenaAcceso      String                @map("contraseña_acceso") @db.VarChar(255)
+  modalidadPreferencial modalidad             @default(Presencial) @map("modalidad_preferencial")
+  createdAt             DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt             DateTime?             @map("deleted_at") @db.Timestamptz(6)
+  alumnos               AlumnoCurso[]         @relation("AlumnosEnCurso")
+  clasesConsulta        ClaseConsulta[]       @relation("ClasesConsultaCurso")
+  consultas             Consulta[]            @relation("ConsultasCurso")
+  dificultadesCurso     DificultadesCurso     @relation(fields: [idDificultadesCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  progresoCurso         ProgresoCurso         @relation(fields: [idProgreso], references: [id], onDelete: NoAction, onUpdate: NoAction)
   diasClase             DiaClase[]
   dificultadesAlumnos   DificultadAlumno[]
-  docentes              DocenteCurso[]     @relation("DocentesEnCurso")
+  historialDificultades HistorialDificultad[]
+  docentes              DocenteCurso[]        @relation("DocentesEnCurso")
   sesionesRefuerzo      SesionRefuerzo[]
 
   @@index([deletedAt], map: "idx_cursos_activo")
@@ -155,11 +158,12 @@ model DificultadAlumno {
 }
 
 model Dificultad {
-  id                 String              @id @default(uuid()) @db.Uuid
-  nombre             String              @unique @db.VarChar(255)
-  descripcion        String              @unique @db.VarChar(255)
+  id                 String                @id @default(uuid()) @db.Uuid
+  nombre             String                @unique @db.VarChar(255)
+  descripcion        String                @unique @db.VarChar(255)
   tema               temas
   dificultadesAlumno DificultadAlumno[]
+  historialCambios   HistorialDificultad[]
   dificultadesCursos DificultadesCurso[]
   preguntas          Pregunta[]
   sesionRefuerzos    SesionRefuerzo[]
@@ -186,6 +190,8 @@ model DocenteCurso {
   idDocente String        @map("id_docente") @db.Uuid
   idCurso   String        @map("id_curso") @db.Uuid
   estado    estado_simple
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  deletedAt DateTime?     @map("deleted_at") @db.Timestamptz(6)
   curso     Curso         @relation("DocentesEnCurso", fields: [idCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
   docente   Usuario       @relation("CursosDocente", fields: [idDocente], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
@@ -193,6 +199,22 @@ model DocenteCurso {
   @@index([estado], map: "idx_docente_curso_estado")
   @@index([idDocente, idCurso], map: "idx_docente_curso_pks")
   @@map("docente_curso")
+}
+
+model HistorialDificultad {
+  id           String           @id @default(uuid()) @db.Uuid
+  idAlumno     String           @map("id_alumno") @db.Uuid
+  idCurso      String           @map("id_curso") @db.Uuid
+  idDificultad String           @map("id_dificultad") @db.Uuid
+  grado        grado_dificultad
+  fechaCambio  DateTime         @default(now()) @map("fecha_cambio") @db.Timestamptz(6)
+
+  alumno     Usuario    @relation(fields: [idAlumno], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  curso      Curso      @relation(fields: [idCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  dificultad Dificultad @relation(fields: [idDificultad], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([idCurso, fechaCambio], map: "idx_historial_dif_curso_fecha")
+  @@map("historial_dificultades")
 }
 
 model Institucion {
@@ -457,29 +479,30 @@ model SesionRefuerzo {
 }
 
 model Usuario {
-  id                  String              @id @default(uuid()) @db.Uuid
-  nombre              String              @db.VarChar(255)
-  apellido            String              @db.VarChar(255)
-  dni                 String              @unique @db.VarChar(9)
-  fechaNacimiento     DateTime            @map("fecha_nacimiento") @db.Date
-  genero              generos
-  email               String              @unique @db.VarChar(255)
-  password            String              @db.VarChar(255)
-  rol                 roles
-  ultimoAcceso        DateTime?           @map("ultimo_acceso") @db.Timestamptz(6)
-  createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt           DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt           DateTime?           @map("deleted_at") @db.Timestamptz(6)
-  cursosDelAlumno     AlumnoCurso[]       @relation("CursosDelAlumno")
-  clasesACargo        ClaseConsulta[]     @relation("ClasesACargo")
-  consultas           Consulta[]          @relation("ConsultasAlumno")
-  dificultades        DificultadAlumno[]  @relation("DificultadesAlumno")
-  cursosDocente       DocenteCurso[]      @relation("CursosDocente")
-  logsAuditoria       LogAuditoria[]
-  preguntasCreadas    Pregunta[]          @relation("PreguntasCreadas")
-  respuestasConsultas RespuestaConsulta[] @relation("RespuestasDocente")
-  sesionesRefuerzo    SesionRefuerzo[]    @relation("SesionesAlumno")
-  sesionesCreadas     SesionRefuerzo[]    @relation("SesionesCreadas")
+  id                    String                @id @default(uuid()) @db.Uuid
+  nombre                String                @db.VarChar(255)
+  apellido              String                @db.VarChar(255)
+  dni                   String                @unique @db.VarChar(9)
+  fechaNacimiento       DateTime              @map("fecha_nacimiento") @db.Date
+  genero                generos
+  email                 String                @unique @db.VarChar(255)
+  password              String                @db.VarChar(255)
+  rol                   roles
+  ultimoAcceso          DateTime?             @map("ultimo_acceso") @db.Timestamptz(6)
+  createdAt             DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt             DateTime?             @map("deleted_at") @db.Timestamptz(6)
+  cursosDelAlumno       AlumnoCurso[]         @relation("CursosDelAlumno")
+  clasesACargo          ClaseConsulta[]       @relation("ClasesACargo")
+  consultas             Consulta[]            @relation("ConsultasAlumno")
+  dificultades          DificultadAlumno[]    @relation("DificultadesAlumno")
+  historialDificultades HistorialDificultad[]
+  cursosDocente         DocenteCurso[]        @relation("CursosDocente")
+  logsAuditoria         LogAuditoria[]
+  preguntasCreadas      Pregunta[]            @relation("PreguntasCreadas")
+  respuestasConsultas   RespuestaConsulta[]   @relation("RespuestasDocente")
+  sesionesRefuerzo      SesionRefuerzo[]      @relation("SesionesAlumno")
+  sesionesCreadas       SesionRefuerzo[]      @relation("SesionesCreadas")
 
   @@index([deletedAt], map: "idx_usuario_activo")
   @@index([apellido], map: "idx_usuario_apellido")
