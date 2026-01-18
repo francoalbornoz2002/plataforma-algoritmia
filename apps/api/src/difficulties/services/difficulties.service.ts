@@ -380,7 +380,8 @@ export class DifficultiesService {
       await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         // --- Paso A: Iterar y hacer UPSERT para cada dificultad ---
         for (const dto of dtos) {
-          await tx.dificultadAlumno.upsert({
+          // 1. Buscamos el estado actual para saber si cambió
+          const existing = await tx.dificultadAlumno.findUnique({
             where: {
               idAlumno_idCurso_idDificultad: {
                 idAlumno: idAlumno,
@@ -388,16 +389,42 @@ export class DifficultiesService {
                 idDificultad: dto.idDificultad,
               },
             },
-            create: {
-              idAlumno: idAlumno,
-              idCurso: idCurso,
-              idDificultad: dto.idDificultad,
-              grado: dto.grado,
-            },
-            update: {
-              grado: dto.grado,
-            },
           });
+
+          // 2. Solo actuamos si es nuevo o si el grado es diferente
+          const shouldUpdate = !existing || existing.grado !== dto.grado;
+
+          if (shouldUpdate) {
+            await tx.dificultadAlumno.upsert({
+              where: {
+                idAlumno_idCurso_idDificultad: {
+                  idAlumno: idAlumno,
+                  idCurso: idCurso,
+                  idDificultad: dto.idDificultad,
+                },
+              },
+              create: {
+                idAlumno: idAlumno,
+                idCurso: idCurso,
+                idDificultad: dto.idDificultad,
+                grado: dto.grado,
+              },
+              update: {
+                grado: dto.grado,
+              },
+            });
+
+            // 3. Insertamos en el Historial
+            await tx.historialDificultad.create({
+              data: {
+                idAlumno: idAlumno,
+                idCurso: idCurso,
+                idDificultad: dto.idDificultad,
+                grado: dto.grado,
+                fechaCambio: new Date(),
+              },
+            });
+          }
         } // Fin del bucle
 
         // --- Paso B: Recalcular los KPIs del curso (UNA SOLA VEZ) ---

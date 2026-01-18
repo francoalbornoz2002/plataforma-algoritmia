@@ -778,8 +778,8 @@ export class SesionesRefuerzoService {
       else if (pctAciertos < 85) nuevoGrado = grado_dificultad.Bajo;
       else nuevoGrado = grado_dificultad.Ninguno;
 
-      // Actualizamos o creamos la dificultad con el nuevo grado (incluso si es Ninguno)
-      await tx.dificultadAlumno.upsert({
+      // 3.1. Verificar estado actual para Historial
+      const existingDifficulty = await tx.dificultadAlumno.findUnique({
         where: {
           idAlumno_idCurso_idDificultad: {
             idAlumno,
@@ -787,17 +787,47 @@ export class SesionesRefuerzoService {
             idDificultad: sesion.idDificultad,
           },
         },
-        update: { grado: nuevoGrado },
-        create: {
-          idAlumno,
-          idCurso,
-          idDificultad: sesion.idDificultad,
-          grado: nuevoGrado,
-        },
       });
 
-      // 3.1. Recalcular KPIs del curso (Importante: dentro de la transacción)
-      await this.difficultiesService.recalculateCourseDifficulties(tx, idCurso);
+      const shouldUpdate =
+        !existingDifficulty || existingDifficulty.grado !== nuevoGrado;
+
+      if (shouldUpdate) {
+        // Actualizamos o creamos la dificultad con el nuevo grado
+        await tx.dificultadAlumno.upsert({
+          where: {
+            idAlumno_idCurso_idDificultad: {
+              idAlumno,
+              idCurso,
+              idDificultad: sesion.idDificultad,
+            },
+          },
+          update: { grado: nuevoGrado },
+          create: {
+            idAlumno,
+            idCurso,
+            idDificultad: sesion.idDificultad,
+            grado: nuevoGrado,
+          },
+        });
+
+        // Insertamos en el Historial
+        await tx.historialDificultad.create({
+          data: {
+            idAlumno,
+            idCurso,
+            idDificultad: sesion.idDificultad,
+            grado: nuevoGrado,
+            fechaCambio: new Date(),
+          },
+        });
+
+        // 3.2. Recalcular KPIs del curso (Solo si hubo cambios)
+        await this.difficultiesService.recalculateCourseDifficulties(
+          tx,
+          idCurso,
+        );
+      }
 
       // 4. Guardar Respuestas y Resultado
       // IMPORTANTE: Primero creamos el ResultadoSesion porque RespuestaAlumno tiene una FK que apunta a él.
