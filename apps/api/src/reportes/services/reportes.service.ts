@@ -8,6 +8,7 @@ import {
   estado_consulta,
   estado_clase_consulta,
   estado_sesion,
+  HistorialDificultad,
 } from '@prisma/client';
 
 const TOTAL_MISIONES = 10;
@@ -247,20 +248,61 @@ export class ReportesService {
         }
 
         // C. Dificultades (Snapshot a la fecha 'end')
-        const historialCompleto = await this.prisma.$queryRaw<
-          { id_alumno: string; id_dificultad: string; grado: string }[]
-        >`
-          SELECT DISTINCT ON (id_alumno, id_dificultad) id_alumno, id_dificultad, grado
-          FROM historial_dificultades
-          WHERE id_curso = ${curso.id}::uuid AND fecha_cambio <= ${end}
-          ORDER BY id_alumno, id_dificultad, fecha_cambio DESC
-        `;
+        // Usamos findMany y procesamos en memoria para evitar problemas con raw query y enums
+        // y para permitir un fallback al estado actual si no hay historial (migración).
+        const historialRaw =
+          await this.prisma.extendedClient.historialDificultad.findMany({
+            where: {
+              idCurso: curso.id,
+              fechaCambio: { lte: end },
+            },
+            orderBy: {
+              fechaCambio: 'desc',
+            },
+            select: {
+              idAlumno: true,
+              idDificultad: true,
+              grado: true,
+            },
+          });
 
-        const activosConDificultad = historialCompleto.filter(
+        let snapshotDificultades: {
+          idDificultad: string;
+          grado: string;
+          idAlumno: string;
+        }[] = [];
+
+        if (historialRaw.length > 0) {
+          const mapUltimo = new Map<string, (typeof snapshotDificultades)[0]>();
+          historialRaw.forEach((h) => {
+            const key = `${h.idAlumno}-${h.idDificultad}`;
+            if (!mapUltimo.has(key)) {
+              mapUltimo.set(key, {
+                idDificultad: h.idDificultad,
+                grado: h.grado,
+                idAlumno: h.idAlumno,
+              });
+            }
+          });
+          snapshotDificultades = Array.from(mapUltimo.values());
+        } else {
+          // Fallback: Si no hay historial y la fecha es reciente (hoy o futuro), usamos el estado actual
+          // Esto es vital para cursos con datos existentes previos a la implementación del historial.
+          const isRecent = end >= new Date(new Date().setHours(0, 0, 0, 0));
+          if (isRecent) {
+            const currentStatus = await this.prisma.dificultadAlumno.findMany({
+              where: { idCurso: curso.id },
+              select: { idAlumno: true, idDificultad: true, grado: true },
+            });
+            snapshotDificultades = currentStatus;
+          }
+        }
+
+        const activosConDificultad = snapshotDificultades.filter(
           (h) => h.grado !== 'Ninguno',
         );
         const alumnosConDificultadSet = new Set(
-          activosConDificultad.map((h) => h.id_alumno),
+          activosConDificultad.map((h) => h.idAlumno),
         );
         const cantAlumnosConDificultad = alumnosConDificultadSet.size;
         const pctAlumnosConDificultad =
@@ -273,7 +315,7 @@ export class ReportesService {
         let temaFrecuente = 'Ninguno';
 
         if (activosConDificultad.length > 0) {
-          const difIds = activosConDificultad.map((d) => d.id_dificultad);
+          const difIds = activosConDificultad.map((d) => d.idDificultad);
           const dificultadesInfo = await this.prisma.dificultad.findMany({
             where: { id: { in: difIds } },
             select: { id: true, nombre: true, tema: true },
@@ -284,7 +326,7 @@ export class ReportesService {
           const temaCount: Record<string, number> = {};
 
           activosConDificultad.forEach((h) => {
-            const info = difMap.get(h.id_dificultad);
+            const info = difMap.get(h.idDificultad);
             if (info) {
               difCount[info.nombre] = (difCount[info.nombre] || 0) + 1;
               temaCount[info.tema] = (temaCount[info.tema] || 0) + 1;
