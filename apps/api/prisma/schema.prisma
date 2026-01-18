@@ -8,15 +8,15 @@ datasource db {
 }
 
 model AlumnoCurso {
-  idAlumno       String         @map("id_alumno") @db.Uuid
-  idCurso        String         @map("id_curso") @db.Uuid
-  idProgreso     String         @unique @map("id_progreso") @db.Uuid
-  estado         estado_simple
-  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
-  deletedAt      DateTime?      @map("deleted_at") @db.Timestamptz(6)
-  alumno         Usuario        @relation("CursosDelAlumno", fields: [idAlumno], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  curso          Curso          @relation("AlumnosEnCurso", fields: [idCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  progresoAlumno ProgresoAlumno @relation(fields: [idProgreso], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  idAlumno         String         @map("id_alumno") @db.Uuid
+  idCurso          String         @map("id_curso") @db.Uuid
+  idProgreso       String         @unique @map("id_progreso") @db.Uuid
+  estado           estado_simple
+  fechaInscripcion DateTime       @default(now()) @map("fecha_inscripcion") @db.Timestamptz(6)
+  fechaBaja        DateTime?      @map("fecha_baja") @db.Timestamptz(6)
+  alumno           Usuario        @relation("CursosDelAlumno", fields: [idAlumno], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  curso            Curso          @relation("AlumnosEnCurso", fields: [idCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  progresoAlumno   ProgresoAlumno @relation(fields: [idProgreso], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@id([idAlumno, idCurso])
   @@index([estado], map: "idx_alumno_curso_estado")
@@ -187,13 +187,13 @@ model DificultadesCurso {
 }
 
 model DocenteCurso {
-  idDocente String        @map("id_docente") @db.Uuid
-  idCurso   String        @map("id_curso") @db.Uuid
-  estado    estado_simple
-  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  deletedAt DateTime?     @map("deleted_at") @db.Timestamptz(6)
-  curso     Curso         @relation("DocentesEnCurso", fields: [idCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  docente   Usuario       @relation("CursosDocente", fields: [idDocente], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  idDocente       String        @map("id_docente") @db.Uuid
+  idCurso         String        @map("id_curso") @db.Uuid
+  estado          estado_simple
+  fechaAsignacion DateTime      @default(now()) @map("fecha_asignacion") @db.Timestamptz(6)
+  fechaBaja       DateTime?     @map("fecha_baja") @db.Timestamptz(6)
+  curso           Curso         @relation("DocentesEnCurso", fields: [idCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  docente         Usuario       @relation("CursosDocente", fields: [idDocente], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@id([idDocente, idCurso])
   @@index([estado], map: "idx_docente_curso_estado")
