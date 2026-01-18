@@ -19,6 +19,7 @@ import { MailModule } from './mail/mail.module';
 import { PreguntasModule } from './preguntas/preguntas.module';
 import { SesionesRefuerzoModule } from './sesiones-refuerzo/sesiones-refuerzo.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ReportesModule } from './reportes/reportes.module';
 
 const UPLOADS_PATH = join(process.cwd(), 'uploads');
 
@@ -51,6 +52,7 @@ const UPLOADS_PATH = join(process.cwd(), 'uploads');
     MailModule,
     PreguntasModule,
     SesionesRefuerzoModule,
+    ReportesModule,
   ],
   controllers: [],
   providers: [MailService],
