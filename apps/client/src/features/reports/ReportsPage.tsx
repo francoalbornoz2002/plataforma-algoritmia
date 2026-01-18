@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Container, Paper, Tab, Tabs, Typography } from "@mui/material";
+import { Box, Paper, Tab, Tabs, Typography } from "@mui/material";
 import GroupIcon from "@mui/icons-material/Group";
 import SchoolIcon from "@mui/icons-material/School";
 import HistoryIcon from "@mui/icons-material/History";
@@ -36,9 +36,9 @@ export default function ReportsPage() {
   };
 
   return (
-    <Container maxWidth="xl">
+    <Box sx={{ width: "100%" }}>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom fontWeight="bold">
+        <Typography variant="h4" gutterBottom>
           Reportes y Estadísticas
         </Typography>
         <Typography variant="body1" color="text.secondary">
@@ -80,6 +80,6 @@ export default function ReportsPage() {
           </Box>
         </CustomTabPanel>
       </Paper>
-    </Container>
+    </Box>
   );
 }

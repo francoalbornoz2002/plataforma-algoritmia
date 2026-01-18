@@ -11,11 +11,12 @@ import {
   Alert,
   CircularProgress,
   Paper,
+  Chip,
+  Divider,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableOnIcon from "@mui/icons-material/TableChart";
-import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { estado_simple } from "../../../types";
 import {
   getCoursesReport,
@@ -50,43 +51,9 @@ export default function CoursesReportTab() {
     }
   };
 
-  const columns: GridColDef[] = [
-    { field: "nombre", headerName: "Curso", flex: 1.5 },
-    { field: "estado", headerName: "Estado", flex: 0.8 },
-    {
-      field: "alumnosActivos",
-      headerName: "Alumnos Activos",
-      type: "number",
-      flex: 1,
-    },
-    {
-      field: "avancePromedio",
-      headerName: "% Avance",
-      type: "number",
-      flex: 1,
-      valueFormatter: (params) => `${params.value}%`,
-    },
-    {
-      field: "alumnosConDificultad",
-      headerName: "% Dificultad",
-      type: "number",
-      flex: 1,
-      valueGetter: (params) => params.value.porcentaje,
-      valueFormatter: (params) => `${params.value}%`,
-    },
-    { field: "dificultadFrecuente", headerName: "Dif. Frecuente", flex: 1.2 },
-    {
-      field: "consultas",
-      headerName: "% Consultas Res.",
-      type: "number",
-      flex: 1,
-      valueGetter: (params) => params.value.pctResueltas,
-      valueFormatter: (params) => `${params.value}%`,
-    },
-  ];
-
   return (
     <Box>
+      {/* Filtros */}
       <Card variant="outlined" sx={{ mb: 3 }}>
         <CardContent>
           <Grid container spacing={2} alignItems="center">
@@ -144,6 +111,7 @@ export default function CoursesReportTab() {
         </CardContent>
       </Card>
 
+      {/* Acciones de Exportación */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}>
         <Button
           variant="outlined"
@@ -163,6 +131,7 @@ export default function CoursesReportTab() {
         </Button>
       </Box>
 
+      {/* Mensajes de Estado */}
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
@@ -184,8 +153,13 @@ export default function CoursesReportTab() {
         </Box>
       )}
 
+      {/* Resultados */}
       {reportData && (
         <Box>
+          {/* KPIs Globales */}
+          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+            Resumen Global
+          </Typography>
           <Grid container spacing={2} sx={{ mb: 3 }}>
             <Grid sx={{ xs: 12, md: 4 }}>
               <Card>
@@ -225,17 +199,140 @@ export default function CoursesReportTab() {
             </Grid>
           </Grid>
 
-          <Paper sx={{ height: 500, width: "100%" }}>
-            <DataGrid
-              rows={reportData.data}
-              columns={columns}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 10 } },
-              }}
-              pageSizeOptions={[10, 25, 50]}
-              disableRowSelectionOnClick
-            />
-          </Paper>
+          {/* Lista de Cursos (Tarjetas) */}
+          <Typography variant="h6" gutterBottom>
+            Detalle por Curso
+          </Typography>
+          <Grid container spacing={3}>
+            {reportData.data.map((curso: any) => (
+              <Grid key={curso.id} sx={{ xs: 12 }}>
+                <Card variant="outlined">
+                  <CardContent>
+                    {/* Encabezado de la Tarjeta */}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        mb: 2,
+                      }}
+                    >
+                      <Typography variant="h6" component="div">
+                        {curso.nombre}
+                      </Typography>
+                      <Chip
+                        label={curso.estado}
+                        color={
+                          curso.estado === "Activo" ? "success" : "default"
+                        }
+                        variant="filled"
+                        size="small"
+                      />
+                    </Box>
+                    <Divider sx={{ mb: 2 }} />
+
+                    {/* Métricas del Curso */}
+                    <Grid container spacing={2}>
+                      {/* Fila 1: Personas y Progreso */}
+                      <Grid sx={{ xs: 12, sm: 6, md: 3 }}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Alumnos Activos
+                        </Typography>
+                        <Typography variant="h6">
+                          {curso.alumnosActivos}
+                        </Typography>
+                      </Grid>
+                      <Grid sx={{ xs: 12, sm: 6, md: 3 }}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Docentes Activos
+                        </Typography>
+                        <Typography variant="h6">
+                          {curso.docentesActivos}
+                        </Typography>
+                      </Grid>
+                      <Grid sx={{ xs: 12, sm: 6, md: 3 }}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          % Avance Promedio
+                        </Typography>
+                        <Typography variant="h6">
+                          {curso.avancePromedio}%
+                        </Typography>
+                      </Grid>
+                      <Grid sx={{ xs: 12, sm: 6, md: 3 }}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Alumnos con Dificultad
+                        </Typography>
+                        <Typography variant="h6">
+                          {curso.alumnosConDificultad.cantidad}
+                          <Typography
+                            component="span"
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ ml: 1 }}
+                          >
+                            ({curso.alumnosConDificultad.porcentaje}%)
+                          </Typography>
+                        </Typography>
+                      </Grid>
+
+                      {/* Fila 2: Detalles de Dificultad */}
+                      <Grid sx={{ xs: 12, sm: 6, md: 6 }}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Dificultad más frecuente
+                        </Typography>
+                        <Typography variant="body1">
+                          {curso.dificultadFrecuente}
+                        </Typography>
+                      </Grid>
+                      <Grid sx={{ xs: 12, sm: 6, md: 6 }}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Tema más frecuente
+                        </Typography>
+                        <Typography variant="body1">
+                          {curso.temaFrecuente}
+                        </Typography>
+                      </Grid>
+
+                      {/* Fila 3: Interacciones (Consultas, Clases, Sesiones) */}
+                      <Grid sx={{ xs: 12, sm: 4 }}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Consultas
+                        </Typography>
+                        <Typography variant="body1">
+                          Total: <strong>{curso.consultas.total}</strong>
+                        </Typography>
+                        <Typography variant="caption" color="success.main">
+                          {curso.consultas.pctResueltas}% Resueltas
+                        </Typography>
+                      </Grid>
+                      <Grid sx={{ xs: 12, sm: 4 }}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Clases de Consulta
+                        </Typography>
+                        <Typography variant="body1">
+                          Total: <strong>{curso.clases.total}</strong>
+                        </Typography>
+                        <Typography variant="caption" color="primary.main">
+                          {curso.clases.pctRealizadas}% Realizadas
+                        </Typography>
+                      </Grid>
+                      <Grid sx={{ xs: 12, sm: 4 }}>
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Sesiones de Refuerzo
+                        </Typography>
+                        <Typography variant="body1">
+                          Total: <strong>{curso.sesiones.total}</strong>
+                        </Typography>
+                        <Typography variant="caption" color="secondary.main">
+                          {curso.sesiones.pctCompletadas}% Completadas
+                        </Typography>
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
         </Box>
       )}
     </Box>

@@ -11,11 +11,16 @@ import {
   Alert,
   CircularProgress,
   Paper,
+  Chip,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableOnIcon from "@mui/icons-material/TableChart";
-import { DataGrid, type GridColDef } from "@mui/x-data-grid";
+import {
+  DataGrid,
+  type GridColDef,
+  type GridRenderCellParams,
+} from "@mui/x-data-grid";
 import { roles, estado_simple } from "../../../types";
 import {
   getUsersReport,
@@ -60,13 +65,23 @@ export default function UsersReportTab() {
       field: "createdAt",
       headerName: "Fecha Alta",
       flex: 1,
-      valueFormatter: (params) => new Date(params.value).toLocaleDateString(),
+      valueFormatter: (value: any) => new Date(value).toLocaleDateString(),
     },
     {
       field: "deletedAt",
       headerName: "Estado",
       flex: 0.8,
-      valueGetter: (params) => (params.value ? "Inactivo" : "Activo"),
+      align: "center",
+      headerAlign: "center",
+      valueGetter: (value: any) => (value ? "Inactivo" : "Activo"),
+      renderCell: (params: GridRenderCellParams) => (
+        <Chip
+          label={params.value}
+          size="small"
+          color={params.value === "Activo" ? "success" : "error"}
+          variant="filled"
+        />
+      ),
     },
   ];
 
@@ -193,8 +208,11 @@ export default function UsersReportTab() {
       {reportData && (
         <Box>
           {/* KPIs */}
+          <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+            Estado de Usuarios
+          </Typography>
           <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid sx={{ xs: 12, md: 3 }}>
+            <Grid sx={{ xs: 12, md: 4 }}>
               <Card>
                 <CardContent>
                   <Typography color="text.secondary" gutterBottom>
@@ -206,7 +224,7 @@ export default function UsersReportTab() {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid sx={{ xs: 12, md: 3 }}>
+            <Grid sx={{ xs: 12, md: 4 }}>
               <Card>
                 <CardContent>
                   <Typography color="text.secondary" gutterBottom>
@@ -218,11 +236,29 @@ export default function UsersReportTab() {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid sx={{ xs: 12, md: 3 }}>
+            <Grid sx={{ xs: 12, md: 4 }}>
               <Card>
                 <CardContent>
                   <Typography color="text.secondary" gutterBottom>
-                    Nuevos (Último Año)
+                    Inactivos
+                  </Typography>
+                  <Typography variant="h4" color="error.main">
+                    {reportData.resumen.inactivos}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+
+          <Typography variant="h6" gutterBottom>
+            Variación Anual (Últimos 12 meses)
+          </Typography>
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            <Grid sx={{ xs: 12, md: 6 }}>
+              <Card>
+                <CardContent>
+                  <Typography color="text.secondary" gutterBottom>
+                    Nuevos Usuarios (Altas)
                   </Typography>
                   <Typography variant="h4">
                     {reportData.variacionAnual.altas.cantidad}
@@ -246,18 +282,52 @@ export default function UsersReportTab() {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid sx={{ xs: 12, md: 3 }}>
+            <Grid sx={{ xs: 12, md: 6 }}>
               <Card>
                 <CardContent>
                   <Typography color="text.secondary" gutterBottom>
-                    Bajas (Último Año)
+                    Usuarios dados de baja
                   </Typography>
                   <Typography variant="h4">
                     {reportData.variacionAnual.bajas.cantidad}
+                    <Typography
+                      component="span"
+                      variant="body2"
+                      color={
+                        reportData.variacionAnual.bajas.variacionPct <= 0
+                          ? "success.main"
+                          : "error.main"
+                      }
+                      sx={{ ml: 1 }}
+                    >
+                      (
+                      {reportData.variacionAnual.bajas.variacionPct > 0
+                        ? "+"
+                        : ""}
+                      {reportData.variacionAnual.bajas.variacionPct}%)
+                    </Typography>
                   </Typography>
                 </CardContent>
               </Card>
             </Grid>
+          </Grid>
+
+          <Typography variant="h6" gutterBottom>
+            Distribución por Rol
+          </Typography>
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            {reportData.resumen.porRol.map((rolData: any) => (
+              <Grid key={rolData.rol} sx={{ xs: 12, md: 4 }}>
+                <Card>
+                  <CardContent>
+                    <Typography color="text.secondary" gutterBottom>
+                      {rolData.rol}
+                    </Typography>
+                    <Typography variant="h4">{rolData.cantidad}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
           </Grid>
 
           {/* Tabla */}
