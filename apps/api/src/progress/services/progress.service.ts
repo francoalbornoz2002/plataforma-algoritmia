@@ -514,6 +514,12 @@ export class ProgressService {
             },
           });
 
+          // Definimos la fecha de registro para el historial
+          const fechaRegistroHistorial =
+            ultimaActividadLote.getTime() > 0
+              ? ultimaActividadLote
+              : new Date();
+
           // --- NUEVO: Insertar en HistorialProgresoAlumno ---
           await tx.historialProgresoAlumno.create({
             data: {
@@ -525,11 +531,16 @@ export class ProgressService {
               pctMisionesCompletadas: progresoFinal.pctMisionesCompletadas,
               promEstrellas: progresoFinal.promEstrellas,
               promIntentos: progresoFinal.promIntentos,
+              fechaRegistro: fechaRegistroHistorial,
             },
           });
 
           // --- Paso E: Recalcular ProgresoCurso ---
-          await this.recalculateCourseProgress(tx, idCurso);
+          await this.recalculateCourseProgress(
+            tx,
+            idCurso,
+            fechaRegistroHistorial,
+          );
 
           return { message: 'Lote de progreso registrado con éxito' };
         },
@@ -769,6 +780,7 @@ export class ProgressService {
   private async recalculateCourseProgress(
     tx: Prisma.TransactionClient,
     idCurso: string,
+    fechaRegistro: Date = new Date(),
   ) {
     // 1. Obtenemos el ID del ProgresoCurso
     const curso = await tx.curso.findUnique({
@@ -844,6 +856,7 @@ export class ProgressService {
         pctMisionesCompletadas: cursoActualizado.pctMisionesCompletadas,
         promEstrellas: cursoActualizado.promEstrellas,
         promIntentos: cursoActualizado.promIntentos,
+        fechaRegistro: fechaRegistro,
       },
     });
   }

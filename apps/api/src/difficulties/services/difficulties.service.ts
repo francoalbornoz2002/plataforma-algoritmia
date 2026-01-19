@@ -378,8 +378,19 @@ export class DifficultiesService {
 
       // 4. Ejecutar todo como UNA transacción
       await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        let fechaRegistroLote = new Date(0);
+
         // --- Paso A: Iterar y hacer UPSERT para cada dificultad ---
         for (const dto of dtos) {
+          // Calculamos la fecha para este registro (para pruebas)
+          const fechaDto = (dto as any).fechaRegistro
+            ? new Date((dto as any).fechaRegistro)
+            : new Date();
+
+          if (fechaDto > fechaRegistroLote) {
+            fechaRegistroLote = fechaDto;
+          }
+
           // 1. Buscamos el estado actual para saber si cambió
           const existing = await tx.dificultadAlumno.findUnique({
             where: {
@@ -421,14 +432,16 @@ export class DifficultiesService {
                 idCurso: idCurso,
                 idDificultad: dto.idDificultad,
                 grado: dto.grado,
-                fechaCambio: new Date(),
+                fechaCambio: fechaDto,
               },
             });
           }
         } // Fin del bucle
 
         // --- Paso B: Recalcular los KPIs del curso (UNA SOLA VEZ) ---
-        await this.recalculateCourseDifficulties(tx, idCurso);
+        const fechaParaCurso =
+          fechaRegistroLote.getTime() > 0 ? fechaRegistroLote : new Date();
+        await this.recalculateCourseDifficulties(tx, idCurso, fechaParaCurso);
       }); // Fin de la transacción
 
       // 5. PROCESO AUTOMÁTICO: Verificar si alguna dificultad quedó en grado ALTO
@@ -492,6 +505,7 @@ export class DifficultiesService {
   public async recalculateCourseDifficulties(
     tx: Prisma.TransactionClient,
     idCurso: string,
+    fechaRegistro: Date = new Date(),
   ) {
     // 1. Encontrar el registro de DificultadesCurso a actualizar
     const curso = await tx.curso.findUnique({
@@ -531,6 +545,7 @@ export class DifficultiesService {
           idDificultadModa: reset.idDificultadModa,
           promDificultades: reset.promDificultades,
           promGrado: reset.promGrado,
+          fechaRegistro: fechaRegistro,
         },
       });
 
@@ -595,6 +610,7 @@ export class DifficultiesService {
         idDificultadModa: actualizado.idDificultadModa,
         promDificultades: actualizado.promDificultades,
         promGrado: actualizado.promGrado,
+        fechaRegistro: fechaRegistro,
       },
     });
   }
