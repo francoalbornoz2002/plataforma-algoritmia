@@ -812,7 +812,7 @@ export class SesionesRefuerzoService {
         });
 
         // Insertamos en el Historial
-        await tx.historialDificultad.create({
+        await tx.historialDificultadAlumno.create({
           data: {
             idAlumno,
             idCurso,
