@@ -4,7 +4,6 @@ import {
   Button,
   Grid,
   MenuItem,
-  TextField,
   Typography,
   Card,
   CardContent,
@@ -12,8 +11,15 @@ import {
   CircularProgress,
   Paper,
   Chip,
+  Stack,
+  FormControl,
+  InputLabel,
+  Select,
+  type SelectChangeEvent,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { format } from "date-fns";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableOnIcon from "@mui/icons-material/TableChart";
 import {
@@ -38,8 +44,13 @@ export default function UsersReportTab() {
   const [reportData, setReportData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilters({ ...filters, [e.target.name]: e.target.value });
+  const handleChange = (
+    e:
+      | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+      | SelectChangeEvent,
+  ) => {
+    const { name, value } = e.target;
+    setFilters({ ...filters, [name as string]: value });
   };
 
   const handleGenerate = async () => {
@@ -88,80 +99,97 @@ export default function UsersReportTab() {
   return (
     <Box>
       {/* Filtros */}
-      <Card variant="outlined" sx={{ mb: 3 }}>
-        <CardContent>
-          <Grid container spacing={2} alignItems="center">
-            <Grid sx={{ xs: 12, md: 3 }}>
-              <TextField
-                fullWidth
-                label="Fecha Desde"
-                type="date"
-                name="fechaDesde"
-                value={filters.fechaDesde}
-                onChange={handleChange}
-                InputLabelProps={{ shrink: true }}
-                size="small"
-              />
-            </Grid>
-            <Grid sx={{ xs: 12, md: 3 }}>
-              <TextField
-                fullWidth
-                label="Fecha Hasta"
-                type="date"
-                name="fechaHasta"
-                value={filters.fechaHasta}
-                onChange={handleChange}
-                InputLabelProps={{ shrink: true }}
-                size="small"
-              />
-            </Grid>
-            <Grid sx={{ xs: 12, md: 2 }}>
-              <TextField
-                select
-                fullWidth
-                label="Rol"
-                name="rol"
-                value={filters.rol}
-                onChange={handleChange}
-                size="small"
-              >
-                <MenuItem value="">Todos</MenuItem>
-                {Object.values(roles).map((r) => (
-                  <MenuItem key={r} value={r}>
-                    {r}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-            <Grid sx={{ xs: 12, md: 2 }}>
-              <TextField
-                select
-                fullWidth
-                label="Estado"
-                name="estado"
-                value={filters.estado}
-                onChange={handleChange}
-                size="small"
-              >
-                <MenuItem value="">Todos</MenuItem>
-                <MenuItem value={estado_simple.Activo}>Activo</MenuItem>
-                <MenuItem value={estado_simple.Inactivo}>Inactivo</MenuItem>
-              </TextField>
-            </Grid>
-            <Grid sx={{ xs: 12, md: 2 }}>
-              <Button
-                fullWidth
-                variant="contained"
-                startIcon={<SearchIcon />}
-                onClick={handleGenerate}
-                disabled={loading}
-              >
-                {loading ? "Generando..." : "Generar"}
-              </Button>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+      <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
+        <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+          Filtros de reporte
+        </Typography>
+        <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+          <DatePicker
+            label="Fecha Desde"
+            disableFuture
+            value={
+              filters.fechaDesde
+                ? new Date(filters.fechaDesde + "T00:00:00")
+                : null
+            }
+            maxDate={
+              filters.fechaHasta
+                ? new Date(filters.fechaHasta + "T00:00:00")
+                : undefined
+            }
+            onChange={(value) =>
+              setFilters({
+                ...filters,
+                fechaDesde: value ? format(value, "yyyy-MM-dd") : "",
+              })
+            }
+            slotProps={{ textField: { size: "small" } }}
+            sx={{ minWidth: 180 }}
+          />
+          <DatePicker
+            label="Fecha Hasta"
+            disableFuture
+            value={
+              filters.fechaHasta
+                ? new Date(filters.fechaHasta + "T00:00:00")
+                : null
+            }
+            minDate={
+              filters.fechaDesde
+                ? new Date(filters.fechaDesde + "T00:00:00")
+                : undefined
+            }
+            onChange={(value) =>
+              setFilters({
+                ...filters,
+                fechaHasta: value ? format(value, "yyyy-MM-dd") : "",
+              })
+            }
+            slotProps={{ textField: { size: "small" } }}
+            sx={{ minWidth: 180 }}
+          />
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel>Rol</InputLabel>
+            <Select
+              label="Rol"
+              name="rol"
+              value={filters.rol}
+              onChange={handleChange}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {Object.values(roles).map((r) => (
+                <MenuItem key={r} value={r}>
+                  {r}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel>Estado</InputLabel>
+            <Select
+              label="Estado"
+              name="estado"
+              value={filters.estado}
+              onChange={handleChange}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              <MenuItem value={estado_simple.Activo}>Activo</MenuItem>
+              <MenuItem value={estado_simple.Inactivo}>Inactivo</MenuItem>
+            </Select>
+          </FormControl>
+
+          <Box sx={{ flexGrow: 1 }} />
+
+          <Button
+            variant="contained"
+            startIcon={<SearchIcon />}
+            onClick={handleGenerate}
+            disabled={loading}
+          >
+            {loading ? "..." : "Generar"}
+          </Button>
+        </Stack>
+      </Paper>
 
       {/* Acciones de Exportación */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}>

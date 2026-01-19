@@ -41,7 +41,7 @@ export default function ReportsPage() {
         <Typography variant="h4" gutterBottom>
           Reportes y Estadísticas
         </Typography>
-        <Typography variant="body1" color="text.secondary">
+        <Typography variant="body1">
           Genera reportes detallados para analizar el rendimiento de la
           plataforma.
         </Typography>
