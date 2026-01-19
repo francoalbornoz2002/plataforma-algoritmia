@@ -27,7 +27,7 @@ import {
   type GridColDef,
   type GridRenderCellParams,
 } from "@mui/x-data-grid";
-import { roles, estado_simple } from "../../../types";
+import { roles } from "../../../types";
 import {
   getUsersReport,
   type UsersReportFilters,
@@ -38,7 +38,6 @@ export default function UsersReportTab() {
     fechaDesde: "",
     fechaHasta: "",
     rol: "",
-    estado: "",
   });
   const [loading, setLoading] = useState(false);
   const [reportData, setReportData] = useState<any>(null);
@@ -162,19 +161,6 @@ export default function UsersReportTab() {
                   {r}
                 </MenuItem>
               ))}
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 180 }}>
-            <InputLabel>Estado</InputLabel>
-            <Select
-              label="Estado"
-              name="estado"
-              value={filters.estado}
-              onChange={handleChange}
-            >
-              <MenuItem value="">Todos</MenuItem>
-              <MenuItem value={estado_simple.Activo}>Activo</MenuItem>
-              <MenuItem value={estado_simple.Inactivo}>Inactivo</MenuItem>
             </Select>
           </FormControl>
 

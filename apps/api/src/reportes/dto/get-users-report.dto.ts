@@ -1,5 +1,5 @@
 import { IsOptional, IsString, IsDateString, IsEnum } from 'class-validator';
-import { roles, estado_simple } from '@prisma/client';
+import { roles } from '@prisma/client';
 
 export class GetUsersReportDto {
   @IsOptional()
@@ -13,8 +13,4 @@ export class GetUsersReportDto {
   @IsOptional()
   @IsEnum(roles)
   rol?: roles;
-
-  @IsOptional()
-  @IsEnum(estado_simple)
-  estado?: estado_simple;
 }

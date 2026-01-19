@@ -5,7 +5,6 @@ export interface UsersReportFilters {
   fechaDesde?: string;
   fechaHasta?: string;
   rol?: roles | "";
-  estado?: estado_simple | "";
 }
 
 export interface CoursesReportFilters {

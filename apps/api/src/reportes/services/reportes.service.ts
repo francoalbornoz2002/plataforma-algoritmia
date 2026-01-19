@@ -22,7 +22,7 @@ export class ReportesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getUsersReport(dto: GetUsersReportDto) {
-    const { fechaDesde, fechaHasta, rol, estado } = dto;
+    const { fechaDesde, fechaHasta, rol } = dto;
 
     const now = new Date();
     // Fecha Fin: Si no viene, es "ahora". Si viene, es el final de ese día
@@ -43,25 +43,6 @@ export class ReportesService {
     // Filtro de Rol
     if (rol) {
       whereUser.rol = rol;
-    }
-
-    // Filtro de Estado (Simulado según fecha de corte)
-    if (estado) {
-      if (estado === estado_simple.Activo) {
-        // Activo: No borrado O borrado después de la fecha de corte
-        if (isCurrent) {
-          whereUser.deletedAt = null;
-        } else {
-          whereUser.OR = [{ deletedAt: null }, { deletedAt: { gt: end } }];
-        }
-      } else if (estado === estado_simple.Inactivo) {
-        // Inactivo: Borrado antes o en la fecha de corte
-        if (isCurrent) {
-          whereUser.deletedAt = { not: null };
-        } else {
-          whereUser.deletedAt = { lte: end, not: null };
-        }
-      }
     }
 
     // 2. Obtener usuarios
