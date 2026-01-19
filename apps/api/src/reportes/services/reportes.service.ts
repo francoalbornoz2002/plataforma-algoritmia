@@ -11,6 +11,8 @@ import {
   HistorialDificultadAlumno,
   DificultadesCurso,
   Dificultad,
+  HistorialProgresoCurso,
+  HistorialDificultadesCurso,
 } from '@prisma/client';
 
 const TOTAL_MISIONES = 10;
@@ -22,79 +24,99 @@ export class ReportesService {
   async getUsersReport(dto: GetUsersReportDto) {
     const { fechaDesde, fechaHasta, rol, estado } = dto;
 
-    // 1. Filtros para la lista principal y conteos generales
-    const where: Prisma.UsuarioWhereInput = {};
-
-    // Filtro de fechas (sobre createdAt)
-    if (fechaDesde || fechaHasta) {
-      where.createdAt = {};
-      if (fechaDesde) where.createdAt.gte = new Date(fechaDesde);
-      if (fechaHasta) where.createdAt.lte = new Date(fechaHasta);
+    const now = new Date();
+    // Fecha Fin: Si no viene, es "ahora". Si viene, es el final de ese día
+    let end = now;
+    if (fechaHasta) {
+      end = new Date(fechaHasta);
+      end.setUTCHours(23, 59, 59, 999);
     }
+
+    // Determinamos si es reporte actual
+    const isCurrent = end >= now;
+
+    // 1. Filtro Base (Universo de usuarios existentes en la fecha de corte)
+    const whereUser: Prisma.UsuarioWhereInput = {
+      createdAt: { lte: end }, // El usuario debía existir en la fecha de corte
+    };
 
     // Filtro de Rol
     if (rol) {
-      where.rol = rol;
+      whereUser.rol = rol;
     }
 
-    // Filtro de Estado
+    // Filtro de Estado (Simulado según fecha de corte)
     if (estado) {
       if (estado === estado_simple.Activo) {
-        where.deletedAt = null;
+        // Activo: No borrado O borrado después de la fecha de corte
+        if (isCurrent) {
+          whereUser.deletedAt = null;
+        } else {
+          whereUser.OR = [{ deletedAt: null }, { deletedAt: { gt: end } }];
+        }
       } else if (estado === estado_simple.Inactivo) {
-        where.deletedAt = { not: null };
+        // Inactivo: Borrado antes o en la fecha de corte
+        if (isCurrent) {
+          whereUser.deletedAt = { not: null };
+        } else {
+          whereUser.deletedAt = { lte: end, not: null };
+        }
       }
     }
 
-    // 2. Ejecutar consultas principales
-    const [
-      totalUsuarios,
-      usuariosActivos,
-      usuariosInactivos,
-      usuariosPorRol,
-      listaUsuarios,
-    ] = await this.prisma.$transaction([
-      // Total (según filtros)
-      this.prisma.usuario.count({ where }),
-      // Activos (según filtros + condición de activo)
-      this.prisma.usuario.count({ where: { ...where, deletedAt: null } }),
-      // Inactivos (según filtros + condición de inactivo)
-      this.prisma.usuario.count({
-        where: { ...where, deletedAt: { not: null } },
-      }),
-      // Distribución por Rol (según filtros)
-      this.prisma.usuario.groupBy({
-        by: ['rol'],
-        where,
-        _count: { rol: true },
-      }),
-      // Lista de usuarios (según filtros)
-      this.prisma.usuario.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        select: {
-          id: true,
-          nombre: true,
-          apellido: true,
-          dni: true,
-          email: true,
-          rol: true,
-          genero: true,
-          createdAt: true,
-          deletedAt: true,
-          ultimoAcceso: true,
-        },
-      }),
-    ]);
+    // 2. Obtener usuarios
+    const usuarios = await this.prisma.usuario.findMany({
+      where: whereUser,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        nombre: true,
+        apellido: true,
+        dni: true,
+        email: true,
+        rol: true,
+        genero: true,
+        createdAt: true,
+        deletedAt: true,
+        ultimoAcceso: true,
+      },
+    });
+
+    // 3. Procesar métricas en memoria (Snapshot)
+    let totalUsuarios = 0;
+    let usuariosActivos = 0;
+    let usuariosInactivos = 0;
+    const usuariosPorRol: Record<string, number> = {};
+
+    // Helper para determinar estado en la fecha 'end'
+    const getUserStatusAt = (u: { deletedAt: Date | null }) => {
+      if (!u.deletedAt) return 'Activo';
+      return u.deletedAt > end ? 'Activo' : 'Inactivo';
+    };
+
+    const data = usuarios.map((u) => {
+      const status = getUserStatusAt(u);
+
+      // Contadores
+      totalUsuarios++;
+      if (status === 'Activo') usuariosActivos++;
+      else usuariosInactivos++;
+
+      usuariosPorRol[u.rol] = (usuariosPorRol[u.rol] || 0) + 1;
+
+      // Ajustamos deletedAt para que el frontend muestre el estado correcto
+      return {
+        ...u,
+        deletedAt: status === 'Activo' ? null : u.deletedAt,
+      };
+    });
 
     // 3. Calcular Variaciones Anuales (KPIs de "Último Año")
-    // Estos KPIs respetan el filtro de ROL, pero ignoran fechas y estado
-    // para mostrar la tendencia histórica real (Altas y Bajas).
-    const now = new Date();
-    const oneYearAgo = new Date();
-    oneYearAgo.setFullYear(now.getFullYear() - 1);
-    const twoYearsAgo = new Date();
-    twoYearsAgo.setFullYear(now.getFullYear() - 2);
+    // Usamos 'end' como referencia para calcular "hace un año" desde la fecha del reporte
+    const oneYearAgo = new Date(end);
+    oneYearAgo.setFullYear(end.getFullYear() - 1);
+    const twoYearsAgo = new Date(end);
+    twoYearsAgo.setFullYear(end.getFullYear() - 2);
 
     const whereVariacion: Prisma.UsuarioWhereInput = {};
     if (rol) whereVariacion.rol = rol;
@@ -105,11 +127,11 @@ export class ReportesService {
       bajasUltimoAnio,
       bajasAnioAnterior,
     ] = await this.prisma.$transaction([
-      // Altas (createdAt)
+      // Altas
       this.prisma.usuario.count({
         where: {
           ...whereVariacion,
-          createdAt: { gte: oneYearAgo, lte: now },
+          createdAt: { gte: oneYearAgo, lte: end },
         },
       }),
       this.prisma.usuario.count({
@@ -118,11 +140,11 @@ export class ReportesService {
           createdAt: { gte: twoYearsAgo, lt: oneYearAgo },
         },
       }),
-      // Bajas (deletedAt)
+      // Bajas
       this.prisma.usuario.count({
         where: {
           ...whereVariacion,
-          deletedAt: { gte: oneYearAgo, lte: now },
+          deletedAt: { gte: oneYearAgo, lte: end },
         },
       }),
       this.prisma.usuario.count({
@@ -144,9 +166,9 @@ export class ReportesService {
         total: totalUsuarios,
         activos: usuariosActivos,
         inactivos: usuariosInactivos,
-        porRol: usuariosPorRol.map((r) => ({
-          rol: r.rol,
-          cantidad: r._count.rol,
+        porRol: Object.entries(usuariosPorRol).map(([rol, cantidad]) => ({
+          rol,
+          cantidad,
         })),
       },
       variacionAnual: {
@@ -163,7 +185,7 @@ export class ReportesService {
           ),
         },
       },
-      data: listaUsuarios,
+      data,
     };
   }
 
@@ -277,14 +299,13 @@ export class ReportesService {
           avancePromedio = Number(curso.progresoCurso.pctMisionesCompletadas);
         } else {
           // Modo Histórico: Buscamos el último snapshot en el historial
-          const histProg =
-            await this.prisma.extendedClient.historialProgresoCurso.findFirst({
-              where: {
-                idProgresoCurso: curso.idProgreso,
-                fechaRegistro: { lte: end },
-              },
-              orderBy: { fechaRegistro: 'desc' },
-            });
+          const histProg = await this.prisma.historialProgresoCurso.findFirst({
+            where: {
+              idProgresoCurso: curso.idProgreso,
+              fechaRegistro: { lte: end },
+            },
+            orderBy: { fechaRegistro: 'desc' },
+          });
 
           if (histProg) {
             avancePromedio = Number(histProg.pctMisionesCompletadas);
@@ -312,15 +333,13 @@ export class ReportesService {
         } else {
           // Modo Histórico: Usamos HistorialDificultadesCurso
           const histDif =
-            await this.prisma.extendedClient.historialDificultadesCurso.findFirst(
-              {
-                where: {
-                  idDificultadesCurso: curso.idDificultadesCurso,
-                  fechaRegistro: { lte: end },
-                },
-                orderBy: { fechaRegistro: 'desc' },
+            await this.prisma.historialDificultadesCurso.findFirst({
+              where: {
+                idDificultadesCurso: curso.idDificultadesCurso,
+                fechaRegistro: { lte: end },
               },
-            );
+              orderBy: { fechaRegistro: 'desc' },
+            });
 
           if (histDif) {
             temaFrecuente = histDif.temaModa;
@@ -363,17 +382,15 @@ export class ReportesService {
             // Modo Histórico: Reconstruimos desde HistorialDificultadAlumno
             // Buscamos el último estado de cada alumno antes de la fecha 'end'
             const history =
-              await this.prisma.extendedClient.historialDificultadAlumno.findMany(
-                {
-                  where: {
-                    idCurso: curso.id,
-                    idAlumno: { in: activeIds },
-                    fechaCambio: { lte: end },
-                  },
-                  orderBy: { fechaCambio: 'asc' }, // Orden ascendente para procesar cambios
-                  select: { idAlumno: true, idDificultad: true, grado: true },
+              await this.prisma.historialDificultadAlumno.findMany({
+                where: {
+                  idCurso: curso.id,
+                  idAlumno: { in: activeIds },
+                  fechaCambio: { lte: end },
                 },
-              );
+                orderBy: { fechaCambio: 'asc' }, // Orden ascendente para procesar cambios
+                select: { idAlumno: true, idDificultad: true, grado: true },
+              });
 
             // Mapa para obtener el estado final de cada par Alumno-Dificultad
             const mapState = new Map<string, string>();

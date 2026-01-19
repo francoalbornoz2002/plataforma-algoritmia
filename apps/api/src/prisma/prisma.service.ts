@@ -121,6 +121,18 @@ export class PrismaService implements OnModuleInit {
   get docenteCurso() {
     return this.extendedClient.docenteCurso;
   }
+  get historialDificultadAlumno() {
+    return this.extendedClient.historialDificultadAlumno;
+  }
+  get historialDificultadesCurso() {
+    return this.extendedClient.historialDificultadesCurso;
+  }
+  get historialProgresoAlumno() {
+    return this.extendedClient.historialProgresoAlumno;
+  }
+  get historialProgresoCurso() {
+    return this.extendedClient.historialProgresoCurso;
+  }
   get institucion() {
     return this.extendedClient.institucion;
   }
