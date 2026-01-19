@@ -415,7 +415,7 @@ export class DifficultiesService {
             });
 
             // 3. Insertamos en el Historial
-            await tx.historialDificultad.create({
+            await tx.historialDificultadAlumno.create({
               data: {
                 idAlumno: idAlumno,
                 idCurso: idCurso,
@@ -513,7 +513,7 @@ export class DifficultiesService {
 
     // Si no hay dificultades, reseteamos y salimos
     if (allDifAlumnos.length === 0) {
-      await tx.dificultadesCurso.update({
+      const reset = await tx.dificultadesCurso.update({
         where: { id: curso.idDificultadesCurso },
         data: {
           temaModa: 'Ninguno',
@@ -522,6 +522,18 @@ export class DifficultiesService {
           promGrado: 'Ninguno',
         },
       });
+
+      // Guardar historial de reset
+      await tx.historialDificultadesCurso.create({
+        data: {
+          idDificultadesCurso: curso.idDificultadesCurso,
+          temaModa: reset.temaModa,
+          idDificultadModa: reset.idDificultadModa,
+          promDificultades: reset.promDificultades,
+          promGrado: reset.promGrado,
+        },
+      });
+
       return;
     }
 
@@ -565,13 +577,24 @@ export class DifficultiesService {
     else if (promNumerico > 0) promGrado = 'Bajo'; // 0.1 a 1.5
 
     // 4. Actualizar la tabla DificultadesCurso
-    await tx.dificultadesCurso.update({
+    const actualizado = await tx.dificultadesCurso.update({
       where: { id: curso.idDificultadesCurso },
       data: {
         temaModa: temaModa,
         idDificultadModa: dificultadModaId,
         promDificultades: promDificultades,
         promGrado: promGrado,
+      },
+    });
+
+    // --- NUEVO: Insertar en HistorialDificultadesCurso ---
+    await tx.historialDificultadesCurso.create({
+      data: {
+        idDificultadesCurso: curso.idDificultadesCurso,
+        temaModa: actualizado.temaModa,
+        idDificultadModa: actualizado.idDificultadModa,
+        promDificultades: actualizado.promDificultades,
+        promGrado: actualizado.promGrado,
       },
     });
   }

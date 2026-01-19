@@ -505,12 +505,26 @@ export class ProgressService {
               TOTAL_MISIONES_JUEGO) *
             100;
 
-          await tx.progresoAlumno.update({
+          const progresoFinal = await tx.progresoAlumno.update({
             where: { id: idProgreso },
             data: {
               promEstrellas: nuevoPromEstrellas,
               promIntentos: nuevoPromIntentos,
               pctMisionesCompletadas: nuevoPctCompletadas,
+            },
+          });
+
+          // --- NUEVO: Insertar en HistorialProgresoAlumno ---
+          await tx.historialProgresoAlumno.create({
+            data: {
+              idProgreso: idProgreso,
+              cantMisionesCompletadas: progresoFinal.cantMisionesCompletadas,
+              totalEstrellas: progresoFinal.totalEstrellas,
+              totalExp: progresoFinal.totalExp,
+              totalIntentos: progresoFinal.totalIntentos,
+              pctMisionesCompletadas: progresoFinal.pctMisionesCompletadas,
+              promEstrellas: progresoFinal.promEstrellas,
+              promIntentos: progresoFinal.promIntentos,
             },
           });
 
@@ -803,7 +817,7 @@ export class ProgressService {
     });
 
     // 4. Actualizamos la tabla ProgresoCurso combinando ambas agregaciones
-    await tx.progresoCurso.update({
+    const cursoActualizado = await tx.progresoCurso.update({
       where: { id: curso.idProgreso },
       data: {
         // --- Datos de la Agregación 1 (Todos) ---
@@ -816,6 +830,20 @@ export class ProgressService {
         // --- Datos de la Agregación 2 (Solo Jugadores) ---
         promEstrellas: agregadosJugadores._avg.promEstrellas || 0,
         promIntentos: agregadosJugadores._avg.promIntentos || 0,
+      },
+    });
+
+    // --- NUEVO: Insertar en HistorialProgresoCurso ---
+    await tx.historialProgresoCurso.create({
+      data: {
+        idProgresoCurso: curso.idProgreso,
+        misionesCompletadas: cursoActualizado.misionesCompletadas,
+        totalEstrellas: cursoActualizado.totalEstrellas,
+        totalExp: cursoActualizado.totalExp,
+        totalIntentos: cursoActualizado.totalIntentos,
+        pctMisionesCompletadas: cursoActualizado.pctMisionesCompletadas,
+        promEstrellas: cursoActualizado.promEstrellas,
+        promIntentos: cursoActualizado.promIntentos,
       },
     });
   }
