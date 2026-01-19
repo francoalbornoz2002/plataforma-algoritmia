@@ -1,13 +1,13 @@
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 
-export default function StatsPage() {
+export default function AdminDashboardPage() {
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
-        Estadísticas
+        Reportes y estadísticas
       </Typography>
-      <Typography>Aquí irán las estadísticas del sistema.</Typography>
+      <Typography>Aquí irá los reportes y estadísticas del curso.</Typography>
     </Box>
   );
 }

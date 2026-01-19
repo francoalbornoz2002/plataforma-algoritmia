@@ -2,8 +2,6 @@ import React from "react";
 import LoginPage from "./features/authentication/pages/LoginPage";
 import { Navigate, Route, Routes } from "react-router";
 import UsersPage from "./features/users/pages/UsersPage";
-import StatsPage from "./features/stats/StatsPage";
-import ReportsPage from "./features/reports/ReportsPage";
 import AuditPage from "./features/audit/pages/AuditPage";
 import CoursesPage from "./features/courses/pages/CoursesPage";
 import AccountPage from "./features/users/pages/AccountPage";
@@ -27,6 +25,8 @@ import PreguntasPage from "./features/preguntas/pages/PreguntasPage";
 import SesionesRefuerzoPage from "./features/sesiones-refuerzo/pages/SesionesRefuerzoPage";
 import MisSesionesPage from "./features/sesiones-refuerzo/pages/MisSesionesPage";
 import SesionResolverPage from "./features/sesiones-refuerzo/pages/SesionResolverPage";
+import CourseReportsPage from "./features/reports/pages/CourseReportsPage";
+import ReportsPage from "./features/reports/pages/ReportsPage";
 
 export const AppRouter: React.FC<{}> = () => {
   return (
@@ -50,7 +50,6 @@ export const AppRouter: React.FC<{}> = () => {
             <Route index element={<AdminDashboardPage />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="courses" element={<CoursesPage />} />
-            <Route path="stats" element={<StatsPage />} />
             <Route path="reports" element={<ReportsPage />} />
             <Route path="audit" element={<AuditPage />} />
             <Route path="settings" element={<SettingsPage />} />
@@ -72,6 +71,7 @@ export const AppRouter: React.FC<{}> = () => {
             <Route path="questions" element={<PreguntasPage />} />
             <Route path="consults" element={<ConsultasPage />} />
             <Route path="consult-classes" element={<ClasesConsultaPage />} />
+            <Route path="reports" element={<CourseReportsPage />} />
             <Route path="settings" element={<CourseSettingsPage />} />
           </Route>
         </Route>

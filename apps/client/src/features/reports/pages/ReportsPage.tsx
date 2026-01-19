@@ -3,8 +3,8 @@ import { Box, Paper, Tab, Tabs, Typography } from "@mui/material";
 import GroupIcon from "@mui/icons-material/Group";
 import SchoolIcon from "@mui/icons-material/School";
 import HistoryIcon from "@mui/icons-material/History";
-import UsersReportTab from "./components/UsersReportTab";
-import CoursesReportTab from "./components/CoursesReportTab";
+import UsersReportTab from "../components/UsersReportTab";
+import CoursesReportTab from "../components/CoursesReportTab";
 
 interface TabPanelProps {
   children?: React.ReactNode;

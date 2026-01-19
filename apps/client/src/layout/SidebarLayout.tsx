@@ -30,8 +30,11 @@ export default function SidebarLayout() {
     { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
     { text: "Usuarios", icon: <PeopleIcon />, path: "/dashboard/users" },
     { text: "Cursos", icon: <SchoolIcon />, path: "/dashboard/courses" },
-    { text: "Estadísticas", icon: <BarChartIcon />, path: "/dashboard/stats" },
-    { text: "Reportes", icon: <AssessmentIcon />, path: "/dashboard/reports" },
+    {
+      text: "Reportes y estadísticas",
+      icon: <AssessmentIcon />,
+      path: "/dashboard/reports",
+    },
     { text: "Auditoría", icon: <VpnKeyIcon />, path: "/dashboard/audit" },
     {
       text: "Datos de la Institución",
@@ -71,6 +74,11 @@ export default function SidebarLayout() {
       text: "Clases de consulta del curso",
       icon: <Class />,
       path: "/course/consult-classes",
+    },
+    {
+      text: "Reportes y estadísticas",
+      icon: <AssessmentIcon />,
+      path: "/course/reports",
     },
     {
       text: "Configuración de curso",
