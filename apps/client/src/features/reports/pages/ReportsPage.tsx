@@ -47,7 +47,7 @@ export default function ReportsPage() {
         </Typography>
       </Box>
 
-      <Paper sx={{ width: "100%", mb: 4 }}>
+      <Paper sx={{ width: "100%", mb: 2 }}>
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Tabs
             value={value}

@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { GetUsersReportDto } from '../dto/get-users-report.dto';
+import { GetUsersSummaryDto } from '../dto/get-users-summary.dto';
+import {
+  GetUsersDistributionDto,
+  AgrupacionUsuarios,
+} from '../dto/get-users-distribution.dto';
+import { GetUsersHistoryDto } from '../dto/get-users-history.dto';
+import { GetUsersListDto } from '../dto/get-users-list.dto';
 import { GetCoursesReportDto } from '../dto/get-courses-report.dto';
 import {
   estado_simple,
@@ -21,34 +27,194 @@ const TOTAL_MISIONES = 10;
 export class ReportesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getUsersReport(dto: GetUsersReportDto) {
-    const { fechaDesde, fechaHasta, rol } = dto;
-
-    const now = new Date();
-    // Fecha Fin: Si no viene, es "ahora". Si viene, es el final de ese día
-    let end = now;
-    if (fechaHasta) {
-      end = new Date(fechaHasta);
+  async getUsersSummary(dto: GetUsersSummaryDto) {
+    const { fechaCorte } = dto;
+    const end = fechaCorte ? new Date(fechaCorte) : new Date();
+    if (fechaCorte) {
       end.setUTCHours(23, 59, 59, 999);
     }
 
-    // Determinamos si es reporte actual
-    const isCurrent = end >= now;
-
-    // 1. Filtro Base (Universo de usuarios existentes en la fecha de corte)
-    const whereUser: Prisma.UsuarioWhereInput = {
-      createdAt: { lte: end }, // El usuario debía existir en la fecha de corte
+    // Base: Usuarios creados antes o en la fecha de corte
+    const whereBase: Prisma.UsuarioWhereInput = {
+      createdAt: { lte: end },
     };
 
-    // Filtro de Rol
-    if (rol) {
-      whereUser.rol = rol;
+    // Activos: (No borrados) O (Borrados DESPUÉS de la fecha de corte)
+    const whereActive: Prisma.UsuarioWhereInput = {
+      ...whereBase,
+      OR: [{ deletedAt: null }, { deletedAt: { gt: end } }],
+    };
+
+    // Inactivos: (Borrados) Y (Borrados ANTES o EN la fecha de corte)
+    const whereInactive: Prisma.UsuarioWhereInput = {
+      ...whereBase,
+      deletedAt: { lte: end, not: null },
+    };
+
+    const [total, activos, inactivos] = await this.prisma.$transaction([
+      this.prisma.usuario.count({ where: whereBase }),
+      this.prisma.usuario.count({ where: whereActive }),
+      this.prisma.usuario.count({ where: whereInactive }),
+    ]);
+
+    return { total, activos, inactivos };
+  }
+
+  async getUsersDistribution(dto: GetUsersDistributionDto) {
+    const { fechaCorte, agruparPor } = dto;
+    const end = fechaCorte ? new Date(fechaCorte) : new Date();
+    if (fechaCorte) {
+      end.setUTCHours(23, 59, 59, 999);
     }
 
-    // 2. Obtener usuarios
-    const usuarios = await this.prisma.usuario.findMany({
-      where: whereUser,
-      orderBy: { createdAt: 'desc' },
+    // Traemos los datos mínimos necesarios para agrupar en memoria
+    // (Es más seguro para la lógica de "estado histórico" que SQL puro complejo)
+    const users = await this.prisma.usuario.findMany({
+      where: { createdAt: { lte: end } },
+      select: { rol: true, deletedAt: true },
+    });
+
+    const distribution: any[] = [];
+
+    if (agruparPor === AgrupacionUsuarios.ROL) {
+      const groups: Record<string, number> = {};
+      users.forEach((u) => {
+        groups[u.rol] = (groups[u.rol] || 0) + 1;
+      });
+      for (const [grupo, cantidad] of Object.entries(groups)) {
+        distribution.push({ grupo, cantidad });
+      }
+    } else if (agruparPor === AgrupacionUsuarios.ESTADO) {
+      let activos = 0;
+      let inactivos = 0;
+      users.forEach((u) => {
+        const isActive = !u.deletedAt || u.deletedAt > end;
+        if (isActive) activos++;
+        else inactivos++;
+      });
+      distribution.push({ grupo: 'Activo', cantidad: activos });
+      distribution.push({ grupo: 'Inactivo', cantidad: inactivos });
+    } else {
+      // AMBOS
+      const groups: Record<string, number> = {};
+      users.forEach((u) => {
+        const isActive = !u.deletedAt || u.deletedAt > end;
+        const estado = isActive ? 'Activo' : 'Inactivo';
+        const key = `${u.rol}|${estado}`;
+        groups[key] = (groups[key] || 0) + 1;
+      });
+      for (const [key, cantidad] of Object.entries(groups)) {
+        const [rol, estado] = key.split('|');
+        distribution.push({ rol, estado, cantidad });
+      }
+    }
+
+    return distribution;
+  }
+
+  async getUsersAltas(dto: GetUsersHistoryDto) {
+    const { fechaDesde, fechaHasta, rol } = dto;
+    const start = fechaDesde ? new Date(fechaDesde) : new Date(0);
+    if (fechaDesde) start.setUTCHours(0, 0, 0, 0);
+
+    const end = fechaHasta ? new Date(fechaHasta) : new Date();
+    end.setUTCHours(23, 59, 59, 999);
+
+    const where: Prisma.UsuarioWhereInput = {
+      createdAt: { gte: start, lte: end },
+    };
+    if (rol) where.rol = rol;
+
+    const users = await this.prisma.usuario.findMany({
+      where,
+      orderBy: { createdAt: 'asc' },
+      select: {
+        id: true,
+        nombre: true,
+        apellido: true,
+        email: true,
+        rol: true,
+        createdAt: true,
+        deletedAt: true,
+      },
+    });
+
+    // Generamos metadatos para gráficos (agrupado por día)
+    const meta: Record<string, number> = {};
+    users.forEach((u) => {
+      const dateKey = u.createdAt.toISOString().split('T')[0];
+      meta[dateKey] = (meta[dateKey] || 0) + 1;
+    });
+
+    return {
+      data: users,
+      meta: Object.entries(meta).map(([fecha, cantidad]) => ({
+        fecha,
+        cantidad,
+      })),
+    };
+  }
+
+  async getUsersBajas(dto: GetUsersHistoryDto) {
+    const { fechaDesde, fechaHasta, rol } = dto;
+    const start = fechaDesde ? new Date(fechaDesde) : new Date(0);
+    if (fechaDesde) start.setUTCHours(0, 0, 0, 0);
+
+    const end = fechaHasta ? new Date(fechaHasta) : new Date();
+    end.setUTCHours(23, 59, 59, 999);
+
+    const where: Prisma.UsuarioWhereInput = {
+      deletedAt: { gte: start, lte: end },
+    };
+    if (rol) where.rol = rol;
+
+    const users = await this.prisma.usuario.findMany({
+      where,
+      orderBy: { deletedAt: 'asc' },
+      select: {
+        id: true,
+        nombre: true,
+        apellido: true,
+        email: true,
+        rol: true,
+        createdAt: true,
+        deletedAt: true,
+      },
+    });
+
+    // Generamos metadatos para gráficos (agrupado por día de baja)
+    const meta: Record<string, number> = {};
+    users.forEach((u) => {
+      if (u.deletedAt) {
+        const dateKey = u.deletedAt.toISOString().split('T')[0];
+        meta[dateKey] = (meta[dateKey] || 0) + 1;
+      }
+    });
+
+    return {
+      data: users,
+      meta: Object.entries(meta).map(([fecha, cantidad]) => ({
+        fecha,
+        cantidad,
+      })),
+    };
+  }
+
+  async getUsersList(dto: GetUsersListDto) {
+    const { fechaCorte, rol } = dto;
+    const end = fechaCorte ? new Date(fechaCorte) : new Date();
+    if (fechaCorte) {
+      end.setUTCHours(23, 59, 59, 999);
+    }
+
+    const where: Prisma.UsuarioWhereInput = {
+      createdAt: { lte: end },
+    };
+    if (rol) where.rol = rol;
+
+    const users = await this.prisma.usuario.findMany({
+      where,
+      orderBy: { apellido: 'asc' },
       select: {
         id: true,
         nombre: true,
@@ -63,111 +229,17 @@ export class ReportesService {
       },
     });
 
-    // 3. Procesar métricas en memoria (Snapshot)
-    let totalUsuarios = 0;
-    let usuariosActivos = 0;
-    let usuariosInactivos = 0;
-    const usuariosPorRol: Record<string, number> = {};
-
-    // Helper para determinar estado en la fecha 'end'
-    const getUserStatusAt = (u: { deletedAt: Date | null }) => {
-      if (!u.deletedAt) return 'Activo';
-      return u.deletedAt > end ? 'Activo' : 'Inactivo';
-    };
-
-    const data = usuarios.map((u) => {
-      const status = getUserStatusAt(u);
-
-      // Contadores
-      totalUsuarios++;
-      if (status === 'Activo') usuariosActivos++;
-      else usuariosInactivos++;
-
-      usuariosPorRol[u.rol] = (usuariosPorRol[u.rol] || 0) + 1;
-
-      // Ajustamos deletedAt para que el frontend muestre el estado correcto
+    // Calculamos el estado histórico para cada usuario
+    return users.map((u) => {
+      const isActive = !u.deletedAt || u.deletedAt > end;
       return {
         ...u,
-        deletedAt: status === 'Activo' ? null : u.deletedAt,
+        estado: isActive ? 'Activo' : 'Inactivo',
+        // Opcional: Si queremos ser estrictos con el reporte histórico,
+        // podríamos ocultar el deletedAt si ocurrió después de la fecha de corte.
+        deletedAt: isActive ? null : u.deletedAt,
       };
     });
-
-    // 3. Calcular Variaciones Anuales (KPIs de "Último Año")
-    // Usamos 'end' como referencia para calcular "hace un año" desde la fecha del reporte
-    const oneYearAgo = new Date(end);
-    oneYearAgo.setFullYear(end.getFullYear() - 1);
-    const twoYearsAgo = new Date(end);
-    twoYearsAgo.setFullYear(end.getFullYear() - 2);
-
-    const whereVariacion: Prisma.UsuarioWhereInput = {};
-    if (rol) whereVariacion.rol = rol;
-
-    const [
-      altasUltimoAnio,
-      altasAnioAnterior,
-      bajasUltimoAnio,
-      bajasAnioAnterior,
-    ] = await this.prisma.$transaction([
-      // Altas
-      this.prisma.usuario.count({
-        where: {
-          ...whereVariacion,
-          createdAt: { gte: oneYearAgo, lte: end },
-        },
-      }),
-      this.prisma.usuario.count({
-        where: {
-          ...whereVariacion,
-          createdAt: { gte: twoYearsAgo, lt: oneYearAgo },
-        },
-      }),
-      // Bajas
-      this.prisma.usuario.count({
-        where: {
-          ...whereVariacion,
-          deletedAt: { gte: oneYearAgo, lte: end },
-        },
-      }),
-      this.prisma.usuario.count({
-        where: {
-          ...whereVariacion,
-          deletedAt: { gte: twoYearsAgo, lt: oneYearAgo },
-        },
-      }),
-    ]);
-
-    // Helper para porcentaje
-    const calcularVariacion = (actual: number, anterior: number) => {
-      if (anterior === 0) return actual > 0 ? 100 : 0;
-      return ((actual - anterior) / anterior) * 100;
-    };
-
-    return {
-      resumen: {
-        total: totalUsuarios,
-        activos: usuariosActivos,
-        inactivos: usuariosInactivos,
-        porRol: Object.entries(usuariosPorRol).map(([rol, cantidad]) => ({
-          rol,
-          cantidad,
-        })),
-      },
-      variacionAnual: {
-        altas: {
-          cantidad: altasUltimoAnio,
-          variacionPct: parseFloat(
-            calcularVariacion(altasUltimoAnio, altasAnioAnterior).toFixed(2),
-          ),
-        },
-        bajas: {
-          cantidad: bajasUltimoAnio,
-          variacionPct: parseFloat(
-            calcularVariacion(bajasUltimoAnio, bajasAnioAnterior).toFixed(2),
-          ),
-        },
-      },
-      data,
-    };
   }
 
   async getCoursesReport(dto: GetCoursesReportDto) {
