@@ -1,7 +1,7 @@
-import { IsOptional, IsString, IsDateString, IsEnum } from 'class-validator';
+import { IsOptional, IsDateString, IsEnum } from 'class-validator';
 import { roles } from '@prisma/client';
 
-export class GetUsersReportDto {
+export class GetUsersHistoryDto {
   @IsOptional()
   @IsDateString()
   fechaDesde?: string;
