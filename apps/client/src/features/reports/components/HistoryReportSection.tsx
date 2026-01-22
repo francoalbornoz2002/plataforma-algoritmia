@@ -181,7 +181,7 @@ export default function HistoryReportSection() {
   ];
 
   return (
-    <Box sx={{ mt: 2 }}>
+    <Paper elevation={5} component="section" sx={{ p: 2 }}>
       <Typography
         variant="h5"
         gutterBottom
@@ -189,7 +189,7 @@ export default function HistoryReportSection() {
       >
         Historial de Movimientos
       </Typography>
-      <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
+      <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
         <Stack spacing={2}>
           {/* Fila Superior: Tipo de Reporte y Filtros Rápidos */}
 
@@ -343,7 +343,7 @@ export default function HistoryReportSection() {
       >
         {/* Tabla (Izquierda) */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Paper sx={{ height: 450, width: "100%" }}>
+          <Paper elevation={3} sx={{ height: 450, width: "100%" }}>
             <DataGrid
               rows={data}
               columns={columns}
@@ -362,7 +362,7 @@ export default function HistoryReportSection() {
         {/* Gráfico (Derecha) */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
           {chartData && chartData.dates.length > 0 ? (
-            <Paper elevation={2} sx={{ p: 2, height: "100%" }}>
+            <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
               <Typography variant="h6" gutterBottom>
                 Evolución en el tiempo
               </Typography>
@@ -417,6 +417,6 @@ export default function HistoryReportSection() {
           )}
         </Box>
       </Stack>
-    </Box>
+    </Paper>
   );
 }

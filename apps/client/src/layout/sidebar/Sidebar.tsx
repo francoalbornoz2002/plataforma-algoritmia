@@ -144,6 +144,9 @@ export default function Sidebar({
   const location = useLocation();
   const { logout } = useAuth();
 
+  // Detectar si estamos en la página de reportes para ajustar el layout
+  const isReportsPage = location.pathname.startsWith("/dashboard/reports");
+
   // --- OBTENER EL CONTEXTO DEL CURSO --- //
   // (La envolvemos en un try/catch porque el Admin NO tiene este contexto)
   let selectedCourseName: string | null = null;
@@ -167,12 +170,12 @@ export default function Sidebar({
       // Si no hay coincidencia exacta, busca el prefijo más específico
       const matchingItems = menuItems.filter((item) =>
         location.pathname.startsWith(
-          item.path + (item.path === "/dashboard" ? "" : "/")
-        )
+          item.path + (item.path === "/dashboard" ? "" : "/"),
+        ),
       );
       // Ordena por longitud de path descendente para encontrar el más específico
       bestMatch = matchingItems.sort(
-        (a, b) => b.path.length - a.path.length
+        (a, b) => b.path.length - a.path.length,
       )[0];
     }
     const pageTitle = bestMatch ? bestMatch.text : "Plataforma Algoritmia";
@@ -297,11 +300,12 @@ export default function Sidebar({
       </Drawer>
       <Container
         component="main"
-        maxWidth="xl"
+        maxWidth={isReportsPage ? false : "xl"} // Sin límite de ancho en reportes
+        disableGutters={isReportsPage} // Sin padding lateral en reportes
         sx={{
           flexGrow: 1,
-          pt: 3,
-          pb: 3,
+          pt: isReportsPage ? 0 : 3, // Sin padding superior en reportes
+          pb: isReportsPage ? 0 : 3, // Sin padding inferior en reportes
         }}
       >
         <DrawerHeader />

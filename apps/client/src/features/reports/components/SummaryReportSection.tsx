@@ -2,17 +2,16 @@ import { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Button,
-  Grid,
   MenuItem,
   Typography,
-  Card,
-  CardContent,
   Alert,
   Paper,
   Stack,
   FormControl,
   InputLabel,
   Select,
+  Chip,
+  Divider,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
@@ -22,10 +21,20 @@ import { BarChart } from "@mui/x-charts/BarChart";
 import {
   getUsersSummary,
   getUsersDistribution,
+  getUsersList, // Importamos el servicio de lista
   AgrupacionUsuarios,
   type UsersSummaryFilters,
   type UsersDistributionFilters,
+  type UsersListFilters,
 } from "../service/reports.service";
+import { DataGrid, type GridColDef } from "@mui/x-data-grid";
+
+// Definimos colores constantes para mantener consistencia
+const ROLE_COLORS: Record<string, string> = {
+  Administrador: "#9c27b0", // Púrpura
+  Docente: "#ed6c02", // Naranja
+  Alumno: "#0288d1", // Azul
+};
 
 export default function SummaryReportSection() {
   const [filters, setFilters] = useState<
@@ -36,22 +45,32 @@ export default function SummaryReportSection() {
   });
   const [loading, setLoading] = useState(false);
   const [summaryData, setSummaryData] = useState<any>(null);
+  const [usersList, setUsersList] = useState<any[]>([]); // Estado para la lista
   const [distributionData, setDistributionData] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  // Estado para el filtro interactivo del gráfico
+  const [chartFilter, setChartFilter] = useState<{
+    rol?: string;
+    estado?: string;
+  } | null>(null);
 
   const handleGenerate = async () => {
     setLoading(true);
     setError(null);
     try {
-      const [summary, dist] = await Promise.all([
+      // Consultamos todo en paralelo: Resumen, Distribución y Lista
+      const [summary, dist, list] = await Promise.all([
         getUsersSummary({ fechaCorte: filters.fechaCorte }),
         getUsersDistribution({
           fechaCorte: filters.fechaCorte,
           agruparPor: filters.agruparPor,
         }),
+        getUsersList({ fechaCorte: filters.fechaCorte } as UsersListFilters),
       ]);
+
       setSummaryData(summary);
       setDistributionData(dist);
+      setUsersList(list);
     } catch (err) {
       console.error(err);
       setError("Error al cargar el resumen.");
@@ -66,8 +85,30 @@ export default function SummaryReportSection() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
+  // Limpiar filtro del gráfico si cambian los filtros principales
+  useEffect(() => {
+    setChartFilter(null);
+  }, [filters.agruparPor]);
+
+  // Filtrar usuarios localmente basado en la selección del gráfico
+  const filteredUsers = useMemo(() => {
+    if (!chartFilter) return usersList;
+    return usersList.filter((user) => {
+      const matchRol = chartFilter.rol ? user.rol === chartFilter.rol : true;
+      const matchEstado = chartFilter.estado
+        ? user.estado === chartFilter.estado
+        : true;
+      return matchRol && matchEstado;
+    });
+  }, [usersList, chartFilter]);
+
   const chartConfig = useMemo(() => {
     if (!distributionData || distributionData.length === 0) return null;
+
+    const totalDistribution = distributionData.reduce(
+      (acc: number, curr: any) => acc + curr.cantidad,
+      0,
+    );
 
     if (filters.agruparPor === AgrupacionUsuarios.AMBOS) {
       // Validación: Evitar crash si los datos viejos no tienen la estructura esperada (transición)
@@ -96,7 +137,17 @@ export default function SummaryReportSection() {
       return {
         dataset,
         xAxis: [{ scaleType: "band" as const, dataKey: "estado" }],
-        series: roles.map((r) => ({ dataKey: r, label: r, stack: "total" })),
+        series: roles.map((r) => ({
+          dataKey: r,
+          label: r,
+          id: r, // ID necesario para identificar la serie al hacer click
+          stack: "total",
+          color: ROLE_COLORS[r] || "#0288d1",
+          valueFormatter: (value: number | null) =>
+            value !== null
+              ? `${value} (${((value / totalDistribution) * 100).toFixed(1)}%)`
+              : "",
+        })),
       };
     }
 
@@ -105,24 +156,142 @@ export default function SummaryReportSection() {
       return null;
     }
 
+    if (filters.agruparPor === AgrupacionUsuarios.ESTADO) {
+      const activoData = distributionData.find(
+        (d: any) => d.grupo === "Activo",
+      );
+      const inactivoData = distributionData.find(
+        (d: any) => d.grupo === "Inactivo",
+      );
+
+      const dataset = [
+        {
+          category: "Total",
+          Activo: activoData ? activoData.cantidad : 0,
+          Inactivo: inactivoData ? inactivoData.cantidad : 0,
+        },
+      ];
+
+      return {
+        dataset,
+        xAxis: [
+          {
+            scaleType: "band" as const,
+            dataKey: "category",
+          },
+        ],
+        series: [
+          {
+            dataKey: "Activo",
+            label: "Activo",
+            id: "Activo", // ID para click
+            color: "#2e7d32",
+            valueFormatter: (value: number | null) =>
+              value !== null
+                ? `${value} (${((value / totalDistribution) * 100).toFixed(1)}%)`
+                : "",
+          },
+          {
+            dataKey: "Inactivo",
+            label: "Inactivo",
+            id: "Inactivo", // ID para click
+            color: "#d32f2f",
+            valueFormatter: (value: number | null) =>
+              value !== null
+                ? `${value} (${((value / totalDistribution) * 100).toFixed(1)}%)`
+                : "",
+          },
+        ],
+      };
+    }
+
+    // Default: Agrupación por ROL
+    // Transformamos los datos para tener múltiples series (una por rol) y así tener leyenda correcta
+    const dataset: Record<string, any>[] = [{ category: "Total" }];
+    distributionData.forEach((d: any) => {
+      dataset[0][d.grupo] = d.cantidad;
+    });
+
     return {
-      dataset: distributionData,
-      xAxis: [{ scaleType: "band" as const, dataKey: "grupo" }],
-      series: [{ dataKey: "cantidad", label: "Cantidad", color: "#0288d1" }],
+      dataset,
+      xAxis: [
+        {
+          scaleType: "band" as const,
+          dataKey: "category",
+        },
+      ],
+      series: distributionData.map((d: any) => ({
+        dataKey: d.grupo,
+        label: d.grupo,
+        id: d.grupo,
+        color: ROLE_COLORS[d.grupo] || "#0288d1",
+        valueFormatter: (value: number | null) =>
+          value !== null
+            ? `${value} (${((value / totalDistribution) * 100).toFixed(1)}%)`
+            : "",
+      })),
     };
   }, [distributionData, filters.agruparPor]);
 
+  // Manejador de clicks en el gráfico
+  const handleItemClick = (event: any, identifier: any) => {
+    if (!identifier || !chartConfig) return;
+    const { seriesId, dataIndex } = identifier;
+
+    if (filters.agruparPor === AgrupacionUsuarios.ROL) {
+      // Por Rol: seriesId es el nombre del rol (ej: "Alumno")
+      if (typeof seriesId === "string") setChartFilter({ rol: seriesId });
+    } else if (filters.agruparPor === AgrupacionUsuarios.ESTADO) {
+      // Por Estado: seriesId es "Activo" o "Inactivo" (definido en chartConfig)
+      if (typeof seriesId === "string") setChartFilter({ estado: seriesId });
+    } else if (filters.agruparPor === AgrupacionUsuarios.AMBOS) {
+      // Ambos: seriesId es el Rol, dataIndex apunta al Estado en el dataset
+      const estadoItem = chartConfig.dataset[dataIndex];
+      // seriesId viene del chart library, aseguramos que sea string (el Rol)
+      if (estadoItem && typeof seriesId === "string") {
+        // Nota: dataset tiene { estado: 'Activo' } o { estado: 'Inactivo' }
+        // seriesId es el Rol (ej: 'Alumno')
+        setChartFilter({
+          rol: seriesId,
+          // @ts-ignore - Sabemos que estado existe en nuestro dataset específico
+          estado: estadoItem.estado,
+        });
+      }
+    }
+  };
+
+  // Columnas simplificadas para la tabla integrada
+  const columns: GridColDef[] = [
+    { field: "nombre", headerName: "Nombre", flex: 1, minWidth: 100 },
+    { field: "apellido", headerName: "Apellido", flex: 1, minWidth: 100 },
+    { field: "rol", headerName: "Rol", flex: 0.8, minWidth: 90 },
+    {
+      field: "estado",
+      headerName: "Estado",
+      flex: 0.7,
+      minWidth: 90,
+      renderCell: (params) => (
+        <Chip
+          label={params.value}
+          size="small"
+          color={params.value === "Activo" ? "success" : "error"}
+          variant="filled"
+        />
+      ),
+    },
+  ];
+
   return (
-    <Box sx={{ mt: 2 }}>
+    <Paper elevation={5} component="section" sx={{ p: 2 }}>
       <Typography
         variant="h5"
         gutterBottom
         sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}
       >
-        Resumen y Estadísticas
+        Resumen de usuarios
       </Typography>
       {/* Filtros */}
-      <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
+      <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
         <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
           <DatePicker
             label="Fecha de Corte (Opcional)"
@@ -184,75 +353,134 @@ export default function SummaryReportSection() {
       {error && <Alert severity="error">{error}</Alert>}
 
       {summaryData && (
-        <>
-          <Typography variant="h6" gutterBottom>
-            KPIs Globales
-          </Typography>
-
-          <Grid container spacing={2} sx={{ mb: 4 }}>
-            <Grid sx={{ xs: 12, md: 4 }}>
-              <Card>
-                <CardContent>
-                  <Typography color="text.secondary">Total Usuarios</Typography>
-                  <Typography variant="h3">{summaryData.total}</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid sx={{ xs: 12, md: 4 }}>
-              <Card>
-                <CardContent>
-                  <Typography color="text.secondary">Activos</Typography>
-                  <Typography variant="h3" color="success.main">
-                    {summaryData.activos}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid sx={{ xs: 12, md: 4 }}>
-              <Card>
-                <CardContent>
-                  <Typography color="text.secondary">Inactivos</Typography>
-                  <Typography variant="h3" color="error.main">
-                    {summaryData.inactivos}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-
-          <Typography variant="h6" gutterBottom>
-            Distribución de Usuarios
-          </Typography>
-          <Grid container spacing={2} sx={{ mb: 4 }}>
-            {distributionData.map((item, index) => (
-              <Grid sx={{ xs: 12, md: 4 }} key={index}>
-                <Card variant="outlined">
-                  <CardContent>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      {item.grupo || `${item.rol} - ${item.estado}`}
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={2}
+          sx={{ width: "100%" }}
+        >
+          {/* Izquierda: KPIs y Gráfico */}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Stack direction="row" spacing={2} sx={{ height: "100%" }}>
+              {/* Columna KPIs */}
+              <Paper elevation={3} sx={{ p: 2, minWidth: 140 }}>
+                <Stack
+                  spacing={2}
+                  justifyContent="center"
+                  alignItems="center"
+                  sx={{ height: "100%" }}
+                >
+                  <Box sx={{ textAlign: "center" }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Total
                     </Typography>
-                    <Typography variant="h5">{item.cantidad}</Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
+                    <Typography variant="h4" fontWeight="bold">
+                      {summaryData.total}
+                    </Typography>
+                  </Box>
+                  <Divider flexItem />
+                  <Box sx={{ textAlign: "center" }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Activos
+                    </Typography>
+                    <Typography
+                      variant="h4"
+                      color="success.main"
+                      fontWeight="bold"
+                    >
+                      {summaryData.activos}
+                    </Typography>
+                    <Typography variant="caption" color="success.main">
+                      {summaryData.total > 0
+                        ? `${((summaryData.activos / summaryData.total) * 100).toFixed(1)}%`
+                        : "0%"}
+                    </Typography>
+                  </Box>
+                  <Divider flexItem />
+                  <Box sx={{ textAlign: "center" }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Inactivos
+                    </Typography>
+                    <Typography
+                      variant="h4"
+                      color="error.main"
+                      fontWeight="bold"
+                    >
+                      {summaryData.inactivos}
+                    </Typography>
+                    <Typography variant="caption" color="error.main">
+                      {summaryData.total > 0
+                        ? `${((summaryData.inactivos / summaryData.total) * 100).toFixed(1)}%`
+                        : "0%"}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </Paper>
 
-          {chartConfig && (
-            <Paper elevation={2} sx={{ p: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Gráfico de Distribución
-              </Typography>
-              <BarChart
-                dataset={chartConfig.dataset}
-                xAxis={chartConfig.xAxis}
-                series={chartConfig.series}
-                height={350}
-              />
+              {/* Gráfico */}
+              {chartConfig && (
+                <Paper elevation={3} sx={{ p: 2, flex: 1, minWidth: 0 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Distribución
+                  </Typography>
+                  <BarChart
+                    dataset={chartConfig.dataset}
+                    xAxis={chartConfig.xAxis}
+                    series={chartConfig.series}
+                    height={350}
+                    onItemClick={handleItemClick}
+                  />
+                </Paper>
+              )}
+            </Stack>
+          </Box>
+
+          {/* Derecha: Tabla de Usuarios */}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Paper
+              elevation={3}
+              sx={{
+                p: 2,
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+                sx={{ mb: 2 }}
+              >
+                <Typography variant="h6">Detalle de Usuarios</Typography>
+                {chartFilter && (
+                  <Chip
+                    label={`Filtro: ${chartFilter.rol || ""} ${
+                      chartFilter.estado || ""
+                    }`}
+                    onDelete={() => setChartFilter(null)}
+                    color="primary"
+                    size="small"
+                  />
+                )}
+              </Stack>
+              <Box sx={{ flex: 1, width: "100%" }}>
+                <DataGrid
+                  rows={filteredUsers}
+                  columns={columns}
+                  loading={loading}
+                  initialState={{
+                    pagination: { paginationModel: { pageSize: 10 } },
+                  }}
+                  pageSizeOptions={[10, 25, 50]}
+                  disableRowSelectionOnClick
+                  density="compact"
+                  sx={{ height: "100%" }}
+                />
+              </Box>
             </Paper>
-          )}
-        </>
+          </Box>
+        </Stack>
       )}
-    </Box>
+    </Paper>
   );
 }

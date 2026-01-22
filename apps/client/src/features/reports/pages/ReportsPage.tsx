@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Paper, Tab, Tabs, Typography } from "@mui/material";
+import { Box, Tab, Tabs, Typography } from "@mui/material";
 import GroupIcon from "@mui/icons-material/Group";
 import SchoolIcon from "@mui/icons-material/School";
 import HistoryIcon from "@mui/icons-material/History";
@@ -37,49 +37,43 @@ export default function ReportsPage() {
 
   return (
     <Box sx={{ width: "100%" }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          Reportes y Estadísticas
-        </Typography>
-        <Typography variant="body1">
-          Genera reportes detallados para analizar el rendimiento de la
-          plataforma.
-        </Typography>
+      <Box
+        sx={{
+          borderBottom: 1,
+          borderColor: "divider",
+          bgcolor: "background.paper", // Fondo blanco para la barra de pestañas
+        }}
+      >
+        <Tabs
+          value={value}
+          onChange={handleChange}
+          aria-label="pestañas de reportes"
+          variant="scrollable"
+          scrollButtons="auto"
+        >
+          <Tab icon={<GroupIcon />} iconPosition="start" label="Usuarios" />
+          <Tab icon={<SchoolIcon />} iconPosition="start" label="Cursos" />
+          <Tab
+            icon={<HistoryIcon />}
+            iconPosition="start"
+            label="Historial de Exportaciones"
+            disabled
+          />
+        </Tabs>
       </Box>
-
-      <Paper sx={{ width: "100%", mb: 2 }}>
-        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-          <Tabs
-            value={value}
-            onChange={handleChange}
-            aria-label="pestañas de reportes"
-            variant="scrollable"
-            scrollButtons="auto"
-          >
-            <Tab icon={<GroupIcon />} iconPosition="start" label="Usuarios" />
-            <Tab icon={<SchoolIcon />} iconPosition="start" label="Cursos" />
-            <Tab
-              icon={<HistoryIcon />}
-              iconPosition="start"
-              label="Historial de Exportaciones"
-              disabled
-            />
-          </Tabs>
+      <CustomTabPanel value={value} index={0}>
+        <UsersReportTab />
+      </CustomTabPanel>
+      <CustomTabPanel value={value} index={1}>
+        <CoursesReportTab />
+      </CustomTabPanel>
+      <CustomTabPanel value={value} index={2}>
+        <Box sx={{ p: 3, textAlign: "center" }}>
+          <Typography>
+            Historial de reportes generados (Próximamente)
+          </Typography>
         </Box>
-        <CustomTabPanel value={value} index={0}>
-          <UsersReportTab />
-        </CustomTabPanel>
-        <CustomTabPanel value={value} index={1}>
-          <CoursesReportTab />
-        </CustomTabPanel>
-        <CustomTabPanel value={value} index={2}>
-          <Box sx={{ p: 3, textAlign: "center" }}>
-            <Typography>
-              Historial de reportes generados (Próximamente)
-            </Typography>
-          </Box>
-        </CustomTabPanel>
-      </Paper>
+      </CustomTabPanel>
     </Box>
   );
 }
