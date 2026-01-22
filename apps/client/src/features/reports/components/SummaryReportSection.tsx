@@ -355,7 +355,7 @@ export default function SummaryReportSection() {
       {summaryData && (
         <Stack
           direction={{ xs: "column", md: "row" }}
-          spacing={2}
+          spacing={3}
           sx={{ width: "100%" }}
         >
           {/* Izquierda: KPIs y Gráfico */}

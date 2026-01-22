@@ -29,10 +29,52 @@ export interface UsersListFilters {
   rol?: roles | "";
 }
 
-export interface CoursesReportFilters {
+export interface CoursesSummaryFilters {
+  fechaCorte?: string;
+}
+
+export interface CoursesListFilters {
+  fechaCorte?: string;
+  estado?: estado_simple | "";
+  search?: string;
+}
+
+export enum TipoMovimientoCurso {
+  TODOS = "Todos",
+  ALTA = "Alta",
+  BAJA = "Baja",
+}
+
+export interface CoursesHistoryFilters {
+  tipoMovimiento?: TipoMovimientoCurso | "";
   fechaDesde?: string;
   fechaHasta?: string;
-  estado?: estado_simple | "";
+}
+
+export enum TipoMovimientoInscripcion {
+  TODOS = "Todos",
+  INSCRIPCION = "Inscripcion",
+  BAJA = "Baja",
+}
+
+export interface StudentEnrollmentHistoryFilters {
+  tipoMovimiento?: TipoMovimientoInscripcion | "";
+  fechaDesde?: string;
+  fechaHasta?: string;
+  cursoId?: string;
+}
+
+export enum TipoMovimientoAsignacion {
+  TODOS = "Todos",
+  ASIGNACION = "Asignacion",
+  BAJA = "Baja",
+}
+
+export interface TeacherAssignmentHistoryFilters {
+  tipoMovimiento?: TipoMovimientoAsignacion | "";
+  fechaDesde?: string;
+  fechaHasta?: string;
+  cursoId?: string;
 }
 
 // --- Endpoints Modulares de Usuarios ---
@@ -89,12 +131,62 @@ export const getUsersList = async (params: UsersListFilters) => {
   return response.data;
 };
 
-export const getCoursesReport = async (params: CoursesReportFilters) => {
+export const getCoursesSummary = async (params: CoursesSummaryFilters) => {
   const cleanParams = Object.fromEntries(
     Object.entries(params).filter(([_, v]) => v !== ""),
   );
-  const response = await apiClient.get("/reportes/cursos", {
+  const response = await apiClient.get("/reportes/cursos/resumen", {
     params: cleanParams,
   });
+  return response.data;
+};
+
+export const getCoursesList = async (params: CoursesListFilters) => {
+  const cleanParams = Object.fromEntries(
+    Object.entries(params).filter(([_, v]) => v !== ""),
+  );
+  const response = await apiClient.get("/reportes/cursos/listado", {
+    params: cleanParams,
+  });
+  return response.data;
+};
+
+export const getCoursesHistory = async (params: CoursesHistoryFilters) => {
+  const cleanParams = Object.fromEntries(
+    Object.entries(params).filter(([_, v]) => v !== ""),
+  );
+  const response = await apiClient.get("/reportes/cursos/historial", {
+    params: cleanParams,
+  });
+  return response.data;
+};
+
+export const getStudentEnrollmentHistory = async (
+  params: StudentEnrollmentHistoryFilters,
+) => {
+  const cleanParams = Object.fromEntries(
+    Object.entries(params).filter(([_, v]) => v !== ""),
+  );
+  const response = await apiClient.get(
+    "/reportes/cursos/historial-inscripciones",
+    {
+      params: cleanParams,
+    },
+  );
+  return response.data;
+};
+
+export const getTeacherAssignmentHistory = async (
+  params: TeacherAssignmentHistoryFilters,
+) => {
+  const cleanParams = Object.fromEntries(
+    Object.entries(params).filter(([_, v]) => v !== ""),
+  );
+  const response = await apiClient.get(
+    "/reportes/cursos/historial-asignaciones",
+    {
+      params: cleanParams,
+    },
+  );
   return response.data;
 };
