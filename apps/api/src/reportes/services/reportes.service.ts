@@ -7,19 +7,21 @@ import {
 } from '../dto/get-users-distribution.dto';
 import { GetUsersHistoryDto } from '../dto/get-users-history.dto';
 import { GetUsersListDto } from '../dto/get-users-list.dto';
-import { GetCoursesReportDto } from '../dto/get-courses-report.dto';
+import { GetCoursesSummaryDto } from '../dto/get-courses-summary.dto';
+import { GetCoursesListDto } from '../dto/get-courses-list.dto';
 import {
-  estado_simple,
-  Prisma,
-  estado_consulta,
-  estado_clase_consulta,
-  estado_sesion,
-  HistorialDificultadAlumno,
-  DificultadesCurso,
-  Dificultad,
-  HistorialProgresoCurso,
-  HistorialDificultadesCurso,
-} from '@prisma/client';
+  GetCoursesHistoryDto,
+  TipoMovimientoCurso,
+} from '../dto/get-courses-history.dto';
+import {
+  GetStudentEnrollmentHistoryDto,
+  TipoMovimientoInscripcion,
+} from '../dto/get-student-enrollment-history.dto';
+import {
+  GetTeacherAssignmentHistoryDto,
+  TipoMovimientoAsignacion,
+} from '../dto/get-teacher-assignment-history.dto';
+import { estado_simple, Prisma } from '@prisma/client';
 
 const TOTAL_MISIONES = 10;
 
@@ -242,321 +244,317 @@ export class ReportesService {
     });
   }
 
-  async getCoursesReport(dto: GetCoursesReportDto) {
-    const { fechaDesde, fechaHasta, estado } = dto;
+  // --- REPORTES DE CURSOS (ADMIN) ---
 
-    const now = new Date();
-    // Fecha Inicio: Si no viene, es el inicio de los tiempos
-    const start = fechaDesde ? new Date(fechaDesde) : new Date(0);
-    if (fechaDesde) {
-      start.setUTCHours(0, 0, 0, 0);
-    }
-
-    // Fecha Fin: Si no viene, es "ahora". Si viene, es el final de ese día
-    let end = now;
-    if (fechaHasta) {
-      end = new Date(fechaHasta);
+  async getCoursesSummary(dto: GetCoursesSummaryDto) {
+    const { fechaCorte } = dto;
+    const end = fechaCorte ? new Date(fechaCorte) : new Date();
+    if (fechaCorte) {
       end.setUTCHours(23, 59, 59, 999);
     }
 
-    // Determinamos el modo: ¿Es reporte actual o histórico?
-    // Si la fecha fin es mayor o igual a "ahora", usamos el estado actual (tablas principales).
-    // Si es pasado, usamos las tablas de historial.
-    const isCurrent = end >= now;
-
-    // 1. Filtro de Cursos (Universo de cursos existentes en la fecha de corte)
-    const whereCurso: Prisma.CursoWhereInput = {
-      createdAt: { lte: end }, // El curso debía existir en la fecha de corte
+    // Base: Cursos creados antes o en la fecha de corte
+    const whereBase: Prisma.CursoWhereInput = {
+      createdAt: { lte: end },
     };
 
-    if (estado) {
-      if (estado === estado_simple.Activo) {
-        // Activo: No borrado O borrado después de la fecha de corte
-        if (isCurrent) {
-          whereCurso.deletedAt = null;
-        } else {
-          whereCurso.OR = [{ deletedAt: null }, { deletedAt: { gt: end } }];
-        }
-      } else if (estado === estado_simple.Inactivo) {
-        // Inactivo: Borrado antes o en la fecha de corte
-        if (isCurrent) {
-          whereCurso.deletedAt = { not: null };
-        } else {
-          whereCurso.deletedAt = { lte: end, not: null };
-        }
-      }
+    // Activos: (No borrados) O (Borrados DESPUÉS de la fecha de corte)
+    const whereActive: Prisma.CursoWhereInput = {
+      ...whereBase,
+      OR: [{ deletedAt: null }, { deletedAt: { gt: end } }],
+    };
+
+    // Inactivos: (Borrados) Y (Borrados ANTES o EN la fecha de corte)
+    const whereInactive: Prisma.CursoWhereInput = {
+      ...whereBase,
+      deletedAt: { lte: end, not: null },
+    };
+
+    const [total, activos, inactivos] = await this.prisma.$transaction([
+      this.prisma.curso.count({ where: whereBase }),
+      this.prisma.curso.count({ where: whereActive }),
+      this.prisma.curso.count({ where: whereInactive }),
+    ]);
+
+    return { total, activos, inactivos };
+  }
+
+  async getCoursesList(dto: GetCoursesListDto) {
+    const { fechaCorte, estado, search } = dto;
+    const end = fechaCorte ? new Date(fechaCorte) : new Date();
+    if (fechaCorte) {
+      end.setUTCHours(23, 59, 59, 999);
     }
 
-    // Obtenemos los cursos
-    const cursos = await this.prisma.curso.findMany({
-      where: whereCurso,
+    const where: Prisma.CursoWhereInput = {
+      createdAt: { lte: end },
+    };
+
+    if (search) {
+      where.nombre = { contains: search, mode: 'insensitive' };
+    }
+
+    if (estado === estado_simple.Activo) {
+      where.OR = [{ deletedAt: null }, { deletedAt: { gt: end } }];
+    } else if (estado === estado_simple.Inactivo) {
+      where.deletedAt = { lte: end, not: null };
+    }
+
+    const courses = await this.prisma.curso.findMany({
+      where,
+      orderBy: { nombre: 'asc' },
       select: {
         id: true,
         nombre: true,
         deletedAt: true,
-        idProgreso: true,
-        idDificultadesCurso: true,
-        // Optimizacion: Traemos datos actuales solo si estamos en modo actual
-        progresoCurso: isCurrent ? true : false,
-        dificultadesCurso: isCurrent
-          ? { include: { dificultadModa: true } }
-          : false,
+        createdAt: true,
+        alumnos: {
+          where: { fechaInscripcion: { lte: end } },
+          select: { fechaBaja: true },
+        },
+        docentes: {
+          where: { fechaAsignacion: { lte: end } },
+          select: { fechaBaja: true },
+        },
       },
-      orderBy: { nombre: 'asc' },
     });
 
-    // 2. Métricas Globales (Resumen)
-    const totalCursos = cursos.length;
-    let cursosActivos = 0;
-    let cursosInactivos = 0;
+    return courses.map((c) => {
+      const isActive = !c.deletedAt || c.deletedAt > end;
 
-    // Helper para determinar estado de un curso en la fecha 'end'
-    const getCursoStatusAt = (c: { deletedAt: Date | null }) => {
-      if (!c.deletedAt) return 'Activo';
-      return c.deletedAt > end ? 'Activo' : 'Inactivo';
-    };
+      let alumnosActivos = 0;
+      let alumnosInactivos = 0;
+      c.alumnos.forEach((a) => {
+        if (!a.fechaBaja || a.fechaBaja > end) alumnosActivos++;
+        else alumnosInactivos++;
+      });
 
-    cursos.forEach((c) => {
-      const status = getCursoStatusAt(c);
-      if (status === 'Activo') cursosActivos++;
-      else cursosInactivos++;
+      let docentesActivos = 0;
+      let docentesInactivos = 0;
+      c.docentes.forEach((d) => {
+        if (!d.fechaBaja || d.fechaBaja > end) docentesActivos++;
+        else docentesInactivos++;
+      });
+
+      return {
+        id: c.id,
+        nombre: c.nombre,
+        estado: isActive ? 'Activo' : 'Inactivo',
+        createdAt: c.createdAt,
+        deletedAt: isActive ? null : c.deletedAt,
+        alumnos: { activos: alumnosActivos, inactivos: alumnosInactivos },
+        docentes: { activos: docentesActivos, inactivos: docentesInactivos },
+      };
     });
+  }
 
-    // 3. Procesar métricas por curso
-    const data = await Promise.all(
-      cursos.map(async (curso) => {
-        const cursoStatus = getCursoStatusAt(curso);
+  async getCoursesHistory(dto: GetCoursesHistoryDto) {
+    const { fechaDesde, fechaHasta, tipoMovimiento } = dto;
+    const start = fechaDesde ? new Date(fechaDesde) : new Date(0);
+    if (fechaDesde) start.setUTCHours(0, 0, 0, 0);
+    const end = fechaHasta ? new Date(fechaHasta) : new Date();
+    end.setUTCHours(23, 59, 59, 999);
 
-        // --- A. Alumnos y Docentes Activos (Snapshot a la fecha 'end') ---
-        // Usamos las tablas de relación verificando fechas de alta/baja
-        const alumnosActivos = await this.prisma.alumnoCurso.count({
-          where: {
-            idCurso: curso.id,
-            fechaInscripcion: { lte: end },
-            OR: [{ fechaBaja: null }, { fechaBaja: { gt: end } }],
-          },
-        });
+    const events: any[] = [];
 
-        const docentesActivos = await this.prisma.docenteCurso.count({
-          where: {
-            idCurso: curso.id,
-            fechaAsignacion: { lte: end },
-            OR: [{ fechaBaja: null }, { fechaBaja: { gt: end } }],
-          },
-        });
-
-        // --- B. Progreso (% Avance) ---
-        let avancePromedio = 0;
-        if (isCurrent && curso.progresoCurso) {
-          // Modo Actual: Leemos directamente de la tabla agregada
-          avancePromedio = Number(curso.progresoCurso.pctMisionesCompletadas);
-        } else {
-          // Modo Histórico: Buscamos el último snapshot en el historial
-          const histProg = await this.prisma.historialProgresoCurso.findFirst({
-            where: {
-              idProgresoCurso: curso.idProgreso,
-              fechaRegistro: { lte: end },
+    if (
+      !tipoMovimiento ||
+      tipoMovimiento === TipoMovimientoCurso.TODOS ||
+      tipoMovimiento === TipoMovimientoCurso.ALTA
+    ) {
+      const altas = await this.prisma.curso.findMany({
+        where: { createdAt: { gte: start, lte: end } },
+        select: {
+          id: true,
+          nombre: true,
+          createdAt: true,
+          docentes: {
+            where: { fechaAsignacion: { lte: end } },
+            select: {
+              fechaAsignacion: true,
+              docente: { select: { nombre: true, apellido: true } },
             },
-            orderBy: { fechaRegistro: 'desc' },
-          });
-
-          if (histProg) {
-            avancePromedio = Number(histProg.pctMisionesCompletadas);
-          }
-        }
-
-        // --- C. Dificultades (Modas y Cantidad) ---
-        let cantAlumnosConDificultad = 0;
-        let pctAlumnosConDificultad = 0;
-        let dificultadFrecuente = 'Ninguna';
-        let temaFrecuente = 'Ninguno';
-
-        // C.1 Modas (Dificultad y Tema más frecuente)
-        if (isCurrent && curso.dificultadesCurso) {
-          // Modo Actual: Usamos la tabla agregada
-          if (curso.dificultadesCurso) {
-            dificultadFrecuente =
-              (
-                curso.dificultadesCurso as DificultadesCurso & {
-                  dificultadModa: Dificultad | null;
-                }
-              ).dificultadModa?.nombre || 'Ninguna';
-            temaFrecuente = curso.dificultadesCurso.temaModa || 'Ninguno';
-          }
-        } else {
-          // Modo Histórico: Usamos HistorialDificultadesCurso
-          const histDif =
-            await this.prisma.historialDificultadesCurso.findFirst({
-              where: {
-                idDificultadesCurso: curso.idDificultadesCurso,
-                fechaRegistro: { lte: end },
-              },
-              orderBy: { fechaRegistro: 'desc' },
-            });
-
-          if (histDif) {
-            temaFrecuente = histDif.temaModa;
-            // Si hay una dificultad moda guardada (ID), buscamos su nombre
-            if (histDif.idDificultadModa) {
-              const dif = await this.prisma.dificultad.findUnique({
-                where: { id: histDif.idDificultadModa },
-                select: { nombre: true },
-              });
-              dificultadFrecuente = dif?.nombre || 'Ninguna';
-            }
-          }
-        }
-
-        // C.2 Cantidad de Alumnos con Dificultad
-        // Obtenemos IDs de alumnos activos en la fecha de corte
-        const activeStudents = await this.prisma.alumnoCurso.findMany({
-          where: {
-            idCurso: curso.id,
-            fechaInscripcion: { lte: end },
-            OR: [{ fechaBaja: null }, { fechaBaja: { gt: end } }],
           },
-          select: { idAlumno: true },
-        });
-        const activeIds = activeStudents.map((a) => a.idAlumno);
-
-        if (activeIds.length > 0) {
-          if (isCurrent) {
-            // Modo Actual: Contamos en la tabla actual
-            const count = await this.prisma.dificultadAlumno.groupBy({
-              by: ['idAlumno'],
-              where: {
-                idCurso: curso.id,
-                idAlumno: { in: activeIds },
-                grado: { not: 'Ninguno' },
-              },
-            });
-            cantAlumnosConDificultad = count.length;
-          } else {
-            // Modo Histórico: Reconstruimos desde HistorialDificultadAlumno
-            // Buscamos el último estado de cada alumno antes de la fecha 'end'
-            const history =
-              await this.prisma.historialDificultadAlumno.findMany({
-                where: {
-                  idCurso: curso.id,
-                  idAlumno: { in: activeIds },
-                  fechaCambio: { lte: end },
-                },
-                orderBy: { fechaCambio: 'asc' }, // Orden ascendente para procesar cambios
-                select: { idAlumno: true, idDificultad: true, grado: true },
-              });
-
-            // Mapa para obtener el estado final de cada par Alumno-Dificultad
-            const mapState = new Map<string, string>();
-            history.forEach((h) => {
-              const key = `${h.idAlumno}-${h.idDificultad}`;
-              mapState.set(key, h.grado); // Sobreescribe con el último valor
-            });
-
-            // Contamos alumnos únicos que tengan al menos una dificultad activa (!= Ninguno)
-            const studentsWithDif = new Set<string>();
-            mapState.forEach((grado, key) => {
-              if (grado !== 'Ninguno') {
-                const [idAlumno] = key.split('-');
-                studentsWithDif.add(idAlumno);
-              }
-            });
-            cantAlumnosConDificultad = studentsWithDif.size;
-          }
-        }
-
-        pctAlumnosConDificultad =
-          alumnosActivos > 0
-            ? (cantAlumnosConDificultad / alumnosActivos) * 100
-            : 0;
-
-        // --- Métricas de Flujo (Siempre filtradas por fecha) ---
-        // E. Consultas
-        const consultasTotal = await this.prisma.consulta.count({
-          where: {
-            idCurso: curso.id,
-            fechaConsulta: { gte: start, lte: end },
+          diasClase: true,
+        },
+      });
+      altas.forEach((c) => {
+        events.push({
+          tipo: 'Alta',
+          fecha: c.createdAt,
+          curso: c.nombre,
+          detalle: {
+            docentes: c.docentes
+              .filter(
+                (d) =>
+                  Math.abs(
+                    d.fechaAsignacion.getTime() - c.createdAt.getTime(),
+                  ) <
+                  7 * 24 * 60 * 60 * 1000,
+              ) // Filtramos docentes asignados en la primera semana
+              .map((d) => `${d.docente.nombre} ${d.docente.apellido}`)
+              .join(', '),
+            dias: c.diasClase.map((d) => d.dia).join(', '),
           },
         });
-        const consultasResueltas = await this.prisma.consulta.count({
-          where: {
-            idCurso: curso.id,
-            fechaConsulta: { gte: start, lte: end },
-            estado: 'Resuelta',
-          },
-        });
-        const pctConsultasResueltas =
-          consultasTotal > 0 ? (consultasResueltas / consultasTotal) * 100 : 0;
+      });
+    }
 
-        // F. Clases de Consulta
-        const clasesTotal = await this.prisma.claseConsulta.count({
-          where: {
-            idCurso: curso.id,
-            fechaClase: { gte: start, lte: end },
-          },
+    if (
+      !tipoMovimiento ||
+      tipoMovimiento === TipoMovimientoCurso.TODOS ||
+      tipoMovimiento === TipoMovimientoCurso.BAJA
+    ) {
+      const bajas = await this.prisma.curso.findMany({
+        where: { deletedAt: { gte: start, lte: end } },
+        select: {
+          id: true,
+          nombre: true,
+          deletedAt: true,
+        },
+      });
+      bajas.forEach((c) => {
+        events.push({
+          tipo: 'Baja',
+          fecha: c.deletedAt!,
+          curso: c.nombre,
+          detalle: '-',
         });
-        const clasesRealizadas = await this.prisma.claseConsulta.count({
-          where: {
-            idCurso: curso.id,
-            fechaClase: { gte: start, lte: end },
-            estadoClase: 'Realizada',
-          },
-        });
-        const pctClasesRealizadas =
-          clasesTotal > 0 ? (clasesRealizadas / clasesTotal) * 100 : 0;
+      });
+    }
 
-        // G. Sesiones de Refuerzo
-        const sesionesTotal = await this.prisma.sesionRefuerzo.count({
-          where: {
-            idCurso: curso.id,
-            createdAt: { gte: start, lte: end },
-          },
-        });
-        const sesionesCompletadas = await this.prisma.sesionRefuerzo.count({
-          where: {
-            idCurso: curso.id,
-            createdAt: { gte: start, lte: end },
-            estado: 'Completada',
-          },
-        });
-        const pctSesionesCompletadas =
-          sesionesTotal > 0 ? (sesionesCompletadas / sesionesTotal) * 100 : 0;
+    return events.sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
+  }
 
-        return {
-          id: curso.id,
-          nombre: curso.nombre,
-          estado: cursoStatus,
-          alumnosActivos,
-          docentesActivos,
-          avancePromedio: parseFloat(avancePromedio.toFixed(2)),
-          alumnosConDificultad: {
-            cantidad: cantAlumnosConDificultad,
-            porcentaje: parseFloat(pctAlumnosConDificultad.toFixed(2)),
-          },
-          dificultadFrecuente,
-          temaFrecuente,
-          consultas: {
-            total: consultasTotal,
-            pctResueltas: parseFloat(pctConsultasResueltas.toFixed(2)),
-          },
-          clases: {
-            total: clasesTotal,
-            pctRealizadas: parseFloat(pctClasesRealizadas.toFixed(2)),
-          },
-          sesiones: {
-            total: sesionesTotal,
-            pctCompletadas: parseFloat(pctSesionesCompletadas.toFixed(2)),
-          },
-        };
-      }),
-    );
+  async getStudentEnrollmentHistory(dto: GetStudentEnrollmentHistoryDto) {
+    const { fechaDesde, fechaHasta, tipoMovimiento, cursoId } = dto;
+    const start = fechaDesde ? new Date(fechaDesde) : new Date(0);
+    if (fechaDesde) start.setUTCHours(0, 0, 0, 0);
+    const end = fechaHasta ? new Date(fechaHasta) : new Date();
+    end.setUTCHours(23, 59, 59, 999);
 
-    return {
-      resumen: {
-        total: totalCursos,
-        activos: cursosActivos,
-        inactivos: cursosInactivos,
-      },
-      data,
-    };
+    const events: any[] = [];
+
+    if (
+      !tipoMovimiento ||
+      tipoMovimiento === TipoMovimientoInscripcion.TODOS ||
+      tipoMovimiento === TipoMovimientoInscripcion.INSCRIPCION
+    ) {
+      const where: Prisma.AlumnoCursoWhereInput = {
+        fechaInscripcion: { gte: start, lte: end },
+      };
+      if (cursoId) where.idCurso = cursoId;
+
+      const inscripciones = await this.prisma.alumnoCurso.findMany({
+        where,
+        include: {
+          alumno: { select: { nombre: true, apellido: true } },
+          curso: { select: { nombre: true } },
+        },
+      });
+      inscripciones.forEach((i) => {
+        events.push({
+          tipo: 'Inscripción',
+          fecha: i.fechaInscripcion,
+          alumno: `${i.alumno.nombre} ${i.alumno.apellido}`,
+          curso: i.curso.nombre,
+        });
+      });
+    }
+
+    if (
+      !tipoMovimiento ||
+      tipoMovimiento === TipoMovimientoInscripcion.TODOS ||
+      tipoMovimiento === TipoMovimientoInscripcion.BAJA
+    ) {
+      const where: Prisma.AlumnoCursoWhereInput = {
+        fechaBaja: { gte: start, lte: end },
+      };
+      if (cursoId) where.idCurso = cursoId;
+
+      const bajas = await this.prisma.alumnoCurso.findMany({
+        where,
+        include: {
+          alumno: { select: { nombre: true, apellido: true } },
+          curso: { select: { nombre: true } },
+        },
+      });
+      bajas.forEach((i) => {
+        events.push({
+          tipo: 'Baja',
+          fecha: i.fechaBaja!,
+          alumno: `${i.alumno.nombre} ${i.alumno.apellido}`,
+          curso: i.curso.nombre,
+        });
+      });
+    }
+
+    return events.sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
+  }
+
+  async getTeacherAssignmentHistory(dto: GetTeacherAssignmentHistoryDto) {
+    const { fechaDesde, fechaHasta, tipoMovimiento, cursoId } = dto;
+    const start = fechaDesde ? new Date(fechaDesde) : new Date(0);
+    if (fechaDesde) start.setUTCHours(0, 0, 0, 0);
+    const end = fechaHasta ? new Date(fechaHasta) : new Date();
+    end.setUTCHours(23, 59, 59, 999);
+
+    const events: any[] = [];
+
+    if (
+      !tipoMovimiento ||
+      tipoMovimiento === TipoMovimientoAsignacion.TODOS ||
+      tipoMovimiento === TipoMovimientoAsignacion.ASIGNACION
+    ) {
+      const where: Prisma.DocenteCursoWhereInput = {
+        fechaAsignacion: { gte: start, lte: end },
+      };
+      if (cursoId) where.idCurso = cursoId;
+
+      const asignaciones = await this.prisma.docenteCurso.findMany({
+        where,
+        include: {
+          docente: { select: { nombre: true, apellido: true } },
+          curso: { select: { nombre: true } },
+        },
+      });
+      asignaciones.forEach((i) => {
+        events.push({
+          tipo: 'Asignación',
+          fecha: i.fechaAsignacion,
+          docente: `${i.docente.nombre} ${i.docente.apellido}`,
+          curso: i.curso.nombre,
+        });
+      });
+    }
+
+    if (
+      !tipoMovimiento ||
+      tipoMovimiento === TipoMovimientoAsignacion.TODOS ||
+      tipoMovimiento === TipoMovimientoAsignacion.BAJA
+    ) {
+      const where: Prisma.DocenteCursoWhereInput = {
+        fechaBaja: { gte: start, lte: end },
+      };
+      if (cursoId) where.idCurso = cursoId;
+
+      const bajas = await this.prisma.docenteCurso.findMany({
+        where,
+        include: {
+          docente: { select: { nombre: true, apellido: true } },
+          curso: { select: { nombre: true } },
+        },
+      });
+      bajas.forEach((i) => {
+        events.push({
+          tipo: 'Baja',
+          fecha: i.fechaBaja!,
+          docente: `${i.docente.nombre} ${i.docente.apellido}`,
+          curso: i.curso.nombre,
+        });
+      });
+    }
+
+    return events.sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
   }
 }

@@ -4,45 +4,86 @@ import { GetUsersSummaryDto } from '../dto/get-users-summary.dto';
 import { GetUsersDistributionDto } from '../dto/get-users-distribution.dto';
 import { GetUsersHistoryDto } from '../dto/get-users-history.dto';
 import { GetUsersListDto } from '../dto/get-users-list.dto';
-import { GetCoursesReportDto } from '../dto/get-courses-report.dto';
-import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { roles } from '@prisma/client';
+import { GetCoursesSummaryDto } from '../dto/get-courses-summary.dto';
+import { GetCoursesListDto } from '../dto/get-courses-list.dto';
+import { GetCoursesHistoryDto } from '../dto/get-courses-history.dto';
+import { GetStudentEnrollmentHistoryDto } from '../dto/get-student-enrollment-history.dto';
+import { GetTeacherAssignmentHistoryDto } from '../dto/get-teacher-assignment-history.dto';
 
 @Controller('reportes')
 @UseGuards(RolesGuard)
-@Roles(roles.Administrador)
 export class ReportesController {
   constructor(private readonly reportesService: ReportesService) {}
 
+  // --- REPORTES DE USUARIOS (ADMIN ONLY) ---
+
   @Get('usuarios/resumen')
+  @Roles(roles.Administrador)
   getUsersSummary(@Query() dto: GetUsersSummaryDto) {
     return this.reportesService.getUsersSummary(dto);
   }
 
   @Get('usuarios/distribucion')
+  @Roles(roles.Administrador)
   getUsersDistribution(@Query() dto: GetUsersDistributionDto) {
     return this.reportesService.getUsersDistribution(dto);
   }
 
   @Get('usuarios/altas')
+  @Roles(roles.Administrador)
   getUsersAltas(@Query() dto: GetUsersHistoryDto) {
     return this.reportesService.getUsersAltas(dto);
   }
 
   @Get('usuarios/bajas')
+  @Roles(roles.Administrador)
   getUsersBajas(@Query() dto: GetUsersHistoryDto) {
     return this.reportesService.getUsersBajas(dto);
   }
 
   @Get('usuarios/listado')
+  @Roles(roles.Administrador)
   getUsersList(@Query() dto: GetUsersListDto) {
     return this.reportesService.getUsersList(dto);
   }
 
-  @Get('cursos')
-  getCoursesReport(@Query() dto: GetCoursesReportDto) {
-    return this.reportesService.getCoursesReport(dto);
+  // --- REPORTES DE CURSOS (ADMIN) ---
+
+  // Sección 1: Resumen de cursos (KPIs y Gráficos)
+  @Get('cursos/resumen')
+  @Roles(roles.Administrador)
+  getCoursesSummary(@Query() dto: GetCoursesSummaryDto) {
+    return this.reportesService.getCoursesSummary(dto);
+  }
+
+  // Sección 1: Listado detallado de cursos
+  @Get('cursos/listado')
+  @Roles(roles.Administrador)
+  getCoursesList(@Query() dto: GetCoursesListDto) {
+    return this.reportesService.getCoursesList(dto);
+  }
+
+  // Sección 2: Historial de altas y bajas de cursos
+  @Get('cursos/historial')
+  @Roles(roles.Administrador)
+  getCoursesHistory(@Query() dto: GetCoursesHistoryDto) {
+    return this.reportesService.getCoursesHistory(dto);
+  }
+
+  // Sección 3: Historial de inscripciones y bajas de alumnos
+  @Get('cursos/historial-inscripciones')
+  @Roles(roles.Administrador)
+  getStudentEnrollmentHistory(@Query() dto: GetStudentEnrollmentHistoryDto) {
+    return this.reportesService.getStudentEnrollmentHistory(dto);
+  }
+
+  // Sección 4: Historial de asignaciones y bajas de docentes
+  @Get('cursos/historial-asignaciones')
+  @Roles(roles.Administrador)
+  getTeacherAssignmentHistory(@Query() dto: GetTeacherAssignmentHistoryDto) {
+    return this.reportesService.getTeacherAssignmentHistory(dto);
   }
 }
