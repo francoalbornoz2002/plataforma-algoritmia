@@ -9,7 +9,13 @@ import {
 import { CreateCourseDto } from '../dto/create-course.dto';
 import { UpdateCourseDto } from '../dto/update-course.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { estado_simple, Prisma, roles } from '@prisma/client'; // Importamos 'roles'
+import {
+  estado_simple,
+  Prisma,
+  roles,
+  estado_sesion,
+  estado_clase_consulta,
+} from '@prisma/client'; // Importamos 'roles'
 // import * as bcrypt from 'bcrypt';
 import { FindAllCoursesDto } from '../dto/find-all-courses.dto';
 import { dateToTime, timeToDate } from 'src/helpers';
@@ -430,7 +436,12 @@ export class CoursesService {
       // Necesitamos fetchear el curso para obtener los IDs de progreso y dificultades
       const curso = await this.prisma.curso.findUnique({
         where: { id, deletedAt: null },
-        select: { id: true, idProgreso: true, idDificultadesCurso: true }, // Solo traemos lo que necesitamos
+        select: {
+          id: true,
+          idProgreso: true,
+          idDificultadesCurso: true,
+          alumnos: { select: { idProgreso: true } },
+        },
       });
 
       if (!curso) {
@@ -438,6 +449,8 @@ export class CoursesService {
           `Curso con ID '${id}' no encontrado o ya ha sido eliminado.`,
         );
       }
+
+      const idsProgresosAlumnos = curso.alumnos.map((a) => a.idProgreso);
 
       // 2. Ejecutar todas las bajas en una transacción
       // Usamos $transaction con un array de operaciones
@@ -451,22 +464,59 @@ export class CoursesService {
         // b. Dar de baja el ProgresoCurso
         this.prisma.progresoCurso.update({
           where: { id: curso.idProgreso },
-          data: { estado: 'Inactivo' },
+          data: { estado: estado_simple.Inactivo },
         }),
 
         // c. Dar de baja DificultadesCurso
         this.prisma.dificultadesCurso.update({
           where: { id: curso.idDificultadesCurso },
-          data: { estado: 'Inactivo' },
+          data: { estado: estado_simple.Inactivo },
         }),
 
         // d. Dar de baja asignaciones de Docentes (updateMany)
         this.prisma.docenteCurso.updateMany({
-          where: { idCurso: curso.id },
-          data: { estado: 'Inactivo' },
+          where: { idCurso: curso.id, estado: estado_simple.Activo },
+          data: { estado: estado_simple.Inactivo, fechaBaja: new Date() },
         }),
 
-        // e. Eliminar Días de Clase (deleteMany)
+        // e. Dar de baja inscripciones de Alumnos
+        this.prisma.alumnoCurso.updateMany({
+          where: { idCurso: curso.id, estado: estado_simple.Activo },
+          data: { estado: estado_simple.Inactivo, fechaBaja: new Date() },
+        }),
+
+        // f. Dar de baja Progresos de Alumnos (si existen)
+        ...(idsProgresosAlumnos.length > 0
+          ? [
+              this.prisma.progresoAlumno.updateMany({
+                where: { id: { in: idsProgresosAlumnos } },
+                data: { estado: estado_simple.Inactivo },
+              }),
+            ]
+          : []),
+
+        // g. Dar de baja Sesiones de Refuerzo
+        this.prisma.sesionRefuerzo.updateMany({
+          where: { idCurso: curso.id, deletedAt: null },
+          data: { deletedAt: new Date(), estado: estado_sesion.Cancelada },
+        }),
+
+        // h. Dar de baja Consultas
+        this.prisma.consulta.updateMany({
+          where: { idCurso: curso.id, deletedAt: null },
+          data: { deletedAt: new Date() },
+        }),
+
+        // i. Dar de baja Clases de Consulta
+        this.prisma.claseConsulta.updateMany({
+          where: { idCurso: curso.id, deletedAt: null },
+          data: {
+            deletedAt: new Date(),
+            estadoClase: estado_clase_consulta.Cancelada,
+          },
+        }),
+
+        // j. Eliminar Días de Clase (deleteMany)
         this.prisma.diaClase.deleteMany({
           where: { idCurso: curso.id },
         }),
