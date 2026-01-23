@@ -70,7 +70,7 @@ export function CourseProvider({ children }: { children: ReactNode }) {
       setSelectedCourse,
       isLoading,
     }),
-    [selectedCourse, isLoading]
+    [selectedCourse, isLoading],
   );
 
   return (
@@ -84,8 +84,14 @@ export function useCourseContext() {
   const context = useContext(CourseContext);
   if (context === undefined) {
     throw new Error(
-      "useCourseContext debe ser usado dentro de un CourseProvider"
+      "useCourseContext debe ser usado dentro de un CourseProvider",
     );
   }
   return context;
+}
+
+// 5. Hook opcional (devuelve undefined si no hay provider)
+// Útil para componentes compartidos entre Admin (sin contexto de curso) y Docente (con contexto)
+export function useOptionalCourseContext() {
+  return useContext(CourseContext);
 }

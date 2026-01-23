@@ -1,5 +1,5 @@
 import apiClient from "../../../lib/axios";
-import { roles, estado_simple } from "../../../types";
+import { roles, estado_simple, dificultad_mision } from "../../../types";
 
 // --- Interfaces para Reportes de Usuarios (Modular) ---
 
@@ -75,6 +75,21 @@ export interface TeacherAssignmentHistoryFilters {
   fechaDesde?: string;
   fechaHasta?: string;
   cursoId?: string;
+}
+
+// --- Interfaces para Reportes de Progreso de Curso Específico ---
+
+export interface CourseMissionsReportFilters {
+  dificultad?: dificultad_mision | "";
+  fechaDesde?: string;
+  fechaHasta?: string;
+}
+
+export interface CourseMissionDetailReportFilters {
+  misionId?: string;
+  dificultad?: dificultad_mision | "";
+  fechaDesde?: string;
+  fechaHasta?: string;
 }
 
 // --- Endpoints Modulares de Usuarios ---
@@ -169,6 +184,47 @@ export const getStudentEnrollmentHistory = async (
   );
   const response = await apiClient.get(
     "/reportes/cursos/historial-inscripciones",
+    {
+      params: cleanParams,
+    },
+  );
+  return response.data;
+};
+
+// --- Endpoints de Reportes de Curso Específico (Progreso) ---
+
+export const getCourseProgressSummary = async (courseId: string) => {
+  const response = await apiClient.get(
+    `/reportes/cursos/${courseId}/progreso/resumen`,
+  );
+  return response.data;
+};
+
+export const getCourseMissionsReport = async (
+  courseId: string,
+  params: CourseMissionsReportFilters,
+) => {
+  const cleanParams = Object.fromEntries(
+    Object.entries(params).filter(([_, v]) => v !== ""),
+  );
+  const response = await apiClient.get(
+    `/reportes/cursos/${courseId}/progreso/misiones`,
+    {
+      params: cleanParams,
+    },
+  );
+  return response.data;
+};
+
+export const getCourseMissionDetailReport = async (
+  courseId: string,
+  params: CourseMissionDetailReportFilters,
+) => {
+  const cleanParams = Object.fromEntries(
+    Object.entries(params).filter(([_, v]) => v !== ""),
+  );
+  const response = await apiClient.get(
+    `/reportes/cursos/${courseId}/progreso/detalle-mision`,
     {
       params: cleanParams,
     },
