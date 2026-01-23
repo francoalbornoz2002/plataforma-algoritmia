@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GetUsersSummaryDto } from '../dto/get-users-summary.dto';
 import {
@@ -21,6 +21,8 @@ import {
   GetTeacherAssignmentHistoryDto,
   TipoMovimientoAsignacion,
 } from '../dto/get-teacher-assignment-history.dto';
+import { GetCourseMissionsReportDto } from '../dto/get-course-missions-report.dto';
+import { GetCourseMissionDetailReportDto } from '../dto/get-course-mission-detail-report.dto';
 import { dateToTime } from '../../helpers';
 import { estado_simple, Prisma } from '@prisma/client';
 
@@ -560,5 +562,250 @@ export class ReportesService {
     }
 
     return events.sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
+  }
+
+  // --- REPORTES ESPECÍFICOS DE CURSO (ADMIN Y DOCENTE) ---
+
+  async getCourseProgressSummary(idCurso: string) {
+    const curso = await this.prisma.curso.findUnique({
+      where: { id: idCurso },
+      include: {
+        progresoCurso: true,
+        _count: {
+          select: {
+            alumnos: { where: { estado: estado_simple.Activo } },
+          },
+        },
+      },
+    });
+
+    if (!curso || !curso.progresoCurso) {
+      throw new NotFoundException(
+        'Curso no encontrado o sin progreso inicializado.',
+      );
+    }
+
+    const totalAlumnos = curso._count.alumnos;
+    const progreso = curso.progresoCurso;
+
+    // Parse Decimals
+    const pctCompletadas = Number(progreso.pctMisionesCompletadas);
+    const promEstrellas = Number(progreso.promEstrellas);
+    const promIntentos = Number(progreso.promIntentos);
+
+    // Gráfico de Torta: Progreso Promedio vs Restante
+    const pieChartData = [
+      { label: 'Completado', value: pctCompletadas, color: '#4caf50' },
+      { label: 'Restante', value: 100 - pctCompletadas, color: '#e0e0e0' },
+    ];
+
+    return {
+      resumen: {
+        progresoTotal: pctCompletadas,
+        misionesCompletadas: progreso.misionesCompletadas,
+        estrellasTotales: progreso.totalEstrellas,
+        expTotal: progreso.totalExp,
+        intentosTotales: progreso.totalIntentos,
+        promEstrellas,
+        promIntentos,
+        totalAlumnos,
+      },
+      grafico: pieChartData,
+    };
+  }
+
+  async getCourseMissionsReport(
+    idCurso: string,
+    dto: GetCourseMissionsReportDto,
+  ) {
+    const { dificultad, fechaDesde, fechaHasta } = dto;
+    const start = fechaDesde ? new Date(fechaDesde) : new Date(0);
+    if (fechaDesde) start.setUTCHours(0, 0, 0, 0);
+    const end = fechaHasta ? new Date(fechaHasta) : new Date();
+    end.setUTCHours(23, 59, 59, 999);
+
+    const where: Prisma.MisionCompletadaWhereInput = {
+      progresoAlumno: {
+        alumnoCurso: { idCurso: idCurso },
+      },
+      fechaCompletado: { gte: start, lte: end },
+    };
+
+    if (dificultad) {
+      where.mision = { dificultadMision: dificultad };
+    }
+
+    const completions = await this.prisma.misionCompletada.findMany({
+      where,
+      include: {
+        mision: true,
+      },
+      orderBy: { fechaCompletado: 'asc' },
+    });
+
+    // 1. Gráfico de tiempo (Agrupado por día)
+    const chartData: Record<string, number> = {};
+    completions.forEach((c) => {
+      if (c.fechaCompletado) {
+        const dateKey = c.fechaCompletado.toISOString().split('T')[0];
+        chartData[dateKey] = (chartData[dateKey] || 0) + 1;
+      }
+    });
+
+    // 2. Tabla detalle por misión
+    const totalAlumnos = await this.prisma.alumnoCurso.count({
+      where: { idCurso: idCurso, estado: estado_simple.Activo },
+    });
+
+    const missionStats: Record<string, any> = {};
+
+    completions.forEach((c) => {
+      if (!missionStats[c.idMision]) {
+        missionStats[c.idMision] = {
+          id: c.idMision,
+          nombre: c.mision.nombre,
+          dificultad: c.mision.dificultadMision,
+          count: 0,
+          uniqueStudents: new Set(),
+          totalEstrellas: 0,
+          totalExp: 0,
+          totalIntentos: 0,
+        };
+      }
+      const stat = missionStats[c.idMision];
+      stat.count++;
+      stat.uniqueStudents.add(c.idProgreso);
+      stat.totalEstrellas += c.estrellas;
+      stat.totalExp += c.exp;
+      stat.totalIntentos += c.intentos;
+    });
+
+    const tableData = Object.values(missionStats).map((stat: any) => {
+      const uniqueCount = stat.uniqueStudents.size;
+      return {
+        id: stat.id,
+        nombre: stat.nombre,
+        dificultad: stat.dificultad,
+        completadoPor: uniqueCount,
+        pctCompletado:
+          totalAlumnos > 0 ? (uniqueCount / totalAlumnos) * 100 : 0,
+        promEstrellas: stat.totalEstrellas / stat.count,
+        promExp: stat.totalExp / stat.count,
+        promIntentos: stat.totalIntentos / stat.count,
+      };
+    });
+
+    return {
+      grafico: Object.entries(chartData).map(([fecha, cantidad]) => ({
+        fecha,
+        cantidad,
+      })),
+      tabla: tableData,
+    };
+  }
+
+  async getCourseMissionDetailReport(
+    idCurso: string,
+    dto: GetCourseMissionDetailReportDto,
+  ) {
+    const { misionId, dificultad, fechaDesde, fechaHasta } = dto;
+
+    // Si no se selecciona misión, devolvemos lista para el selector
+    if (!misionId) {
+      const whereMision: Prisma.MisionWhereInput = {};
+      if (dificultad) whereMision.dificultadMision = dificultad;
+
+      const misiones = await this.prisma.mision.findMany({
+        where: whereMision,
+        select: { id: true, nombre: true, dificultadMision: true },
+      });
+      return { misionesDisponibles: misiones, detalle: null };
+    }
+
+    const start = fechaDesde ? new Date(fechaDesde) : new Date(0);
+    if (fechaDesde) start.setUTCHours(0, 0, 0, 0);
+    const end = fechaHasta ? new Date(fechaHasta) : new Date();
+    end.setUTCHours(23, 59, 59, 999);
+
+    // Info Misión
+    const mision = await this.prisma.mision.findUnique({
+      where: { id: misionId },
+    });
+    if (!mision) throw new NotFoundException('Misión no encontrada');
+
+    // Completions
+    const completions = await this.prisma.misionCompletada.findMany({
+      where: {
+        idMision: misionId,
+        progresoAlumno: {
+          alumnoCurso: { idCurso: idCurso },
+        },
+        fechaCompletado: { gte: start, lte: end },
+      },
+      include: {
+        progresoAlumno: {
+          include: {
+            alumnoCurso: {
+              include: {
+                alumno: { select: { nombre: true, apellido: true } },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { fechaCompletado: 'desc' },
+    });
+
+    // Gráfico
+    const chartData: Record<string, number> = {};
+    completions.forEach((c) => {
+      if (c.fechaCompletado) {
+        const dateKey = c.fechaCompletado.toISOString().split('T')[0];
+        chartData[dateKey] = (chartData[dateKey] || 0) + 1;
+      }
+    });
+
+    // Stats
+    const totalCompletions = completions.length;
+    const uniqueStudents = new Set(completions.map((c) => c.idProgreso)).size;
+    const totalAlumnos = await this.prisma.alumnoCurso.count({
+      where: { idCurso: idCurso, estado: estado_simple.Activo },
+    });
+
+    const totalEstrellas = completions.reduce((acc, c) => acc + c.estrellas, 0);
+    const totalExp = completions.reduce((acc, c) => acc + c.exp, 0);
+    const totalIntentos = completions.reduce((acc, c) => acc + c.intentos, 0);
+
+    // Tabla Alumnos
+    const tableData = completions.map((c) => ({
+      id: c.progresoAlumno.id,
+      alumno: c.progresoAlumno.alumnoCurso
+        ? `${c.progresoAlumno.alumnoCurso.alumno.nombre} ${c.progresoAlumno.alumnoCurso.alumno.apellido}`
+        : 'Alumno Desconocido',
+      estrellas: c.estrellas,
+      exp: c.exp,
+      intentos: c.intentos,
+      fecha: c.fechaCompletado,
+    }));
+
+    return {
+      mision: mision,
+      grafico: Object.entries(chartData).map(([fecha, cantidad]) => ({
+        fecha,
+        cantidad,
+      })),
+      stats: {
+        vecesCompletada: totalCompletions,
+        alumnosCompletaron: uniqueStudents,
+        pctAlumnos:
+          totalAlumnos > 0 ? (uniqueStudents / totalAlumnos) * 100 : 0,
+        promEstrellas:
+          totalCompletions > 0 ? totalEstrellas / totalCompletions : 0,
+        promExp: totalCompletions > 0 ? totalExp / totalCompletions : 0,
+        promIntentos:
+          totalCompletions > 0 ? totalIntentos / totalCompletions : 0,
+      },
+      tabla: tableData,
+    };
   }
 }

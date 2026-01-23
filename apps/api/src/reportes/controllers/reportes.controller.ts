@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ReportesService } from '../services/reportes.service';
 import { GetUsersSummaryDto } from '../dto/get-users-summary.dto';
 import { GetUsersDistributionDto } from '../dto/get-users-distribution.dto';
@@ -12,6 +12,8 @@ import { GetCoursesListDto } from '../dto/get-courses-list.dto';
 import { GetCoursesHistoryDto } from '../dto/get-courses-history.dto';
 import { GetStudentEnrollmentHistoryDto } from '../dto/get-student-enrollment-history.dto';
 import { GetTeacherAssignmentHistoryDto } from '../dto/get-teacher-assignment-history.dto';
+import { GetCourseMissionsReportDto } from '../dto/get-course-missions-report.dto';
+import { GetCourseMissionDetailReportDto } from '../dto/get-course-mission-detail-report.dto';
 
 @Controller('reportes')
 @UseGuards(RolesGuard)
@@ -85,5 +87,34 @@ export class ReportesController {
   @Roles(roles.Administrador)
   getTeacherAssignmentHistory(@Query() dto: GetTeacherAssignmentHistoryDto) {
     return this.reportesService.getTeacherAssignmentHistory(dto);
+  }
+
+  // --- REPORTES ESPECÍFICOS DE CURSO (ADMIN Y DOCENTE) ---
+
+  // Progreso - Sección 1: Resumen de progreso del curso
+  @Get('cursos/:id/progreso/resumen')
+  @Roles(roles.Administrador, roles.Docente)
+  getCourseProgressSummary(@Param('id') id: string) {
+    return this.reportesService.getCourseProgressSummary(id);
+  }
+
+  // Progreso - Sección 2: Reporte de Misiones Completadas
+  @Get('cursos/:id/progreso/misiones')
+  @Roles(roles.Administrador, roles.Docente)
+  getCourseMissionsReport(
+    @Param('id') id: string,
+    @Query() dto: GetCourseMissionsReportDto,
+  ) {
+    return this.reportesService.getCourseMissionsReport(id, dto);
+  }
+
+  // Progreso - Sección 3: Detalles por Misión
+  @Get('cursos/:id/progreso/detalle-mision')
+  @Roles(roles.Administrador, roles.Docente)
+  getCourseMissionDetailReport(
+    @Param('id') id: string,
+    @Query() dto: GetCourseMissionDetailReportDto,
+  ) {
+    return this.reportesService.getCourseMissionDetailReport(id, dto);
   }
 }
