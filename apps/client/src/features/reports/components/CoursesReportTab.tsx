@@ -5,6 +5,9 @@ import HistoryEduIcon from "@mui/icons-material/HistoryEdu";
 import PersonIcon from "@mui/icons-material/Person";
 import SchoolIcon from "@mui/icons-material/School";
 import CoursesSummarySection from "./CoursesSummarySection";
+import CoursesHistorySection from "./CoursesHistorySection";
+import StudentEnrollmentHistorySection from "./StudentEnrollmentHistorySection";
+import TeacherAssignmentHistorySection from "./TeacherAssignmentHistorySection";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -36,7 +39,7 @@ export default function CoursesReportTab() {
   };
 
   return (
-    <Box sx={{ width: "100%" }}>
+    <Box sx={{ width: "100%", mt: -3 }}>
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
         <Tabs
           value={value}
@@ -54,19 +57,16 @@ export default function CoursesReportTab() {
             icon={<HistoryEduIcon />}
             iconPosition="start"
             label="Historial Cursos"
-            disabled // Próximamente
           />
           <Tab
             icon={<PersonIcon />}
             iconPosition="start"
             label="Historial Alumnos"
-            disabled // Próximamente
           />
           <Tab
             icon={<SchoolIcon />}
             iconPosition="start"
             label="Historial Docentes"
-            disabled // Próximamente
           />
         </Tabs>
       </Box>
@@ -76,25 +76,19 @@ export default function CoursesReportTab() {
         <CoursesSummarySection />
       </CustomTabPanel>
 
-      {/* Sección 2: Historial Cursos (Placeholder) */}
+      {/* Sección 2: Historial Cursos */}
       <CustomTabPanel value={value} index={1}>
-        <Typography sx={{ p: 2 }}>
-          Próximamente: Historial de altas y bajas de cursos.
-        </Typography>
+        <CoursesHistorySection />
       </CustomTabPanel>
 
-      {/* Sección 3: Historial Alumnos (Placeholder) */}
+      {/* Sección 3: Historial Alumnos */}
       <CustomTabPanel value={value} index={2}>
-        <Typography sx={{ p: 2 }}>
-          Próximamente: Historial de inscripciones y bajas de alumnos.
-        </Typography>
+        <StudentEnrollmentHistorySection />
       </CustomTabPanel>
 
-      {/* Sección 4: Historial Docentes (Placeholder) */}
+      {/* Sección 4: Historial Docentes */}
       <CustomTabPanel value={value} index={3}>
-        <Typography sx={{ p: 2 }}>
-          Próximamente: Historial de asignaciones y bajas de docentes.
-        </Typography>
+        <TeacherAssignmentHistorySection />
       </CustomTabPanel>
     </Box>
   );

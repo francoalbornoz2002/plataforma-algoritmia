@@ -21,6 +21,7 @@ import {
   GetTeacherAssignmentHistoryDto,
   TipoMovimientoAsignacion,
 } from '../dto/get-teacher-assignment-history.dto';
+import { dateToTime } from '../../helpers';
 import { estado_simple, Prisma } from '@prisma/client';
 
 const TOTAL_MISIONES = 10;
@@ -369,7 +370,6 @@ export class ReportesService {
           nombre: true,
           createdAt: true,
           docentes: {
-            where: { fechaAsignacion: { lte: end } },
             select: {
               fechaAsignacion: true,
               docente: { select: { nombre: true, apellido: true } },
@@ -389,12 +389,16 @@ export class ReportesService {
                 (d) =>
                   Math.abs(
                     d.fechaAsignacion.getTime() - c.createdAt.getTime(),
-                  ) <
-                  7 * 24 * 60 * 60 * 1000,
-              ) // Filtramos docentes asignados en la primera semana
+                  ) < 10000,
+              )
               .map((d) => `${d.docente.nombre} ${d.docente.apellido}`)
               .join(', '),
-            dias: c.diasClase.map((d) => d.dia).join(', '),
+            dias: c.diasClase
+              .map(
+                (d) =>
+                  `${d.dia} (${dateToTime(d.horaInicio)} - ${dateToTime(d.horaFin)})`,
+              )
+              .join(', '),
           },
         });
       });

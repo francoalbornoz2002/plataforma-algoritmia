@@ -174,8 +174,8 @@ export default function CoursesSummarySection() {
       field: "createdAt",
       headerName: "Fecha Creación",
       width: 150,
-      valueFormatter: (params) =>
-        params.value ? format(new Date(params.value), "dd/MM/yyyy") : "-",
+      valueFormatter: (value: any) =>
+        value ? format(new Date(value), "dd/MM/yyyy") : "-",
     },
   ];
 
