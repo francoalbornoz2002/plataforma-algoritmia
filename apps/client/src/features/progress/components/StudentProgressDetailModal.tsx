@@ -105,13 +105,9 @@ export default function StudentProgressDetailModal({
             </Typography>
 
             {specialMissions.length === 0 ? (
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ fontStyle: "italic", mb: 2 }}
-              >
-                Sin misiones especiales completadas.
-              </Typography>
+              <Alert severity="info" sx={{ mb: 4 }}>
+                Este alumno no tiene misiones especiales completadas.
+              </Alert>
             ) : (
               <Grid container spacing={2}>
                 {specialMissions.map((missionData) => (

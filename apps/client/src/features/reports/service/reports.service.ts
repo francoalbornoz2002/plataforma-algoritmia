@@ -79,6 +79,10 @@ export interface TeacherAssignmentHistoryFilters {
 
 // --- Interfaces para Reportes de Progreso de Curso Específico ---
 
+export interface CourseProgressSummaryFilters {
+  fechaCorte?: string;
+}
+
 export interface CourseMissionsReportFilters {
   dificultad?: dificultad_mision | "";
   fechaDesde?: string;
@@ -193,9 +197,16 @@ export const getStudentEnrollmentHistory = async (
 
 // --- Endpoints de Reportes de Curso Específico (Progreso) ---
 
-export const getCourseProgressSummary = async (courseId: string) => {
+export const getCourseProgressSummary = async (
+  courseId: string,
+  params?: CourseProgressSummaryFilters,
+) => {
+  const cleanParams = params
+    ? Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== ""))
+    : {};
   const response = await apiClient.get(
     `/reportes/cursos/${courseId}/progreso/resumen`,
+    { params: cleanParams },
   );
   return response.data;
 };

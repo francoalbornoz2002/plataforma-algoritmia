@@ -439,126 +439,134 @@ export default function ProgressPage() {
       ) : null}
 
       {/* --- B. Filtros --- */}
-      <Typography variant="h5" gutterBottom>
-        Progreso de Alumnos
-      </Typography>
-      <Accordion sx={{ mb: 2 }}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography>Filtros de búsqueda</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-            <TextField
-              label="Buscar Alumno..."
-              variant="outlined"
-              size="small"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              sx={{ flexGrow: 1 }}
-            />
-            <FormControl size="small" sx={{ minWidth: 160 }}>
-              <InputLabel>Progreso</InputLabel>
-              <Select
-                name="progressRange"
-                value={queryOptions.progressRange}
-                label="Progreso"
-                onChange={handleFilterChange}
-              >
-                <MenuItem value="">Todos</MenuItem>
-                {Object.entries(ProgressRange).map(([key, value]) => (
-                  <MenuItem key={key} value={value}>
-                    {value}%
+      <Paper elevation={5} component="section" sx={{ p: 2, mb: 4 }}>
+        <Typography
+          variant="h5"
+          gutterBottom
+          sx={{ mb: 3, fontWeight: "bold", color: "primary.main" }}
+        >
+          Progresos individuales de alumnos
+        </Typography>
+        <Accordion sx={{ mb: 2 }}>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography>Filtros de búsqueda</Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+              <TextField
+                label="Buscar Alumno..."
+                variant="outlined"
+                size="small"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                sx={{ flexGrow: 1 }}
+              />
+              <FormControl size="small" sx={{ minWidth: 160 }}>
+                <InputLabel>Progreso</InputLabel>
+                <Select
+                  name="progressRange"
+                  value={queryOptions.progressRange}
+                  label="Progreso"
+                  onChange={handleFilterChange}
+                >
+                  <MenuItem value="">Todos</MenuItem>
+                  {Object.entries(ProgressRange).map(([key, value]) => (
+                    <MenuItem key={key} value={value}>
+                      {value}%
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 160 }}>
+                <InputLabel>Estrellas</InputLabel>
+                <Select
+                  name="starsRange"
+                  value={queryOptions.starsRange}
+                  label="Estrellas"
+                  onChange={handleFilterChange}
+                >
+                  <MenuItem value="">Todas</MenuItem>
+                  {Object.entries(StarsRange).map(([key, value]) => (
+                    <MenuItem key={key} value={value}>
+                      {value} ⭐
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 160 }}>
+                <InputLabel>Últ. Actividad</InputLabel>
+                <Select
+                  name="activityRange"
+                  value={queryOptions.activityRange}
+                  label="Últ. Actividad"
+                  onChange={handleFilterChange}
+                >
+                  <MenuItem value="">Todos</MenuItem>
+                  <MenuItem value={ActivityRange.LAST_24H}>
+                    Últimas 24h
                   </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 160 }}>
-              <InputLabel>Estrellas</InputLabel>
-              <Select
-                name="starsRange"
-                value={queryOptions.starsRange}
-                label="Estrellas"
-                onChange={handleFilterChange}
-              >
-                <MenuItem value="">Todas</MenuItem>
-                {Object.entries(StarsRange).map(([key, value]) => (
-                  <MenuItem key={key} value={value}>
-                    {value} ⭐
+                  <MenuItem value={ActivityRange.LAST_3D}>
+                    Últimos 3 días
                   </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 160 }}>
-              <InputLabel>Últ. Actividad</InputLabel>
-              <Select
-                name="activityRange"
-                value={queryOptions.activityRange}
-                label="Últ. Actividad"
-                onChange={handleFilterChange}
-              >
-                <MenuItem value="">Todos</MenuItem>
-                <MenuItem value={ActivityRange.LAST_24H}>Últimas 24h</MenuItem>
-                <MenuItem value={ActivityRange.LAST_3D}>
-                  Últimos 3 días
-                </MenuItem>
-                <MenuItem value={ActivityRange.LAST_7D}>
-                  Últimos 7 días
-                </MenuItem>
-                <MenuItem value={ActivityRange.INACTIVE}>
-                  Inactivo (+7d)
-                </MenuItem>
-              </Select>
-            </FormControl>
-          </Stack>
-        </AccordionDetails>
-      </Accordion>
+                  <MenuItem value={ActivityRange.LAST_7D}>
+                    Últimos 7 días
+                  </MenuItem>
+                  <MenuItem value={ActivityRange.INACTIVE}>
+                    Inactivo (+7d)
+                  </MenuItem>
+                </Select>
+              </FormControl>
+            </Stack>
+          </AccordionDetails>
+        </Accordion>
 
-      {/* --- C. DataGrid --- */}
-      {gridError && <Alert severity="error">{gridError}</Alert>}
-      <Box sx={{ height: 600, width: "100%" }}>
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          rowCount={totalRows}
-          loading={gridLoading}
-          // Paginación
-          paginationMode="server"
-          paginationModel={{
-            page: queryOptions.page - 1, // MUI es 0-indexed
-            pageSize: queryOptions.limit,
-          }}
-          onPaginationModelChange={handlePaginationChange}
-          pageSizeOptions={[5, 10, 25]}
-          // Ordenamiento
-          sortingMode="server"
-          sortModel={[{ field: queryOptions.sort, sort: queryOptions.order }]}
-          onSortModelChange={handleSortChange}
-          disableRowSelectionOnClick
-          disableColumnResize={true}
-          sx={{
-            "& .MuiDataGrid-cell:focus": {
-              outline: "none",
-            },
-            "& .MuiDataGrid-cell:focus-within": {
-              outline: "none",
-            },
-            "& .MuiDataGrid-columnHeader:focus": {
-              outline: "none",
-            },
-            "& .MuiDataGrid-columnHeader:focus-within": {
-              outline: "none",
-            },
-          }}
-        />
-      </Box>
-      {/* --- D. RENDERIZADO DEL MODAL DE DETALLE --- */}
-      {viewingStudent && (
-        <StudentProgressDetailModal
-          open={!!viewingStudent}
-          onClose={() => setViewingStudent(null)}
-          studentData={viewingStudent}
-        />
-      )}
+        {/* --- C. DataGrid --- */}
+        {gridError && <Alert severity="error">{gridError}</Alert>}
+        <Box sx={{ height: 600, width: "100%" }}>
+          <DataGrid
+            rows={rows}
+            columns={columns}
+            rowCount={totalRows}
+            loading={gridLoading}
+            // Paginación
+            paginationMode="server"
+            paginationModel={{
+              page: queryOptions.page - 1, // MUI es 0-indexed
+              pageSize: queryOptions.limit,
+            }}
+            onPaginationModelChange={handlePaginationChange}
+            pageSizeOptions={[5, 10, 25]}
+            // Ordenamiento
+            sortingMode="server"
+            sortModel={[{ field: queryOptions.sort, sort: queryOptions.order }]}
+            onSortModelChange={handleSortChange}
+            disableRowSelectionOnClick
+            disableColumnResize={true}
+            sx={{
+              "& .MuiDataGrid-cell:focus": {
+                outline: "none",
+              },
+              "& .MuiDataGrid-cell:focus-within": {
+                outline: "none",
+              },
+              "& .MuiDataGrid-columnHeader:focus": {
+                outline: "none",
+              },
+              "& .MuiDataGrid-columnHeader:focus-within": {
+                outline: "none",
+              },
+            }}
+          />
+        </Box>
+        {/* --- D. RENDERIZADO DEL MODAL DE DETALLE --- */}
+        {viewingStudent && (
+          <StudentProgressDetailModal
+            open={!!viewingStudent}
+            onClose={() => setViewingStudent(null)}
+            studentData={viewingStudent}
+          />
+        )}
+      </Paper>
     </Box>
   );
 }

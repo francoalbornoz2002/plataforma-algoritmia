@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   Box,
+  Button,
   Typography,
   Paper,
   Stack,
@@ -13,6 +14,8 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import TableOnIcon from "@mui/icons-material/TableChart";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
 import {
@@ -20,6 +23,7 @@ import {
   type CourseMissionDetailReportFilters,
 } from "../service/reports.service";
 import { dificultad_mision } from "../../../types";
+import { useOptionalCourseContext } from "../../../context/CourseContext";
 
 interface Props {
   courseId: string;
@@ -36,6 +40,12 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
   const [data, setData] = useState<any>(null);
   const [missionsList, setMissionsList] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const courseContext = useOptionalCourseContext();
+
+  const courseCreatedAt =
+    courseContext?.selectedCourse?.id === courseId
+      ? courseContext?.selectedCourse?.createdAt
+      : undefined;
 
   // Cargar lista de misiones o datos específicos
   useEffect(() => {
@@ -145,6 +155,8 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
               })
             }
             slotProps={{ textField: { size: "small" } }}
+            disableFuture
+            minDate={courseCreatedAt ? new Date(courseCreatedAt) : undefined}
           />
           <DatePicker
             label="Hasta"
@@ -160,9 +172,31 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
               })
             }
             slotProps={{ textField: { size: "small" } }}
+            disableFuture
+            minDate={courseCreatedAt ? new Date(courseCreatedAt) : undefined}
           />
         </Stack>
       </Paper>
+
+      {/* Acciones */}
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}>
+        <Button
+          variant="outlined"
+          startIcon={<PictureAsPdfIcon />}
+          disabled={!data}
+          color="error"
+        >
+          Exportar PDF
+        </Button>
+        <Button
+          variant="outlined"
+          startIcon={<TableOnIcon />}
+          disabled={!data}
+          color="success"
+        >
+          Exportar Excel
+        </Button>
+      </Box>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>

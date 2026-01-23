@@ -14,6 +14,7 @@ import { GetStudentEnrollmentHistoryDto } from '../dto/get-student-enrollment-hi
 import { GetTeacherAssignmentHistoryDto } from '../dto/get-teacher-assignment-history.dto';
 import { GetCourseMissionsReportDto } from '../dto/get-course-missions-report.dto';
 import { GetCourseMissionDetailReportDto } from '../dto/get-course-mission-detail-report.dto';
+import { GetCourseProgressSummaryDto } from '../dto/get-course-progress-summary.dto';
 
 @Controller('reportes')
 @UseGuards(RolesGuard)
@@ -94,8 +95,11 @@ export class ReportesController {
   // Progreso - Sección 1: Resumen de progreso del curso
   @Get('cursos/:id/progreso/resumen')
   @Roles(roles.Administrador, roles.Docente)
-  getCourseProgressSummary(@Param('id') id: string) {
-    return this.reportesService.getCourseProgressSummary(id);
+  getCourseProgressSummary(
+    @Param('id') id: string,
+    @Query() dto: GetCourseProgressSummaryDto,
+  ) {
+    return this.reportesService.getCourseProgressSummary(id, dto);
   }
 
   // Progreso - Sección 2: Reporte de Misiones Completadas

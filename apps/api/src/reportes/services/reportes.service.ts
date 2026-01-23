@@ -23,6 +23,7 @@ import {
 } from '../dto/get-teacher-assignment-history.dto';
 import { GetCourseMissionsReportDto } from '../dto/get-course-missions-report.dto';
 import { GetCourseMissionDetailReportDto } from '../dto/get-course-mission-detail-report.dto';
+import { GetCourseProgressSummaryDto } from '../dto/get-course-progress-summary.dto';
 import { dateToTime } from '../../helpers';
 import { estado_simple, Prisma } from '@prisma/client';
 
@@ -566,27 +567,69 @@ export class ReportesService {
 
   // --- REPORTES ESPECÍFICOS DE CURSO (ADMIN Y DOCENTE) ---
 
-  async getCourseProgressSummary(idCurso: string) {
+  async getCourseProgressSummary(
+    idCurso: string,
+    dto?: GetCourseProgressSummaryDto,
+  ) {
+    const { fechaCorte } = dto || {};
+
     const curso = await this.prisma.curso.findUnique({
       where: { id: idCurso },
-      include: {
-        progresoCurso: true,
-        _count: {
-          select: {
-            alumnos: { where: { estado: estado_simple.Activo } },
-          },
-        },
-      },
+      select: { id: true, idProgreso: true },
     });
 
-    if (!curso || !curso.progresoCurso) {
-      throw new NotFoundException(
-        'Curso no encontrado o sin progreso inicializado.',
-      );
+    if (!curso) {
+      throw new NotFoundException('Curso no encontrado.');
     }
 
-    const totalAlumnos = curso._count.alumnos;
-    const progreso = curso.progresoCurso;
+    let progreso: any;
+    let totalAlumnos = 0;
+
+    if (fechaCorte) {
+      // --- MODO HISTÓRICO ---
+      const end = new Date(fechaCorte);
+      end.setUTCHours(23, 59, 59, 999);
+
+      // 1. Buscar el registro histórico más cercano a la fecha de corte
+      const historial = await this.prisma.historialProgresoCurso.findFirst({
+        where: {
+          idProgresoCurso: curso.idProgreso,
+          fechaRegistro: { lte: end },
+        },
+        orderBy: { fechaRegistro: 'desc' },
+      });
+
+      // Si no hay historial previo, asumimos valores en 0
+      progreso = historial || {
+        misionesCompletadas: 0,
+        totalEstrellas: 0,
+        totalExp: 0,
+        totalIntentos: 0,
+        pctMisionesCompletadas: 0,
+        promEstrellas: 0,
+        promIntentos: 0,
+      };
+
+      // 2. Calcular alumnos activos a esa fecha
+      totalAlumnos = await this.prisma.alumnoCurso.count({
+        where: {
+          idCurso: idCurso,
+          fechaInscripcion: { lte: end },
+          OR: [{ fechaBaja: null }, { fechaBaja: { gt: end } }],
+        },
+      });
+    } else {
+      // --- MODO ACTUAL ---
+      progreso = await this.prisma.progresoCurso.findUnique({
+        where: { id: curso.idProgreso },
+      });
+
+      if (!progreso) throw new NotFoundException('Progreso no inicializado.');
+
+      totalAlumnos = await this.prisma.alumnoCurso.count({
+        where: { idCurso: idCurso, estado: estado_simple.Activo },
+      });
+    }
 
     // Parse Decimals
     const pctCompletadas = Number(progreso.pctMisionesCompletadas);
@@ -639,20 +682,12 @@ export class ReportesService {
       where,
       include: {
         mision: true,
+        progresoAlumno: true, // Solo necesitamos el ID para contar únicos
       },
       orderBy: { fechaCompletado: 'asc' },
     });
 
-    // 1. Gráfico de tiempo (Agrupado por día)
-    const chartData: Record<string, number> = {};
-    completions.forEach((c) => {
-      if (c.fechaCompletado) {
-        const dateKey = c.fechaCompletado.toISOString().split('T')[0];
-        chartData[dateKey] = (chartData[dateKey] || 0) + 1;
-      }
-    });
-
-    // 2. Tabla detalle por misión
+    // 1. Agrupación por Misión
     const totalAlumnos = await this.prisma.alumnoCurso.count({
       where: { idCurso: idCurso, estado: estado_simple.Activo },
     });
@@ -695,11 +730,23 @@ export class ReportesService {
       };
     });
 
+    // 2. Gráfico de tiempo (Total de misiones completadas por fecha)
+    const chartData: Record<string, number> = {};
+    completions.forEach((c) => {
+      if (c.fechaCompletado) {
+        const dateKey = c.fechaCompletado.toISOString().split('T')[0];
+        chartData[dateKey] = (chartData[dateKey] || 0) + 1;
+      }
+    });
+
+    const grafico = Object.entries(chartData)
+      .map(([fecha, cantidad]) => ({ fecha, cantidad }))
+      .sort(
+        (a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime(),
+      );
+
     return {
-      grafico: Object.entries(chartData).map(([fecha, cantidad]) => ({
-        fecha,
-        cantidad,
-      })),
+      grafico,
       tabla: tableData,
     };
   }
