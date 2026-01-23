@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Typography,
-  Grid,
   Alert,
   Accordion,
   AccordionSummary,
@@ -16,6 +15,9 @@ import {
   type SelectChangeEvent,
   Tooltip,
   Button,
+  Paper,
+  Divider,
+  CircularProgress,
 } from "@mui/material";
 import {
   DataGrid,
@@ -23,9 +25,15 @@ import {
   type GridPaginationModel,
   type GridSortModel,
 } from "@mui/x-data-grid";
+import { PieChart } from "@mui/x-charts/PieChart";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import StarIcon from "@mui/icons-material/Star";
+import BoltIcon from "@mui/icons-material/Bolt";
+import ReplayIcon from "@mui/icons-material/Replay";
+import PercentIcon from "@mui/icons-material/Percent";
+import TaskAltIcon from "@mui/icons-material/TaskAlt";
 
 // 1. Hooks y Servicios
 import { useCourseContext } from "../../../context/CourseContext";
@@ -47,7 +55,6 @@ import {
   StarsRange,
 } from "../../../types/progress-filters";
 import StudentProgressDetailModal from "../components/StudentProgressDetailModal";
-import KpiProgressCard from "../components/KpiProgressCard";
 
 type StudentRow = ProgresoAlumnoDetallado;
 
@@ -145,7 +152,7 @@ export default function ProgressPage() {
   };
 
   const handleFilterChange = (
-    e: SelectChangeEvent<string | number> | React.ChangeEvent<HTMLInputElement>
+    e: SelectChangeEvent<string | number> | React.ChangeEvent<HTMLInputElement>,
   ) => {
     setQueryOptions((prev) => ({
       ...prev,
@@ -238,7 +245,7 @@ export default function ProgressPage() {
         ),
       },
     ],
-    []
+    [],
   );
 
   // --- 6. RENDERIZADO ---
@@ -250,55 +257,186 @@ export default function ProgressPage() {
     );
   }
 
+  // Datos para el gráfico
+  const pieChartData = overview
+    ? [
+        {
+          label: "Completado",
+          value: overview.pctMisionesCompletadas,
+          color: "#4caf50",
+        },
+        {
+          label: "Restante",
+          value: 100 - overview.pctMisionesCompletadas,
+          color: "#e0e0e0",
+        },
+      ]
+    : [];
+
   return (
     <Box>
       {/* --- A. Resumen (KPIs) --- */}
-      <Typography variant="h5" gutterBottom>
-        Resumen de Progreso
-      </Typography>
       {overviewError && <Alert severity="error">{overviewError}</Alert>}
-      <Grid
-        container
-        spacing={3}
-        sx={{ mb: 3 }}
-        columns={{ xs: 12, sm: 12, md: 10 }}
-      >
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <KpiProgressCard
-            title="Misiones Completadas"
-            value={overview ? overview.misionesCompletadas : 0}
-            loading={overviewLoading}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <KpiProgressCard
-            title="Progreso Total"
-            value={overview ? overview.pctMisionesCompletadas.toFixed(1) : 0}
-            loading={overviewLoading}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <KpiProgressCard
-            title="Estrellas (Prom.)"
-            value={overview ? overview.promEstrellas.toFixed(1) : 0}
-            loading={overviewLoading}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <KpiProgressCard
-            title="Intentos (Prom.)"
-            value={overview ? overview.promIntentos.toFixed(1) : 0}
-            loading={overviewLoading}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-          <KpiProgressCard
-            title="EXP Total"
-            value={overview ? `${overview.totalExp} EXP` : 0}
-            loading={overviewLoading}
-          />
-        </Grid>
-      </Grid>
+
+      {overviewLoading ? (
+        <CircularProgress sx={{ mb: 3 }} />
+      ) : overview ? (
+        <Paper elevation={5} component="section" sx={{ p: 2, mb: 4 }}>
+          <Typography
+            variant="h5"
+            gutterBottom
+            sx={{ mb: 3, fontWeight: "bold", color: "primary.main" }}
+          >
+            Resumen de Progreso del Curso
+          </Typography>
+
+          <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
+            {/* KPIs */}
+            <Box sx={{ flex: 1 }}>
+              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
+                <Stack spacing={2}>
+                  <Box>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <PercentIcon color="success" />
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Progreso Promedio del Curso
+                      </Typography>
+                    </Stack>
+                    <Typography
+                      variant="h3"
+                      color="primary.main"
+                      fontWeight="bold"
+                    >
+                      {overview.pctMisionesCompletadas.toFixed(1)}%
+                    </Typography>
+                  </Box>
+                  <Divider />
+                  <Box>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <TaskAltIcon color="info" fontSize="small" />
+                      <Typography variant="caption" display="block">
+                        Misiones Completadas (Total acumulado)
+                      </Typography>
+                    </Stack>
+                    <Typography variant="h6">
+                      {overview.misionesCompletadas}
+                    </Typography>
+                  </Box>
+                  <Divider />
+                  <Stack direction="row" spacing={4}>
+                    <Box>
+                      <Stack direction="row" alignItems="center" spacing={0.5}>
+                        <StarIcon color="warning" fontSize="small" />
+                        <Typography variant="caption" display="block">
+                          Estrellas
+                        </Typography>
+                      </Stack>
+                      <Typography variant="body1" fontWeight="bold">
+                        {overview.totalEstrellas}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Stack direction="row" alignItems="center" spacing={0.5}>
+                        <BoltIcon color="primary" fontSize="small" />
+                        <Typography variant="caption" display="block">
+                          Exp Total
+                        </Typography>
+                      </Stack>
+                      <Typography variant="body1" fontWeight="bold">
+                        {overview.totalExp}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Stack direction="row" alignItems="center" spacing={0.5}>
+                        <ReplayIcon color="action" fontSize="small" />
+                        <Typography variant="caption" display="block">
+                          Intentos
+                        </Typography>
+                      </Stack>
+                      <Typography variant="body1" fontWeight="bold">
+                        {overview.totalIntentos}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                  <Divider />
+                  <Box>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Promedios por Alumno
+                    </Typography>
+                    <Stack direction="row" spacing={4}>
+                      <Box>
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          spacing={0.5}
+                        >
+                          <StarIcon color="warning" fontSize="inherit" />
+                          <Typography variant="caption">Estrellas</Typography>
+                        </Stack>
+                        <Typography variant="h6" color="warning.main">
+                          {overview.promEstrellas.toFixed(1)}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          spacing={0.5}
+                        >
+                          <ReplayIcon color="info" fontSize="inherit" />
+                          <Typography variant="caption">Intentos</Typography>
+                        </Stack>
+                        <Typography variant="h6" color="info.main">
+                          {overview.promIntentos.toFixed(1)}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </Box>
+                </Stack>
+              </Paper>
+            </Box>
+
+            {/* Gráfico */}
+            <Box sx={{ flex: 1, minHeight: 300 }}>
+              <Paper
+                elevation={3}
+                sx={{
+                  p: 2,
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <Typography variant="h6" gutterBottom>
+                  Estado Global
+                </Typography>
+                <PieChart
+                  series={[
+                    {
+                      data: pieChartData,
+                      highlightScope: { fade: "global", highlight: "item" },
+                      faded: {
+                        innerRadius: 30,
+                        additionalRadius: -30,
+                        color: "gray",
+                      },
+                    },
+                  ]}
+                  height={250}
+                  width={400}
+                  slotProps={{
+                    legend: {
+                      direction: "horizontal",
+                      position: { vertical: "bottom", horizontal: "center" },
+                    },
+                  }}
+                />
+              </Paper>
+            </Box>
+          </Stack>
+        </Paper>
+      ) : null}
 
       {/* --- B. Filtros --- */}
       <Typography variant="h5" gutterBottom>

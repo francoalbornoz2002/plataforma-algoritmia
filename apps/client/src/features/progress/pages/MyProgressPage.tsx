@@ -6,9 +6,17 @@ import {
   CircularProgress,
   Alert,
   Divider,
+  Paper,
+  Stack,
 } from "@mui/material";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import StarIcon from "@mui/icons-material/Star";
+import BoltIcon from "@mui/icons-material/Bolt";
+import ReplayIcon from "@mui/icons-material/Replay";
+import PercentIcon from "@mui/icons-material/Percent";
+import TaskAltIcon from "@mui/icons-material/TaskAlt";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 
 // 1. Hooks y Servicios
 import { useCourseContext } from "../../../context/CourseContext";
@@ -17,7 +25,7 @@ import { getMyProgress } from "../../users/services/alumnos.service";
 // 2. Tipos
 import type { ProgresoAlumno } from "../../../types";
 import MissionCard from "../components/MissionCard";
-import KpiProgressCard from "../components/KpiProgressCard";
+import { PieChart } from "@mui/x-charts/PieChart";
 
 export default function MyProgressPage() {
   // --- 1. CONTEXTO ---
@@ -64,77 +72,198 @@ export default function MyProgressPage() {
       })}`
     : "Nunca";
 
+  // Datos para el gráfico
+  const pieChartData = progress
+    ? [
+        {
+          label: "Completado",
+          value: progress.pctMisionesCompletadas,
+          color: "#4caf50",
+        },
+        {
+          label: "Restante",
+          value: 100 - progress.pctMisionesCompletadas,
+          color: "#e0e0e0",
+        },
+      ]
+    : [];
+
   return (
     <Box>
-      <Typography variant="h5" gutterBottom>
-        Mi Progreso en {selectedCourse.nombre}
-      </Typography>
+      {isLoading ? (
+        <CircularProgress sx={{ mb: 3 }} />
+      ) : progress ? (
+        <Paper elevation={5} component="section" sx={{ p: 2, mb: 4 }}>
+          <Typography
+            variant="h5"
+            gutterBottom
+            sx={{ mb: 3, fontWeight: "bold", color: "primary.main" }}
+          >
+            Mi Progreso en {selectedCourse.nombre}
+          </Typography>
 
-      {/* --- Grilla de KPIs --- */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <KpiProgressCard
-            title="Progreso Total"
-            value={
-              progress ? `${progress.pctMisionesCompletadas.toFixed(1)}%` : 0
-            }
-            loading={isLoading}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <KpiProgressCard
-            title="Estrellas (Prom.)"
-            value={progress ? progress.promEstrellas.toFixed(1) : 0}
-            loading={isLoading}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <KpiProgressCard
-            title="Intentos (Prom.)"
-            value={progress ? progress.promIntentos.toFixed(1) : 0}
-            loading={isLoading}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <KpiProgressCard
-            title="EXP Total"
-            value={progress ? progress.totalExp : 0}
-            loading={isLoading}
-          />
-        </Grid>
+          <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
+            {/* KPIs */}
+            <Box sx={{ flex: 1 }}>
+              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
+                <Stack spacing={2}>
+                  <Box>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <PercentIcon color="success" />
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Progreso Total
+                      </Typography>
+                    </Stack>
+                    <Typography
+                      variant="h3"
+                      color="primary.main"
+                      fontWeight="bold"
+                    >
+                      {progress.pctMisionesCompletadas.toFixed(1)}%
+                    </Typography>
+                  </Box>
+                  <Divider />
+                  <Stack direction="row" justifyContent="space-between">
+                    <Box>
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        <TaskAltIcon color="info" fontSize="small" />
+                        <Typography variant="caption" display="block">
+                          Misiones Completadas
+                        </Typography>
+                      </Stack>
+                      <Typography variant="h6">
+                        {progress.cantMisionesCompletadas}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        <AccessTimeIcon color="action" fontSize="small" />
+                        <Typography variant="caption" display="block">
+                          Última Actividad
+                        </Typography>
+                      </Stack>
+                      <Typography variant="h6">
+                        {ultimaActividadFormateada}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                  <Divider />
+                  <Stack direction="row" spacing={4}>
+                    <Box>
+                      <Stack direction="row" alignItems="center" spacing={0.5}>
+                        <StarIcon color="warning" fontSize="small" />
+                        <Typography variant="caption" display="block">
+                          Estrellas
+                        </Typography>
+                      </Stack>
+                      <Typography variant="body1" fontWeight="bold">
+                        {progress.totalEstrellas}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Stack direction="row" alignItems="center" spacing={0.5}>
+                        <BoltIcon color="primary" fontSize="small" />
+                        <Typography variant="caption" display="block">
+                          Exp Total
+                        </Typography>
+                      </Stack>
+                      <Typography variant="body1" fontWeight="bold">
+                        {progress.totalExp}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Stack direction="row" alignItems="center" spacing={0.5}>
+                        <ReplayIcon color="action" fontSize="small" />
+                        <Typography variant="caption" display="block">
+                          Intentos
+                        </Typography>
+                      </Stack>
+                      <Typography variant="body1" fontWeight="bold">
+                        {progress.totalIntentos}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                  <Divider />
+                  <Box>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Mis Promedios
+                    </Typography>
+                    <Stack direction="row" spacing={4}>
+                      <Box>
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          spacing={0.5}
+                        >
+                          <StarIcon color="warning" fontSize="inherit" />
+                          <Typography variant="caption">Estrellas</Typography>
+                        </Stack>
+                        <Typography variant="h6" color="warning.main">
+                          {progress.promEstrellas.toFixed(1)}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          spacing={0.5}
+                        >
+                          <ReplayIcon color="info" fontSize="inherit" />
+                          <Typography variant="caption">Intentos</Typography>
+                        </Stack>
+                        <Typography variant="h6" color="info.main">
+                          {progress.promIntentos.toFixed(1)}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </Box>
+                </Stack>
+              </Paper>
+            </Box>
 
-        {/* --- Fila 2 de KPIs --- */}
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <KpiProgressCard
-            title="Misiones Completadas"
-            value={progress ? progress.cantMisionesCompletadas : 0}
-            loading={isLoading}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <KpiProgressCard
-            title="Estrellas Totales"
-            value={progress ? progress.totalEstrellas : 0}
-            loading={isLoading}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <KpiProgressCard
-            title="Intentos Totales"
-            value={progress ? progress.totalIntentos : 0}
-            loading={isLoading}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <KpiProgressCard
-            title="Última Actividad"
-            value={ultimaActividadFormateada}
-            loading={isLoading}
-          />
-        </Grid>
-      </Grid>
+            {/* Gráfico */}
+            <Box sx={{ flex: 1, minHeight: 300 }}>
+              <Paper
+                elevation={3}
+                sx={{
+                  p: 2,
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                }}
+              >
+                <Typography variant="h6" gutterBottom>
+                  Estado Global
+                </Typography>
+                <PieChart
+                  series={[
+                    {
+                      data: pieChartData,
+                      highlightScope: { fade: "global", highlight: "item" },
+                      faded: {
+                        innerRadius: 30,
+                        additionalRadius: -30,
+                        color: "gray",
+                      },
+                    },
+                  ]}
+                  height={250}
+                  width={400}
+                  slotProps={{
+                    legend: {
+                      direction: "horizontal",
+                      position: { vertical: "bottom", horizontal: "center" },
+                    },
+                  }}
+                />
+              </Paper>
+            </Box>
+          </Stack>
+        </Paper>
+      ) : null}
 
-      <Divider sx={{ my: 4 }} />
+      <Divider sx={{ mb: 4 }} />
 
       {/* --- SECCIÓN 1: MISIONES DE CAMPAÑA (Normales) --- */}
       <Typography
