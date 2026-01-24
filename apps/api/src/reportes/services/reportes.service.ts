@@ -28,6 +28,7 @@ import { dateToTime } from '../../helpers';
 import { estado_simple, grado_dificultad, Prisma } from '@prisma/client';
 import { GetCourseDifficultiesReportDto } from '../dto/get-course-difficulties-report.dto';
 import { GetCourseDifficultiesHistoryDto } from '../dto/get-course-difficulties-history.dto';
+import { GetStudentDifficultiesReportDto } from '../dto/get-student-difficulties-report.dto';
 import { temas, fuente_cambio_dificultad } from '@prisma/client';
 
 const TOTAL_MISIONES = 10;
@@ -1183,5 +1184,182 @@ export class ReportesService {
     };
 
     return { timeline, stats, tabla: history };
+  }
+
+  async getStudentDifficultiesReport(
+    idCurso: string,
+    dto: GetStudentDifficultiesReportDto,
+  ) {
+    const {
+      studentId,
+      temas: temasStr,
+      dificultades,
+      fuente,
+      fechaDesde,
+      fechaHasta,
+    } = dto;
+
+    // --- PARTE 1: MINI RESUMEN (Estado Actual) ---
+    // Obtenemos las dificultades actuales del alumno en este curso
+    const currentDifficulties = await this.prisma.dificultadAlumno.findMany({
+      where: {
+        idCurso,
+        idAlumno: studentId,
+        grado: { not: grado_dificultad.Ninguno }, // Solo activas
+      },
+      include: { dificultad: true },
+    });
+
+    // Agrupaciones para gráficos del resumen
+    const byGrade = { Bajo: 0, Medio: 0, Alto: 0 };
+    const byTopic: Record<string, number> = {};
+
+    currentDifficulties.forEach((d) => {
+      if (d.grado in byGrade) byGrade[d.grado]++;
+      byTopic[d.dificultad.tema] = (byTopic[d.dificultad.tema] || 0) + 1;
+    });
+
+    const summary = {
+      tabla: currentDifficulties.map((d) => ({
+        id: d.dificultad.id,
+        nombre: d.dificultad.nombre,
+        tema: d.dificultad.tema,
+        grado: d.grado,
+      })),
+      graficos: {
+        porGrado: [
+          { label: 'Bajo', value: byGrade.Bajo, color: '#4caf50' },
+          { label: 'Medio', value: byGrade.Medio, color: '#ff9800' },
+          { label: 'Alto', value: byGrade.Alto, color: '#f44336' },
+        ],
+        porTema: Object.entries(byTopic).map(([label, value]) => ({
+          label,
+          value,
+        })),
+      },
+    };
+
+    // --- PARTE 2: HISTORIAL Y EVOLUCIÓN ---
+
+    // Filtros de fecha
+    const start = fechaDesde ? new Date(fechaDesde) : new Date(0);
+    if (fechaDesde) start.setUTCHours(0, 0, 0, 0);
+    const end = fechaHasta ? new Date(fechaHasta) : new Date();
+    end.setUTCHours(23, 59, 59, 999);
+
+    const whereHistory: Prisma.HistorialDificultadAlumnoWhereInput = {
+      idCurso,
+      idAlumno: studentId,
+      fechaCambio: { gte: start, lte: end },
+    };
+
+    if (fuente) whereHistory.fuente = fuente;
+    if (dificultades) {
+      const ids = dificultades.split(',').filter(Boolean);
+      if (ids.length > 0) whereHistory.idDificultad = { in: ids };
+    }
+    if (temasStr) {
+      const temasList = temasStr.split(',').filter(Boolean) as temas[];
+      if (temasList.length > 0)
+        whereHistory.dificultad = { tema: { in: temasList } };
+    }
+
+    const history = await this.prisma.historialDificultadAlumno.findMany({
+      where: whereHistory,
+      include: { dificultad: { select: { nombre: true, tema: true } } },
+      orderBy: { fechaCambio: 'asc' }, // Orden ascendente para construir la evolución
+    });
+
+    // A) Stats de Mejora
+    let totalMejoras = 0;
+    let mejorasVideojuego = 0;
+    let mejorasSesion = 0;
+    const gradeWeight: Record<string, number> = {
+      [grado_dificultad.Ninguno]: 0,
+      [grado_dificultad.Bajo]: 1,
+      [grado_dificultad.Medio]: 2,
+      [grado_dificultad.Alto]: 3,
+    };
+
+    history.forEach((h) => {
+      const wOld = gradeWeight[h.gradoAnterior] || 0;
+      const wNew = gradeWeight[h.gradoNuevo] || 0;
+      if (wOld > wNew) {
+        totalMejoras++;
+        if (h.fuente === fuente_cambio_dificultad.VIDEOJUEGO)
+          mejorasVideojuego++;
+        else if (h.fuente === fuente_cambio_dificultad.SESION_REFUERZO)
+          mejorasSesion++;
+      }
+    });
+
+    const stats = {
+      totalMejoras,
+      porcentajeVideojuego:
+        totalMejoras > 0 ? (mejorasVideojuego / totalMejoras) * 100 : 0,
+      porcentajeSesion:
+        totalMejoras > 0 ? (mejorasSesion / totalMejoras) * 100 : 0,
+    };
+
+    // B) Gráfico de Evolución (Dataset unificado)
+    // Necesitamos un punto en el tiempo por cada cambio, manteniendo el estado de las otras dificultades.
+    const evolutionDataset: any[] = [];
+    const currentStates: Record<string, number> = {}; // idDificultad -> valor numérico
+    const difficultyNames: Record<string, string> = {}; // idDificultad -> Nombre
+
+    // Inicializamos el dataset
+    history.forEach((h) => {
+      const dateStr = h.fechaCambio.toISOString();
+      const diffId = h.idDificultad;
+      const newVal = gradeWeight[h.gradoNuevo];
+      const oldVal = gradeWeight[h.gradoAnterior];
+
+      // Si es la primera vez que vemos esta dificultad en la línea de tiempo,
+      // insertamos un punto "previo" con el valor anterior (ej. Ninguno)
+      // para que el gráfico dibuje la línea de transición hacia el nuevo valor.
+      if (currentStates[diffId] === undefined) {
+        // Usamos 1 segundo antes para crear el efecto de "salto" o transición
+        let prevDate = new Date(h.fechaCambio.getTime() - 1000);
+
+        // Aseguramos no romper el orden cronológico si hay eventos muy pegados
+        if (evolutionDataset.length > 0) {
+          const lastDate = evolutionDataset[evolutionDataset.length - 1].date;
+          if (prevDate < lastDate) prevDate = lastDate;
+        }
+
+        evolutionDataset.push({
+          date: prevDate,
+          ...currentStates, // Estado de las otras dificultades en ese momento
+          [diffId]: oldVal, // Forzamos el valor anterior para esta dificultad
+        });
+      }
+
+      currentStates[diffId] = newVal;
+      difficultyNames[diffId] = h.dificultad.nombre;
+
+      // Creamos un punto en el tiempo con el estado actual de TODAS las dificultades rastreadas hasta ese momento
+      const dataPoint: any = {
+        date: h.fechaCambio, // Objeto Date para el eje X
+        ...currentStates, // Spread de los estados actuales
+      };
+      evolutionDataset.push(dataPoint);
+    });
+
+    // Lista de series para el gráfico (una por dificultad encontrada en el historial)
+    const series = Object.keys(difficultyNames).map((id) => ({
+      dataKey: id,
+      label: difficultyNames[id],
+      showMark: true,
+    }));
+
+    return {
+      summary,
+      history: history.reverse(), // Devolvemos historial descendente para la tabla
+      stats,
+      evolution: {
+        dataset: evolutionDataset,
+        series,
+      },
+    };
   }
 }
