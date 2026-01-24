@@ -1,5 +1,10 @@
 import apiClient from "../../../lib/axios";
-import { roles, estado_simple, dificultad_mision } from "../../../types";
+import {
+  roles,
+  estado_simple,
+  dificultad_mision,
+  fuente_cambio_dificultad,
+} from "../../../types";
 
 // --- Interfaces para Reportes de Usuarios (Modular) ---
 
@@ -100,6 +105,14 @@ export interface CourseMissionDetailReportFilters {
 
 export interface CourseDifficultiesReportFilters {
   fechaCorte?: string;
+}
+
+export interface CourseDifficultiesHistoryFilters {
+  temas?: string; // "Tema1,Tema2"
+  dificultades?: string; // "id1,id2"
+  fuente?: fuente_cambio_dificultad | "";
+  fechaDesde?: string;
+  fechaHasta?: string;
 }
 
 // --- Endpoints Modulares de Usuarios ---
@@ -258,6 +271,20 @@ export const getCourseDifficultiesReport = async (
   );
   const response = await apiClient.get(
     `/reportes/cursos/${courseId}/dificultades/resumen`,
+    { params: cleanParams },
+  );
+  return response.data;
+};
+
+export const getCourseDifficultiesHistory = async (
+  courseId: string,
+  params: CourseDifficultiesHistoryFilters,
+) => {
+  const cleanParams = Object.fromEntries(
+    Object.entries(params).filter(([_, v]) => v !== ""),
+  );
+  const response = await apiClient.get(
+    `/reportes/cursos/${courseId}/dificultades/historial`,
     { params: cleanParams },
   );
   return response.data;

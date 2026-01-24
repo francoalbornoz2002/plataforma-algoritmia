@@ -79,6 +79,11 @@ export enum estado_sesion {
   No_realizada = "No_realizada",
 }
 
+export enum fuente_cambio_dificultad {
+  VIDEOJUEGO = "VIDEOJUEGO",
+  SESION_REFUERZO = "SESION_REFUERZO",
+}
+
 /* ---------------------- INTERFACES ---------------------- */
 
 export interface MenuItemType {
