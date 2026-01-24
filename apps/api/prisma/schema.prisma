@@ -203,12 +203,14 @@ model DocenteCurso {
 }
 
 model HistorialDificultadAlumno {
-  id           String           @id @default(uuid()) @db.Uuid
-  idAlumno     String           @map("id_alumno") @db.Uuid
-  idCurso      String           @map("id_curso") @db.Uuid
-  idDificultad String           @map("id_dificultad") @db.Uuid
-  grado        grado_dificultad
-  fechaCambio  DateTime         @default(now()) @map("fecha_cambio") @db.Timestamptz(6)
+  id            String                   @id @default(uuid()) @db.Uuid
+  idAlumno      String                   @map("id_alumno") @db.Uuid
+  idCurso       String                   @map("id_curso") @db.Uuid
+  idDificultad  String                   @map("id_dificultad") @db.Uuid
+  gradoAnterior grado_dificultad         @default(Ninguno) @map("grado_anterior")
+  gradoNuevo    grado_dificultad         @map("grado_nuevo")
+  fuente        fuente_cambio_dificultad @default(VIDEOJUEGO)
+  fechaCambio   DateTime                 @default(now()) @map("fecha_cambio") @db.Timestamptz(6)
 
   alumno     Usuario    @relation(fields: [idAlumno], references: [id], onDelete: NoAction, onUpdate: NoAction)
   curso      Curso      @relation(fields: [idCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -649,4 +651,9 @@ enum temas {
   Variables
   Procedimientos
   Ninguno
+}
+
+enum fuente_cambio_dificultad {
+  VIDEOJUEGO      @map("Videojuego")
+  SESION_REFUERZO @map("Sesión de Refuerzo")
 }
