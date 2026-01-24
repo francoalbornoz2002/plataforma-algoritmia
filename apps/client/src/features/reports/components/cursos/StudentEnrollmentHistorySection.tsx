@@ -1,4 +1,4 @@
-// apps/client/src/features/reports/components/CoursesHistorySection.tsx
+// apps/client/src/features/reports/components/StudentEnrollmentHistorySection.tsx
 
 import { useState, useEffect } from "react";
 import {
@@ -11,39 +11,55 @@ import {
   Stack,
   Divider,
   ButtonGroup,
-  Tooltip,
-  IconButton,
+  Autocomplete,
+  TextField,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableOnIcon from "@mui/icons-material/TableChart";
-import InfoIcon from "@mui/icons-material/Info";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
 import {
-  getCoursesHistory,
-  TipoMovimientoCurso,
-  type CoursesHistoryFilters,
-} from "../service/reports.service";
+  getStudentEnrollmentHistory,
+  getCoursesList,
+  TipoMovimientoInscripcion,
+  type StudentEnrollmentHistoryFilters,
+} from "../../service/reports.service";
 
-export default function CoursesHistorySection() {
-  const [type, setType] = useState<TipoMovimientoCurso>(
-    TipoMovimientoCurso.TODOS,
+export default function StudentEnrollmentHistorySection() {
+  const [type, setType] = useState<TipoMovimientoInscripcion>(
+    TipoMovimientoInscripcion.TODOS,
   );
-  const [filters, setFilters] = useState<CoursesHistoryFilters>({
+  const [filters, setFilters] = useState<StudentEnrollmentHistoryFilters>({
     fechaDesde: "",
     fechaHasta: "",
-    tipoMovimiento: TipoMovimientoCurso.TODOS,
+    cursoId: "",
+    tipoMovimiento: TipoMovimientoInscripcion.TODOS,
   });
+
+  const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any[]>([]);
   const [chartData, setChartData] = useState<{
     dates: string[];
-    altas: number[];
+    inscripciones: number[];
     bajas: number[];
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Cargar lista de cursos para el filtro
+  useEffect(() => {
+    const loadCourses = async () => {
+      try {
+        const list = await getCoursesList({});
+        setCourses(list);
+      } catch (err) {
+        console.error("Error cargando cursos", err);
+      }
+    };
+    loadCourses();
+  }, []);
 
   // Sincronizar el tipo seleccionado con los filtros
   useEffect(() => {
@@ -54,39 +70,39 @@ export default function CoursesHistorySection() {
     setLoading(true);
     setError(null);
     try {
-      const events = await getCoursesHistory(filters);
+      const events = await getStudentEnrollmentHistory(filters);
 
-      // Agregamos un ID único para el DataGrid y procesamos fechas
+      // Agregamos un ID único para el DataGrid
       const rows = events.map((ev: any, index: number) => ({
         ...ev,
-        id: `${ev.tipo}-${index}`, // ID único compuesto
+        id: `${ev.tipo}-${index}`,
       }));
       setData(rows);
 
-      // Procesar datos para el gráfico (Agrupar por fecha)
-      const stats: Record<string, { altas: number; bajas: number }> = {};
+      // Procesar datos para el gráfico
+      const stats: Record<string, { inscripciones: number; bajas: number }> =
+        {};
 
       events.forEach((ev: any) => {
         const dateStr = new Date(ev.fecha).toISOString().split("T")[0];
-        if (!stats[dateStr]) stats[dateStr] = { altas: 0, bajas: 0 };
+        if (!stats[dateStr]) stats[dateStr] = { inscripciones: 0, bajas: 0 };
 
-        if (ev.tipo === "Alta") stats[dateStr].altas++;
+        if (ev.tipo === "Inscripción") stats[dateStr].inscripciones++;
         else if (ev.tipo === "Baja") stats[dateStr].bajas++;
       });
 
-      // Ordenar fechas ascendentemente para el gráfico
       const sortedDates = Object.keys(stats).sort(
         (a, b) => new Date(a).getTime() - new Date(b).getTime(),
       );
 
       setChartData({
         dates: sortedDates,
-        altas: sortedDates.map((d) => stats[d].altas),
+        inscripciones: sortedDates.map((d) => stats[d].inscripciones),
         bajas: sortedDates.map((d) => stats[d].bajas),
       });
     } catch (err) {
       console.error(err);
-      setError("Error al cargar el historial de cursos.");
+      setError("Error al cargar el historial de alumnos.");
     } finally {
       setLoading(false);
     }
@@ -113,15 +129,16 @@ export default function CoursesHistorySection() {
   };
 
   const columns: GridColDef[] = [
+    { field: "alumno", headerName: "Alumno", flex: 1, minWidth: 150 },
     { field: "curso", headerName: "Curso", flex: 1, minWidth: 150 },
     {
       field: "tipo",
       headerName: "Movimiento",
-      width: 120,
+      width: 130,
       renderCell: (params) => (
         <Chip
           label={params.value}
-          color={params.value === "Alta" ? "primary" : "error"}
+          color={params.value === "Inscripción" ? "success" : "error"}
           size="small"
           variant="outlined"
         />
@@ -134,40 +151,6 @@ export default function CoursesHistorySection() {
       valueFormatter: (value: any) =>
         value ? new Date(value).toLocaleDateString() : "-",
     },
-    {
-      field: "detalle",
-      headerName: "Detalle",
-      flex: 1.5,
-      minWidth: 200,
-      renderCell: (params) => {
-        if (!params.value || params.value === "-") return "-";
-        // Si es un objeto (Detalle de Alta con docentes y días)
-        if (typeof params.value === "object") {
-          return (
-            <Stack spacing={0.5} sx={{ py: 1 }}>
-              {params.value.docentes ? (
-                <Typography variant="caption" display="block">
-                  <strong>Docentes al momento de la creación:</strong>{" "}
-                  {params.value.docentes}
-                </Typography>
-              ) : (
-                <Typography
-                  variant="caption"
-                  display="block"
-                  color="text.secondary"
-                >
-                  <em>Sin docentes asignados al crear</em>
-                </Typography>
-              )}
-              <Typography variant="caption" display="block">
-                <strong>Días de clase:</strong> {params.value.dias || "-"}
-              </Typography>
-            </Stack>
-          );
-        }
-        return params.value;
-      },
-    },
   ];
 
   return (
@@ -177,12 +160,12 @@ export default function CoursesHistorySection() {
         gutterBottom
         sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}
       >
-        Historial de Movimientos de Cursos
+        Historial de Inscripciones y Bajas
       </Typography>
 
       <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
         <Stack spacing={2}>
-          {/* Fila Superior: Tipo de Movimiento y Filtros Rápidos */}
+          {/* Fila Superior */}
           <Stack
             direction={{ xs: "column", md: "row" }}
             alignItems={{ xs: "flex-start", md: "center" }}
@@ -195,29 +178,33 @@ export default function CoursesHistorySection() {
               <ButtonGroup size="small">
                 <Button
                   variant={
-                    type === TipoMovimientoCurso.TODOS
+                    type === TipoMovimientoInscripcion.TODOS
                       ? "contained"
                       : "outlined"
                   }
-                  onClick={() => setType(TipoMovimientoCurso.TODOS)}
+                  onClick={() => setType(TipoMovimientoInscripcion.TODOS)}
                   color="info"
                 >
                   Todos
                 </Button>
                 <Button
                   variant={
-                    type === TipoMovimientoCurso.ALTA ? "contained" : "outlined"
+                    type === TipoMovimientoInscripcion.INSCRIPCION
+                      ? "contained"
+                      : "outlined"
                   }
-                  onClick={() => setType(TipoMovimientoCurso.ALTA)}
-                  color="primary"
+                  onClick={() => setType(TipoMovimientoInscripcion.INSCRIPCION)}
+                  color="success"
                 >
-                  Altas
+                  Inscripciones
                 </Button>
                 <Button
                   variant={
-                    type === TipoMovimientoCurso.BAJA ? "contained" : "outlined"
+                    type === TipoMovimientoInscripcion.BAJA
+                      ? "contained"
+                      : "outlined"
                   }
-                  onClick={() => setType(TipoMovimientoCurso.BAJA)}
+                  onClick={() => setType(TipoMovimientoInscripcion.BAJA)}
                   color="error"
                 >
                   Bajas
@@ -227,7 +214,7 @@ export default function CoursesHistorySection() {
 
             <Box>
               <Typography variant="subtitle2" gutterBottom>
-                Filtros Rápidos de Tiempo
+                Filtros Rápidos
               </Typography>
               <ButtonGroup variant="outlined" size="small">
                 <Button onClick={() => applyQuickFilter("week")}>
@@ -245,7 +232,7 @@ export default function CoursesHistorySection() {
 
           <Divider />
 
-          {/* Fila Inferior: Selectores de Fecha */}
+          {/* Fila Inferior: Fechas y Curso */}
           <Stack
             direction="row"
             spacing={2}
@@ -294,11 +281,27 @@ export default function CoursesHistorySection() {
               slotProps={{ textField: { size: "small" } }}
               sx={{ minWidth: 180 }}
             />
+
+            <Autocomplete
+              options={courses}
+              getOptionLabel={(option) => option.nombre}
+              value={courses.find((c) => c.id === filters.cursoId) || null}
+              onChange={(event, newValue) => {
+                setFilters({
+                  ...filters,
+                  cursoId: newValue ? newValue.id : "",
+                });
+              }}
+              renderInput={(params) => (
+                <TextField {...params} label="Filtrar por Curso" size="small" />
+              )}
+              sx={{ minWidth: 250 }}
+            />
           </Stack>
         </Stack>
       </Paper>
 
-      {/* Acciones Exportar */}
+      {/* Acciones */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}>
         <Button
           variant="outlined"
@@ -325,7 +328,7 @@ export default function CoursesHistorySection() {
         spacing={3}
         sx={{ width: "100%" }}
       >
-        {/* Tabla (Izquierda) */}
+        {/* Tabla */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Paper elevation={3} sx={{ height: 450, width: "100%" }}>
             <DataGrid
@@ -342,12 +345,12 @@ export default function CoursesHistorySection() {
           </Paper>
         </Box>
 
-        {/* Gráfico (Derecha) */}
+        {/* Gráfico */}
         <Box sx={{ flex: 1, minWidth: 0 }}>
           {chartData && chartData.dates.length > 0 ? (
             <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
               <Typography variant="h6" gutterBottom>
-                Evolución en el tiempo
+                Evolución de Inscripciones
               </Typography>
               <LineChart
                 xAxis={[
@@ -360,18 +363,18 @@ export default function CoursesHistorySection() {
                   },
                 ]}
                 series={[
-                  ...(type === TipoMovimientoCurso.ALTA ||
-                  type === TipoMovimientoCurso.TODOS
+                  ...(type === TipoMovimientoInscripcion.INSCRIPCION ||
+                  type === TipoMovimientoInscripcion.TODOS
                     ? [
                         {
-                          data: chartData.altas,
-                          label: "Altas",
-                          color: "#1976d2",
+                          data: chartData.inscripciones,
+                          label: "Inscripciones",
+                          color: "#2e7d32",
                         },
                       ]
                     : []),
-                  ...(type === TipoMovimientoCurso.BAJA ||
-                  type === TipoMovimientoCurso.TODOS
+                  ...(type === TipoMovimientoInscripcion.BAJA ||
+                  type === TipoMovimientoInscripcion.TODOS
                     ? [
                         {
                           data: chartData.bajas,

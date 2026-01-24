@@ -20,9 +20,9 @@ import { LineChart } from "@mui/x-charts/LineChart";
 import {
   getCourseMissionsReport,
   type CourseMissionsReportFilters,
-} from "../service/reports.service";
-import { dificultad_mision } from "../../../types";
-import { useOptionalCourseContext } from "../../../context/CourseContext";
+} from "../../service/reports.service";
+import { dificultad_mision } from "../../../../types";
+import { useOptionalCourseContext } from "../../../../context/CourseContext";
 
 interface Props {
   courseId: string;

@@ -23,8 +23,8 @@ import { PieChart } from "@mui/x-charts/PieChart";
 import {
   getCourseProgressSummary,
   type CourseProgressSummaryFilters,
-} from "../service/reports.service";
-import { useOptionalCourseContext } from "../../../context/CourseContext";
+} from "../../service/reports.service";
+import { useOptionalCourseContext } from "../../../../context/CourseContext";
 
 interface Props {
   courseId: string;

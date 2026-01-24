@@ -25,8 +25,8 @@ import {
   getCoursesList,
   type CoursesSummaryFilters,
   type CoursesListFilters,
-} from "../service/reports.service";
-import { useDebounce } from "../../../hooks/useDebounce";
+} from "../../service/reports.service";
+import { useDebounce } from "../../../../hooks/useDebounce";
 
 export default function CoursesSummarySection() {
   const [filters, setFilters] = useState<

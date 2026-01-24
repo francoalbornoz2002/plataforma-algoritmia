@@ -26,10 +26,7 @@ import { GetCourseMissionDetailReportDto } from '../dto/get-course-mission-detai
 import { GetCourseProgressSummaryDto } from '../dto/get-course-progress-summary.dto';
 import { dateToTime } from '../../helpers';
 import { estado_simple, grado_dificultad, Prisma } from '@prisma/client';
-import {
-  GetCourseDifficultiesReportDto,
-  AgrupacionDificultad,
-} from '../dto/get-course-difficulties-report.dto';
+import { GetCourseDifficultiesReportDto } from '../dto/get-course-difficulties-report.dto';
 
 const TOTAL_MISIONES = 10;
 
@@ -864,7 +861,7 @@ export class ReportesService {
     idCurso: string,
     dto: GetCourseDifficultiesReportDto,
   ) {
-    const { fechaCorte, agruparPor = AgrupacionDificultad.TODO } = dto;
+    const { fechaCorte } = dto;
 
     // 1. Obtener Total de Alumnos (Activos a la fecha)
     let totalAlumnos = 0;
@@ -935,59 +932,43 @@ export class ReportesService {
     const studentsWithHighGrade = new Set<string>();
     const highGradeDifficultiesCount = new Map<string, number>(); // IdDificultad -> Count (solo grado Alto)
 
-    const doTema =
-      agruparPor === AgrupacionDificultad.TODO ||
-      agruparPor === AgrupacionDificultad.TEMA;
-    const doDificultad =
-      agruparPor === AgrupacionDificultad.TODO ||
-      agruparPor === AgrupacionDificultad.DIFICULTAD;
-    const doGrado =
-      agruparPor === AgrupacionDificultad.TODO ||
-      agruparPor === AgrupacionDificultad.GRADO;
-
     activeDifficulties.forEach((d) => {
       // 1. Por Tema
-      if (doTema) {
-        const tema = d.dificultad.tema;
-        if (!byTopic.has(tema)) byTopic.set(tema, new Set());
-        byTopic.get(tema)!.add(d.idAlumno);
-      }
+      const tema = d.dificultad.tema;
+      if (!byTopic.has(tema)) byTopic.set(tema, new Set());
+      byTopic.get(tema)!.add(d.idAlumno);
 
       // 2. Por Dificultad
-      if (doDificultad) {
-        const difId = d.idDificultad;
-        if (!byDifficulty.has(difId)) byDifficulty.set(difId, new Set());
-        byDifficulty.get(difId)!.add(d.idAlumno);
+      const difId = d.idDificultad;
+      if (!byDifficulty.has(difId)) byDifficulty.set(difId, new Set());
+      byDifficulty.get(difId)!.add(d.idAlumno);
 
-        // 4. Detalle por Dificultad (Tabla)
-        if (!difficultyDetails.has(difId)) {
-          difficultyDetails.set(difId, {
-            id: difId,
-            nombre: d.dificultad.nombre,
-            tema: d.dificultad.tema,
-            total: 0,
-            grados: { Bajo: 0, Medio: 0, Alto: 0 },
-          });
-        }
-        const detail = difficultyDetails.get(difId)!;
-        detail.total++;
-        if (d.grado in detail.grados) detail.grados[d.grado]++;
+      // 4. Detalle por Dificultad (Tabla)
+      if (!difficultyDetails.has(difId)) {
+        difficultyDetails.set(difId, {
+          id: difId,
+          nombre: d.dificultad.nombre,
+          tema: d.dificultad.tema,
+          total: 0,
+          grados: { Bajo: 0, Medio: 0, Alto: 0 },
+        });
       }
+      const detail = difficultyDetails.get(difId)!;
+      detail.total++;
+      if (d.grado in detail.grados) detail.grados[d.grado]++;
 
       // 3. Por Grado
-      if (doGrado) {
-        if (d.grado in byGrade) {
-          byGrade[d.grado]++;
-        }
+      if (d.grado in byGrade) {
+        byGrade[d.grado]++;
+      }
 
-        // 5. Stats de Grado Alto
-        if (d.grado === grado_dificultad.Alto) {
-          studentsWithHighGrade.add(d.idAlumno);
-          highGradeDifficultiesCount.set(
-            d.idDificultad,
-            (highGradeDifficultiesCount.get(d.idDificultad) || 0) + 1,
-          );
-        }
+      // 5. Stats de Grado Alto
+      if (d.grado === grado_dificultad.Alto) {
+        studentsWithHighGrade.add(d.idAlumno);
+        highGradeDifficultiesCount.set(
+          d.idDificultad,
+          (highGradeDifficultiesCount.get(d.idDificultad) || 0) + 1,
+        );
       }
     });
 

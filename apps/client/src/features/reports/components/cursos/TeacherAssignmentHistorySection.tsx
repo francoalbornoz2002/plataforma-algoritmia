@@ -25,7 +25,7 @@ import {
   getCoursesList,
   TipoMovimientoAsignacion,
   type TeacherAssignmentHistoryFilters,
-} from "../service/reports.service";
+} from "../../service/reports.service";
 
 export default function TeacherAssignmentHistorySection() {
   const [type, setType] = useState<TipoMovimientoAsignacion>(
