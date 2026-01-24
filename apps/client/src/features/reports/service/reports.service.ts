@@ -96,6 +96,20 @@ export interface CourseMissionDetailReportFilters {
   fechaHasta?: string;
 }
 
+// --- Interfaces para Reportes de Dificultades ---
+
+export enum AgrupacionDificultad {
+  TEMA = "TEMA",
+  DIFICULTAD = "DIFICULTAD",
+  GRADO = "GRADO",
+  TODO = "TODO",
+}
+
+export interface CourseDifficultiesReportFilters {
+  fechaCorte?: string;
+  agruparPor?: AgrupacionDificultad;
+}
+
 // --- Endpoints Modulares de Usuarios ---
 
 export const getUsersSummary = async (params: UsersSummaryFilters) => {
@@ -239,6 +253,20 @@ export const getCourseMissionDetailReport = async (
     {
       params: cleanParams,
     },
+  );
+  return response.data;
+};
+
+export const getCourseDifficultiesReport = async (
+  courseId: string,
+  params: CourseDifficultiesReportFilters,
+) => {
+  const cleanParams = Object.fromEntries(
+    Object.entries(params).filter(([_, v]) => v !== ""),
+  );
+  const response = await apiClient.get(
+    `/reportes/cursos/${courseId}/dificultades/resumen`,
+    { params: cleanParams },
   );
   return response.data;
 };
