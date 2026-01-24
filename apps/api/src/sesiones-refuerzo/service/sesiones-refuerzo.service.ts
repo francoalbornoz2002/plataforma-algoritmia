@@ -17,6 +17,7 @@ import {
   grado_dificultad,
   Prisma,
   roles,
+  fuente_cambio_dificultad,
 } from '@prisma/client';
 import { getDiaSemanaEnum } from 'src/helpers';
 import { FindAllSesionesDto } from '../dto/find-all-sesiones.dto';
@@ -817,8 +818,12 @@ export class SesionesRefuerzoService {
             idAlumno,
             idCurso,
             idDificultad: sesion.idDificultad,
-            grado: nuevoGrado,
+            gradoAnterior: existingDifficulty
+              ? existingDifficulty.grado
+              : grado_dificultad.Ninguno,
+            gradoNuevo: nuevoGrado,
             fechaCambio: new Date(),
+            fuente: fuente_cambio_dificultad.SESION_REFUERZO,
           },
         });
 

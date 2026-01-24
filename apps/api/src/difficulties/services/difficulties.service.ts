@@ -8,7 +8,13 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { FindStudentDifficultiesDto } from '../dto/find-student-difficulties.dto';
-import { grado_dificultad, Prisma, roles, temas } from '@prisma/client';
+import {
+  grado_dificultad,
+  Prisma,
+  roles,
+  temas,
+  fuente_cambio_dificultad,
+} from '@prisma/client';
 import { SubmitDifficultyDto } from '../dto/submit-difficulty.dto';
 import { SesionesRefuerzoService } from '../../sesiones-refuerzo/service/sesiones-refuerzo.service';
 
@@ -431,8 +437,12 @@ export class DifficultiesService {
                 idAlumno: idAlumno,
                 idCurso: idCurso,
                 idDificultad: dto.idDificultad,
-                grado: dto.grado,
+                gradoAnterior: existing
+                  ? existing.grado
+                  : grado_dificultad.Ninguno,
+                gradoNuevo: dto.grado,
                 fechaCambio: fechaDto,
+                fuente: fuente_cambio_dificultad.VIDEOJUEGO,
               },
             });
           }
