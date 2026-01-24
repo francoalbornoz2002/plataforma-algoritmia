@@ -106,6 +106,17 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
       alto: item.grados.Alto,
     })) || [];
 
+  // Calcular el máximo valor para el eje X para que las barras sean proporcionales al total de alumnos
+  const maxBarValue = barChartData.reduce(
+    (acc: number, item: any) =>
+      Math.max(acc, item.bajo + item.medio + item.alto),
+    0,
+  );
+  const xMax =
+    data?.kpis?.totalAlumnos > 0
+      ? Math.max(data.kpis.totalAlumnos, maxBarValue)
+      : undefined;
+
   const showLoading = loading && !data;
 
   return (
@@ -245,15 +256,9 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
           </Grid>
 
           {/* Gráficos de Distribución */}
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", md: "2.5fr 1.6fr" },
-              gap: 3,
-            }}
-          >
+          <Grid container spacing={3}>
             {/* Izquierda: Por Dificultad (Más grande) */}
-            <Box sx={{ minWidth: 0 }}>
+            <Grid size={6}>
               <Paper
                 elevation={3}
                 sx={{
@@ -263,7 +268,6 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                   alignItems: "center",
                   justifyContent: "center",
                   height: "100%",
-                  minHeight: 450,
                 }}
               >
                 <Typography variant="subtitle1" gutterBottom>
@@ -288,16 +292,15 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                   }}
                 />
               </Paper>
-            </Box>
+            </Grid>
 
             {/* Derecha: Stack de Tema y Grado */}
-            <Box sx={{ minWidth: 0 }}>
-              <Stack spacing={3} sx={{ height: "100%" }}>
+            <Grid size={6}>
+              <Stack spacing={3}>
                 <Paper
                   elevation={3}
                   sx={{
                     p: 2,
-                    flex: 1,
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
@@ -330,7 +333,6 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                   elevation={3}
                   sx={{
                     p: 2,
-                    flex: 1,
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
@@ -360,8 +362,8 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                   />
                 </Paper>
               </Stack>
-            </Box>
-          </Box>
+            </Grid>
+          </Grid>
 
           {/* Gráfico Detallado (Barras Apiladas) */}
           <Paper elevation={3} sx={{ p: 2 }}>
@@ -375,8 +377,10 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                 yAxis={[
                   {
                     scaleType: "band",
+                    categoryGapRatio: 0.9,
                     dataKey: "nombre",
                     label: "Dificultad",
+                    width: 280,
                     tickLabelStyle: {
                       fontSize: 10,
                     },
@@ -384,10 +388,12 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                 ]}
                 xAxis={[
                   {
+                    label: "Cantidad de alumnos afectados",
+                    dataKey: "total",
+                    tickMinStep: 1,
+                    max: xMax,
                     valueFormatter: (value: number | null) =>
-                      value !== null && Number.isInteger(value)
-                        ? value.toString()
-                        : "",
+                      value !== null ? value.toString() : "",
                   },
                 ]}
                 series={[
@@ -411,7 +417,6 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                   },
                 ]}
                 height={500}
-                margin={{ left: 200, right: 20 }}
               />
             ) : (
               <Typography color="text.secondary" align="center" sx={{ py: 4 }}>

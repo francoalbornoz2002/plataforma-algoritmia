@@ -13,10 +13,12 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Autocomplete,
-  TextField,
-  Grid,
   CircularProgress,
+  type SelectChangeEvent,
+  Checkbox,
+  ListItemText,
+  OutlinedInput,
+  Grid,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
@@ -37,10 +39,22 @@ import {
   fuente_cambio_dificultad,
   grado_dificultad,
 } from "../../../../types";
+import { School, VideogameAsset } from "@mui/icons-material";
 
 interface Props {
   courseId: string;
 }
+
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
 
 export default function CourseDifficultiesHistory({ courseId }: Props) {
   // --- Estados de Filtros ---
@@ -54,8 +68,8 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
 
   // Estados para selectores múltiples (UI)
   const [selectedTemas, setSelectedTemas] = useState<temas[]>([]);
-  const [selectedDificultades, setSelectedDificultades] = useState<
-    { id: string; nombre: string }[]
+  const [selectedDificultadesIds, setSelectedDificultadesIds] = useState<
+    string[]
   >([]);
 
   // --- Estados de Datos ---
@@ -96,9 +110,9 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
     setFilters((prev) => ({
       ...prev,
       temas: selectedTemas.join(","),
-      dificultades: selectedDificultades.map((d) => d.id).join(","),
+      dificultades: selectedDificultadesIds.join(","),
     }));
-  }, [selectedTemas, selectedDificultades]);
+  }, [selectedTemas, selectedDificultadesIds]);
 
   // 3. Cargar Historial
   useEffect(() => {
@@ -145,14 +159,42 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
     }));
   };
 
+  const handleTemasChange = (
+    event: SelectChangeEvent<typeof selectedTemas>,
+  ) => {
+    const {
+      target: { value },
+    } = event;
+    setSelectedTemas(
+      typeof value === "string" ? (value.split(",") as temas[]) : value,
+    );
+  };
+
+  const handleDificultadesChange = (
+    event: SelectChangeEvent<typeof selectedDificultadesIds>,
+  ) => {
+    const {
+      target: { value },
+    } = event;
+    setSelectedDificultadesIds(
+      typeof value === "string" ? value.split(",") : value,
+    );
+  };
+
+  const handleClearFilters = () => {
+    setFilters({ ...filters, fechaDesde: "", fechaHasta: "", fuente: "" });
+    setSelectedTemas([]);
+    setSelectedDificultadesIds([]);
+  };
+
   // --- Columnas Tabla ---
   const columns: GridColDef[] = [
     {
       field: "fechaCambio",
       headerName: "Fecha",
-      width: 150,
+      width: 180,
       valueFormatter: (value: string) =>
-        value ? new Date(value).toLocaleString() : "-",
+        value ? format(new Date(value), "dd/MM/yyyy hh:mm a") : "-",
     },
     {
       field: "alumno",
@@ -254,26 +296,60 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
       {/* --- Filtros --- */}
       <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
         <Stack spacing={2}>
-          {/* Fila 1: Filtros Rápidos y Fuente */}
+          {/* Fila 1: Filtros Rápidos */}
+          <Box>
+            <Typography variant="subtitle2" gutterBottom>
+              Filtros Rápidos de Tiempo
+            </Typography>
+            <ButtonGroup variant="outlined" size="small">
+              <Button onClick={() => applyQuickFilter(3)}>3 Días</Button>
+              <Button onClick={() => applyQuickFilter(5)}>5 Días</Button>
+              <Button onClick={() => applyQuickFilter(7)}>1 Semana</Button>
+              <Button onClick={applyMonthFilter}>1 Mes</Button>
+            </ButtonGroup>
+          </Box>
+
+          <Divider />
+
+          {/* Fila 2: Fechas, Fuente, Temas y Dificultades */}
           <Stack
             direction={{ xs: "column", md: "row" }}
-            alignItems={{ xs: "flex-start", md: "center" }}
             spacing={2}
-            justifyContent="space-between"
+            alignItems="center"
+            flexWrap="wrap"
           >
-            <Box>
-              <Typography variant="subtitle2" gutterBottom>
-                Filtros Rápidos de Tiempo
-              </Typography>
-              <ButtonGroup variant="outlined" size="small">
-                <Button onClick={() => applyQuickFilter(3)}>3 Días</Button>
-                <Button onClick={() => applyQuickFilter(5)}>5 Días</Button>
-                <Button onClick={() => applyQuickFilter(7)}>1 Semana</Button>
-                <Button onClick={applyMonthFilter}>1 Mes</Button>
-              </ButtonGroup>
-            </Box>
+            <DatePicker
+              label="Fecha Desde"
+              value={
+                filters.fechaDesde
+                  ? new Date(filters.fechaDesde + "T00:00:00")
+                  : null
+              }
+              onChange={(val) =>
+                setFilters({
+                  ...filters,
+                  fechaDesde: val ? format(val, "yyyy-MM-dd") : "",
+                })
+              }
+              slotProps={{ textField: { size: "small", sx: { width: 170 } } }}
+            />
+            <DatePicker
+              label="Fecha Hasta"
+              value={
+                filters.fechaHasta
+                  ? new Date(filters.fechaHasta + "T00:00:00")
+                  : null
+              }
+              onChange={(val) =>
+                setFilters({
+                  ...filters,
+                  fechaHasta: val ? format(val, "yyyy-MM-dd") : "",
+                })
+              }
+              slotProps={{ textField: { size: "small", sx: { width: 170 } } }}
+            />
 
-            <FormControl size="small" sx={{ minWidth: 200 }}>
+            <FormControl size="small" sx={{ minWidth: 190 }}>
               <InputLabel>Fuente de Registro</InputLabel>
               <Select
                 value={filters.fuente}
@@ -294,79 +370,64 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
                 </MenuItem>
               </Select>
             </FormControl>
-          </Stack>
 
-          <Divider />
-
-          {/* Fila 2: Fechas, Temas y Dificultades */}
-          <Grid container spacing={2} alignItems="center">
-            <Grid sx={{ xs: 12, md: 3 }}>
-              <DatePicker
-                label="Fecha Desde"
-                value={
-                  filters.fechaDesde
-                    ? new Date(filters.fechaDesde + "T00:00:00")
-                    : null
-                }
-                onChange={(val) =>
-                  setFilters({
-                    ...filters,
-                    fechaDesde: val ? format(val, "yyyy-MM-dd") : "",
-                  })
-                }
-                slotProps={{ textField: { size: "small", fullWidth: true } }}
-              />
-            </Grid>
-            <Grid sx={{ xs: 12, md: 3 }}>
-              <DatePicker
-                label="Fecha Hasta"
-                value={
-                  filters.fechaHasta
-                    ? new Date(filters.fechaHasta + "T00:00:00")
-                    : null
-                }
-                onChange={(val) =>
-                  setFilters({
-                    ...filters,
-                    fechaHasta: val ? format(val, "yyyy-MM-dd") : "",
-                  })
-                }
-                slotProps={{ textField: { size: "small", fullWidth: true } }}
-              />
-            </Grid>
-            <Grid sx={{ xs: 12, md: 3 }}>
-              <Autocomplete
+            <FormControl size="small" sx={{ width: 250 }}>
+              <InputLabel id="temas-select-label">Filtrar por Temas</InputLabel>
+              <Select
+                labelId="temas-select-label"
                 multiple
-                options={Object.values(temas).filter((t) => t !== "Ninguno")}
                 value={selectedTemas}
-                onChange={(_, newValue) => setSelectedTemas(newValue)}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Filtrar por Temas"
-                    size="small"
-                  />
-                )}
-              />
-            </Grid>
-            <Grid sx={{ xs: 12, md: 3 }}>
-              <Autocomplete
+                onChange={handleTemasChange}
+                input={<OutlinedInput label="Filtrar por Temas" />}
+                renderValue={(selected) => selected.join(", ")}
+                MenuProps={MenuProps}
+              >
+                {Object.values(temas)
+                  .filter((t) => t !== "Ninguno")
+                  .map((t) => (
+                    <MenuItem key={t} value={t}>
+                      <Checkbox checked={selectedTemas.indexOf(t) > -1} />
+                      <ListItemText primary={t} />
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={{ width: 300 }}>
+              <InputLabel id="dificultades-select-label">
+                Filtrar por Dificultades
+              </InputLabel>
+              <Select
+                labelId="dificultades-select-label"
                 multiple
-                options={availableDifficulties}
-                getOptionLabel={(option) => option.nombre}
-                value={selectedDificultades}
-                onChange={(_, newValue) => setSelectedDificultades(newValue)}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Filtrar por Dificultades"
-                    size="small"
-                  />
-                )}
-                isOptionEqualToValue={(option, value) => option.id === value.id}
-              />
-            </Grid>
-          </Grid>
+                value={selectedDificultadesIds}
+                onChange={handleDificultadesChange}
+                input={<OutlinedInput label="Filtrar por Dificultades" />}
+                renderValue={(selected) => {
+                  const names = selected.map(
+                    (id) =>
+                      availableDifficulties.find((d) => d.id === id)?.nombre ||
+                      id,
+                  );
+                  return names.join(", ");
+                }}
+                MenuProps={MenuProps}
+              >
+                {availableDifficulties.map((d) => (
+                  <MenuItem key={d.id} value={d.id}>
+                    <Checkbox
+                      checked={selectedDificultadesIds.indexOf(d.id) > -1}
+                    />
+                    <ListItemText primary={d.nombre} />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <Button variant="text" onClick={handleClearFilters}>
+              Limpiar
+            </Button>
+          </Stack>
         </Stack>
       </Paper>
 
@@ -396,175 +457,181 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
       )}
 
       {data && (
-        <Stack spacing={3}>
-          {/* --- Sección Superior: KPI y Gráfico --- */}
-          <Grid container spacing={3}>
-            {/* KPI: Fuente de Mejora */}
-            <Grid sx={{ xs: 12, md: 4 }}>
-              <Paper
-                elevation={3}
-                sx={{
-                  p: 3,
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  bgcolor: "primary.50",
-                }}
-              >
-                <Typography variant="h6" gutterBottom color="primary.main">
-                  Fuente de Mejora
-                </Typography>
-                <Typography variant="body2" color="text.secondary" paragraph>
-                  Porcentaje de registros donde el alumno disminuyó su grado de
-                  dificultad (mejoró).
-                </Typography>
+        <Grid container spacing={3}>
+          {/* --- Sección Superior: Fuente de Mejora (Barras y Tabla) --- */}
+          <Grid size={6}>
+            <Paper
+              elevation={3}
+              sx={{
+                p: 3,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                bgcolor: "primary.50",
+                height: "100%",
+              }}
+            >
+              <Typography variant="h6" gutterBottom color="primary.main">
+                Fuente de Mejora
+              </Typography>
+              <Typography variant="body2" color="text.secondary" paragraph>
+                Porcentaje de registros donde el alumno disminuyó su grado de
+                dificultad (mejoró).
+              </Typography>
 
-                <Stack spacing={2}>
-                  <Box>
-                    <Stack
-                      direction="row"
-                      justifyContent="space-between"
-                      alignItems="center"
-                    >
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <VideogameAssetIcon color="primary" />
-                        <Typography variant="subtitle2">Videojuego</Typography>
-                      </Stack>
-                      <Typography variant="h6" fontWeight="bold">
-                        {data.stats.porcentajeVideojuego.toFixed(1)}%
-                      </Typography>
-                    </Stack>
-                    <Box
-                      sx={{
-                        width: "100%",
-                        height: 8,
-                        bgcolor: "grey.300",
-                        borderRadius: 1,
-                        mt: 0.5,
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          width: `${data.stats.porcentajeVideojuego}%`,
-                          height: "100%",
-                          bgcolor: "primary.main",
-                          borderRadius: 1,
-                        }}
-                      />
-                    </Box>
-                  </Box>
-
-                  <Box>
-                    <Stack
-                      direction="row"
-                      justifyContent="space-between"
-                      alignItems="center"
-                    >
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <SchoolIcon color="secondary" />
-                        <Typography variant="subtitle2">Sesiones</Typography>
-                      </Stack>
-                      <Typography variant="h6" fontWeight="bold">
-                        {data.stats.porcentajeSesion.toFixed(1)}%
-                      </Typography>
-                    </Stack>
-                    <Box
-                      sx={{
-                        width: "100%",
-                        height: 8,
-                        bgcolor: "grey.300",
-                        borderRadius: 1,
-                        mt: 0.5,
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          width: `${data.stats.porcentajeSesion}%`,
-                          height: "100%",
-                          bgcolor: "secondary.main",
-                          borderRadius: 1,
-                        }}
-                      />
-                    </Box>
-                  </Box>
-
-                  <Typography variant="caption" align="center" sx={{ mt: 2 }}>
-                    Total de mejoras registradas:{" "}
-                    <strong>{data.stats.totalMejoras}</strong>
-                  </Typography>
-                </Stack>
-              </Paper>
-            </Grid>
-
-            {/* Gráfico de Línea */}
-            <Grid sx={{ xs: 12, md: 8 }}>
-              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-                <Typography variant="h6" gutterBottom>
-                  Evolución de Registros
-                </Typography>
-                {data.timeline.length > 0 ? (
-                  <LineChart
-                    xAxis={[
-                      {
-                        scaleType: "point",
-                        data: data.timeline.map((t: any) => t.fecha),
-                        label: "Fecha",
-                        valueFormatter: (date) =>
-                          new Date(date).toLocaleDateString(),
-                      },
-                    ]}
-                    series={[
-                      {
-                        data: data.timeline.map((t: any) => t.videojuego),
-                        label: "Videojuego",
-                        color: "#1976d2",
-                        showMark: false,
-                      },
-                      {
-                        data: data.timeline.map((t: any) => t.sesion_refuerzo),
-                        label: "Sesiones",
-                        color: "#9c27b0",
-                        showMark: false,
-                      },
-                    ]}
-                    height={300}
-                    margin={{ left: 40, right: 40, top: 20, bottom: 30 }}
-                  />
-                ) : (
-                  <Box
-                    display="flex"
-                    justifyContent="center"
+              <Stack spacing={2}>
+                <Box>
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
                     alignItems="center"
-                    height={250}
                   >
-                    <Typography color="text.secondary">
-                      No hay datos para el periodo seleccionado.
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <VideogameAssetIcon color="primary" />
+                      <Typography variant="subtitle2">Videojuego</Typography>
+                    </Stack>
+                    <Typography variant="h6" fontWeight="bold">
+                      {data.stats.porcentajeVideojuego.toFixed(1)}%
                     </Typography>
+                  </Stack>
+                  <Box
+                    sx={{
+                      width: "100%",
+                      height: 8,
+                      bgcolor: "grey.300",
+                      borderRadius: 1,
+                      mt: 0.5,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: `${data.stats.porcentajeVideojuego}%`,
+                        height: "100%",
+                        bgcolor: "primary.main",
+                        borderRadius: 1,
+                      }}
+                    />
                   </Box>
-                )}
-              </Paper>
-            </Grid>
+                </Box>
+
+                <Box>
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                  >
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <SchoolIcon color="secondary" />
+                      <Typography variant="subtitle2">Sesiones</Typography>
+                    </Stack>
+                    <Typography variant="h6" fontWeight="bold">
+                      {data.stats.porcentajeSesion.toFixed(1)}%
+                    </Typography>
+                  </Stack>
+                  <Box
+                    sx={{
+                      width: "100%",
+                      height: 8,
+                      bgcolor: "grey.300",
+                      borderRadius: 1,
+                      mt: 0.5,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: `${data.stats.porcentajeSesion}%`,
+                        height: "100%",
+                        bgcolor: "secondary.main",
+                        borderRadius: 1,
+                      }}
+                    />
+                  </Box>
+                </Box>
+
+                <Typography variant="caption" align="center" sx={{ mt: 2 }}>
+                  Total de mejoras registradas:{" "}
+                  <strong>{data.stats.totalMejoras}</strong>
+                </Typography>
+
+                <Box sx={{ height: 400, width: "100%", mt: 2 }}>
+                  <DataGrid
+                    rows={data.tabla}
+                    columns={columns}
+                    getRowId={(row) => row.id}
+                    density="compact"
+                    disableRowSelectionOnClick
+                    initialState={{
+                      pagination: { paginationModel: { pageSize: 5 } },
+                      sorting: {
+                        sortModel: [{ field: "fechaCambio", sort: "desc" }],
+                      },
+                    }}
+                    pageSizeOptions={[5, 10, 25]}
+                    sx={{
+                      "& .MuiDataGrid-cell": {
+                        fontSize: "0.75rem",
+                      },
+                      "& .MuiDataGrid-columnHeader": {
+                        fontSize: "0.75rem",
+                      },
+                    }}
+                  />
+                </Box>
+              </Stack>
+            </Paper>
           </Grid>
 
-          {/* --- Tabla Detalle --- */}
-          <Paper elevation={3} sx={{ height: 500, width: "100%" }}>
-            <DataGrid
-              rows={data.tabla}
-              columns={columns}
-              getRowId={(row) => row.id}
-              density="compact"
-              disableRowSelectionOnClick
-              initialState={{
-                pagination: { paginationModel: { pageSize: 10 } },
-                sorting: {
-                  sortModel: [{ field: "fechaCambio", sort: "desc" }],
-                },
-              }}
-              pageSizeOptions={[10, 25, 50]}
-            />
-          </Paper>
-        </Stack>
+          {/* --- Gráfico de Línea --- */}
+          <Grid size={6}>
+            <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
+              <Typography variant="h6" gutterBottom>
+                Evolución de Registros
+              </Typography>
+              {data.timeline.length > 0 ? (
+                <LineChart
+                  xAxis={[
+                    {
+                      scaleType: "point",
+                      data: data.timeline.map((t: any) => t.fecha),
+                      label: "Fecha",
+                      valueFormatter: (date) => {
+                        const [y, m, d] = date.split("-");
+                        return `${d}/${m}/${y}`;
+                      },
+                    },
+                  ]}
+                  series={[
+                    {
+                      data: data.timeline.map((t: any) => t.videojuego),
+                      label: "Videojuego",
+                      color: "#1976d2",
+                      curve: "linear",
+                    },
+                    {
+                      data: data.timeline.map((t: any) => t.sesion_refuerzo),
+                      label: "Sesiones",
+                      color: "#9c27b0",
+                      curve: "linear",
+                    },
+                  ]}
+                  height={350}
+                  margin={{ left: 30, right: 30, top: 30, bottom: 30 }}
+                />
+              ) : (
+                <Box
+                  display="flex"
+                  justifyContent="center"
+                  alignItems="center"
+                  height={250}
+                >
+                  <Typography color="text.secondary">
+                    No hay datos para el periodo seleccionado.
+                  </Typography>
+                </Box>
+              )}
+            </Paper>
+          </Grid>
+        </Grid>
       )}
     </Paper>
   );
