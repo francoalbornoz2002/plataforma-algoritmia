@@ -997,8 +997,8 @@ export class ReportesService {
       { label: 'Alto', value: byGrade.Alto, color: '#f44336' },
     ];
 
-    // Tabla Detalle
-    const tablaDetalle = Array.from(difficultyDetails.values());
+    // Distribución de Grados (Datos para el gráfico)
+    const distribucionGrados = Array.from(difficultyDetails.values());
 
     // KPIs
     const totalActiveDifficulties = activeDifficulties.length;
@@ -1047,7 +1047,7 @@ export class ReportesService {
         porDificultad: graficoDificultades,
         porGrado: graficoGrados,
       },
-      tabla: tablaDetalle,
+      distribucionGrados,
       kpis: {
         totalAlumnos,
         promDificultades,

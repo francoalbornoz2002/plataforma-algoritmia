@@ -15,7 +15,6 @@ import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableOnIcon from "@mui/icons-material/TableChart";
 import { PieChart } from "@mui/x-charts/PieChart";
 import { BarChart } from "@mui/x-charts/BarChart";
-import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import {
   getCourseDifficultiesReport,
   type CourseDifficultiesReportFilters,
@@ -61,45 +60,9 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
     setFilters({ ...filters, fechaCorte: "" });
   };
 
-  const columns: GridColDef[] = [
-    { field: "nombre", headerName: "Dificultad", flex: 1, minWidth: 150 },
-    { field: "tema", headerName: "Tema", width: 120 },
-    {
-      field: "total",
-      headerName: "Alumnos Afectados",
-      width: 150,
-      align: "center",
-      headerAlign: "center",
-    },
-    {
-      field: "gradoAlto",
-      headerName: "Grado Alto",
-      width: 100,
-      align: "center",
-      headerAlign: "center",
-      valueGetter: (params, row) => row.grados?.Alto || 0,
-    },
-    {
-      field: "gradoMedio",
-      headerName: "Grado Medio",
-      width: 100,
-      align: "center",
-      headerAlign: "center",
-      valueGetter: (params, row) => row.grados?.Medio || 0,
-    },
-    {
-      field: "gradoBajo",
-      headerName: "Grado Bajo",
-      width: 100,
-      align: "center",
-      headerAlign: "center",
-      valueGetter: (params, row) => row.grados?.Bajo || 0,
-    },
-  ];
-
   // Preparar datos para el gráfico de barras apiladas
   const barChartData =
-    data?.tabla?.map((item: any) => ({
+    data?.distribucionGrados?.map((item: any) => ({
       nombre: item.nombre,
       bajo: item.grados.Bajo,
       medio: item.grados.Medio,
@@ -124,7 +87,8 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
       <Typography
         variant="h5"
         gutterBottom
-        sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}
+        color="primary.main"
+        sx={{ mb: 2, fontWeight: "bold" }}
       >
         Resumen de Dificultades del Curso
       </Typography>
@@ -270,8 +234,12 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                   height: "100%",
                 }}
               >
-                <Typography variant="subtitle1" gutterBottom>
-                  Por Dificultad
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  gutterBottom
+                >
+                  Cantidad de alumnos afectados de cada Dificultad
                 </Typography>
                 <PieChart
                   series={[
@@ -307,8 +275,12 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                     justifyContent: "center",
                   }}
                 >
-                  <Typography variant="subtitle1" gutterBottom>
-                    Por Tema
+                  <Typography
+                    variant="subtitle2"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    Cantidad de alumnos con dificultades activas por tema
                   </Typography>
                   <PieChart
                     series={[
@@ -339,8 +311,12 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                     justifyContent: "center",
                   }}
                 >
-                  <Typography variant="subtitle1" gutterBottom>
-                    Por Grado
+                  <Typography
+                    variant="subtitle2"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    Cantidad de alumnos con dificultades activas por Grado
                   </Typography>
                   <PieChart
                     series={[
@@ -423,16 +399,6 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                 No hay datos suficientes para mostrar el gráfico.
               </Typography>
             )}
-          </Paper>
-
-          {/* Tabla Detalle */}
-          <Paper elevation={3} sx={{ height: 400, width: "100%" }}>
-            <DataGrid
-              rows={data.tabla}
-              columns={columns}
-              density="compact"
-              disableRowSelectionOnClick
-            />
           </Paper>
         </Stack>
       )}
