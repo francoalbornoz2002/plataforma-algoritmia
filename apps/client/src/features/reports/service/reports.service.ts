@@ -115,6 +115,11 @@ export interface CourseDifficultiesHistoryFilters {
   fechaHasta?: string;
 }
 
+export interface StudentDifficultiesReportFilters
+  extends CourseDifficultiesHistoryFilters {
+  studentId: string;
+}
+
 // --- Endpoints Modulares de Usuarios ---
 
 export const getUsersSummary = async (params: UsersSummaryFilters) => {
@@ -285,6 +290,20 @@ export const getCourseDifficultiesHistory = async (
   );
   const response = await apiClient.get(
     `/reportes/cursos/${courseId}/dificultades/historial`,
+    { params: cleanParams },
+  );
+  return response.data;
+};
+
+export const getStudentDifficultiesReport = async (
+  courseId: string,
+  params: StudentDifficultiesReportFilters,
+) => {
+  const cleanParams = Object.fromEntries(
+    Object.entries(params).filter(([_, v]) => v !== ""),
+  );
+  const response = await apiClient.get(
+    `/reportes/cursos/${courseId}/dificultades/alumno`,
     { params: cleanParams },
   );
   return response.data;

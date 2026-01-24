@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Box, Tab, Tabs } from "@mui/material";
 import CourseDifficultiesSummary from "./CourseDifficultiesSummary";
 import CourseDifficultiesHistory from "./CourseDifficultiesHistory";
-import { Assessment, History } from "@mui/icons-material";
+import StudentDifficultiesReport from "./StudentDifficultiesReport";
+import { Assessment, History, Person } from "@mui/icons-material";
 
 interface Props {
   courseId: string;
@@ -34,10 +35,12 @@ export default function DifficultiesReportTab({ courseId }: Props) {
             iconPosition="start"
             label="Historial de Cambios"
           />
+          <Tab icon={<Person />} iconPosition="start" label="Por Alumno" />
         </Tabs>
       </Box>
       {tabIndex === 0 && <CourseDifficultiesSummary courseId={courseId} />}
       {tabIndex === 1 && <CourseDifficultiesHistory courseId={courseId} />}
+      {tabIndex === 2 && <StudentDifficultiesReport courseId={courseId} />}
     </Box>
   );
 }

@@ -302,10 +302,14 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
               Filtros Rápidos de Tiempo
             </Typography>
             <ButtonGroup variant="outlined" size="small">
-              <Button onClick={() => applyQuickFilter(3)}>3 Días</Button>
-              <Button onClick={() => applyQuickFilter(5)}>5 Días</Button>
-              <Button onClick={() => applyQuickFilter(7)}>1 Semana</Button>
-              <Button onClick={applyMonthFilter}>1 Mes</Button>
+              <Button onClick={() => applyQuickFilter(3)}>
+                Últimos 3 Días
+              </Button>
+              <Button onClick={() => applyQuickFilter(5)}>
+                Últimos 5 Días
+              </Button>
+              <Button onClick={() => applyQuickFilter(7)}>Última Semana</Button>
+              <Button onClick={applyMonthFilter}>Último Mes</Button>
             </ButtonGroup>
           </Box>
 
