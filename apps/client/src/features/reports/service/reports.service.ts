@@ -98,16 +98,8 @@ export interface CourseMissionDetailReportFilters {
 
 // --- Interfaces para Reportes de Dificultades ---
 
-export enum AgrupacionDificultad {
-  TEMA = "TEMA",
-  DIFICULTAD = "DIFICULTAD",
-  GRADO = "GRADO",
-  TODO = "TODO",
-}
-
 export interface CourseDifficultiesReportFilters {
   fechaCorte?: string;
-  agruparPor?: AgrupacionDificultad;
 }
 
 // --- Endpoints Modulares de Usuarios ---

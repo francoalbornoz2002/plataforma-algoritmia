@@ -6,8 +6,9 @@ import WarningIcon from "@mui/icons-material/Warning";
 import QuestionAnswerIcon from "@mui/icons-material/QuestionAnswer";
 import ClassIcon from "@mui/icons-material/Class";
 import SchoolIcon from "@mui/icons-material/School";
-import ProgressReportTab from "../components/ProgressReportTab";
+import ProgressReportTab from "../components/progreso/ProgressReportTab";
 import { useOptionalCourseContext } from "../../../context/CourseContext";
+import DifficultiesReportTab from "../components/dificultades/DifficultiesReportTab";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -94,9 +95,7 @@ export default function CourseReportsPage() {
         <ProgressReportTab courseId={courseId} />
       </CustomTabPanel>
       <CustomTabPanel value={value} index={1}>
-        <Typography sx={{ p: 2 }}>
-          Próximamente: Reporte de Dificultades
-        </Typography>
+        <DifficultiesReportTab courseId={courseId} />
       </CustomTabPanel>
       {/* Resto de pestañas placeholder */}
     </Box>
