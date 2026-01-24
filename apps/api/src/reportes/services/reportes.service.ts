@@ -27,6 +27,8 @@ import { GetCourseProgressSummaryDto } from '../dto/get-course-progress-summary.
 import { dateToTime } from '../../helpers';
 import { estado_simple, grado_dificultad, Prisma } from '@prisma/client';
 import { GetCourseDifficultiesReportDto } from '../dto/get-course-difficulties-report.dto';
+import { GetCourseDifficultiesHistoryDto } from '../dto/get-course-difficulties-history.dto';
+import { temas, fuente_cambio_dificultad } from '@prisma/client';
 
 const TOTAL_MISIONES = 10;
 
@@ -898,7 +900,7 @@ export class ReportesService {
         stateMap.set(key, {
           idAlumno: h.idAlumno,
           idDificultad: h.idDificultad,
-          grado: h.grado,
+          grado: h.gradoNuevo, // Leemos 'gradoNuevo' del historial, pero lo guardamos como 'grado' para la lógica siguiente
           dificultad: h.dificultad,
         });
       });
@@ -1064,5 +1066,122 @@ export class ReportesService {
         },
       },
     };
+  }
+
+  async getCourseDifficultiesHistory(
+    idCurso: string,
+    dto: GetCourseDifficultiesHistoryDto,
+  ) {
+    const {
+      temas: temasStr,
+      dificultades,
+      fuente,
+      fechaDesde,
+      fechaHasta,
+    } = dto;
+
+    // 1. Configurar rango de fechas
+    const start = fechaDesde ? new Date(fechaDesde) : new Date(0);
+    if (fechaDesde) start.setUTCHours(0, 0, 0, 0);
+    const end = fechaHasta ? new Date(fechaHasta) : new Date();
+    end.setUTCHours(23, 59, 59, 999);
+
+    // 2. Construir filtro WHERE
+    const where: Prisma.HistorialDificultadAlumnoWhereInput = {
+      idCurso,
+      fechaCambio: { gte: start, lte: end },
+    };
+
+    if (fuente) {
+      where.fuente = fuente;
+    }
+
+    if (dificultades) {
+      const ids = dificultades.split(',').filter(Boolean);
+      if (ids.length > 0) where.idDificultad = { in: ids };
+    }
+
+    if (temasStr) {
+      const temasList = temasStr.split(',').filter(Boolean) as temas[];
+      if (temasList.length > 0) {
+        where.dificultad = { tema: { in: temasList } };
+      }
+    }
+
+    // 3. Consultar Historial
+    const history = await this.prisma.historialDificultadAlumno.findMany({
+      where,
+      include: {
+        alumno: { select: { nombre: true, apellido: true } },
+        dificultad: { select: { nombre: true, tema: true } },
+      },
+      orderBy: { fechaCambio: 'desc' },
+    });
+
+    // 4. Procesar Datos
+
+    // A) Línea de Tiempo (Agrupado por día y fuente)
+    const timelineMap = new Map<
+      string,
+      { videojuego: number; sesion_refuerzo: number }
+    >();
+
+    // B) Estadísticas de Mejora
+    let totalMejoras = 0;
+    let mejorasVideojuego = 0;
+    let mejorasSesion = 0;
+
+    // Pesos para comparar grados: Alto(3) > Medio(2) > Bajo(1) > Ninguno(0)
+    const gradeWeight: Record<string, number> = {
+      [grado_dificultad.Ninguno]: 0,
+      [grado_dificultad.Bajo]: 1,
+      [grado_dificultad.Medio]: 2,
+      [grado_dificultad.Alto]: 3,
+    };
+
+    history.forEach((h) => {
+      // Timeline
+      const dateKey = h.fechaCambio.toISOString().split('T')[0];
+      if (!timelineMap.has(dateKey)) {
+        timelineMap.set(dateKey, { videojuego: 0, sesion_refuerzo: 0 });
+      }
+      const entry = timelineMap.get(dateKey)!;
+
+      if (h.fuente === fuente_cambio_dificultad.VIDEOJUEGO) entry.videojuego++;
+      else if (h.fuente === fuente_cambio_dificultad.SESION_REFUERZO)
+        entry.sesion_refuerzo++;
+
+      // Stats: Mejora si el grado anterior era "mayor" (más difícil) que el nuevo
+      const wOld = gradeWeight[h.gradoAnterior] || 0;
+      const wNew = gradeWeight[h.gradoNuevo] || 0; // Usamos gradoNuevo
+
+      if (wOld > wNew) {
+        totalMejoras++;
+        if (h.fuente === fuente_cambio_dificultad.VIDEOJUEGO)
+          mejorasVideojuego++;
+        else if (h.fuente === fuente_cambio_dificultad.SESION_REFUERZO)
+          mejorasSesion++;
+      }
+    });
+
+    const timeline = Array.from(timelineMap.entries())
+      .map(([fecha, counts]) => ({
+        fecha,
+        videojuego: counts.videojuego,
+        sesion_refuerzo: counts.sesion_refuerzo,
+      }))
+      .sort(
+        (a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime(),
+      );
+
+    const stats = {
+      totalMejoras,
+      porcentajeVideojuego:
+        totalMejoras > 0 ? (mejorasVideojuego / totalMejoras) * 100 : 0,
+      porcentajeSesion:
+        totalMejoras > 0 ? (mejorasSesion / totalMejoras) * 100 : 0,
+    };
+
+    return { timeline, stats, tabla: history };
   }
 }
