@@ -19,7 +19,7 @@ import ReplayIcon from "@mui/icons-material/Replay";
 import PercentIcon from "@mui/icons-material/Percent";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import GroupIcon from "@mui/icons-material/Group";
-import { PieChart } from "@mui/x-charts/PieChart";
+import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 import {
   getCourseProgressSummary,
   type CourseProgressSummaryFilters,
@@ -254,31 +254,26 @@ export default function CourseProgressSummary({ courseId }: Props) {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
+                justifyContent: "center",
               }}
             >
               <Typography variant="h6" gutterBottom>
-                Estado Global
+                Gráfico de progreso global
               </Typography>
-              <PieChart
-                series={[
-                  {
-                    data: data.grafico,
-                    highlightScope: { fade: "global", highlight: "item" },
-                    faded: {
-                      innerRadius: 30,
-                      additionalRadius: -30,
-                      color: "gray",
-                    },
+              <Gauge
+                value={data.resumen.progresoTotal}
+                cornerRadius="50%"
+                sx={{
+                  [`& .${gaugeClasses.valueText}`]: {
+                    fontSize: 35,
+                    fontWeight: "bold",
                   },
-                ]}
-                height={250}
-                width={400}
-                slotProps={{
-                  legend: {
-                    direction: "horizontal",
-                    position: { vertical: "bottom", horizontal: "center" },
+                  [`& .${gaugeClasses.valueArc}`]: {
+                    fill: "#4caf50",
                   },
                 }}
+                text={({ value }) => `${value?.toFixed(1)}%`}
+                height={250}
               />
             </Paper>
           </Box>

@@ -25,7 +25,7 @@ import { getMyProgress } from "../../users/services/alumnos.service";
 // 2. Tipos
 import type { ProgresoAlumno } from "../../../types";
 import MissionCard from "../components/MissionCard";
-import { PieChart } from "@mui/x-charts/PieChart";
+import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 
 export default function MyProgressPage() {
   // --- 1. CONTEXTO ---
@@ -71,22 +71,6 @@ export default function MyProgressPage() {
         addSuffix: false,
       })}`
     : "Nunca";
-
-  // Datos para el gráfico
-  const pieChartData = progress
-    ? [
-        {
-          label: "Completado",
-          value: progress.pctMisionesCompletadas,
-          color: "#4caf50",
-        },
-        {
-          label: "Restante",
-          value: 100 - progress.pctMisionesCompletadas,
-          color: "#e0e0e0",
-        },
-      ]
-    : [];
 
   return (
     <Box>
@@ -231,31 +215,26 @@ export default function MyProgressPage() {
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
                 <Typography variant="h6" gutterBottom>
-                  Estado Global
+                  Gráfico de mi progreso
                 </Typography>
-                <PieChart
-                  series={[
-                    {
-                      data: pieChartData,
-                      highlightScope: { fade: "global", highlight: "item" },
-                      faded: {
-                        innerRadius: 30,
-                        additionalRadius: -30,
-                        color: "gray",
-                      },
+                <Gauge
+                  value={progress.pctMisionesCompletadas}
+                  cornerRadius="50%"
+                  sx={{
+                    [`& .${gaugeClasses.valueText}`]: {
+                      fontSize: 35,
+                      fontWeight: "bold",
                     },
-                  ]}
-                  height={250}
-                  width={400}
-                  slotProps={{
-                    legend: {
-                      direction: "horizontal",
-                      position: { vertical: "bottom", horizontal: "center" },
+                    [`& .${gaugeClasses.valueArc}`]: {
+                      fill: "#4caf50",
                     },
                   }}
+                  text={({ value }) => `${value?.toFixed(1)}%`}
+                  height={250}
                 />
               </Paper>
             </Box>
