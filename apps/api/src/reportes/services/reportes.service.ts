@@ -25,7 +25,11 @@ import { GetCourseMissionsReportDto } from '../dto/get-course-missions-report.dt
 import { GetCourseMissionDetailReportDto } from '../dto/get-course-mission-detail-report.dto';
 import { GetCourseProgressSummaryDto } from '../dto/get-course-progress-summary.dto';
 import { dateToTime } from '../../helpers';
-import { estado_simple, Prisma } from '@prisma/client';
+import { estado_simple, grado_dificultad, Prisma } from '@prisma/client';
+import {
+  GetCourseDifficultiesReportDto,
+  AgrupacionDificultad,
+} from '../dto/get-course-difficulties-report.dto';
 
 const TOTAL_MISIONES = 10;
 
@@ -853,6 +857,231 @@ export class ReportesService {
           totalCompletions > 0 ? totalIntentos / totalCompletions : 0,
       },
       tabla: tableData,
+    };
+  }
+
+  async getCourseDifficultiesReport(
+    idCurso: string,
+    dto: GetCourseDifficultiesReportDto,
+  ) {
+    const { fechaCorte, agruparPor = AgrupacionDificultad.TODO } = dto;
+
+    // 1. Obtener Total de Alumnos (Activos a la fecha)
+    let totalAlumnos = 0;
+    let rawDifficulties: any[] = [];
+
+    if (fechaCorte) {
+      const end = new Date(fechaCorte);
+      end.setUTCHours(23, 59, 59, 999);
+
+      // A. Alumnos activos a la fecha de corte
+      totalAlumnos = await this.prisma.alumnoCurso.count({
+        where: {
+          idCurso: idCurso,
+          fechaInscripcion: { lte: end },
+          OR: [{ fechaBaja: null }, { fechaBaja: { gt: end } }],
+        },
+      });
+
+      // B. Reconstruir estado de dificultades desde el historial
+      const history = await this.prisma.historialDificultadAlumno.findMany({
+        where: {
+          idCurso: idCurso,
+          fechaCambio: { lte: end },
+        },
+        orderBy: { fechaCambio: 'asc' }, // Procesamos en orden cronológico
+        include: { dificultad: true },
+      });
+
+      // Mapa para guardar el último estado: "idAlumno-idDificultad" -> Registro
+      const stateMap = new Map<string, any>();
+
+      history.forEach((h) => {
+        const key = `${h.idAlumno}-${h.idDificultad}`;
+        stateMap.set(key, {
+          idAlumno: h.idAlumno,
+          idDificultad: h.idDificultad,
+          grado: h.grado,
+          dificultad: h.dificultad,
+        });
+      });
+
+      rawDifficulties = Array.from(stateMap.values());
+    } else {
+      // MODO ACTUAL
+      totalAlumnos = await this.prisma.alumnoCurso.count({
+        where: { idCurso: idCurso, estado: estado_simple.Activo },
+      });
+
+      rawDifficulties = await this.prisma.dificultadAlumno.findMany({
+        where: { idCurso: idCurso },
+        include: { dificultad: true },
+      });
+    }
+
+    // Filtramos las que tengan grado 'Ninguno' si consideramos que eso significa "sin dificultad"
+    // Opcional: Depende de tu lógica de negocio. Asumiremos que 'Ninguno' no cuenta como dificultad activa.
+    const activeDifficulties = rawDifficulties.filter(
+      (d) => d.grado !== grado_dificultad.Ninguno,
+    );
+
+    // --- PROCESAMIENTO DE DATOS ---
+
+    // Estructuras auxiliares
+    const byTopic = new Map<string, Set<string>>(); // Tema -> Set(idAlumnos)
+    const byDifficulty = new Map<string, Set<string>>(); // IdDificultad -> Set(idAlumnos)
+    const byGrade = { Bajo: 0, Medio: 0, Alto: 0 };
+    const difficultyDetails = new Map<string, any>(); // IdDificultad -> Stats
+    const studentsWithHighGrade = new Set<string>();
+    const highGradeDifficultiesCount = new Map<string, number>(); // IdDificultad -> Count (solo grado Alto)
+
+    const doTema =
+      agruparPor === AgrupacionDificultad.TODO ||
+      agruparPor === AgrupacionDificultad.TEMA;
+    const doDificultad =
+      agruparPor === AgrupacionDificultad.TODO ||
+      agruparPor === AgrupacionDificultad.DIFICULTAD;
+    const doGrado =
+      agruparPor === AgrupacionDificultad.TODO ||
+      agruparPor === AgrupacionDificultad.GRADO;
+
+    activeDifficulties.forEach((d) => {
+      // 1. Por Tema
+      if (doTema) {
+        const tema = d.dificultad.tema;
+        if (!byTopic.has(tema)) byTopic.set(tema, new Set());
+        byTopic.get(tema)!.add(d.idAlumno);
+      }
+
+      // 2. Por Dificultad
+      if (doDificultad) {
+        const difId = d.idDificultad;
+        if (!byDifficulty.has(difId)) byDifficulty.set(difId, new Set());
+        byDifficulty.get(difId)!.add(d.idAlumno);
+
+        // 4. Detalle por Dificultad (Tabla)
+        if (!difficultyDetails.has(difId)) {
+          difficultyDetails.set(difId, {
+            id: difId,
+            nombre: d.dificultad.nombre,
+            tema: d.dificultad.tema,
+            total: 0,
+            grados: { Bajo: 0, Medio: 0, Alto: 0 },
+          });
+        }
+        const detail = difficultyDetails.get(difId)!;
+        detail.total++;
+        if (d.grado in detail.grados) detail.grados[d.grado]++;
+      }
+
+      // 3. Por Grado
+      if (doGrado) {
+        if (d.grado in byGrade) {
+          byGrade[d.grado]++;
+        }
+
+        // 5. Stats de Grado Alto
+        if (d.grado === grado_dificultad.Alto) {
+          studentsWithHighGrade.add(d.idAlumno);
+          highGradeDifficultiesCount.set(
+            d.idDificultad,
+            (highGradeDifficultiesCount.get(d.idDificultad) || 0) + 1,
+          );
+        }
+      }
+    });
+
+    // --- CONSTRUCCIÓN DE RESPUESTA ---
+
+    // Gráficos
+    const graficoTemas = Array.from(byTopic.entries()).map(
+      ([tema, students]) => ({
+        label: tema,
+        value: students.size,
+      }),
+    );
+
+    const graficoDificultades = Array.from(byDifficulty.entries()).map(
+      ([id, students]) => ({
+        label: difficultyDetails.get(id)?.nombre || 'Desconocida',
+        value: students.size,
+      }),
+    );
+
+    const graficoGrados = [
+      { label: 'Bajo', value: byGrade.Bajo, color: '#4caf50' },
+      { label: 'Medio', value: byGrade.Medio, color: '#ff9800' },
+      { label: 'Alto', value: byGrade.Alto, color: '#f44336' },
+    ];
+
+    // Tabla Detalle
+    const tablaDetalle = Array.from(difficultyDetails.values());
+
+    // KPIs
+    const totalActiveDifficulties = activeDifficulties.length;
+    const promDificultades =
+      totalAlumnos > 0 ? totalActiveDifficulties / totalAlumnos : 0;
+
+    // Moda Tema
+    let maxTopic = { label: 'Ninguno', value: 0 };
+    graficoTemas.forEach((t) => {
+      if (t.value > maxTopic.value) maxTopic = t;
+    });
+    const pctTemaFrecuente =
+      totalAlumnos > 0 ? (maxTopic.value / totalAlumnos) * 100 : 0;
+
+    // Moda Dificultad
+    let maxDiff = { label: 'Ninguna', value: 0, id: '' };
+    graficoDificultades.forEach((d, idx) => {
+      const id = Array.from(byDifficulty.keys())[idx]; // Orden coincide
+      if (d.value > maxDiff.value) maxDiff = { ...d, id };
+    });
+    const pctDificultadFrecuente =
+      totalAlumnos > 0 ? (maxDiff.value / totalAlumnos) * 100 : 0;
+    const breakdownDificultadFrecuente = maxDiff.id
+      ? difficultyDetails.get(maxDiff.id)?.grados
+      : null;
+
+    // Grado Alto
+    const pctGradoAlto =
+      totalAlumnos > 0 ? (studentsWithHighGrade.size / totalAlumnos) * 100 : 0;
+
+    let maxHighDiffId = '';
+    let maxHighDiffCount = 0;
+    highGradeDifficultiesCount.forEach((count, id) => {
+      if (count > maxHighDiffCount) {
+        maxHighDiffCount = count;
+        maxHighDiffId = id;
+      }
+    });
+    const nombreModaAlto = maxHighDiffId
+      ? difficultyDetails.get(maxHighDiffId)?.nombre
+      : 'Ninguna';
+
+    return {
+      graficos: {
+        porTema: graficoTemas,
+        porDificultad: graficoDificultades,
+        porGrado: graficoGrados,
+      },
+      tabla: tablaDetalle,
+      kpis: {
+        totalAlumnos,
+        promDificultades,
+        temaFrecuente: {
+          nombre: maxTopic.label,
+          pctAlumnos: pctTemaFrecuente,
+        },
+        dificultadFrecuente: {
+          nombre: maxDiff.label,
+          pctAlumnos: pctDificultadFrecuente,
+          desglose: breakdownDificultadFrecuente,
+        },
+        gradoAlto: {
+          pctAlumnos: pctGradoAlto,
+          modaNombre: nombreModaAlto,
+        },
+      },
     };
   }
 }
