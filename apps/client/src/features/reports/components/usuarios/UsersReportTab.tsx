@@ -1,4 +1,4 @@
-import { Stack, Paper } from "@mui/material";
+import { Stack } from "@mui/material";
 import SummaryReportSection from "./SummaryReportSection";
 import HistoryReportSection from "./HistoryReportSection";
 

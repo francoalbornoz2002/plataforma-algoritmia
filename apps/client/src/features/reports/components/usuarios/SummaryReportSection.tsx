@@ -26,7 +26,7 @@ import {
   type UsersSummaryFilters,
   type UsersDistributionFilters,
   type UsersListFilters,
-} from "../service/reports.service";
+} from "../../service/reports.service";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 
 // Definimos colores constantes para mantener consistencia

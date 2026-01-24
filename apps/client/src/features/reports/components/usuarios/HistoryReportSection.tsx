@@ -20,13 +20,13 @@ import { format } from "date-fns";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableOnIcon from "@mui/icons-material/TableChart";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
-import { roles } from "../../../types";
+import { roles } from "../../../../types";
 import { LineChart } from "@mui/x-charts/LineChart";
 import {
   getUsersAltas,
   getUsersBajas,
   type UsersHistoryFilters,
-} from "../service/reports.service";
+} from "../../service/reports.service";
 
 export default function HistoryReportSection() {
   const [type, setType] = useState<"altas" | "bajas" | "todos">("todos");
