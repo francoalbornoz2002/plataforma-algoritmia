@@ -154,7 +154,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
               <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
                 <Stack spacing={1}>
                   <Typography variant="subtitle2" color="text.secondary">
-                    Promedio Dificultades/Alumno
+                    Promedio Dificultades por Alumno
                   </Typography>
                   <Typography
                     variant="h4"
@@ -173,15 +173,17 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
               <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
                 <Stack spacing={1}>
                   <Typography variant="subtitle2" color="text.secondary">
-                    Tema Más Frecuente
+                    Tema de dificultad Más Frecuente
                   </Typography>
                   <Typography variant="h6" fontWeight="bold">
                     {data.kpis.temaFrecuente.nombre}
                   </Typography>
-                  <Typography variant="caption" color="error">
-                    Afecta al {data.kpis.temaFrecuente.pctAlumnos.toFixed(1)}%
-                    de alumnos
-                  </Typography>
+                  <Alert severity="error" variant="outlined">
+                    <Typography variant="caption">
+                      El {data.kpis.temaFrecuente.pctAlumnos.toFixed(1)}% de
+                      alumnos poseen alguna dificultad de este tema
+                    </Typography>
+                  </Alert>
                 </Stack>
               </Paper>
             </Grid>
@@ -194,11 +196,12 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                   <Typography variant="h6" fontWeight="bold">
                     {data.kpis.dificultadFrecuente.nombre}
                   </Typography>
-                  <Typography variant="caption" color="warning.main">
-                    Afecta al{" "}
-                    {data.kpis.dificultadFrecuente.pctAlumnos.toFixed(1)}% de
-                    alumnos
-                  </Typography>
+                  <Alert severity="warning" variant="outlined">
+                    <Typography variant="caption">
+                      El {data.kpis.dificultadFrecuente.pctAlumnos.toFixed(1)}%
+                      de alumnos del curso poseen esta dificultad
+                    </Typography>
+                  </Alert>
                 </Stack>
               </Paper>
             </Grid>
@@ -206,13 +209,14 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
               <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
                 <Stack spacing={1}>
                   <Typography variant="subtitle2" color="text.secondary">
-                    Alumnos con Grado Alto
+                    Alumnos con dificultades en Grado Alto
                   </Typography>
                   <Typography variant="h4" color="error.main" fontWeight="bold">
                     {data.kpis.gradoAlto.pctAlumnos.toFixed(1)}%
                   </Typography>
                   <Typography variant="caption">
-                    Moda en Alto: {data.kpis.gradoAlto.modaNombre}
+                    Dificultad de grado Alto más frecuente:{" "}
+                    {data.kpis.gradoAlto.modaNombre}
                   </Typography>
                 </Stack>
               </Paper>
@@ -251,6 +255,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                     },
                   ]}
                   height={400}
+                  sx={{ width: "100%" }}
                   slotProps={{
                     legend: {
                       direction: "vertical",
@@ -342,7 +347,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
           </Grid>
 
           {/* Gráfico Detallado (Barras Apiladas) */}
-          <Paper elevation={3} sx={{ p: 2 }}>
+          <Paper elevation={3} sx={{ p: 2, width: "100%" }}>
             <Typography variant="h6" gutterBottom>
               Distribución de Grados por Dificultad
             </Typography>
@@ -393,6 +398,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                   },
                 ]}
                 height={500}
+                sx={{ width: "100%" }}
               />
             ) : (
               <Typography color="text.secondary" align="center" sx={{ py: 4 }}>

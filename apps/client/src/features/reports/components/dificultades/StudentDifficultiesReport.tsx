@@ -30,6 +30,8 @@ import VideogameAssetIcon from "@mui/icons-material/VideogameAsset";
 import SchoolIcon from "@mui/icons-material/School";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import PersonIcon from "@mui/icons-material/Person";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import TableOnIcon from "@mui/icons-material/TableChart";
 
 import {
   getStudentDifficultiesReport,
@@ -514,6 +516,26 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
             </Stack>
           </Paper>
 
+          {/* --- Acciones Exportar --- */}
+          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+            <Button
+              variant="outlined"
+              startIcon={<PictureAsPdfIcon />}
+              disabled={!data}
+              color="error"
+            >
+              Exportar PDF
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<TableOnIcon />}
+              disabled={!data}
+              color="success"
+            >
+              Exportar Excel
+            </Button>
+          </Box>
+
           {/* --- Stats de Mejora --- */}
           <Paper elevation={3} sx={{ p: 2, bgcolor: "primary.50" }}>
             <Typography variant="h6" gutterBottom color="primary.main">
@@ -560,7 +582,7 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
                 >
                   <Stack direction="row" spacing={1}>
                     <SchoolIcon color="secondary" />
-                    <Typography>Sesiones</Typography>
+                    <Typography>Sesiones de refuerzo</Typography>
                   </Stack>
                   <Typography fontWeight="bold">
                     {data.stats.porcentajeSesion.toFixed(1)}%
@@ -597,9 +619,24 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
                 dataset={data.evolution.dataset}
                 xAxis={[
                   {
-                    scaleType: "time",
-                    dataKey: "date",
-                    valueFormatter: (date) => format(date, "dd/MM HH:mm"),
+                    scaleType: "point",
+                    label: "Fecha",
+                    data: data.evolution.dataset.map((_: any, i: number) => i),
+                    valueFormatter: (index: number) => {
+                      const current = data.evolution.dataset[index];
+                      const prev = data.evolution.dataset[index - 1];
+
+                      if (!current) return "";
+
+                      const currentDateStr = format(current.date, "dd/MM");
+                      const prevDateStr = prev
+                        ? format(prev.date, "dd/MM")
+                        : null;
+
+                      return currentDateStr === prevDateStr
+                        ? ""
+                        : currentDateStr;
+                    },
                   },
                 ]}
                 yAxis={[
@@ -614,6 +651,10 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
                 series={data.evolution.series.map((s: any) => ({
                   ...s,
                   connectNulls: true, // Conectar puntos para ver la línea continua
+                  valueFormatter: (v: number | null) =>
+                    v !== null
+                      ? ["Ninguno", "Bajo", "Medio", "Alto"][v] || ""
+                      : "",
                 }))}
                 height={350}
                 margin={{ left: 70 }}
