@@ -25,10 +25,16 @@ import { GetCourseMissionsReportDto } from '../dto/get-course-missions-report.dt
 import { GetCourseMissionDetailReportDto } from '../dto/get-course-mission-detail-report.dto';
 import { GetCourseProgressSummaryDto } from '../dto/get-course-progress-summary.dto';
 import { dateToTime } from '../../helpers';
-import { estado_simple, grado_dificultad, Prisma } from '@prisma/client';
+import {
+  estado_simple,
+  grado_dificultad,
+  Prisma,
+  estado_consulta,
+} from '@prisma/client';
 import { GetCourseDifficultiesReportDto } from '../dto/get-course-difficulties-report.dto';
 import { GetCourseDifficultiesHistoryDto } from '../dto/get-course-difficulties-history.dto';
 import { GetStudentDifficultiesReportDto } from '../dto/get-student-difficulties-report.dto';
+import { GetCourseConsultationsSummaryDto } from '../dto/get-course-consultations-summary.dto';
 import { temas, fuente_cambio_dificultad } from '@prisma/client';
 
 const TOTAL_MISIONES = 10;
@@ -1360,6 +1366,174 @@ export class ReportesService {
         dataset: evolutionDataset,
         series,
       },
+    };
+  }
+
+  async getCourseConsultationsSummary(
+    idCurso: string,
+    dto: GetCourseConsultationsSummaryDto,
+  ) {
+    const { fechaDesde, fechaHasta } = dto;
+    const start = fechaDesde ? new Date(fechaDesde) : new Date(0);
+    if (fechaDesde) start.setUTCHours(0, 0, 0, 0);
+    const end = fechaHasta ? new Date(fechaHasta) : new Date();
+    end.setUTCHours(23, 59, 59, 999);
+
+    // 1. Obtener todas las consultas en el rango (incluyendo eliminadas para el conteo de inactivas)
+    const allConsultations = await this.prisma.consulta.findMany({
+      where: {
+        idCurso,
+        fechaConsulta: { gte: start, lte: end },
+      },
+      include: {
+        alumno: { select: { id: true, nombre: true, apellido: true } },
+        respuestaConsulta: { include: { docente: true } },
+        clasesDondeSeTrata: {
+          include: {
+            claseConsulta: { include: { docenteResponsable: true } },
+          },
+        },
+      },
+    });
+
+    // 2. Separar Activas e Inactivas
+    let activeCount = 0;
+    let inactiveCount = 0;
+    const activeConsultations: any[] = [];
+
+    allConsultations.forEach((c) => {
+      if (c.deletedAt) {
+        inactiveCount++;
+      } else {
+        activeCount++;
+        activeConsultations.push(c);
+      }
+    });
+
+    // 3. Gráfico de Torta (Solo Activas)
+    const statusCounts = {
+      [estado_consulta.Pendiente]: 0,
+      [estado_consulta.A_revisar]: 0,
+      [estado_consulta.Revisada]: 0,
+      [estado_consulta.Resuelta]: 0,
+    };
+
+    activeConsultations.forEach((c) => {
+      if (statusCounts[c.estado] !== undefined) {
+        statusCounts[c.estado]++;
+      }
+    });
+
+    const graficoEstados = [
+      {
+        label: 'Pendiente',
+        value: statusCounts[estado_consulta.Pendiente],
+        color: '#ff9800',
+      }, // Naranja
+      {
+        label: 'A revisar',
+        value: statusCounts[estado_consulta.A_revisar],
+        color: '#2196f3',
+      }, // Azul
+      {
+        label: 'Revisada',
+        value: statusCounts[estado_consulta.Revisada],
+        color: '#9c27b0',
+      }, // Violeta
+      {
+        label: 'Resuelta',
+        value: statusCounts[estado_consulta.Resuelta],
+        color: '#4caf50',
+      }, // Verde
+    ];
+
+    // 4. Estadísticas
+
+    // A. Alumno con más consultas
+    const studentCounts = new Map<string, { count: number; name: string }>();
+    activeConsultations.forEach((c) => {
+      const id = c.idAlumno;
+      const name = `${c.alumno.nombre} ${c.alumno.apellido}`;
+      if (!studentCounts.has(id)) studentCounts.set(id, { count: 0, name });
+      studentCounts.get(id)!.count++;
+    });
+
+    let topStudent = { name: 'Ninguno', count: 0, percentage: 0 };
+    for (const [_, data] of studentCounts) {
+      if (data.count > topStudent.count) {
+        topStudent = {
+          name: data.name,
+          count: data.count,
+          percentage: activeCount > 0 ? (data.count / activeCount) * 100 : 0,
+        };
+      }
+    }
+
+    // B. Docente que más responde/atiende
+    // Contamos "intervenciones" únicas: Si respondió o si fue el responsable de la clase donde se trató.
+    const teacherCounts = new Map<
+      string,
+      { count: number; name: string; consultations: Set<string> }
+    >();
+
+    activeConsultations.forEach((c) => {
+      // 1. Respuesta directa
+      if (c.respuestaConsulta?.docente) {
+        const d = c.respuestaConsulta.docente;
+        const id = d.id;
+        const name = `${d.nombre} ${d.apellido}`;
+        if (!teacherCounts.has(id))
+          teacherCounts.set(id, { count: 0, name, consultations: new Set() });
+        teacherCounts.get(id)!.consultations.add(c.id);
+      }
+
+      // 2. Tratada en clase
+      c.clasesDondeSeTrata.forEach((cc: any) => {
+        if (cc.claseConsulta?.docenteResponsable) {
+          const d = cc.claseConsulta.docenteResponsable;
+          const id = d.id;
+          const name = `${d.nombre} ${d.apellido}`;
+          if (!teacherCounts.has(id))
+            teacherCounts.set(id, { count: 0, name, consultations: new Set() });
+          teacherCounts.get(id)!.consultations.add(c.id);
+        }
+      });
+    });
+
+    let topTeacher = { name: 'Ninguno', count: 0, percentage: 0 };
+    for (const [_, data] of teacherCounts) {
+      const count = data.consultations.size;
+      if (count > topTeacher.count) {
+        topTeacher = {
+          name: data.name,
+          count: count,
+          percentage: activeCount > 0 ? (count / activeCount) * 100 : 0,
+        };
+      }
+    }
+
+    // C. Porcentaje Resueltas
+    const resolvedCount = statusCounts[estado_consulta.Resuelta];
+    const resolvedPct =
+      activeCount > 0 ? (resolvedCount / activeCount) * 100 : 0;
+
+    // D. Porcentaje Por Atender (Pendiente + A revisar)
+    const pendingCount =
+      statusCounts[estado_consulta.Pendiente] +
+      statusCounts[estado_consulta.A_revisar];
+    const pendingPct = activeCount > 0 ? (pendingCount / activeCount) * 100 : 0;
+
+    return {
+      kpis: {
+        totalConsultas: activeCount + inactiveCount,
+        activas: activeCount,
+        inactivas: inactiveCount,
+        resueltas: { count: resolvedCount, percentage: resolvedPct },
+        pendientes: { count: pendingCount, percentage: pendingPct },
+      },
+      graficoEstados,
+      topStudent,
+      topTeacher,
     };
   }
 }
