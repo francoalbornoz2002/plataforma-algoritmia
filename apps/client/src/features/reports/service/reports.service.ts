@@ -120,6 +120,19 @@ export interface StudentDifficultiesReportFilters
   studentId: string;
 }
 
+export interface CourseConsultationsSummaryFilters {
+  fechaDesde?: string;
+  fechaHasta?: string;
+}
+
+export interface CourseConsultationsHistoryFilters {
+  temas?: string; // "Tema1,Tema2"
+  estados?: string; // "Pendiente,Resuelta"
+  alumnos?: string; // "id1,id2"
+  fechaDesde?: string;
+  fechaHasta?: string;
+}
+
 // --- Endpoints Modulares de Usuarios ---
 
 export const getUsersSummary = async (params: UsersSummaryFilters) => {
@@ -304,6 +317,34 @@ export const getStudentDifficultiesReport = async (
   );
   const response = await apiClient.get(
     `/reportes/cursos/${courseId}/dificultades/alumno`,
+    { params: cleanParams },
+  );
+  return response.data;
+};
+
+export const getCourseConsultationsSummary = async (
+  courseId: string,
+  params: CourseConsultationsSummaryFilters,
+) => {
+  const cleanParams = Object.fromEntries(
+    Object.entries(params).filter(([_, v]) => v !== ""),
+  );
+  const response = await apiClient.get(
+    `/reportes/cursos/${courseId}/consultas/resumen`,
+    { params: cleanParams },
+  );
+  return response.data;
+};
+
+export const getCourseConsultationsHistory = async (
+  courseId: string,
+  params: CourseConsultationsHistoryFilters,
+) => {
+  const cleanParams = Object.fromEntries(
+    Object.entries(params).filter(([_, v]) => v !== ""),
+  );
+  const response = await apiClient.get(
+    `/reportes/cursos/${courseId}/consultas/historial`,
     { params: cleanParams },
   );
   return response.data;
