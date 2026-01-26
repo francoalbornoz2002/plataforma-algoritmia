@@ -36,7 +36,13 @@ import { GetCourseDifficultiesHistoryDto } from '../dto/get-course-difficulties-
 import { GetStudentDifficultiesReportDto } from '../dto/get-student-difficulties-report.dto';
 import { GetCourseConsultationsSummaryDto } from '../dto/get-course-consultations-summary.dto';
 import { GetCourseConsultationsHistoryDto } from '../dto/get-course-consultations-history.dto';
-import { temas, fuente_cambio_dificultad } from '@prisma/client';
+import { GetCourseClassesSummaryDto } from '../dto/get-course-classes-summary.dto';
+import { GetCourseClassesHistoryDto } from '../dto/get-course-classes-history.dto';
+import {
+  temas,
+  fuente_cambio_dificultad,
+  estado_clase_consulta,
+} from '@prisma/client';
 
 const TOTAL_MISIONES = 10;
 
@@ -1691,5 +1697,265 @@ export class ReportesService {
       );
 
     return { stats, timeline, tabla };
+  }
+
+  async getCourseClassesSummary(
+    idCurso: string,
+    dto: GetCourseClassesSummaryDto,
+  ) {
+    const { fechaDesde, fechaHasta } = dto;
+    const start = fechaDesde ? new Date(fechaDesde) : new Date(0);
+    if (fechaDesde) start.setUTCHours(0, 0, 0, 0);
+    const end = fechaHasta ? new Date(fechaHasta) : new Date();
+    end.setUTCHours(23, 59, 59, 999);
+
+    // 1. Obtener Clases
+    const allClasses = await this.prisma.claseConsulta.findMany({
+      where: {
+        idCurso,
+        fechaClase: { gte: start, lte: end },
+      },
+      include: {
+        docenteResponsable: {
+          select: { id: true, nombre: true, apellido: true },
+        },
+        consultasEnClase: true,
+      },
+    });
+
+    // 2. Clasificación Activas/Inactivas y Gráfico
+    let activeCount = 0;
+    let inactiveCount = 0;
+    const activeClasses: any[] = [];
+    const realizedClasses: any[] = [];
+    const statusCounts: Record<string, number> = {};
+
+    allClasses.forEach((c) => {
+      const estado = c.estadoClase;
+      statusCounts[estado] = (statusCounts[estado] || 0) + 1;
+
+      const isInactive =
+        c.deletedAt !== null ||
+        c.estadoClase === estado_clase_consulta.Cancelada ||
+        c.estadoClase === estado_clase_consulta.No_realizada;
+
+      if (isInactive) {
+        inactiveCount++;
+      } else {
+        activeCount++;
+        activeClasses.push(c);
+      }
+
+      if (c.estadoClase === estado_clase_consulta.Realizada) {
+        realizedClasses.push(c);
+      }
+    });
+
+    const graficoEstados = Object.entries(statusCounts).map(
+      ([label, value]) => ({
+        label: label.replace('_', ' '),
+        value,
+      }),
+    );
+
+    // 3. Promedio de consultas por clase (Sobre clases activas)
+    let totalConsultasAgendadas = 0;
+    activeClasses.forEach((c) => {
+      totalConsultasAgendadas += c.consultasEnClase.length;
+    });
+    const promConsultasPorClase =
+      activeCount > 0 ? totalConsultasAgendadas / activeCount : 0;
+
+    // 4. Efectividad de Revisión (Sobre clases REALIZADAS)
+    let sumPercentages = 0;
+    let sumReviewedCounts = 0;
+    let totalRealizedWithConsultations = 0;
+
+    realizedClasses.forEach((c) => {
+      const total = c.consultasEnClase.length;
+      if (total > 0) {
+        const reviewed = c.consultasEnClase.filter(
+          (cc) => cc.revisadaEnClase,
+        ).length;
+        const pct = (reviewed / total) * 100;
+
+        sumPercentages += pct;
+        sumReviewedCounts += reviewed;
+        totalRealizedWithConsultations++;
+      }
+    });
+
+    const promPorcentajeRevisadas =
+      totalRealizedWithConsultations > 0
+        ? sumPercentages / totalRealizedWithConsultations
+        : 0;
+
+    const promCantidadRevisadas =
+      totalRealizedWithConsultations > 0
+        ? sumReviewedCounts / totalRealizedWithConsultations
+        : 0;
+
+    // 5. Impacto en Resolución (Consultas Resueltas vs Resueltas vía Clase)
+    const resolvedConsultations = await this.prisma.consulta.findMany({
+      where: {
+        idCurso,
+        estado: estado_consulta.Resuelta,
+        fechaConsulta: { gte: start, lte: end },
+      },
+      include: {
+        clasesDondeSeTrata: true,
+      },
+    });
+
+    const totalResolved = resolvedConsultations.length;
+    let resolvedViaClassCount = 0;
+
+    resolvedConsultations.forEach((c) => {
+      const wasReviewedInClass = c.clasesDondeSeTrata.some(
+        (cc) => cc.revisadaEnClase,
+      );
+      if (wasReviewedInClass) {
+        resolvedViaClassCount++;
+      }
+    });
+
+    const pctResolvedViaClass =
+      totalResolved > 0 ? (resolvedViaClassCount / totalResolved) * 100 : 0;
+
+    // 6. Docente con más clases realizadas
+    const teacherCounts = new Map<string, { count: number; name: string }>();
+    realizedClasses.forEach((c) => {
+      if (c.docenteResponsable) {
+        const id = c.docenteResponsable.id;
+        const name = `${c.docenteResponsable.nombre} ${c.docenteResponsable.apellido}`;
+        if (!teacherCounts.has(id)) teacherCounts.set(id, { count: 0, name });
+        teacherCounts.get(id)!.count++;
+      }
+    });
+
+    let topTeacher = { name: 'Ninguno', count: 0 };
+    for (const [_, data] of teacherCounts) {
+      if (data.count > topTeacher.count) {
+        topTeacher = data;
+      }
+    }
+
+    return {
+      kpis: {
+        totalClases: allClasses.length,
+        activas: activeCount,
+        inactivas: inactiveCount,
+        promConsultasPorClase,
+      },
+      graficoEstados,
+      efectividad: {
+        promedioRevisadasPct: promPorcentajeRevisadas,
+        promedioRevisadasCount: promCantidadRevisadas,
+      },
+      impacto: {
+        totalResueltas: totalResolved,
+        resueltasViaClase: resolvedViaClassCount,
+        porcentaje: pctResolvedViaClass,
+      },
+      topTeacher,
+    };
+  }
+
+  async getCourseClassesHistory(
+    idCurso: string,
+    dto: GetCourseClassesHistoryDto,
+  ) {
+    const { fechaDesde, fechaHasta, docenteId } = dto;
+    const start = fechaDesde ? new Date(fechaDesde) : new Date(0);
+    if (fechaDesde) start.setUTCHours(0, 0, 0, 0);
+    const end = fechaHasta ? new Date(fechaHasta) : new Date();
+    end.setUTCHours(23, 59, 59, 999);
+
+    const where: Prisma.ClaseConsultaWhereInput = {
+      idCurso,
+      fechaClase: { gte: start, lte: end },
+    };
+
+    if (docenteId) {
+      where.idDocente = docenteId;
+    }
+
+    const clases = await this.prisma.claseConsulta.findMany({
+      where,
+      include: {
+        docenteResponsable: {
+          select: { id: true, nombre: true, apellido: true },
+        },
+        consultasEnClase: {
+          include: {
+            consulta: {
+              include: {
+                alumno: { select: { nombre: true, apellido: true } },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { fechaClase: 'desc' },
+    });
+
+    // Obtener lista de docentes del curso para el filtro del frontend
+    const docentesCurso = await this.prisma.docenteCurso.findMany({
+      where: { idCurso },
+      select: {
+        docente: { select: { id: true, nombre: true, apellido: true } },
+      },
+    });
+
+    // Procesamiento para Gráfico y Tabla
+    const chartData: any[] = [];
+    const tableData = clases.map((c) => {
+      const totalConsultas = c.consultasEnClase.length;
+      const revisadas = c.consultasEnClase.filter(
+        (cc) => cc.revisadaEnClase,
+      ).length;
+      const noRevisadas = totalConsultas - revisadas;
+
+      // Solo agregamos al gráfico si la clase tiene consultas y (opcionalmente) si está realizada
+      // Para mostrar historial completo, podemos incluir todas, pero visualmente es mejor las realizadas.
+      if (c.estadoClase === estado_clase_consulta.Realizada) {
+        chartData.push({
+          fecha: c.fechaClase.toISOString().split('T')[0],
+          nombre: c.nombre,
+          revisadas,
+          noRevisadas,
+          total: totalConsultas,
+          pctRevisadas:
+            totalConsultas > 0 ? (revisadas / totalConsultas) * 100 : 0,
+        });
+      }
+
+      // Lógica para fecha de realización
+      const fechaRealizacion =
+        c.estadoClase === estado_clase_consulta.Realizada ? c.updatedAt : null;
+
+      return {
+        id: c.id,
+        nombre: c.nombre,
+        docenteId: c.docenteResponsable?.id || null,
+        docente: c.docenteResponsable
+          ? `${c.docenteResponsable.nombre} ${c.docenteResponsable.apellido}`
+          : 'Sin asignar',
+        fechaAgenda: c.fechaClase,
+        fechaRealizacion,
+        estado: c.estadoClase,
+        totalConsultas,
+        revisadas,
+        consultasEnClase: c.consultasEnClase, // Para el modal de detalle
+      };
+    });
+
+    const docentesDisponibles = docentesCurso.map((d) => ({
+      id: d.docente.id,
+      nombre: `${d.docente.nombre} ${d.docente.apellido}`,
+    }));
+
+    // Reverse chartData para orden cronológico (de antiguo a nuevo)
+    return { chartData: chartData.reverse(), tableData, docentesDisponibles };
   }
 }

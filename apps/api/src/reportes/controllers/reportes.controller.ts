@@ -20,6 +20,8 @@ import { GetCourseDifficultiesHistoryDto } from '../dto/get-course-difficulties-
 import { GetStudentDifficultiesReportDto } from '../dto/get-student-difficulties-report.dto';
 import { GetCourseConsultationsSummaryDto } from '../dto/get-course-consultations-summary.dto';
 import { GetCourseConsultationsHistoryDto } from '../dto/get-course-consultations-history.dto';
+import { GetCourseClassesSummaryDto } from '../dto/get-course-classes-summary.dto';
+import { GetCourseClassesHistoryDto } from '../dto/get-course-classes-history.dto';
 
 @Controller('reportes')
 @UseGuards(RolesGuard)
@@ -175,5 +177,25 @@ export class ReportesController {
     @Query() dto: GetCourseConsultationsHistoryDto,
   ) {
     return this.reportesService.getCourseConsultationsHistory(id, dto);
+  }
+
+  // Clases de Consulta - Sección 1: Resumen
+  @Get('cursos/:id/clases-consulta/resumen')
+  @Roles(roles.Administrador, roles.Docente)
+  getCourseClassesSummary(
+    @Param('id') id: string,
+    @Query() dto: GetCourseClassesSummaryDto,
+  ) {
+    return this.reportesService.getCourseClassesSummary(id, dto);
+  }
+
+  // Clases de Consulta - Sección 2: Historial
+  @Get('cursos/:id/clases-consulta/historial')
+  @Roles(roles.Administrador, roles.Docente)
+  getCourseClassesHistory(
+    @Param('id') id: string,
+    @Query() dto: GetCourseClassesHistoryDto,
+  ) {
+    return this.reportesService.getCourseClassesHistory(id, dto);
   }
 }
