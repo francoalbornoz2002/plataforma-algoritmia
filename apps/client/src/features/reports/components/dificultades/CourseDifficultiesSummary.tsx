@@ -8,6 +8,7 @@ import {
   CircularProgress,
   Button,
   Grid,
+  Divider,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
@@ -223,6 +224,8 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
             </Grid>
           </Grid>
 
+          <Divider />
+
           {/* Gráficos de Distribución */}
           <Grid container spacing={3}>
             {/* Izquierda: Por Dificultad (Más grande) */}
@@ -233,7 +236,6 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                   p: 2,
                   display: "flex",
                   flexDirection: "column",
-                  alignItems: "center",
                   justifyContent: "center",
                   height: "100%",
                 }}
@@ -242,6 +244,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                   variant="subtitle2"
                   color="text.secondary"
                   gutterBottom
+                  align="center"
                 >
                   Cantidad de alumnos afectados de cada Dificultad
                 </Typography>
@@ -276,7 +279,6 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                     p: 2,
                     display: "flex",
                     flexDirection: "column",
-                    alignItems: "center",
                     justifyContent: "center",
                   }}
                 >
@@ -284,6 +286,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                     variant="subtitle2"
                     color="text.secondary"
                     gutterBottom
+                    align="center"
                   >
                     Cantidad de alumnos con dificultades activas por tema
                   </Typography>
@@ -312,7 +315,6 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                     p: 2,
                     display: "flex",
                     flexDirection: "column",
-                    alignItems: "center",
                     justifyContent: "center",
                   }}
                 >
@@ -320,6 +322,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                     variant="subtitle2"
                     color="text.secondary"
                     gutterBottom
+                    align="center"
                   >
                     Cantidad de alumnos con dificultades activas por Grado
                   </Typography>
