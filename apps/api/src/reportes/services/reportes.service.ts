@@ -35,6 +35,7 @@ import { GetCourseDifficultiesReportDto } from '../dto/get-course-difficulties-r
 import { GetCourseDifficultiesHistoryDto } from '../dto/get-course-difficulties-history.dto';
 import { GetStudentDifficultiesReportDto } from '../dto/get-student-difficulties-report.dto';
 import { GetCourseConsultationsSummaryDto } from '../dto/get-course-consultations-summary.dto';
+import { GetCourseConsultationsHistoryDto } from '../dto/get-course-consultations-history.dto';
 import { temas, fuente_cambio_dificultad } from '@prisma/client';
 
 const TOTAL_MISIONES = 10;
@@ -1523,6 +1524,30 @@ export class ReportesService {
       statusCounts[estado_consulta.A_revisar];
     const pendingPct = activeCount > 0 ? (pendingCount / activeCount) * 100 : 0;
 
+    // E. Métricas de Impacto de Clases de Consulta
+    let reviewedInClassCount = 0;
+    let resolvedInClassCount = 0;
+
+    activeConsultations.forEach((c) => {
+      // Verificamos si fue revisada en alguna clase
+      const wasReviewedInClass = c.clasesDondeSeTrata.some(
+        (cc) => cc.revisadaEnClase,
+      );
+
+      if (wasReviewedInClass) {
+        reviewedInClassCount++;
+        // Si fue revisada en clase Y está resuelta, cuenta como éxito de la clase
+        if (c.estado === estado_consulta.Resuelta) {
+          resolvedInClassCount++;
+        }
+      }
+    });
+
+    const reviewedInClassPct =
+      activeCount > 0 ? (reviewedInClassCount / activeCount) * 100 : 0;
+    const resolvedInClassPct =
+      activeCount > 0 ? (resolvedInClassCount / activeCount) * 100 : 0;
+
     return {
       kpis: {
         totalConsultas: activeCount + inactiveCount,
@@ -1530,10 +1555,141 @@ export class ReportesService {
         inactivas: inactiveCount,
         resueltas: { count: resolvedCount, percentage: resolvedPct },
         pendientes: { count: pendingCount, percentage: pendingPct },
+        impactoClases: {
+          revisadas: {
+            count: reviewedInClassCount,
+            percentage: reviewedInClassPct,
+          },
+          resueltas: {
+            count: resolvedInClassCount,
+            percentage: resolvedInClassPct,
+          },
+        },
       },
       graficoEstados,
       topStudent,
       topTeacher,
     };
+  }
+
+  async getCourseConsultationsHistory(
+    idCurso: string,
+    dto: GetCourseConsultationsHistoryDto,
+  ) {
+    const { temas: temasStr, estados, alumnos, fechaDesde, fechaHasta } = dto;
+
+    // 1. Configurar Fechas
+    const start = fechaDesde ? new Date(fechaDesde) : new Date(0);
+    if (fechaDesde) start.setUTCHours(0, 0, 0, 0);
+    const end = fechaHasta ? new Date(fechaHasta) : new Date();
+    end.setUTCHours(23, 59, 59, 999);
+
+    // 2. Construir Filtros
+    const where: Prisma.ConsultaWhereInput = {
+      idCurso,
+      fechaConsulta: { gte: start, lte: end },
+      deletedAt: null, // Solo consultas activas para el historial operativo
+    };
+
+    if (temasStr) {
+      const list = temasStr.split(',').filter(Boolean) as temas[];
+      if (list.length > 0) where.tema = { in: list };
+    }
+
+    if (estados) {
+      const list = estados.split(',').filter(Boolean) as estado_consulta[];
+      if (list.length > 0) where.estado = { in: list };
+    }
+
+    if (alumnos) {
+      const list = alumnos.split(',').filter(Boolean);
+      if (list.length > 0) where.idAlumno = { in: list };
+    }
+
+    // 3. Consultar Datos
+    const consultas = await this.prisma.consulta.findMany({
+      where,
+      include: {
+        alumno: { select: { nombre: true, apellido: true } },
+        respuestaConsulta: {
+          include: { docente: { select: { nombre: true, apellido: true } } },
+        },
+        clasesDondeSeTrata: {
+          include: {
+            claseConsulta: {
+              include: {
+                docenteResponsable: {
+                  select: { nombre: true, apellido: true },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { fechaConsulta: 'desc' },
+    });
+
+    // 4. Procesar Datos para Tabla y Timeline
+    const timelineMap = new Map<string, number>();
+    const tabla = consultas.map((c) => {
+      // Timeline
+      const dateKey = c.fechaConsulta.toISOString().split('T')[0];
+      timelineMap.set(dateKey, (timelineMap.get(dateKey) || 0) + 1);
+
+      // Determinar docente responsable (Respuesta directa o Clase)
+      let docente = '-';
+      if (c.respuestaConsulta?.docente) {
+        docente = `${c.respuestaConsulta.docente.nombre} ${c.respuestaConsulta.docente.apellido}`;
+      } else if (c.clasesDondeSeTrata.length > 0) {
+        // Tomamos el docente de la última clase donde se trató
+        const lastClass = c.clasesDondeSeTrata[c.clasesDondeSeTrata.length - 1];
+        if (lastClass.claseConsulta?.docenteResponsable) {
+          docente = `${lastClass.claseConsulta.docenteResponsable.nombre} ${lastClass.claseConsulta.docenteResponsable.apellido}`;
+        }
+      }
+
+      return {
+        id: c.id,
+        titulo: c.titulo,
+        tema: c.tema,
+        fecha: c.fechaConsulta,
+        alumno: `${c.alumno.nombre} ${c.alumno.apellido}`,
+        estado: c.estado,
+        docente,
+        valoracion: c.valoracionAlumno,
+        respuesta: c.respuestaConsulta?.descripcion || null,
+      };
+    });
+
+    // 5. Calcular Estadísticas
+    const totalConsultas = consultas.length;
+
+    // Calcular diferencia de días real entre el rango seleccionado (o el rango de datos si no se seleccionó)
+    const effectiveStart = fechaDesde
+      ? start
+      : consultas.length > 0
+        ? consultas[consultas.length - 1].fechaConsulta
+        : new Date();
+    const effectiveEnd = fechaHasta ? end : new Date();
+
+    const diffTime = Math.abs(
+      effectiveEnd.getTime() - effectiveStart.getTime(),
+    );
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1; // Mínimo 1 día para evitar división por 0
+    const diffWeeks = Math.max(diffDays / 7, 1);
+
+    const stats = {
+      total: totalConsultas,
+      promedioDiario: totalConsultas / diffDays,
+      promedioSemanal: totalConsultas / diffWeeks,
+    };
+
+    const timeline = Array.from(timelineMap.entries())
+      .map(([fecha, cantidad]) => ({ fecha, cantidad }))
+      .sort(
+        (a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime(),
+      );
+
+    return { stats, timeline, tabla };
   }
 }
