@@ -38,10 +38,12 @@ import { GetCourseConsultationsSummaryDto } from '../dto/get-course-consultation
 import { GetCourseConsultationsHistoryDto } from '../dto/get-course-consultations-history.dto';
 import { GetCourseClassesSummaryDto } from '../dto/get-course-classes-summary.dto';
 import { GetCourseClassesHistoryDto } from '../dto/get-course-classes-history.dto';
+import { GetCourseSessionsSummaryDto } from '../dto/get-course-sessions-summary.dto';
 import {
   temas,
   fuente_cambio_dificultad,
   estado_clase_consulta,
+  estado_sesion,
 } from '@prisma/client';
 
 const TOTAL_MISIONES = 10;
@@ -1957,5 +1959,160 @@ export class ReportesService {
 
     // Reverse chartData para orden cronológico (de antiguo a nuevo)
     return { chartData: chartData.reverse(), tableData, docentesDisponibles };
+  }
+
+  async getCourseSessionsSummary(
+    idCurso: string,
+    dto: GetCourseSessionsSummaryDto,
+  ) {
+    const { fechaDesde, fechaHasta } = dto;
+    const start = fechaDesde ? new Date(fechaDesde) : new Date(0);
+    if (fechaDesde) start.setUTCHours(0, 0, 0, 0);
+    const end = fechaHasta ? new Date(fechaHasta) : new Date();
+    end.setUTCHours(23, 59, 59, 999);
+
+    // 1. Obtener Sesiones
+    const sessions = await this.prisma.sesionRefuerzo.findMany({
+      where: {
+        idCurso,
+        createdAt: { gte: start, lte: end },
+      },
+      include: {
+        alumno: { select: { id: true, nombre: true, apellido: true } },
+        docente: { select: { id: true, nombre: true, apellido: true } },
+        dificultad: { select: { id: true, nombre: true, tema: true } },
+        resultadoSesion: true,
+      },
+    });
+
+    // 2. Procesamiento de Datos
+    let activeCount = 0;
+    let inactiveCount = 0;
+
+    const stateCounts = {
+      Pendiente: 0,
+      En_curso: 0,
+      Completada: 0,
+      No_completada: 0,
+    };
+
+    const studentCounts = new Map<string, { count: number; name: string }>();
+    const teacherCounts = new Map<string, { count: number; name: string }>();
+    const difficultyCounts = new Map<string, { count: number; name: string }>();
+    const topicCounts = new Map<string, number>();
+
+    let systemGeneratedCount = 0;
+    let teacherGeneratedCount = 0;
+
+    // Efectividad: [Total, Nivel1(40-60), Nivel2(60-85), Nivel3(85+)]
+    const effectiveness = {
+      sistema: { total: 0, level1: 0, level2: 0, level3: 0 },
+      docente: { total: 0, level1: 0, level2: 0, level3: 0 },
+    };
+
+    sessions.forEach((s) => {
+      // A. Activas vs Inactivas
+      const isInactive =
+        s.deletedAt !== null || s.estado === estado_sesion.Cancelada;
+      if (isInactive) inactiveCount++;
+      else activeCount++;
+
+      // B. Estados (Lógica visual)
+      if (s.estado === estado_sesion.Completada) stateCounts.Completada++;
+      else if (
+        s.estado === estado_sesion.Incompleta ||
+        s.estado === estado_sesion.No_realizada
+      )
+        stateCounts.No_completada++;
+      else if (s.estado === estado_sesion.Pendiente) {
+        if (s.fechaInicioReal) stateCounts.En_curso++;
+        else stateCounts.Pendiente++;
+      }
+
+      // C. Agrupaciones (Usamos todas las sesiones para historial de asignación)
+      // Alumno
+      const sId = s.idAlumno;
+      if (!studentCounts.has(sId))
+        studentCounts.set(sId, {
+          count: 0,
+          name: `${s.alumno.nombre} ${s.alumno.apellido}`,
+        });
+      studentCounts.get(sId)!.count++;
+
+      // Docente vs Sistema
+      if (s.idDocente) {
+        teacherGeneratedCount++;
+        const tId = s.idDocente;
+        if (!teacherCounts.has(tId))
+          teacherCounts.set(tId, {
+            count: 0,
+            name: `${s.docente!.nombre} ${s.docente!.apellido}`,
+          });
+        teacherCounts.get(tId)!.count++;
+      } else {
+        systemGeneratedCount++;
+      }
+
+      // Dificultad y Tema
+      const dId = s.idDificultad;
+      if (!difficultyCounts.has(dId))
+        difficultyCounts.set(dId, { count: 0, name: s.dificultad.nombre });
+      difficultyCounts.get(dId)!.count++;
+
+      const topic = s.dificultad.tema;
+      topicCounts.set(topic, (topicCounts.get(topic) || 0) + 1);
+
+      // D. Efectividad (Solo completadas)
+      if (s.estado === estado_sesion.Completada && s.resultadoSesion) {
+        const pct = Number(s.resultadoSesion.pctAciertos);
+        const target = s.idDocente
+          ? effectiveness.docente
+          : effectiveness.sistema;
+
+        target.total++;
+        if (pct >= 85) target.level3++;
+        else if (pct >= 60) target.level2++;
+        else if (pct >= 40) target.level1++;
+      }
+    });
+
+    // 3. Calcular Tops y Modas
+    const getTop = (map: Map<string, { count: number; name: string }>) => {
+      let top = { name: 'Ninguno', count: 0 };
+      for (const val of map.values()) {
+        if (val.count > top.count) top = val;
+      }
+      return top;
+    };
+
+    const getModa = (map: Map<string, number>) => {
+      let top = { label: 'Ninguno', value: 0 };
+      for (const [label, value] of map.entries()) {
+        if (value > top.value) top = { label, value };
+      }
+      return top;
+    };
+
+    const totalSessions = sessions.length;
+
+    return {
+      kpis: {
+        total: totalSessions,
+        activas: activeCount,
+        inactivas: inactiveCount,
+        estados: stateCounts,
+        origen: {
+          sistema: systemGeneratedCount,
+          docente: teacherGeneratedCount,
+        },
+      },
+      tops: {
+        alumno: getTop(studentCounts),
+        docente: getTop(teacherCounts),
+        dificultad: getTop(difficultyCounts),
+        tema: getModa(topicCounts),
+      },
+      efectividad: effectiveness,
+    };
   }
 }
