@@ -11,6 +11,7 @@ import { useOptionalCourseContext } from "../../../context/CourseContext";
 import DifficultiesReportTab from "../components/dificultades/DifficultiesReportTab";
 import ConsultasReportTab from "../components/consultas/ConsultasReportTab";
 import ClassesReportTab from "../components/clases-consulta/ClassesReportTab";
+import SessionsReportTab from "../components/sesiones-refuerzo/SessionsReportTab";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -104,6 +105,9 @@ export default function CourseReportsPage() {
       </CustomTabPanel>
       <CustomTabPanel value={value} index={3}>
         <ClassesReportTab courseId={courseId} />
+      </CustomTabPanel>
+      <CustomTabPanel value={value} index={4}>
+        <SessionsReportTab courseId={courseId} />
       </CustomTabPanel>
     </Box>
   );
