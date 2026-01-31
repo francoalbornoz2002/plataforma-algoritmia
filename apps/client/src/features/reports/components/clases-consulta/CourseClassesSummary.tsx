@@ -17,6 +17,7 @@ import TableOnIcon from "@mui/icons-material/TableChart";
 import SchoolIcon from "@mui/icons-material/School";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { PieChart } from "@mui/x-charts/PieChart";
 
 import {
@@ -250,6 +251,53 @@ export default function CourseClassesSummary({ courseId }: Props) {
               </Paper>
             </Grid>
 
+            {/* Gráfico de Origen */}
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Paper
+                elevation={3}
+                sx={{
+                  p: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  height: "100%",
+                  width: "100%",
+                }}
+              >
+                <Typography variant="h6" gutterBottom align="center">
+                  Origen de Clases
+                </Typography>
+                <PieChart
+                  series={[
+                    {
+                      data: [
+                        {
+                          label: "Sistema",
+                          value: data.kpis.origen.sistema,
+                          color: "#9c27b0",
+                        },
+                        {
+                          label: "Docente",
+                          value: data.kpis.origen.docente,
+                          color: "#ff9800",
+                        },
+                      ],
+                      innerRadius: 30,
+                      paddingAngle: 2,
+                      cornerRadius: 4,
+                    },
+                  ]}
+                  height={250}
+                  slotProps={{
+                    legend: {
+                      direction: "horizontal",
+                      position: { vertical: "bottom", horizontal: "center" },
+                    },
+                  }}
+                />
+              </Paper>
+            </Grid>
+
             {/* Stats Detalladas */}
             <Grid size={{ xs: 12, md: 7 }}>
               <Stack spacing={3} sx={{ height: "100%" }}>
@@ -291,6 +339,29 @@ export default function CourseClassesSummary({ courseId }: Props) {
                   <Typography variant="body2">
                     Ha llevado a cabo un total de <b>{data.topTeacher.count}</b>{" "}
                     clases de consulta realizadas.
+                  </Typography>
+                </Paper>
+                {/* Efectividad Sistema */}
+                <Paper
+                  elevation={3}
+                  sx={{ p: 3, flex: 1, bgcolor: "secondary.50" }}
+                >
+                  <Stack direction="row" spacing={2} alignItems="center" mb={1}>
+                    <AutoAwesomeIcon color="secondary" fontSize="large" />
+                    <Typography variant="h6">Efectividad Automática</Typography>
+                  </Stack>
+                  <Typography
+                    variant="h4"
+                    fontWeight="bold"
+                    color="secondary.main"
+                    gutterBottom
+                  >
+                    {data.kpis.origen.pctSistemaRealizadas.toFixed(1)}%
+                  </Typography>
+                  <Typography variant="body2">
+                    De las clases generadas por el sistema, el{" "}
+                    <b>{data.kpis.origen.pctSistemaRealizadas.toFixed(1)}%</b>{" "}
+                    fueron efectivamente realizadas por un docente.
                   </Typography>
                 </Paper>
               </Stack>

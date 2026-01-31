@@ -23,6 +23,7 @@ import { GetCourseConsultationsHistoryDto } from '../dto/get-course-consultation
 import { GetCourseClassesSummaryDto } from '../dto/get-course-classes-summary.dto';
 import { GetCourseClassesHistoryDto } from '../dto/get-course-classes-history.dto';
 import { GetCourseSessionsSummaryDto } from '../dto/get-course-sessions-summary.dto';
+import { GetCourseSessionsHistoryDto } from '../dto/get-course-sessions-history.dto';
 
 @Controller('reportes')
 @UseGuards(RolesGuard)
@@ -208,5 +209,15 @@ export class ReportesController {
     @Query() dto: GetCourseSessionsSummaryDto,
   ) {
     return this.reportesService.getCourseSessionsSummary(id, dto);
+  }
+
+  // Sesiones de Refuerzo - Sección 2: Historial
+  @Get('cursos/:id/sesiones-refuerzo/historial')
+  @Roles(roles.Administrador, roles.Docente)
+  getCourseSessionsHistory(
+    @Param('id') id: string,
+    @Query() dto: GetCourseSessionsHistoryDto,
+  ) {
+    return this.reportesService.getCourseSessionsHistory(id, dto);
   }
 }

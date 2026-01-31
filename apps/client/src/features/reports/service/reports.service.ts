@@ -149,6 +149,17 @@ export interface CourseSessionsSummaryFilters {
   fechaHasta?: string;
 }
 
+export interface CourseSessionsHistoryFilters {
+  fechaDesde?: string;
+  fechaHasta?: string;
+  origen?: "SISTEMA" | "DOCENTE" | "";
+  docenteId?: string;
+  alumnoId?: string;
+  tema?: string;
+  dificultadId?: string;
+  estado?: string;
+}
+
 // --- Endpoints Modulares de Usuarios ---
 
 export const getUsersSummary = async (params: UsersSummaryFilters) => {
@@ -403,6 +414,20 @@ export const getCourseSessionsSummary = async (
   );
   const response = await apiClient.get(
     `/reportes/cursos/${courseId}/sesiones-refuerzo/resumen`,
+    { params: cleanParams },
+  );
+  return response.data;
+};
+
+export const getCourseSessionsHistory = async (
+  courseId: string,
+  params: CourseSessionsHistoryFilters,
+) => {
+  const cleanParams = Object.fromEntries(
+    Object.entries(params).filter(([_, v]) => v !== ""),
+  );
+  const response = await apiClient.get(
+    `/reportes/cursos/${courseId}/sesiones-refuerzo/historial`,
     { params: cleanParams },
   );
   return response.data;

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Box, Tabs, Tab } from "@mui/material";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import CourseSessionsSummary from "./CourseSessionsSummary";
+import HistoryIcon from "@mui/icons-material/History";
+import CourseSessionsHistory from "./CourseSessionsHistory";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -50,12 +52,20 @@ export default function SessionsReportTab({ courseId }: Props) {
             iconPosition="start"
             label="Resumen General"
           />
-          {/* Futura pestaña de Historial */}
+          <Tab
+            icon={<HistoryIcon />}
+            iconPosition="start"
+            label="Historial Detallado"
+          />
         </Tabs>
       </Box>
 
       <CustomTabPanel value={tabValue} index={0}>
         <CourseSessionsSummary courseId={courseId} />
+      </CustomTabPanel>
+
+      <CustomTabPanel value={tabValue} index={1}>
+        <CourseSessionsHistory courseId={courseId} />
       </CustomTabPanel>
     </Box>
   );

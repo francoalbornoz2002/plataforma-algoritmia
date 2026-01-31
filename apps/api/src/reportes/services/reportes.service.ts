@@ -39,6 +39,7 @@ import { GetCourseConsultationsHistoryDto } from '../dto/get-course-consultation
 import { GetCourseClassesSummaryDto } from '../dto/get-course-classes-summary.dto';
 import { GetCourseClassesHistoryDto } from '../dto/get-course-classes-history.dto';
 import { GetCourseSessionsSummaryDto } from '../dto/get-course-sessions-summary.dto';
+import { GetCourseSessionsHistoryDto } from '../dto/get-course-sessions-history.dto';
 import {
   temas,
   fuente_cambio_dificultad,
@@ -1732,6 +1733,10 @@ export class ReportesService {
     const realizedClasses: any[] = [];
     const statusCounts: Record<string, number> = {};
 
+    let systemCount = 0;
+    let teacherCount = 0;
+    let systemRealizedCount = 0;
+
     allClasses.forEach((c) => {
       const estado = c.estadoClase;
       statusCounts[estado] = (statusCounts[estado] || 0) + 1;
@@ -1750,6 +1755,16 @@ export class ReportesService {
 
       if (c.estadoClase === estado_clase_consulta.Realizada) {
         realizedClasses.push(c);
+      }
+
+      // Conteo por Origen
+      if (c.esAutomatica) {
+        systemCount++;
+        if (c.estadoClase === estado_clase_consulta.Realizada) {
+          systemRealizedCount++;
+        }
+      } else {
+        teacherCount++;
       }
     });
 
@@ -1848,6 +1863,12 @@ export class ReportesService {
         activas: activeCount,
         inactivas: inactiveCount,
         promConsultasPorClase,
+        origen: {
+          sistema: systemCount,
+          docente: teacherCount,
+          pctSistemaRealizadas:
+            systemCount > 0 ? (systemRealizedCount / systemCount) * 100 : 0,
+        },
       },
       graficoEstados,
       efectividad: {
@@ -2113,6 +2134,135 @@ export class ReportesService {
         tema: getModa(topicCounts),
       },
       efectividad: effectiveness,
+    };
+  }
+
+  async getCourseSessionsHistory(
+    idCurso: string,
+    dto: GetCourseSessionsHistoryDto,
+  ) {
+    const {
+      fechaDesde,
+      fechaHasta,
+      origen,
+      docenteId,
+      alumnoId,
+      tema,
+      dificultadId,
+      estado,
+    } = dto;
+
+    const start = fechaDesde ? new Date(fechaDesde) : new Date(0);
+    if (fechaDesde) start.setUTCHours(0, 0, 0, 0);
+    const end = fechaHasta ? new Date(fechaHasta) : new Date();
+    end.setUTCHours(23, 59, 59, 999);
+
+    // 1. Construir Filtros
+    const where: Prisma.SesionRefuerzoWhereInput = {
+      idCurso,
+      // Filtramos por fecha de creación por defecto para traer el rango,
+      // luego el frontend puede refinar visualmente.
+      createdAt: { gte: start, lte: end },
+    };
+
+    if (origen === 'SISTEMA') where.idDocente = null;
+    if (origen === 'DOCENTE') {
+      where.idDocente = { not: null };
+      if (docenteId) where.idDocente = docenteId;
+    }
+
+    if (alumnoId) where.idAlumno = alumnoId;
+    if (tema) where.dificultad = { tema: tema as temas };
+    if (dificultadId) where.idDificultad = dificultadId;
+    if (estado) where.estado = estado as estado_sesion;
+
+    // 2. Obtener Datos
+    const sesiones = await this.prisma.sesionRefuerzo.findMany({
+      where,
+      include: {
+        alumno: { select: { id: true, nombre: true, apellido: true } },
+        docente: { select: { id: true, nombre: true, apellido: true } },
+        dificultad: { select: { id: true, nombre: true, tema: true } },
+        resultadoSesion: {
+          include: {
+            respuestasAlumno: true,
+          },
+        },
+        preguntas: {
+          include: {
+            pregunta: {
+              include: { opcionesRespuesta: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // 3. Obtener Listas para Filtros (Metadata)
+    const [alumnos, docentes, dificultades] = await Promise.all([
+      this.prisma.alumnoCurso.findMany({
+        where: { idCurso },
+        select: {
+          alumno: { select: { id: true, nombre: true, apellido: true } },
+        },
+      }),
+      this.prisma.docenteCurso.findMany({
+        where: { idCurso },
+        select: {
+          docente: { select: { id: true, nombre: true, apellido: true } },
+        },
+      }),
+      this.prisma.dificultad.findMany({
+        where: {
+          dificultadesCursos: { some: { cursos: { some: { id: idCurso } } } },
+        },
+        select: { id: true, nombre: true, tema: true },
+      }),
+    ]);
+
+    // 4. Procesar para Gráfico y Tabla
+    const processedSessions = sesiones.map((s) => {
+      // Lógica de fecha para el eje X según estado
+      let fechaGrafico = s.createdAt; // Default: Pendiente
+
+      if (s.estado === estado_sesion.Completada && s.resultadoSesion) {
+        fechaGrafico = s.resultadoSesion.fechaCompletado;
+      } else if (
+        s.estado === estado_sesion.No_realizada ||
+        s.estado === estado_sesion.Incompleta
+      ) {
+        fechaGrafico = s.fechaHoraLimite;
+      }
+
+      return {
+        ...s,
+        fechaGrafico,
+        origen: s.idDocente ? 'Docente' : 'Sistema',
+      };
+    });
+
+    // Agrupar para el gráfico (Conteo por día)
+    const chartMap = new Map<string, number>();
+    processedSessions.forEach((s) => {
+      const key = s.fechaGrafico.toISOString().split('T')[0];
+      chartMap.set(key, (chartMap.get(key) || 0) + 1);
+    });
+
+    const chartData = Array.from(chartMap.entries())
+      .map(([fecha, cantidad]) => ({ fecha, cantidad }))
+      .sort(
+        (a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime(),
+      );
+
+    return {
+      sessions: processedSessions,
+      chartData,
+      filters: {
+        alumnos: alumnos.map((a) => a.alumno),
+        docentes: docentes.map((d) => d.docente),
+        dificultades,
+      },
     };
   }
 }
