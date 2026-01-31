@@ -36,6 +36,7 @@ model ClaseConsulta {
   horaFin                DateTime                @map("hora_fin") @db.Time(6)
   modalidad              modalidad
   estadoClase            estado_clase_consulta   @map("estado_clase")
+  esAutomatica           Boolean                 @default(false) @map("es_automatica")
   createdAt              DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt              DateTime?               @map("deleted_at") @db.Timestamptz(6)
