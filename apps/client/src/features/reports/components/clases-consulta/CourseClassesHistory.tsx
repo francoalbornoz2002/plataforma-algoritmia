@@ -48,6 +48,7 @@ export default function CourseClassesHistory({ courseId }: Props) {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   // Filtros
   const [filters, setFilters] = useState<CourseClassesHistoryFilters>({
@@ -102,6 +103,7 @@ export default function CourseClassesHistory({ courseId }: Props) {
   };
 
   const handleExportPdf = async () => {
+    setPdfLoading(true);
     try {
       const blob = await getCourseClassesHistoryPdf(courseId, filters);
       const url = window.URL.createObjectURL(blob);
@@ -114,6 +116,8 @@ export default function CourseClassesHistory({ courseId }: Props) {
     } catch (err) {
       console.error(err);
       setError("Error al descargar el PDF.");
+    } finally {
+      setPdfLoading(false);
     }
   };
 
@@ -289,12 +293,18 @@ export default function CourseClassesHistory({ courseId }: Props) {
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}>
         <Button
           variant="outlined"
-          startIcon={<PictureAsPdfIcon />}
-          disabled={!data}
+          startIcon={
+            pdfLoading ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              <PictureAsPdfIcon />
+            )
+          }
+          disabled={!data || pdfLoading}
           color="error"
           onClick={handleExportPdf}
         >
-          Exportar PDF
+          {pdfLoading ? "Generando..." : "Exportar PDF"}
         </Button>
         <Button
           variant="outlined"
