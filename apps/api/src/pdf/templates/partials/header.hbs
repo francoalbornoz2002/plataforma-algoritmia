@@ -1,0 +1,32 @@
+<div class="report-header">
+  <div class="institution-info">
+    {{#if institucion.logoUrl}}
+      <img src="{{institucion.logoUrl}}" alt="Logo" style="height: 40px; margin-bottom: 5px;">
+    {{/if}}
+    <h2 class="institution-name">{{institucion.nombre}}</h2>
+    <p class="institution-details">{{institucion.direccion}}</p>
+    <p class="institution-details">{{institucion.email}} | {{institucion.telefono}}</p>
+  </div>
+  
+  <div class="report-meta">
+    <div class="mb-1"><strong>Reporte N°:</strong> {{reporte.numero}}</div>
+    <div class="mb-1"><strong>Fecha:</strong> {{reporte.fechaEmision}}</div>
+    <div class="mb-1"><strong>Generado por:</strong> {{reporte.generadoPor}}</div>
+    {{#if reporte.aPresentarA}}
+      <div class="mb-1"><strong>A presentar a:</strong> {{reporte.aPresentarA}}</div>
+    {{/if}}
+  </div>
+</div>
+
+<div class="text-center">
+  <div class="report-title">{{reporte.titulo}}</div>
+  {{#if reporte.subtitulo}}
+    <div class="report-subtitle">{{reporte.subtitulo}}</div>
+  {{/if}}
+</div>
+
+{{#if reporte.filtrosTexto}}
+  <div class="filters-section">
+    <strong>Filtros Aplicados:</strong> {{reporte.filtrosTexto}}
+  </div>
+{{/if}}
