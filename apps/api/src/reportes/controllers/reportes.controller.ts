@@ -1,4 +1,12 @@
-import { Controller, Get, Param, Query, UseGuards, Res } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Query,
+  UseGuards,
+  Res,
+  Req,
+} from '@nestjs/common';
 import type { Response } from 'express';
 import { ReportesService } from '../services/reportes.service';
 import { GetUsersSummaryDto } from '../dto/get-users-summary.dto';
@@ -25,6 +33,7 @@ import { GetCourseClassesSummaryDto } from '../dto/get-course-classes-summary.dt
 import { GetCourseClassesHistoryDto } from '../dto/get-course-classes-history.dto';
 import { GetCourseSessionsSummaryDto } from '../dto/get-course-sessions-summary.dto';
 import { GetCourseSessionsHistoryDto } from '../dto/get-course-sessions-history.dto';
+import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
 
 @Controller('reportes')
 @UseGuards(RolesGuard)
@@ -209,8 +218,14 @@ export class ReportesController {
     @Param('id') id: string,
     @Query() dto: GetCourseClassesHistoryDto,
     @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
   ) {
-    const file = await this.reportesService.getCourseClassesHistoryPdf(id, dto);
+    const userId = req.user.userId;
+    const file = await this.reportesService.getCourseClassesHistoryPdf(
+      id,
+      dto,
+      userId,
+    );
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="reporte-clases-${id}.pdf"`,

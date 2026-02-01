@@ -1991,6 +1991,7 @@ export class ReportesService {
   async getCourseClassesHistoryPdf(
     idCurso: string,
     dto: GetCourseClassesHistoryDto,
+    userId: string,
   ): Promise<StreamableFile> {
     // 1. Reutilizamos la lógica de obtención de datos existente
     const data = await this.getCourseClassesHistory(idCurso, dto);
@@ -1999,6 +2000,34 @@ export class ReportesService {
     const curso = await this.prisma.curso.findUnique({
       where: { id: idCurso },
       select: { nombre: true },
+    });
+
+    // 3. Obtener Datos Institucionales y Usuario
+    const institucion = await this.prisma.institucion.findFirst({
+      include: { localidad: { include: { provincia: true } } },
+    });
+
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: userId },
+      select: { nombre: true, apellido: true },
+    });
+
+    // 4. Registrar Generación de Reporte en BD
+    const filtrosTexto: string[] = [];
+    if (dto.fechaDesde) filtrosTexto.push(`Desde: ${dto.fechaDesde}`);
+    if (dto.fechaHasta) filtrosTexto.push(`Hasta: ${dto.fechaHasta}`);
+    if (dto.docenteId) {
+      const doc = data.docentesDisponibles.find((d) => d.id === dto.docenteId);
+      filtrosTexto.push(`Docente: ${doc ? doc.nombre : 'ID ' + dto.docenteId}`);
+    }
+
+    const reporteDB = await this.prisma.reporteGenerado.create({
+      data: {
+        titulo: 'Historial de Clases de Consulta',
+        modulo: 'Cursos',
+        filtrosAplicados: JSON.parse(JSON.stringify(dto)),
+        idUsuarioGenerador: userId,
+      },
     });
 
     // 3. Preparamos los KPIs para el reporte
@@ -2066,8 +2095,27 @@ export class ReportesService {
     };
 
     const templateData = {
-      cursoNombre: curso?.nombre || 'Curso Desconocido',
-      fechaGeneracion: new Date().toLocaleDateString(),
+      // Metadatos Estructurales (Header/Footer)
+      institucion: {
+        nombre: institucion?.nombre || 'Plataforma Algoritmia',
+        direccion: institucion
+          ? `${institucion.direccion}, ${institucion.localidad.localidad}, ${institucion.localidad.provincia.provincia}`
+          : '',
+        email: institucion?.email || '',
+        telefono: institucion?.telefono || '',
+        logoUrl: institucion?.logoUrl,
+      },
+      reporte: {
+        numero: reporteDB.nroReporte,
+        titulo: 'Historial de Clases de Consulta',
+        subtitulo: `Curso: ${curso?.nombre || 'Desconocido'}`,
+        fechaEmision: new Date().toLocaleDateString(),
+        generadoPor: usuario
+          ? `${usuario.nombre} ${usuario.apellido}`
+          : 'Sistema',
+        filtrosTexto: filtrosTexto.join(' | '),
+      },
+      // Datos Específicos del Reporte
       kpis: {
         total: totalClases,
         realizadas,
