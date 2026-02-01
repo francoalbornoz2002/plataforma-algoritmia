@@ -7,9 +7,11 @@ import morgan from 'morgan';
 import { CORS } from './constants';
 import { PrismaService } from './prisma/prisma.service';
 import { AuditInterceptor } from './auditoria/interceptors/audit.interceptor';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // Prefijo global para toda la api
   app.setGlobalPrefix('api');
@@ -58,6 +60,11 @@ async function bootstrap() {
 
   // Habilitamos CORS
   app.enableCors(CORS);
+
+  // Configuración de vistas (Handlebars) para reportes PDF
+  app.useStaticAssets(join(__dirname, '..', 'public'));
+  app.setBaseViewsDir(join(__dirname, '..', 'views'));
+  app.setViewEngine('hbs');
 
   // --- REGISTRAR EL INTERCEPTOR PARA AUDITORIA GLOBALMENTE ---
   // Obtenemos la instancia (Singleton) de PrismaService
