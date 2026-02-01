@@ -20,6 +20,8 @@ interface InstitutionInfoProps {
   isLoading: boolean;
 }
 
+const baseUrl = import.meta.env.VITE_API_URL_WITHOUT_PREFIX;
+
 export default function InstitutionInfo({
   institucion,
   isLoading,
@@ -40,6 +42,21 @@ export default function InstitutionInfo({
           </Typography>
         ) : (
           <Stack spacing={2.5}>
+            {/* --- Logo --- */}
+            {institucion.logoUrl && (
+              <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+                <img
+                  src={`${baseUrl}${institucion.logoUrl}`}
+                  alt="Logo Institución"
+                  style={{
+                    maxHeight: 100,
+                    maxWidth: "100%",
+                    objectFit: "contain",
+                  }}
+                />
+              </Box>
+            )}
+
             <Stack direction="row" spacing={2} alignItems="center">
               <ListItemIcon sx={{ minWidth: "auto" }}>
                 <BusinessIcon color="primary" />

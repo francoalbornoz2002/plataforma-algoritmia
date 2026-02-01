@@ -5,10 +5,12 @@ import {
   IsString,
   MinLength,
 } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class UpdateInstitucionDto {
   @ApiProperty({ description: 'ID de la localidad seleccionada' })
+  @Type(() => Number)
   @IsInt()
   idLocalidad: number;
 
@@ -30,4 +32,12 @@ export class UpdateInstitucionDto {
   @IsString()
   @MinLength(7)
   telefono: string;
+
+  @ApiPropertyOptional({
+    type: 'string',
+    format: 'binary',
+    description: 'Archivo de logo',
+  })
+  @IsOptional()
+  logo?: any;
 }

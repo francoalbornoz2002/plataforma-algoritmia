@@ -5,6 +5,8 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateInstitucionDto } from '../dto/update-institucion.dto';
+import { unlink } from 'fs';
+import { basename, join } from 'path';
 
 @Injectable()
 export class InstitucionService {
@@ -44,10 +46,13 @@ export class InstitucionService {
    * Actualiza O CREA (Upsert) la fila de datos de la institución.
    * Renombramos 'update' a 'upsert'.
    */
-  async upsert(dto: UpdateInstitucionDto) {
+  async upsert(dto: UpdateInstitucionDto, logo?: Express.Multer.File) {
     try {
+      // Separamos 'logo' del resto de datos para que Prisma no falle
+      const { logo: _ignored, ...dataWithoutLogo } = dto;
+
       const current = await this.prisma.institucion.findFirst({
-        select: { id: true },
+        select: { id: true, logoUrl: true },
       });
 
       // --- 1. Definimos el 'include' que queremos devolver ---
@@ -60,17 +65,45 @@ export class InstitucionService {
         },
       };
 
+      // --- Manejo del Logo ---
+      let logoUrl: string | undefined;
+      if (logo && logo.filename) {
+        logoUrl = `/uploads/${logo.filename}`;
+
+        // Si ya existía un logo, borramos el archivo viejo
+        if (current?.logoUrl) {
+          const oldFileName = basename(current.logoUrl);
+          const UPLOADS_PATH = join(process.cwd(), 'uploads');
+          const oldImagePath = join(UPLOADS_PATH, oldFileName);
+
+          unlink(oldImagePath, (err) => {
+            if (err) {
+              console.error(
+                `Error al eliminar logo antiguo ${oldImagePath}:`,
+                err,
+              );
+            }
+          });
+        }
+      }
+
+      // Combinamos los datos del DTO con la nueva URL del logo (si existe)
+      const dataToSave = {
+        ...dataWithoutLogo,
+        ...(logoUrl ? { logoUrl } : {}),
+      };
+
       if (current) {
         // --- 2. SI EXISTE: Actualizamos (UPDATE) ---
         return await this.prisma.institucion.update({
           where: { id: current.id },
-          data: dto,
+          data: dataToSave,
           include: includeData,
         });
       } else {
         // --- 3. SI NO EXISTE: Creamos (CREATE) ---
         return await this.prisma.institucion.create({
-          data: dto,
+          data: dataToSave,
           include: includeData,
         });
       }

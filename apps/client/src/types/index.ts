@@ -398,6 +398,7 @@ export interface Institucion {
   direccion: string;
   email: string;
   telefono: string;
+  logoUrl?: string | null;
   localidad: {
     id: number;
     idProvincia: number;

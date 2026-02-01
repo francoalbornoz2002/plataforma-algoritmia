@@ -5,13 +5,16 @@ import {
   Param,
   ParseIntPipe,
   Patch,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { InstitucionService } from '../services/institucion.service';
 import { UpdateInstitucionDto } from '../dto/update-institucion.dto';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { roles } from '@prisma/client';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('institucion')
 @UseGuards(RolesGuard)
@@ -23,8 +26,12 @@ export class InstitucionController {
    */
   @Patch()
   @Roles(roles.Administrador)
-  update(@Body() updateInstitucionDto: UpdateInstitucionDto) {
-    return this.institucionService.upsert(updateInstitucionDto);
+  @UseInterceptors(FileInterceptor('logo'))
+  update(
+    @Body() updateInstitucionDto: UpdateInstitucionDto,
+    @UploadedFile() logo?: Express.Multer.File,
+  ) {
+    return this.institucionService.upsert(updateInstitucionDto, logo);
   }
 
   /**
