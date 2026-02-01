@@ -178,6 +178,11 @@ export class PrismaService implements OnModuleInit {
   get resultadoSesion() {
     return this.extendedClient.resultadoSesion;
   }
+
+  get reporteGenerado() {
+    return this.extendedClient.reporteGenerado;
+  }
+
   get sesionRefuerzo() {
     return this.extendedClient.sesionRefuerzo;
   }
