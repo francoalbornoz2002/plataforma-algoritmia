@@ -10,7 +10,9 @@ export class PdfService {
     // 1. Compilar la plantilla HBS
     const templatePath = path.join(
       process.cwd(), // Apunta a la raíz del proyecto en ejecución (apps/api)
-      'views',
+      'src',
+      'pdf',
+      'templates',
       `${templateName}.hbs`,
     );
 

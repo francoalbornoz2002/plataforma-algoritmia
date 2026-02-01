@@ -63,7 +63,7 @@ async function bootstrap() {
 
   // Configuración de vistas (Handlebars) para reportes PDF
   app.useStaticAssets(join(__dirname, '..', 'public'));
-  app.setBaseViewsDir(join(__dirname, '..', 'views'));
+  app.setBaseViewsDir(join(__dirname, '..', 'src', 'pdf', 'templates'));
   app.setViewEngine('hbs');
 
   // --- REGISTRAR EL INTERCEPTOR PARA AUDITORIA GLOBALMENTE ---
