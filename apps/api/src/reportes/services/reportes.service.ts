@@ -2132,6 +2132,7 @@ export class ReportesService {
           ? `${usuario.nombre} ${usuario.apellido}`
           : 'Sistema',
         filtrosTexto: filtrosTexto.join(' | '),
+        aPresentarA: dto.aPresentarA,
       },
       // Datos Específicos del Reporte
       kpis: {

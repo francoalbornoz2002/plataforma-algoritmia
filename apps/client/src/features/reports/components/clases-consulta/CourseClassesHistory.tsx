@@ -29,6 +29,7 @@ import {
 } from "../../service/reports.service";
 import { estado_clase_consulta } from "../../../../types";
 import ClaseDetailModal from "../../../clases-consulta/components/ClaseDetailModal";
+import ReportExportDialog from "../common/ReportExportDialog";
 
 interface Props {
   courseId: string;
@@ -67,6 +68,9 @@ export default function CourseClassesHistory({ courseId }: Props) {
   const [selectedClass, setSelectedClass] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Estado para el Modal de Exportación
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+
   // --- Cargar Datos ---
   useEffect(() => {
     const loadData = async () => {
@@ -102,10 +106,15 @@ export default function CourseClassesHistory({ courseId }: Props) {
     setIsModalOpen(true);
   };
 
-  const handleExportPdf = async () => {
+  const handleOpenExportDialog = () => {
+    setIsExportDialogOpen(true);
+  };
+
+  const handleExportPdf = async (aPresentarA: string) => {
     setPdfLoading(true);
     try {
-      const blob = await getCourseClassesHistoryPdf(courseId, filters);
+      const params = { ...filters, aPresentarA };
+      const blob = await getCourseClassesHistoryPdf(courseId, params as any);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -113,6 +122,7 @@ export default function CourseClassesHistory({ courseId }: Props) {
       document.body.appendChild(link);
       link.click();
       link.parentNode?.removeChild(link);
+      setIsExportDialogOpen(false);
     } catch (err) {
       console.error(err);
       setError("Error al descargar el PDF.");
@@ -235,6 +245,7 @@ export default function CourseClassesHistory({ courseId }: Props) {
           >
             <DatePicker
               label="Desde"
+              disableFuture
               value={
                 filters.fechaDesde
                   ? new Date(filters.fechaDesde + "T00:00:00")
@@ -250,6 +261,7 @@ export default function CourseClassesHistory({ courseId }: Props) {
             />
             <DatePicker
               label="Hasta"
+              disableFuture
               value={
                 filters.fechaHasta
                   ? new Date(filters.fechaHasta + "T00:00:00")
@@ -302,7 +314,7 @@ export default function CourseClassesHistory({ courseId }: Props) {
           }
           disabled={!data || pdfLoading}
           color="error"
-          onClick={handleExportPdf}
+          onClick={handleOpenExportDialog}
         >
           {pdfLoading ? "Generando..." : "Exportar PDF"}
         </Button>
@@ -406,6 +418,14 @@ export default function CourseClassesHistory({ courseId }: Props) {
           }}
         />
       )}
+
+      {/* Modal de Exportación */}
+      <ReportExportDialog
+        open={isExportDialogOpen}
+        onClose={() => setIsExportDialogOpen(false)}
+        onExport={handleExportPdf}
+        isGenerating={pdfLoading}
+      />
     </Paper>
   );
 }

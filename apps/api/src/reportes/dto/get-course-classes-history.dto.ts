@@ -12,4 +12,8 @@ export class GetCourseClassesHistoryDto {
   @IsOptional()
   @IsString()
   docenteId?: string;
+
+  @IsOptional()
+  @IsString()
+  aPresentarA?: string;
 }
