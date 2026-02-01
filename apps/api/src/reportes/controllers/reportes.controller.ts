@@ -34,11 +34,15 @@ import { GetCourseClassesHistoryDto } from '../dto/get-course-classes-history.dt
 import { GetCourseSessionsSummaryDto } from '../dto/get-course-sessions-summary.dto';
 import { GetCourseSessionsHistoryDto } from '../dto/get-course-sessions-history.dto';
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
+import { PdfService } from '../../pdf/service/pdf.service';
 
 @Controller('reportes')
 @UseGuards(RolesGuard)
 export class ReportesController {
-  constructor(private readonly reportesService: ReportesService) {}
+  constructor(
+    private readonly reportesService: ReportesService,
+    private readonly pdfService: PdfService,
+  ) {}
 
   // --- REPORTES DE USUARIOS (ADMIN ONLY) ---
 
@@ -221,7 +225,7 @@ export class ReportesController {
     @Req() req: AuthenticatedUserRequest,
   ) {
     const userId = req.user.userId;
-    const file = await this.reportesService.getCourseClassesHistoryPdf(
+    const file = await this.pdfService.getCourseClassesHistoryPdf(
       id,
       dto,
       userId,

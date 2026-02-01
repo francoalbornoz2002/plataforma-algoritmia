@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, StreamableFile } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GetUsersSummaryDto } from '../dto/get-users-summary.dto';
 import {
@@ -46,7 +46,6 @@ import {
   estado_clase_consulta,
   estado_sesion,
 } from '@prisma/client';
-import { PdfService } from '../../pdf/service/pdf.service';
 import { readFile } from 'fs/promises';
 import * as path from 'path';
 
@@ -54,10 +53,7 @@ const TOTAL_MISIONES = 10;
 
 @Injectable()
 export class ReportesService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly pdfService: PdfService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async getUsersSummary(dto: GetUsersSummaryDto) {
     const { fechaCorte } = dto;
@@ -1988,139 +1984,10 @@ export class ReportesService {
     return { chartData: chartData.reverse(), tableData, docentesDisponibles };
   }
 
-  async getCourseClassesHistoryPdf(
-    idCurso: string,
-    dto: GetCourseClassesHistoryDto,
-    userId: string,
-  ): Promise<StreamableFile> {
-    // 1. Reutilizamos la lógica de obtención de datos existente
-    const data = await this.getCourseClassesHistory(idCurso, dto);
-
-    // 2. Obtenemos metadatos comunes (Curso, Institución, Usuario, Logo)
-    const { curso, institucion, usuario, logoBase64 } =
-      await this.getReportMetadata(idCurso, userId);
-
-    // 4. Registrar Generación de Reporte en BD (Modularizado)
-    const { reporteDB, filtrosTexto } = await this.registerReport(
-      userId,
-      'Historial de Clases de Consulta',
-      'Cursos',
-      dto,
-    );
-
-    // 3. Preparamos los KPIs para el reporte
-    const totalClases = data.tableData.length;
-    const realizadas = data.tableData.filter(
-      (c) => c.estado === estado_clase_consulta.Realizada,
-    ).length;
-
-    // Calcular efectividad promedio (revisadas / total) solo de las realizadas
-    let sumPct = 0;
-    let countRealizadasConConsultas = 0;
-    data.tableData.forEach((c) => {
-      if (
-        c.estado === estado_clase_consulta.Realizada &&
-        c.totalConsultas > 0
-      ) {
-        sumPct += (c.revisadas / c.totalConsultas) * 100;
-        countRealizadasConConsultas++;
-      }
-    });
-    const pctEfectividad =
-      countRealizadasConConsultas > 0
-        ? (sumPct / countRealizadasConConsultas).toFixed(1)
-        : '0.0';
-
-    // 4. Formateamos los datos para Handlebars
-    const clasesFormatted = data.tableData.map((c) => ({
-      fecha: c.fechaAgenda.toISOString().split('T')[0], // YYYY-MM-DD
-      nombre: c.nombre,
-      docente: c.docente,
-      estado: c.estado.replace(/_/g, ' '), // "No_realizada" -> "No realizada"
-      estadoRaw: c.estado, // Para la clase CSS (badge-No_realizada)
-      totalConsultas: c.totalConsultas,
-      revisadas: c.revisadas,
-    }));
-
-    // 5. Preparar datos para el Gráfico (Chart.js)
-    // Leemos la librería desde node_modules para inyectarla
-    const chartJsMain = require.resolve('chart.js');
-    const chartJsPath = path.join(path.dirname(chartJsMain), 'chart.umd.js');
-    const chartJsContent = await readFile(chartJsPath, 'utf-8');
-
-    // Preparamos la configuración del gráfico
-    const chartConfig = {
-      type: 'bar',
-      data: {
-        labels: data.chartData.map((d) =>
-          d.fecha.split('-').slice(1).reverse().join('/'),
-        ), // MM/DD
-        datasets: [
-          {
-            label: 'Revisadas',
-            data: data.chartData.map((d) => d.revisadas),
-            backgroundColor: '#2e7d32', // Success main
-            stack: 'Stack 0',
-          },
-          {
-            label: 'No Revisadas',
-            data: data.chartData.map((d) => d.noRevisadas),
-            backgroundColor: '#ed6c02', // Warning main
-            stack: 'Stack 0',
-          },
-        ],
-      },
-    };
-
-    const templateData = {
-      // Metadatos Estructurales (Header/Footer)
-      institucion: {
-        nombre: institucion?.nombre || 'Plataforma Algoritmia',
-        direccion: institucion
-          ? `${institucion.direccion}, ${institucion.localidad.localidad}, ${institucion.localidad.provincia.provincia}`
-          : '',
-        email: institucion?.email || '',
-        telefono: institucion?.telefono || '',
-        logoUrl: logoBase64, // Pasamos el Base64 en lugar de la URL relativa
-      },
-      reporte: {
-        numero: reporteDB.nroReporte,
-        titulo: 'Historial de Clases de Consulta',
-        subtitulo: `Curso: ${curso?.nombre || 'Desconocido'}`,
-        fechaEmision: new Date().toLocaleDateString(),
-        generadoPor: usuario
-          ? `${usuario.nombre} ${usuario.apellido}`
-          : 'Sistema',
-        filtrosTexto: filtrosTexto.join(' | '),
-        aPresentarA: dto.aPresentarA,
-      },
-      // Datos Específicos del Reporte
-      kpis: {
-        total: totalClases,
-        realizadas,
-        pctEfectividad,
-      },
-      chartJsContent, // Librería inyectada
-      chartConfig: JSON.stringify(chartConfig), // Configuración lista para usar
-      clases: clasesFormatted,
-    };
-
-    // 6. Generar PDF usando el servicio
-    const pdfBuffer = await this.pdfService.generatePdf(
-      'reporte-clases',
-      templateData,
-    );
-
-    return new StreamableFile(pdfBuffer, {
-      type: 'application/pdf',
-      disposition: `attachment; filename="historial-clases-${idCurso}.pdf"`,
-    });
-  }
-
   /**
    * Helper privado para registrar el reporte en BD y generar texto de filtros
    */
-  private async registerReport(
+  public async registerReport(
     userId: string,
     titulo: string,
     modulo: string,
@@ -2156,7 +2023,7 @@ export class ReportesService {
   /**
    * Helper privado para obtener metadatos comunes de reportes PDF
    */
-  private async getReportMetadata(idCurso: string, userId: string) {
+  public async getReportMetadata(idCurso: string, userId: string) {
     const [curso, institucion, usuario] = await Promise.all([
       this.prisma.curso.findUnique({
         where: { id: idCurso },
