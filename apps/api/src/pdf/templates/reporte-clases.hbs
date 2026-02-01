@@ -2,112 +2,10 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <style>
-    body {
-      font-family: 'Roboto', sans-serif;
-      color: #333;
-      line-height: 1.4;
-      font-size: 12px;
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 30px;
-      border-bottom: 2px solid #1976d2;
-      padding-bottom: 10px;
-    }
-    .header h1 {
-      color: #1976d2;
-      margin: 0 0 5px 0;
-      font-size: 24px;
-    }
-    .header p {
-      color: #666;
-      margin: 2px 0;
-    }
-    
-    .kpi-container {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 20px;
-      gap: 10px;
-    }
-    .kpi-card {
-      background: #f5f5f5;
-      border-radius: 4px;
-      padding: 10px;
-      flex: 1;
-      text-align: center;
-      border: 1px solid #e0e0e0;
-    }
-    .kpi-value {
-      font-size: 20px;
-      font-weight: bold;
-      color: #1976d2;
-    }
-    .kpi-label {
-      font-size: 11px;
-      color: #666;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-    th {
-      background-color: #1976d2;
-      color: white;
-      padding: 8px;
-      text-align: left;
-      font-weight: bold;
-      font-size: 11px;
-    }
-    td {
-      border-bottom: 1px solid #ddd;
-      padding: 8px;
-      vertical-align: middle;
-    }
-    tr:nth-child(even) {
-      background-color: #f9f9f9;
-    }
-    
-    .badge {
-      padding: 3px 8px;
-      border-radius: 12px;
-      font-size: 10px;
-      font-weight: bold;
-      color: white;
-      display: inline-block;
-      text-transform: capitalize;
-    }
-    /* Colores similares a MUI */
-    .badge-Realizada { background-color: #2e7d32; } /* Success */
-    .badge-Programada { background-color: #0288d1; } /* Info */
-    .badge-No_realizada { background-color: #d32f2f; } /* Error */
-    .badge-Cancelada { background-color: #9e9e9e; } /* Grey */
-    .badge-En_curso { background-color: #ed6c02; } /* Warning */
-    
-    .footer-info {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      padding: 10px 20px;
-      font-size: 9px;
-      color: #999;
-      text-align: right;
-      border-top: 1px solid #eee;
-    }
-  </style>
+  {{> styles}}
 </head>
 <body>
-  <div class="header">
-    <h1>Historial de Clases de Consulta</h1>
-    <p><strong>Curso:</strong> {{cursoNombre}}</p>
-    <p>Generado el: {{fechaGeneracion}}</p>
-  </div>
+  {{> header}}
 
   <div class="kpi-container">
     <div class="kpi-card">
@@ -122,6 +20,11 @@
       <div class="kpi-value">{{kpis.pctEfectividad}}%</div>
       <div class="kpi-label">Efectividad Revisión</div>
     </div>
+  </div>
+
+  <h3>Evolución de Consultas</h3>
+  <div class="chart-container">
+    <canvas id="classesChart"></canvas>
   </div>
 
   <h3>Detalle de Clases</h3>
@@ -152,8 +55,46 @@
     </tbody>
   </table>
 
-  <div class="footer-info">
-    Plataforma de Algoritmia - Reporte Oficial
-  </div>
+  {{> footer}}
+
+  {{!-- Inyectamos la librería Chart.js --}}
+  <script>
+    {{{chartJsContent}}}
+  </script>
+
+  {{!-- Renderizamos el gráfico --}}
+  <script>
+    const ctx = document.getElementById('classesChart').getContext('2d');
+    const config = {{{chartConfig}}};
+    
+    // Ajustes para impresión
+    config.options = {
+      animation: false, // CRÍTICO: Desactivar animación para que salga en el PDF
+      responsive: true,
+      devicePixelRatio: 2, // MEJORA: Aumenta la nitidez del gráfico en el PDF
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: {
+            font: { family: "'Roboto', sans-serif", size: 10 }
+          }
+        },
+        tooltip: { enabled: false } // MEJORA: No necesitamos tooltips en un PDF
+      },
+      scales: {
+        x: { 
+          stacked: true,
+          ticks: { font: { family: "'Roboto', sans-serif", size: 9 } }
+        },
+        y: { 
+          stacked: true, 
+          beginAtZero: true,
+          ticks: { font: { family: "'Roboto', sans-serif", size: 9 } }
+        }
+      }
+    };
+
+    new Chart(ctx, config);
+  </script>
 </body>
 </html>

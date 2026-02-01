@@ -6,7 +6,37 @@ import * as path from 'path';
 
 @Injectable()
 export class PdfService {
+  private async registerPartials() {
+    const partialsDir = path.join(
+      process.cwd(),
+      'src',
+      'pdf',
+      'templates',
+      'partials',
+    );
+
+    const styles = await readFile(
+      path.join(partialsDir, 'styles.hbs'),
+      'utf-8',
+    );
+    const header = await readFile(
+      path.join(partialsDir, 'header.hbs'),
+      'utf-8',
+    );
+    const footer = await readFile(
+      path.join(partialsDir, 'footer.hbs'),
+      'utf-8',
+    );
+
+    hbs.registerPartial('styles', styles);
+    hbs.registerPartial('header', header);
+    hbs.registerPartial('footer', footer);
+  }
+
   async generatePdf(templateName: string, data: any): Promise<Buffer> {
+    // 0. Registrar parciales
+    await this.registerPartials();
+
     // 1. Compilar la plantilla HBS
     const templatePath = path.join(
       process.cwd(), // Apunta a la raíz del proyecto en ejecución (apps/api)

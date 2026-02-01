@@ -47,6 +47,8 @@ import {
   estado_sesion,
 } from '@prisma/client';
 import { PdfService } from '../../pdf/service/pdf.service';
+import { readFile } from 'fs/promises';
+import * as path from 'path';
 
 const TOTAL_MISIONES = 10;
 
@@ -2033,6 +2035,36 @@ export class ReportesService {
       revisadas: c.revisadas,
     }));
 
+    // 5. Preparar datos para el Gráfico (Chart.js)
+    // Leemos la librería desde node_modules para inyectarla
+    const chartJsMain = require.resolve('chart.js');
+    const chartJsPath = path.join(path.dirname(chartJsMain), 'chart.umd.js');
+    const chartJsContent = await readFile(chartJsPath, 'utf-8');
+
+    // Preparamos la configuración del gráfico
+    const chartConfig = {
+      type: 'bar',
+      data: {
+        labels: data.chartData.map((d) =>
+          d.fecha.split('-').slice(1).reverse().join('/'),
+        ), // MM/DD
+        datasets: [
+          {
+            label: 'Revisadas',
+            data: data.chartData.map((d) => d.revisadas),
+            backgroundColor: '#2e7d32', // Success main
+            stack: 'Stack 0',
+          },
+          {
+            label: 'No Revisadas',
+            data: data.chartData.map((d) => d.noRevisadas),
+            backgroundColor: '#ed6c02', // Warning main
+            stack: 'Stack 0',
+          },
+        ],
+      },
+    };
+
     const templateData = {
       cursoNombre: curso?.nombre || 'Curso Desconocido',
       fechaGeneracion: new Date().toLocaleDateString(),
@@ -2041,10 +2073,12 @@ export class ReportesService {
         realizadas,
         pctEfectividad,
       },
+      chartJsContent, // Librería inyectada
+      chartConfig: JSON.stringify(chartConfig), // Configuración lista para usar
       clases: clasesFormatted,
     };
 
-    // 5. Generar PDF usando el servicio
+    // 6. Generar PDF usando el servicio
     const pdfBuffer = await this.pdfService.generatePdf(
       'reporte-clases',
       templateData,
