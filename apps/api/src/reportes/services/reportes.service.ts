@@ -2012,6 +2012,24 @@ export class ReportesService {
       select: { nombre: true, apellido: true },
     });
 
+    // --- PROCESAMIENTO DEL LOGO PARA PDF ---
+    let logoBase64: string | null = null;
+    if (institucion?.logoUrl) {
+      try {
+        // institucion.logoUrl viene como "/uploads/archivo.png"
+        // Eliminamos la barra inicial para usar path.join correctamente con process.cwd()
+        const relativePath = institucion.logoUrl.startsWith('/')
+          ? institucion.logoUrl.substring(1)
+          : institucion.logoUrl;
+        const fullPath = path.join(process.cwd(), relativePath);
+        const fileBuffer = await readFile(fullPath);
+        const ext = path.extname(fullPath).substring(1); // png, jpg, etc.
+        logoBase64 = `data:image/${ext};base64,${fileBuffer.toString('base64')}`;
+      } catch (error) {
+        console.error('Error al procesar logo para PDF:', error);
+      }
+    }
+
     // 4. Registrar Generación de Reporte en BD
     const filtrosTexto: string[] = [];
     if (dto.fechaDesde) filtrosTexto.push(`Desde: ${dto.fechaDesde}`);
@@ -2103,7 +2121,7 @@ export class ReportesService {
           : '',
         email: institucion?.email || '',
         telefono: institucion?.telefono || '',
-        logoUrl: institucion?.logoUrl,
+        logoUrl: logoBase64, // Pasamos el Base64 en lugar de la URL relativa
       },
       reporte: {
         numero: reporteDB.nroReporte,
