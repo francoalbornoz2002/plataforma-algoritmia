@@ -36,6 +36,7 @@ import {
 import { getStudentProgressList } from "../../../users/services/docentes.service";
 import { useDebounce } from "../../../../hooks/useDebounce";
 import { temas, estado_consulta } from "../../../../types";
+import QuickDateFilter from "../../../../components/QuickDateFilter";
 
 interface Props {
   courseId: string;
@@ -135,14 +136,11 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
   }, [courseId, filters]);
 
   // --- Handlers ---
-  const applyQuickFilter = (days: number) => {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(end.getDate() - days);
+  const handleQuickFilter = (start: string, end: string) => {
     setFilters((prev) => ({
       ...prev,
-      fechaDesde: format(start, "yyyy-MM-dd"),
-      fechaHasta: format(end, "yyyy-MM-dd"),
+      fechaDesde: start,
+      fechaHasta: end,
     }));
   };
 
@@ -242,16 +240,7 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
       {/* --- Filtros --- */}
       <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
         <Stack spacing={2}>
-          <Box>
-            <Typography variant="subtitle2" gutterBottom>
-              Filtros Rápidos de Tiempo
-            </Typography>
-            <ButtonGroup variant="outlined" size="small">
-              <Button onClick={() => applyQuickFilter(3)}>3 Días</Button>
-              <Button onClick={() => applyQuickFilter(7)}>1 Semana</Button>
-              <Button onClick={() => applyQuickFilter(30)}>1 Mes</Button>
-            </ButtonGroup>
-          </Box>
+          <QuickDateFilter onApply={handleQuickFilter} />
 
           <Divider />
 

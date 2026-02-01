@@ -23,6 +23,7 @@ import {
 } from "../../service/reports.service";
 import { dificultad_mision } from "../../../../types";
 import { useOptionalCourseContext } from "../../../../context/CourseContext";
+import QuickDateFilter from "../../../../components/QuickDateFilter";
 
 interface Props {
   courseId: string;
@@ -62,6 +63,14 @@ export default function CourseMissionsReport({ courseId }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
+  const handleQuickFilter = (start: string, end: string) => {
+    setFilters({
+      ...filters,
+      fechaDesde: start,
+      fechaHasta: end,
+    });
+  };
+
   const columns: GridColDef[] = [
     { field: "nombre", headerName: "Misión", flex: 1 },
     { field: "dificultad", headerName: "Dificultad", width: 120 },
@@ -97,6 +106,8 @@ export default function CourseMissionsReport({ courseId }: Props) {
 
       {/* Filtros */}
       <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
+        <QuickDateFilter onApply={handleQuickFilter} />
+        <Box sx={{ mt: 2 }} />
         <Stack
           direction={{ xs: "column", md: "row" }}
           spacing={2}

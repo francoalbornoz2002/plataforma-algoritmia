@@ -26,6 +26,7 @@ import {
   TipoMovimientoAsignacion,
   type TeacherAssignmentHistoryFilters,
 } from "../../service/reports.service";
+import QuickDateFilter from "../../../../components/QuickDateFilter";
 
 export default function TeacherAssignmentHistorySection() {
   const [type, setType] = useState<TipoMovimientoAsignacion>(
@@ -113,17 +114,11 @@ export default function TeacherAssignmentHistorySection() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
-  const applyQuickFilter = (range: "week" | "month" | "year") => {
-    const end = new Date();
-    const start = new Date();
-    if (range === "week") start.setDate(end.getDate() - 7);
-    else if (range === "month") start.setMonth(end.getMonth() - 1);
-    else if (range === "year") start.setFullYear(end.getFullYear(), 0, 1);
-
+  const handleQuickFilter = (start: string, end: string) => {
     setFilters((prev) => ({
       ...prev,
-      fechaDesde: format(start, "yyyy-MM-dd"),
-      fechaHasta: format(end, "yyyy-MM-dd"),
+      fechaDesde: start,
+      fechaHasta: end,
     }));
   };
 
@@ -211,22 +206,7 @@ export default function TeacherAssignmentHistorySection() {
               </ButtonGroup>
             </Box>
 
-            <Box>
-              <Typography variant="subtitle2" gutterBottom>
-                Filtros Rápidos
-              </Typography>
-              <ButtonGroup variant="outlined" size="small">
-                <Button onClick={() => applyQuickFilter("week")}>
-                  Última Semana
-                </Button>
-                <Button onClick={() => applyQuickFilter("month")}>
-                  Último Mes
-                </Button>
-                <Button onClick={() => applyQuickFilter("year")}>
-                  Este Año
-                </Button>
-              </ButtonGroup>
-            </Box>
+            <QuickDateFilter onApply={handleQuickFilter} />
           </Stack>
 
           <Divider />

@@ -18,11 +18,10 @@ import {
   InputLabel,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { format, subDays, subYears } from "date-fns";
+import { format } from "date-fns";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import FilterListIcon from "@mui/icons-material/FilterList";
 
 import {
   getCourseSessionsHistory,
@@ -30,6 +29,7 @@ import {
 } from "../../service/reports.service";
 import { temas, estado_sesion } from "../../../../types";
 import SesionDetailModal from "./SesionDetailModal";
+import QuickDateFilter from "../../../../components/QuickDateFilter";
 
 interface Props {
   courseId: string;
@@ -83,16 +83,11 @@ export default function CourseSessionsHistory({ courseId }: Props) {
   }, [courseId, filters]);
 
   // Handlers de Filtros Rápidos
-  const applyQuickFilter = (days: number | "year") => {
-    const end = new Date();
-    let start = new Date();
-    if (days === "year") start = subYears(end, 1);
-    else start = subDays(end, days);
-
+  const handleQuickFilter = (start: string, end: string) => {
     setFilters({
       ...filters,
-      fechaDesde: format(start, "yyyy-MM-dd"),
-      fechaHasta: format(end, "yyyy-MM-dd"),
+      fechaDesde: start,
+      fechaHasta: end,
     });
   };
 
@@ -218,26 +213,7 @@ export default function CourseSessionsHistory({ courseId }: Props) {
       {/* --- Filtros --- */}
       <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
         <Stack spacing={2}>
-          <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
-            <FilterListIcon color="action" />
-            <Typography variant="subtitle2">Filtros Rápidos:</Typography>
-            <Chip label="Hoy" onClick={() => applyQuickFilter(0)} clickable />
-            <Chip
-              label="Últimos 3 días"
-              onClick={() => applyQuickFilter(3)}
-              clickable
-            />
-            <Chip
-              label="Última semana"
-              onClick={() => applyQuickFilter(7)}
-              clickable
-            />
-            <Chip
-              label="Último año"
-              onClick={() => applyQuickFilter("year")}
-              clickable
-            />
-          </Box>
+          <QuickDateFilter onApply={handleQuickFilter} />
 
           <Stack
             direction={{ xs: "column", md: "row" }}

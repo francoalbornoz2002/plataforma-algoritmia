@@ -27,6 +27,7 @@ import {
   getUsersBajas,
   type UsersHistoryFilters,
 } from "../../service/reports.service";
+import QuickDateFilter from "../../../../components/QuickDateFilter";
 
 export default function HistoryReportSection() {
   const [type, setType] = useState<"altas" | "bajas" | "todos">("todos");
@@ -125,22 +126,11 @@ export default function HistoryReportSection() {
     }
   };
 
-  const applyQuickFilter = (range: "week" | "month" | "year") => {
-    const end = new Date();
-    const start = new Date();
-
-    if (range === "week") {
-      start.setDate(end.getDate() - 7);
-    } else if (range === "month") {
-      start.setMonth(end.getMonth() - 1);
-    } else if (range === "year") {
-      start.setFullYear(end.getFullYear(), 0, 1);
-    }
-
+  const handleQuickFilter = (start: string, end: string) => {
     setFilters({
       ...filters,
-      fechaDesde: format(start, "yyyy-MM-dd"),
-      fechaHasta: format(end, "yyyy-MM-dd"),
+      fechaDesde: start,
+      fechaHasta: end,
     });
   };
 
@@ -228,22 +218,7 @@ export default function HistoryReportSection() {
               </ButtonGroup>
             </Box>
 
-            <Box>
-              <Typography variant="subtitle2" gutterBottom>
-                Filtros Rápidos de Tiempo
-              </Typography>
-              <ButtonGroup variant="outlined" size="small">
-                <Button onClick={() => applyQuickFilter("week")}>
-                  Última Semana
-                </Button>
-                <Button onClick={() => applyQuickFilter("month")}>
-                  Último Mes
-                </Button>
-                <Button onClick={() => applyQuickFilter("year")}>
-                  Este Año
-                </Button>
-              </ButtonGroup>
-            </Box>
+            <QuickDateFilter onApply={handleQuickFilter} />
           </Stack>
           <Divider />
           <Stack

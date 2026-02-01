@@ -20,7 +20,6 @@ import { BarChart } from "@mui/x-charts/BarChart";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableOnIcon from "@mui/icons-material/TableChart";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import FilterListIcon from "@mui/icons-material/FilterList";
 
 import {
   getCourseClassesHistory,
@@ -30,6 +29,7 @@ import {
 import { estado_clase_consulta } from "../../../../types";
 import ClaseDetailModal from "../../../clases-consulta/components/ClaseDetailModal";
 import ReportExportDialog from "../common/ReportExportDialog";
+import QuickDateFilter from "../../../../components/QuickDateFilter";
 
 interface Props {
   courseId: string;
@@ -90,6 +90,14 @@ export default function CourseClassesHistory({ courseId }: Props) {
   }, [courseId, filters]);
 
   // --- Handlers ---
+  const handleQuickFilter = (start: string, end: string) => {
+    setFilters({
+      ...filters,
+      fechaDesde: start,
+      fechaHasta: end,
+    });
+  };
+
   const handleClearFilters = () => {
     setFilters({
       fechaDesde: "",
@@ -227,16 +235,13 @@ export default function CourseClassesHistory({ courseId }: Props) {
         color="primary.main"
         sx={{ mb: 2, fontWeight: "bold" }}
       >
-        Historial de Clases de Consulta
+        Historial de Clases de Consulta Realizadas
       </Typography>
 
       {/* --- Filtros --- */}
       <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
         <Stack spacing={2}>
-          <Box display="flex" alignItems="center" gap={1}>
-            <FilterListIcon color="action" />
-            <Typography variant="subtitle2">Filtros de Búsqueda</Typography>
-          </Box>
+          <QuickDateFilter onApply={handleQuickFilter} />
           <Stack
             direction={{ xs: "column", md: "row" }}
             spacing={2}
@@ -337,16 +342,23 @@ export default function CourseClassesHistory({ courseId }: Props) {
         <Stack spacing={4}>
           {/* --- Gráfico Apilado --- */}
           <Paper elevation={3} sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="h6">
               Efectividad por Clase (Consultas Revisadas vs Pendientes)
             </Typography>
             <Typography variant="caption" color="text.secondary" gutterBottom>
-              Solo se muestran clases realizadas en el periodo seleccionado.
+              Solo se muestran clases realizadas o no realizadas en el periodo
+              seleccionado.
             </Typography>
 
             {data.chartData.length > 0 ? (
               <BarChart
                 dataset={data.chartData}
+                yAxis={[
+                  {
+                    label: "Cantidad de consultas de la clase",
+                    labelStyle: { fontSize: 12 },
+                  },
+                ]}
                 xAxis={[
                   {
                     scaleType: "band",
@@ -369,8 +381,7 @@ export default function CourseClassesHistory({ courseId }: Props) {
                     color: "#ff9800", // Naranja
                   },
                 ]}
-                height={350}
-                margin={{ top: 20, bottom: 40, left: 40, right: 10 }}
+                height={500}
                 slotProps={{
                   legend: {
                     direction: "horizontal",

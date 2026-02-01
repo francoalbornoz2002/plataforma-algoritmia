@@ -40,6 +40,7 @@ import {
   grado_dificultad,
 } from "../../../../types";
 import { School, VideogameAsset } from "@mui/icons-material";
+import QuickDateFilter from "../../../../components/QuickDateFilter";
 
 interface Props {
   courseId: string;
@@ -136,26 +137,11 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
 
   // --- Handlers ---
 
-  const applyQuickFilter = (days: number) => {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(end.getDate() - days);
-
+  const handleQuickFilter = (start: string, end: string) => {
     setFilters((prev) => ({
       ...prev,
-      fechaDesde: format(start, "yyyy-MM-dd"),
-      fechaHasta: format(end, "yyyy-MM-dd"),
-    }));
-  };
-
-  const applyMonthFilter = () => {
-    const end = new Date();
-    const start = new Date();
-    start.setMonth(end.getMonth() - 1);
-    setFilters((prev) => ({
-      ...prev,
-      fechaDesde: format(start, "yyyy-MM-dd"),
-      fechaHasta: format(end, "yyyy-MM-dd"),
+      fechaDesde: start,
+      fechaHasta: end,
     }));
   };
 
@@ -297,21 +283,7 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
       <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
         <Stack spacing={2}>
           {/* Fila 1: Filtros Rápidos */}
-          <Box>
-            <Typography variant="subtitle2" gutterBottom>
-              Filtros Rápidos de Tiempo
-            </Typography>
-            <ButtonGroup variant="outlined" size="small">
-              <Button onClick={() => applyQuickFilter(3)}>
-                Últimos 3 Días
-              </Button>
-              <Button onClick={() => applyQuickFilter(5)}>
-                Últimos 5 Días
-              </Button>
-              <Button onClick={() => applyQuickFilter(7)}>Última Semana</Button>
-              <Button onClick={applyMonthFilter}>Último Mes</Button>
-            </ButtonGroup>
-          </Box>
+          <QuickDateFilter onApply={handleQuickFilter} />
 
           <Divider />
 

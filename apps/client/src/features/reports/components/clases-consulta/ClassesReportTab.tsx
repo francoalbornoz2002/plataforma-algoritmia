@@ -47,15 +47,11 @@ export default function ClassesReportTab({ courseId }: Props) {
           variant="scrollable"
           scrollButtons="auto"
         >
-          <Tab
-            icon={<AssessmentIcon />}
-            iconPosition="start"
-            label="Resumen General"
-          />
+          <Tab icon={<AssessmentIcon />} iconPosition="start" label="Resumen" />
           <Tab
             icon={<HistoryIcon />}
             iconPosition="start"
-            label="Historial Detallado"
+            label="Clases realizadas"
           />
         </Tabs>
       </Box>
