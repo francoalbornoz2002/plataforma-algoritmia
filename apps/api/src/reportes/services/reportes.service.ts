@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, StreamableFile } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GetUsersSummaryDto } from '../dto/get-users-summary.dto';
 import {
@@ -46,12 +46,16 @@ import {
   estado_clase_consulta,
   estado_sesion,
 } from '@prisma/client';
+import { PdfService } from '../../pdf/service/pdf.service';
 
 const TOTAL_MISIONES = 10;
 
 @Injectable()
 export class ReportesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly pdfService: PdfService,
+  ) {}
 
   async getUsersSummary(dto: GetUsersSummaryDto) {
     const { fechaCorte } = dto;
@@ -1980,6 +1984,76 @@ export class ReportesService {
 
     // Reverse chartData para orden cronológico (de antiguo a nuevo)
     return { chartData: chartData.reverse(), tableData, docentesDisponibles };
+  }
+
+  async getCourseClassesHistoryPdf(
+    idCurso: string,
+    dto: GetCourseClassesHistoryDto,
+  ): Promise<StreamableFile> {
+    // 1. Reutilizamos la lógica de obtención de datos existente
+    const data = await this.getCourseClassesHistory(idCurso, dto);
+
+    // 2. Obtenemos info extra del curso para el encabezado
+    const curso = await this.prisma.curso.findUnique({
+      where: { id: idCurso },
+      select: { nombre: true },
+    });
+
+    // 3. Preparamos los KPIs para el reporte
+    const totalClases = data.tableData.length;
+    const realizadas = data.tableData.filter(
+      (c) => c.estado === estado_clase_consulta.Realizada,
+    ).length;
+
+    // Calcular efectividad promedio (revisadas / total) solo de las realizadas
+    let sumPct = 0;
+    let countRealizadasConConsultas = 0;
+    data.tableData.forEach((c) => {
+      if (
+        c.estado === estado_clase_consulta.Realizada &&
+        c.totalConsultas > 0
+      ) {
+        sumPct += (c.revisadas / c.totalConsultas) * 100;
+        countRealizadasConConsultas++;
+      }
+    });
+    const pctEfectividad =
+      countRealizadasConConsultas > 0
+        ? (sumPct / countRealizadasConConsultas).toFixed(1)
+        : '0.0';
+
+    // 4. Formateamos los datos para Handlebars
+    const clasesFormatted = data.tableData.map((c) => ({
+      fecha: c.fechaAgenda.toISOString().split('T')[0], // YYYY-MM-DD
+      nombre: c.nombre,
+      docente: c.docente,
+      estado: c.estado.replace(/_/g, ' '), // "No_realizada" -> "No realizada"
+      estadoRaw: c.estado, // Para la clase CSS (badge-No_realizada)
+      totalConsultas: c.totalConsultas,
+      revisadas: c.revisadas,
+    }));
+
+    const templateData = {
+      cursoNombre: curso?.nombre || 'Curso Desconocido',
+      fechaGeneracion: new Date().toLocaleDateString(),
+      kpis: {
+        total: totalClases,
+        realizadas,
+        pctEfectividad,
+      },
+      clases: clasesFormatted,
+    };
+
+    // 5. Generar PDF usando el servicio
+    const pdfBuffer = await this.pdfService.generatePdf(
+      'reporte-clases',
+      templateData,
+    );
+
+    return new StreamableFile(pdfBuffer, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="historial-clases-${idCurso}.pdf"`,
+    });
   }
 
   async getCourseSessionsSummary(

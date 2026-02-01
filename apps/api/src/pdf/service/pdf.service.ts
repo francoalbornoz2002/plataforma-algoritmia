@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import puppeteer from 'puppeteer';
-import * as hbs from 'hbs';
+import hbs from 'hbs';
 import { readFile } from 'fs/promises';
 import * as path from 'path';
 
@@ -8,12 +8,8 @@ import * as path from 'path';
 export class PdfService {
   async generatePdf(templateName: string, data: any): Promise<Buffer> {
     // 1. Compilar la plantilla HBS
-    // Asumimos que las vistas están en la carpeta 'views' en la raíz de la app compilada (dist)
     const templatePath = path.join(
-      __dirname,
-      '..',
-      '..',
-      '..',
+      process.cwd(), // Apunta a la raíz del proyecto en ejecución (apps/api)
       'views',
       `${templateName}.hbs`,
     );

@@ -1,4 +1,5 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards, Res } from '@nestjs/common';
+import type { Response } from 'express';
 import { ReportesService } from '../services/reportes.service';
 import { GetUsersSummaryDto } from '../dto/get-users-summary.dto';
 import { GetUsersDistributionDto } from '../dto/get-users-distribution.dto';
@@ -199,6 +200,22 @@ export class ReportesController {
     @Query() dto: GetCourseClassesHistoryDto,
   ) {
     return this.reportesService.getCourseClassesHistory(id, dto);
+  }
+
+  // Clases de Consulta - Sección 2: Historial (PDF)
+  @Get('cursos/:id/clases-consulta/historial/pdf')
+  @Roles(roles.Administrador, roles.Docente)
+  async getCourseClassesHistoryPdf(
+    @Param('id') id: string,
+    @Query() dto: GetCourseClassesHistoryDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const file = await this.reportesService.getCourseClassesHistoryPdf(id, dto);
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="reporte-clases-${id}.pdf"`,
+    });
+    return file;
   }
 
   // Sesiones de Refuerzo - Sección 1: Resumen

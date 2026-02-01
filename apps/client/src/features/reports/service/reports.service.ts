@@ -405,6 +405,20 @@ export const getCourseClassesHistory = async (
   return response.data;
 };
 
+export const getCourseClassesHistoryPdf = async (
+  courseId: string,
+  params: CourseClassesHistoryFilters,
+) => {
+  const cleanParams = Object.fromEntries(
+    Object.entries(params).filter(([_, v]) => v !== ""),
+  );
+  const response = await apiClient.get(
+    `/reportes/cursos/${courseId}/clases-consulta/historial/pdf`,
+    { params: cleanParams, responseType: "blob" },
+  );
+  return response.data;
+};
+
 export const getCourseSessionsSummary = async (
   courseId: string,
   params: CourseSessionsSummaryFilters,

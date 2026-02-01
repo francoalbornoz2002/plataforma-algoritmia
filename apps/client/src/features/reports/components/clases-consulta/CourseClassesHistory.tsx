@@ -24,6 +24,7 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 
 import {
   getCourseClassesHistory,
+  getCourseClassesHistoryPdf,
   type CourseClassesHistoryFilters,
 } from "../../service/reports.service";
 import { estado_clase_consulta } from "../../../../types";
@@ -98,6 +99,22 @@ export default function CourseClassesHistory({ courseId }: Props) {
     // El modal espera un objeto ClaseConsulta con 'consultasEnClase'
     setSelectedClass(row);
     setIsModalOpen(true);
+  };
+
+  const handleExportPdf = async () => {
+    try {
+      const blob = await getCourseClassesHistoryPdf(courseId, filters);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `historial-clases-${courseId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+    } catch (err) {
+      console.error(err);
+      setError("Error al descargar el PDF.");
+    }
   };
 
   // --- Columnas DataGrid ---
@@ -275,6 +292,7 @@ export default function CourseClassesHistory({ courseId }: Props) {
           startIcon={<PictureAsPdfIcon />}
           disabled={!data}
           color="error"
+          onClick={handleExportPdf}
         >
           Exportar PDF
         </Button>
