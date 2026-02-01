@@ -1996,57 +1996,17 @@ export class ReportesService {
     // 1. Reutilizamos la lógica de obtención de datos existente
     const data = await this.getCourseClassesHistory(idCurso, dto);
 
-    // 2. Obtenemos info extra del curso para el encabezado
-    const curso = await this.prisma.curso.findUnique({
-      where: { id: idCurso },
-      select: { nombre: true },
-    });
+    // 2. Obtenemos metadatos comunes (Curso, Institución, Usuario, Logo)
+    const { curso, institucion, usuario, logoBase64 } =
+      await this.getReportMetadata(idCurso, userId);
 
-    // 3. Obtener Datos Institucionales y Usuario
-    const institucion = await this.prisma.institucion.findFirst({
-      include: { localidad: { include: { provincia: true } } },
-    });
-
-    const usuario = await this.prisma.usuario.findUnique({
-      where: { id: userId },
-      select: { nombre: true, apellido: true },
-    });
-
-    // --- PROCESAMIENTO DEL LOGO PARA PDF ---
-    let logoBase64: string | null = null;
-    if (institucion?.logoUrl) {
-      try {
-        // institucion.logoUrl viene como "/uploads/archivo.png"
-        // Eliminamos la barra inicial para usar path.join correctamente con process.cwd()
-        const relativePath = institucion.logoUrl.startsWith('/')
-          ? institucion.logoUrl.substring(1)
-          : institucion.logoUrl;
-        const fullPath = path.join(process.cwd(), relativePath);
-        const fileBuffer = await readFile(fullPath);
-        const ext = path.extname(fullPath).substring(1); // png, jpg, etc.
-        logoBase64 = `data:image/${ext};base64,${fileBuffer.toString('base64')}`;
-      } catch (error) {
-        console.error('Error al procesar logo para PDF:', error);
-      }
-    }
-
-    // 4. Registrar Generación de Reporte en BD
-    const filtrosTexto: string[] = [];
-    if (dto.fechaDesde) filtrosTexto.push(`Desde: ${dto.fechaDesde}`);
-    if (dto.fechaHasta) filtrosTexto.push(`Hasta: ${dto.fechaHasta}`);
-    if (dto.docenteId) {
-      const doc = data.docentesDisponibles.find((d) => d.id === dto.docenteId);
-      filtrosTexto.push(`Docente: ${doc ? doc.nombre : 'ID ' + dto.docenteId}`);
-    }
-
-    const reporteDB = await this.prisma.reporteGenerado.create({
-      data: {
-        titulo: 'Historial de Clases de Consulta',
-        modulo: 'Cursos',
-        filtrosAplicados: JSON.parse(JSON.stringify(dto)),
-        idUsuarioGenerador: userId,
-      },
-    });
+    // 4. Registrar Generación de Reporte en BD (Modularizado)
+    const { reporteDB, filtrosTexto } = await this.registerReport(
+      userId,
+      'Historial de Clases de Consulta',
+      'Cursos',
+      dto,
+    );
 
     // 3. Preparamos los KPIs para el reporte
     const totalClases = data.tableData.length;
@@ -2155,6 +2115,78 @@ export class ReportesService {
       type: 'application/pdf',
       disposition: `attachment; filename="historial-clases-${idCurso}.pdf"`,
     });
+  }
+
+  /**
+   * Helper privado para registrar el reporte en BD y generar texto de filtros
+   */
+  private async registerReport(
+    userId: string,
+    titulo: string,
+    modulo: string,
+    dto: any,
+  ) {
+    // 1. Guardar en BD
+    const reporteDB = await this.prisma.reporteGenerado.create({
+      data: {
+        titulo,
+        modulo,
+        filtrosAplicados: dto ? JSON.parse(JSON.stringify(dto)) : {},
+        idUsuarioGenerador: userId,
+      },
+    });
+
+    // 2. Generar texto genérico de filtros
+    const filtrosTexto: string[] = [];
+    if (dto) {
+      Object.entries(dto).forEach(([key, value]) => {
+        if (value && key !== 'aPresentarA') {
+          // Formato simple: "Fecha Desde: 2023-01-01"
+          const label = key
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^./, (str) => str.toUpperCase());
+          filtrosTexto.push(`${label}: ${value}`);
+        }
+      });
+    }
+
+    return { reporteDB, filtrosTexto };
+  }
+
+  /**
+   * Helper privado para obtener metadatos comunes de reportes PDF
+   */
+  private async getReportMetadata(idCurso: string, userId: string) {
+    const [curso, institucion, usuario] = await Promise.all([
+      this.prisma.curso.findUnique({
+        where: { id: idCurso },
+        select: { nombre: true },
+      }),
+      this.prisma.institucion.findFirst({
+        include: { localidad: { include: { provincia: true } } },
+      }),
+      this.prisma.usuario.findUnique({
+        where: { id: userId },
+        select: { nombre: true, apellido: true },
+      }),
+    ]);
+
+    let logoBase64: string | null = null;
+    if (institucion?.logoUrl) {
+      try {
+        const relativePath = institucion.logoUrl.startsWith('/')
+          ? institucion.logoUrl.substring(1)
+          : institucion.logoUrl;
+        const fullPath = path.join(process.cwd(), relativePath);
+        const fileBuffer = await readFile(fullPath);
+        const ext = path.extname(fullPath).substring(1);
+        logoBase64 = `data:image/${ext};base64,${fileBuffer.toString('base64')}`;
+      } catch (error) {
+        console.error('Error al procesar logo para PDF:', error);
+      }
+    }
+
+    return { curso, institucion, usuario, logoBase64 };
   }
 
   async getCourseSessionsSummary(
