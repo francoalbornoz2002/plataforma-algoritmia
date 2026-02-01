@@ -236,12 +236,29 @@ model HistorialDificultadesCurso {
   @@map("historial_dificultades_curso")
 }
 
+model ReporteGenerado {
+  id                 String   @id @default(uuid()) @db.Uuid
+  nroReporte         Int      @default(autoincrement()) @map("nro_reporte")
+  titulo             String   @db.VarChar(255)
+  modulo             String   @db.VarChar(100)
+  fechaGeneracion    DateTime @default(now()) @map("fecha_generacion") @db.Timestamptz(6)
+  filtrosAplicados   Json?    @map("filtros_aplicados")
+  idUsuarioGenerador String   @map("id_usuario_generador") @db.Uuid
+  aPresentarA        String?  @map("a_presentar_a") @db.VarChar(255)
+
+  usuarioGenerador Usuario @relation(fields: [idUsuarioGenerador], references: [id])
+
+  @@index([idUsuarioGenerador])
+  @@map("reportes_generados")
+}
+
 model Institucion {
   id          String    @id @default(uuid()) @db.Uuid
   nombre      String    @db.VarChar(255)
   direccion   String    @db.VarChar(255)
   email       String    @db.VarChar(255)
   telefono    String    @db.VarChar(255)
+  logoUrl     String?   @map("logo_url")
   idLocalidad Int       @map("id_localidad")
   localidad   Localidad @relation(fields: [idLocalidad], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
@@ -555,6 +572,7 @@ model Usuario {
   dificultades          DificultadAlumno[]          @relation("DificultadesAlumno")
   historialDificultades HistorialDificultadAlumno[]
   cursosDocente         DocenteCurso[]              @relation("CursosDocente")
+  reportesGenerados     ReporteGenerado[]
   logsAuditoria         LogAuditoria[]
   preguntasCreadas      Pregunta[]                  @relation("PreguntasCreadas")
   respuestasConsultas   RespuestaConsulta[]         @relation("RespuestasDocente")
