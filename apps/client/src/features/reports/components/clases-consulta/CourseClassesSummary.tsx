@@ -24,6 +24,7 @@ import {
   getCourseClassesSummary,
   type CourseClassesSummaryFilters,
 } from "../../service/reports.service";
+import QuickDateFilter from "../../../../components/QuickDateFilter";
 
 interface Props {
   courseId: string;
@@ -59,6 +60,14 @@ export default function CourseClassesSummary({ courseId }: Props) {
     setFilters({ fechaDesde: "", fechaHasta: "" });
   };
 
+  const handleQuickFilter = (start: string, end: string) => {
+    setFilters({
+      ...filters,
+      fechaDesde: start,
+      fechaHasta: end,
+    });
+  };
+
   const showLoading = loading && !data;
 
   return (
@@ -74,6 +83,8 @@ export default function CourseClassesSummary({ courseId }: Props) {
 
       {/* Filtros */}
       <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
+        <QuickDateFilter onApply={handleQuickFilter} />
+        <Box sx={{ mt: 2 }} />
         <Stack
           direction={{ xs: "column", sm: "row" }}
           spacing={2}
