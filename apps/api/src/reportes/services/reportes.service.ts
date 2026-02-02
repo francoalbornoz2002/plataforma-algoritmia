@@ -1,12 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { GetUsersSummaryDto } from '../dto/get-users-summary.dto';
 import {
-  GetUsersDistributionDto,
+  GetUsersSummaryDto,
   AgrupacionUsuarios,
-} from '../dto/get-users-distribution.dto';
-import { GetUsersHistoryDto } from '../dto/get-users-history.dto';
-import { GetUsersListDto } from '../dto/get-users-list.dto';
+} from '../dto/get-users-summary.dto';
+import {
+  GetUsersHistoryDto,
+  TipoMovimientoUsuario,
+} from '../dto/get-users-history.dto';
 import { GetCoursesSummaryDto } from '../dto/get-courses-summary.dto';
 import { GetCoursesListDto } from '../dto/get-courses-list.dto';
 import {
@@ -56,7 +57,7 @@ export class ReportesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getUsersSummary(dto: GetUsersSummaryDto) {
-    const { fechaCorte } = dto;
+    const { fechaCorte, agruparPor, rol } = dto;
     const end = fechaCorte ? new Date(fechaCorte) : new Date();
     if (fechaCorte) {
       end.setUTCHours(23, 59, 59, 999);
@@ -85,16 +86,7 @@ export class ReportesService {
       this.prisma.usuario.count({ where: whereInactive }),
     ]);
 
-    return { total, activos, inactivos };
-  }
-
-  async getUsersDistribution(dto: GetUsersDistributionDto) {
-    const { fechaCorte, agruparPor } = dto;
-    const end = fechaCorte ? new Date(fechaCorte) : new Date();
-    if (fechaCorte) {
-      end.setUTCHours(23, 59, 59, 999);
-    }
-
+    // --- DISTRIBUCIÓN ---
     // Traemos los datos mínimos necesarios para agrupar en memoria
     // (Es más seguro para la lógica de "estado histórico" que SQL puro complejo)
     const users = await this.prisma.usuario.findMany({
@@ -137,111 +129,14 @@ export class ReportesService {
       }
     }
 
-    return distribution;
-  }
-
-  async getUsersAltas(dto: GetUsersHistoryDto) {
-    const { fechaDesde, fechaHasta, rol } = dto;
-    const start = fechaDesde ? new Date(fechaDesde) : new Date(0);
-    if (fechaDesde) start.setUTCHours(0, 0, 0, 0);
-
-    const end = fechaHasta ? new Date(fechaHasta) : new Date();
-    end.setUTCHours(23, 59, 59, 999);
-
-    const where: Prisma.UsuarioWhereInput = {
-      createdAt: { gte: start, lte: end },
-    };
-    if (rol) where.rol = rol;
-
-    const users = await this.prisma.usuario.findMany({
-      where,
-      orderBy: { createdAt: 'asc' },
-      select: {
-        id: true,
-        nombre: true,
-        apellido: true,
-        email: true,
-        rol: true,
-        createdAt: true,
-        deletedAt: true,
-      },
-    });
-
-    // Generamos metadatos para gráficos (agrupado por día)
-    const meta: Record<string, number> = {};
-    users.forEach((u) => {
-      const dateKey = u.createdAt.toISOString().split('T')[0];
-      meta[dateKey] = (meta[dateKey] || 0) + 1;
-    });
-
-    return {
-      data: users,
-      meta: Object.entries(meta).map(([fecha, cantidad]) => ({
-        fecha,
-        cantidad,
-      })),
-    };
-  }
-
-  async getUsersBajas(dto: GetUsersHistoryDto) {
-    const { fechaDesde, fechaHasta, rol } = dto;
-    const start = fechaDesde ? new Date(fechaDesde) : new Date(0);
-    if (fechaDesde) start.setUTCHours(0, 0, 0, 0);
-
-    const end = fechaHasta ? new Date(fechaHasta) : new Date();
-    end.setUTCHours(23, 59, 59, 999);
-
-    const where: Prisma.UsuarioWhereInput = {
-      deletedAt: { gte: start, lte: end },
-    };
-    if (rol) where.rol = rol;
-
-    const users = await this.prisma.usuario.findMany({
-      where,
-      orderBy: { deletedAt: 'asc' },
-      select: {
-        id: true,
-        nombre: true,
-        apellido: true,
-        email: true,
-        rol: true,
-        createdAt: true,
-        deletedAt: true,
-      },
-    });
-
-    // Generamos metadatos para gráficos (agrupado por día de baja)
-    const meta: Record<string, number> = {};
-    users.forEach((u) => {
-      if (u.deletedAt) {
-        const dateKey = u.deletedAt.toISOString().split('T')[0];
-        meta[dateKey] = (meta[dateKey] || 0) + 1;
-      }
-    });
-
-    return {
-      data: users,
-      meta: Object.entries(meta).map(([fecha, cantidad]) => ({
-        fecha,
-        cantidad,
-      })),
-    };
-  }
-
-  async getUsersList(dto: GetUsersListDto) {
-    const { fechaCorte, rol } = dto;
-    const end = fechaCorte ? new Date(fechaCorte) : new Date();
-    if (fechaCorte) {
-      end.setUTCHours(23, 59, 59, 999);
-    }
-
-    const where: Prisma.UsuarioWhereInput = {
+    // --- LISTA DE USUARIOS ---
+    const whereList: Prisma.UsuarioWhereInput = {
       createdAt: { lte: end },
     };
-    if (rol) where.rol = rol;
+    if (rol) whereList.rol = rol;
 
-    const users = await this.prisma.usuario.findMany({
-      where,
+    const usersList = await this.prisma.usuario.findMany({
+      where: whereList,
       orderBy: { apellido: 'asc' },
       select: {
         id: true,
@@ -257,17 +152,90 @@ export class ReportesService {
       },
     });
 
-    // Calculamos el estado histórico para cada usuario
-    return users.map((u) => {
+    const formattedList = usersList.map((u) => {
       const isActive = !u.deletedAt || u.deletedAt > end;
       return {
         ...u,
         estado: isActive ? 'Activo' : 'Inactivo',
-        // Opcional: Si queremos ser estrictos con el reporte histórico,
-        // podríamos ocultar el deletedAt si ocurrió después de la fecha de corte.
         deletedAt: isActive ? null : u.deletedAt,
       };
     });
+
+    return {
+      kpis: { total, activos, inactivos },
+      distribucion: distribution,
+      lista: formattedList,
+    };
+  }
+
+  async getUsersHistory(dto: GetUsersHistoryDto) {
+    const { fechaDesde, fechaHasta, rol, tipoMovimiento } = dto;
+    const start = fechaDesde ? new Date(fechaDesde) : new Date(0);
+    if (fechaDesde) start.setUTCHours(0, 0, 0, 0);
+
+    const end = fechaHasta ? new Date(fechaHasta) : new Date();
+    end.setUTCHours(23, 59, 59, 999);
+
+    const events: any[] = [];
+
+    // 1. Altas
+    if (
+      !tipoMovimiento ||
+      tipoMovimiento === TipoMovimientoUsuario.TODOS ||
+      tipoMovimiento === TipoMovimientoUsuario.ALTA
+    ) {
+      const where: Prisma.UsuarioWhereInput = {
+        createdAt: { gte: start, lte: end },
+      };
+      if (rol) where.rol = rol;
+      const altas = await this.prisma.usuario.findMany({
+        where,
+        select: {
+          id: true,
+          nombre: true,
+          apellido: true,
+          email: true,
+          rol: true,
+          createdAt: true,
+        },
+      });
+      altas.forEach((u) =>
+        events.push({ ...u, tipoMovimiento: 'Alta', fecha: u.createdAt }),
+      );
+    }
+
+    // 2. Bajas
+    if (
+      !tipoMovimiento ||
+      tipoMovimiento === TipoMovimientoUsuario.TODOS ||
+      tipoMovimiento === TipoMovimientoUsuario.BAJA
+    ) {
+      const where: Prisma.UsuarioWhereInput = {
+        deletedAt: { gte: start, lte: end },
+      };
+      if (rol) where.rol = rol;
+      const bajas = await this.prisma.usuario.findMany({
+        where,
+        select: {
+          id: true,
+          nombre: true,
+          apellido: true,
+          email: true,
+          rol: true,
+          deletedAt: true,
+        },
+      });
+      bajas.forEach((u) =>
+        events.push({ ...u, tipoMovimiento: 'Baja', fecha: u.deletedAt }),
+      );
+    }
+
+    // Ordenar por fecha descendente
+    events.sort(
+      (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime(),
+    );
+
+    return { history: events };
   }
 
   // --- REPORTES DE CURSOS (ADMIN) ---
@@ -2012,7 +1980,13 @@ export class ReportesService {
           const label = key
             .replace(/([A-Z])/g, ' $1')
             .replace(/^./, (str) => str.toUpperCase());
-          filtrosTexto.push(`${label}: ${value}`);
+
+          let displayValue = value;
+          if (key === 'agruparPor' && value === 'AMBOS') {
+            displayValue = 'ROL y ESTADO';
+          }
+
+          filtrosTexto.push(`${label}: ${displayValue}`);
         }
       });
     }
@@ -2023,12 +1997,8 @@ export class ReportesService {
   /**
    * Helper privado para obtener metadatos comunes de reportes PDF
    */
-  public async getReportMetadata(idCurso: string, userId: string) {
-    const [curso, institucion, usuario] = await Promise.all([
-      this.prisma.curso.findUnique({
-        where: { id: idCurso },
-        select: { nombre: true },
-      }),
+  public async getReportMetadata(userId: string, idCurso?: string) {
+    const [institucion, usuario] = await Promise.all([
       this.prisma.institucion.findFirst({
         include: { localidad: { include: { provincia: true } } },
       }),
@@ -2037,6 +2007,14 @@ export class ReportesService {
         select: { nombre: true, apellido: true },
       }),
     ]);
+
+    let curso;
+    if (idCurso) {
+      curso = await this.prisma.curso.findUnique({
+        where: { id: idCurso },
+        select: { nombre: true },
+      });
+    }
 
     let logoBase64: string | null = null;
     if (institucion?.logoUrl) {

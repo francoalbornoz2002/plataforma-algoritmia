@@ -9,10 +9,11 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { ReportesService } from '../services/reportes.service';
-import { GetUsersSummaryDto } from '../dto/get-users-summary.dto';
-import { GetUsersDistributionDto } from '../dto/get-users-distribution.dto';
+import {
+  GetUsersSummaryDto,
+  GetUsersSummaryPdfDto,
+} from '../dto/get-users-summary.dto';
 import { GetUsersHistoryDto } from '../dto/get-users-history.dto';
-import { GetUsersListDto } from '../dto/get-users-list.dto';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { roles } from '@prisma/client';
@@ -52,28 +53,30 @@ export class ReportesController {
     return this.reportesService.getUsersSummary(dto);
   }
 
-  @Get('usuarios/distribucion')
+  @Get('usuarios/resumen/pdf')
   @Roles(roles.Administrador)
-  getUsersDistribution(@Query() dto: GetUsersDistributionDto) {
-    return this.reportesService.getUsersDistribution(dto);
+  async getUsersSummaryPdf(
+    @Query() dto: GetUsersSummaryPdfDto, // Usamos el DTO extendido
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.pdfService.getUsersSummaryPdf(
+      dto, // Pasamos el objeto completo (es compatible porque hereda)
+      userId,
+      dto.aPresentarA,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="resumen-usuarios.pdf"`,
+    });
+    return file;
   }
 
-  @Get('usuarios/altas')
+  @Get('usuarios/historial')
   @Roles(roles.Administrador)
-  getUsersAltas(@Query() dto: GetUsersHistoryDto) {
-    return this.reportesService.getUsersAltas(dto);
-  }
-
-  @Get('usuarios/bajas')
-  @Roles(roles.Administrador)
-  getUsersBajas(@Query() dto: GetUsersHistoryDto) {
-    return this.reportesService.getUsersBajas(dto);
-  }
-
-  @Get('usuarios/listado')
-  @Roles(roles.Administrador)
-  getUsersList(@Query() dto: GetUsersListDto) {
-    return this.reportesService.getUsersList(dto);
+  getUsersHistory(@Query() dto: GetUsersHistoryDto) {
+    return this.reportesService.getUsersHistory(dto);
   }
 
   // --- REPORTES DE CURSOS (ADMIN) ---

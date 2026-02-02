@@ -5,6 +5,7 @@ import { readFile } from 'fs/promises';
 import * as path from 'path';
 import { ReportesService } from '../../reportes/services/reportes.service';
 import { GetCourseClassesHistoryDto } from '../../reportes/dto/get-course-classes-history.dto';
+import { GetUsersSummaryDto } from '../../reportes/dto/get-users-summary.dto';
 import { estado_clase_consulta } from '@prisma/client';
 
 @Injectable()
@@ -39,6 +40,8 @@ export class PdfService {
     hbs.registerPartial('styles', styles);
     hbs.registerPartial('header', header);
     hbs.registerPartial('footer', footer);
+    // Helper básico para comparaciones
+    hbs.registerHelper('eq', (a, b) => a === b);
   }
 
   async generatePdf(templateName: string, data: any): Promise<Buffer> {
@@ -107,7 +110,7 @@ export class PdfService {
 
     // 2. Obtener metadatos comunes (Curso, Institución, Usuario, Logo)
     const { curso, institucion, usuario, logoBase64 } =
-      await this.reportesService.getReportMetadata(idCurso, userId);
+      await this.reportesService.getReportMetadata(userId, idCurso);
 
     // 3. Registrar Generación de Reporte en BD
     const { reporteDB, filtrosTexto } =
@@ -216,6 +219,160 @@ export class PdfService {
     return new StreamableFile(pdfBuffer, {
       type: 'application/pdf',
       disposition: `attachment; filename="historial-clases-${idCurso}.pdf"`,
+    });
+  }
+
+  async getUsersSummaryPdf(
+    summaryDto: GetUsersSummaryDto,
+    userId: string,
+    aPresentarA?: string,
+  ): Promise<StreamableFile> {
+    // 1. Obtener datos
+    const summaryResult =
+      await this.reportesService.getUsersSummary(summaryDto);
+
+    const {
+      kpis: summary,
+      distribucion: distribution,
+      lista: list,
+    } = summaryResult;
+
+    // 2. Metadatos
+    const { institucion, usuario, logoBase64 } =
+      await this.reportesService.getReportMetadata(userId);
+
+    // 3. Registrar Reporte
+    const { reporteDB, filtrosTexto } =
+      await this.reportesService.registerReport(
+        userId,
+        'Resumen de Usuarios',
+        'Usuarios',
+        { ...summaryDto, aPresentarA },
+      );
+
+    // 4. Configurar Gráfico
+    const chartJsMain = require.resolve('chart.js');
+    const chartJsPath = path.join(path.dirname(chartJsMain), 'chart.umd.js');
+    const chartJsContent = await readFile(chartJsPath, 'utf-8');
+
+    // Preparar datos del gráfico según agrupación
+    const agruparPor = summaryDto.agruparPor || 'ROL';
+    const totalDistribucion = distribution.reduce(
+      (acc: number, curr: any) => acc + curr.cantidad,
+      0,
+    );
+
+    const chartConfig: any = {
+      type: 'bar',
+      data: { labels: [], datasets: [] },
+      options: {
+        scales: {
+          y: {
+            ticks: {
+              stepSize: 1,
+              precision: 0,
+            },
+          },
+        },
+        plugins: {
+          title: {
+            display: true,
+            text: `Distribución de usuarios por ${
+              agruparPor === 'AMBOS'
+                ? 'ROL y ESTADO'
+                : agruparPor.replace('_', ' ')
+            }`,
+            font: { size: 16 },
+          },
+          legend: { position: 'right' },
+        },
+      },
+    };
+
+    // Colores consistentes
+    const colors: Record<string, string> = {
+      Administrador: '#9c27b0',
+      Docente: '#ed6c02',
+      Alumno: '#0288d1',
+      Activo: '#2e7d32',
+      Inactivo: '#d32f2f',
+    };
+
+    if (agruparPor === 'AMBOS') {
+      // Stacked Bar: X=Estado, Series=Roles
+      chartConfig.data.labels = ['Activo', 'Inactivo'];
+      chartConfig.options.scales.x = { stacked: true };
+      chartConfig.options.scales.y.stacked = true;
+
+      const roles = Array.from(new Set(distribution.map((d: any) => d.rol)));
+      chartConfig.data.datasets = roles.map((rol: any) => {
+        const data = ['Activo', 'Inactivo'].map((estado) => {
+          const found = distribution.find(
+            (d: any) => d.rol === rol && d.estado === estado,
+          );
+          return found ? found.cantidad : 0;
+        });
+
+        // Calcular total del rol para el porcentaje en leyenda (aproximado)
+        const totalRol = distribution
+          .filter((d: any) => d.rol === rol)
+          .reduce((acc: number, curr: any) => acc + curr.cantidad, 0);
+        const pct = ((totalRol / totalDistribucion) * 100).toFixed(1);
+
+        return {
+          label: `${rol} (${totalRol} - ${pct}%)`,
+          data,
+          backgroundColor: colors[rol] || '#888',
+        };
+      });
+    } else {
+      // Simple Bar (Rol o Estado)
+      // Para tener leyenda con colores, usamos un dataset por categoría
+      chartConfig.data.labels = ['Total']; // Una sola barra agrupada o separada
+      chartConfig.data.datasets = distribution.map((d: any) => {
+        const pct = ((d.cantidad / totalDistribucion) * 100).toFixed(1);
+        return {
+          label: `${d.grupo} (${d.cantidad} - ${pct}%)`,
+          data: [d.cantidad],
+          backgroundColor: colors[d.grupo] || '#888',
+        };
+      });
+    }
+
+    const templateData = {
+      institucion: {
+        nombre: institucion?.nombre || 'Plataforma Algoritmia',
+        direccion: institucion
+          ? `${institucion.direccion}, ${institucion.localidad.localidad}, ${institucion.localidad.provincia.provincia}`
+          : '',
+        email: institucion?.email || '',
+        telefono: institucion?.telefono || '',
+        logoUrl: logoBase64,
+      },
+      reporte: {
+        numero: reporteDB.nroReporte,
+        titulo: 'Resumen de Usuarios',
+        fechaEmision: new Date().toLocaleDateString(),
+        generadoPor: usuario
+          ? `${usuario.nombre} ${usuario.apellido}`
+          : 'Sistema',
+        filtrosTexto: filtrosTexto.join(' | '),
+        aPresentarA: aPresentarA,
+      },
+      kpis: summary,
+      chartJsContent,
+      chartConfig: JSON.stringify(chartConfig),
+      usuarios: list,
+    };
+
+    const pdfBuffer = await this.generatePdf(
+      'reporte-usuarios-resumen',
+      templateData,
+    );
+
+    return new StreamableFile(pdfBuffer, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="resumen-usuarios.pdf"`,
     });
   }
 }

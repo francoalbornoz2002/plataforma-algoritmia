@@ -20,14 +20,12 @@ import TableOnIcon from "@mui/icons-material/TableChart";
 import { BarChart } from "@mui/x-charts/BarChart";
 import {
   getUsersSummary,
-  getUsersDistribution,
-  getUsersList, // Importamos el servicio de lista
+  getUsersSummaryPdf,
   AgrupacionUsuarios,
   type UsersSummaryFilters,
-  type UsersDistributionFilters,
-  type UsersListFilters,
 } from "../../service/reports.service";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
+import ReportExportDialog from "../common/ReportExportDialog";
 
 // Definimos colores constantes para mantener consistencia
 const ROLE_COLORS: Record<string, string> = {
@@ -37,9 +35,7 @@ const ROLE_COLORS: Record<string, string> = {
 };
 
 export default function SummaryReportSection() {
-  const [filters, setFilters] = useState<
-    UsersSummaryFilters & UsersDistributionFilters
-  >({
+  const [filters, setFilters] = useState<UsersSummaryFilters>({
     fechaCorte: "",
     agruparPor: AgrupacionUsuarios.ROL,
   });
@@ -54,23 +50,20 @@ export default function SummaryReportSection() {
     estado?: string;
   } | null>(null);
 
+  // Estado para el Modal de Exportación
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
   const handleGenerate = async () => {
     setLoading(true);
     setError(null);
     try {
-      // Consultamos todo en paralelo: Resumen, Distribución y Lista
-      const [summary, dist, list] = await Promise.all([
-        getUsersSummary({ fechaCorte: filters.fechaCorte }),
-        getUsersDistribution({
-          fechaCorte: filters.fechaCorte,
-          agruparPor: filters.agruparPor,
-        }),
-        getUsersList({ fechaCorte: filters.fechaCorte } as UsersListFilters),
-      ]);
+      // Consultamos todo en una sola llamada
+      const result = await getUsersSummary(filters);
 
-      setSummaryData(summary);
-      setDistributionData(dist);
-      setUsersList(list);
+      setSummaryData(result.kpis);
+      setDistributionData(result.distribucion);
+      setUsersList(result.lista);
     } catch (err) {
       console.error(err);
       setError("Error al cargar el resumen.");
@@ -281,6 +274,31 @@ export default function SummaryReportSection() {
     },
   ];
 
+  const handleOpenExportDialog = () => {
+    setIsExportDialogOpen(true);
+  };
+
+  const handleExportPdf = async (aPresentarA: string) => {
+    setPdfLoading(true);
+    try {
+      const params = { ...filters, aPresentarA };
+      const blob = await getUsersSummaryPdf(params);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "resumen-usuarios.pdf");
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      setIsExportDialogOpen(false);
+    } catch (err) {
+      console.error(err);
+      setError("Error al descargar el PDF.");
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
   return (
     <Paper elevation={5} component="section" sx={{ p: 2 }}>
       <Typography
@@ -335,10 +353,11 @@ export default function SummaryReportSection() {
         <Button
           variant="outlined"
           startIcon={<PictureAsPdfIcon />}
-          disabled={!summaryData}
+          disabled={!summaryData || pdfLoading}
           color="error"
+          onClick={handleOpenExportDialog}
         >
-          Exportar PDF
+          {pdfLoading ? "Generando..." : "Exportar PDF"}
         </Button>
         <Button
           variant="outlined"
@@ -481,6 +500,14 @@ export default function SummaryReportSection() {
           </Box>
         </Stack>
       )}
+
+      {/* Modal de Exportación */}
+      <ReportExportDialog
+        open={isExportDialogOpen}
+        onClose={() => setIsExportDialogOpen(false)}
+        onExport={handleExportPdf}
+        isGenerating={pdfLoading}
+      />
     </Paper>
   );
 }

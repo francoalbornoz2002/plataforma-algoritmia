@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  {{> styles}}
+</head>
+<body>
+  {{> header}}
+
+  <!-- KPIs -->
+  <div class="kpi-container">
+    <div class="kpi-card">
+      <div class="kpi-value">{{kpis.total}}</div>
+      <div class="kpi-label">Total Usuarios</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" style="color: #2e7d32;">{{kpis.activos}}</div>
+      <div class="kpi-label">Activos</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" style="color: #d32f2f;">{{kpis.inactivos}}</div>
+      <div class="kpi-label">Inactivos</div>
+    </div>
+  </div>
+
+  <!-- Gráfico -->
+  <div class="chart-container">
+    <canvas id="usersChart"></canvas>
+  </div>
+
+  <!-- Tabla de Usuarios -->
+  <div style="margin-top: 20px;">
+    <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 5px; color: #1976d2;">Listado de Usuarios</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Apellido</th>
+          <th>DNI</th>
+          <th>Email</th>
+          <th>Rol</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each usuarios}}
+        <tr>
+          <td>{{this.nombre}}</td>
+          <td>{{this.apellido}}</td>
+          <td>{{this.dni}}</td>
+          <td>{{this.email}}</td>
+          <td>{{this.rol}}</td>
+          <td>
+            <span class="badge {{#if (eq this.estado 'Activo')}}badge-Realizada{{else}}badge-No_realizada{{/if}}">
+              {{this.estado}}
+            </span>
+          </td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+
+  {{> footer}}
+
+  <!-- Script para renderizar el gráfico -->
+  <script>
+    {{{chartJsContent}}}
+
+    const ctx = document.getElementById('usersChart').getContext('2d');
+    const config = {{{chartConfig}}};
+    
+    // Ajustes para impresión
+    config.options.animation = false;
+    config.options.responsive = true;
+    config.options.maintainAspectRatio = false;
+
+    new Chart(ctx, config);
+  </script>
+  
+  <!-- Helper simple para handlebars en cliente si fuera necesario, pero aquí procesamos en servidor -->
+  <!-- Handlebars helpers se registran en el servicio, aquí usamos lógica simple -->
+</body>
+</html>

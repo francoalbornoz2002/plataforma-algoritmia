@@ -23,18 +23,21 @@ import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { roles } from "../../../../types";
 import { LineChart } from "@mui/x-charts/LineChart";
 import {
-  getUsersAltas,
-  getUsersBajas,
+  getUsersHistory,
   type UsersHistoryFilters,
+  TipoMovimientoUsuario,
 } from "../../service/reports.service";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 
 export default function HistoryReportSection() {
-  const [type, setType] = useState<"altas" | "bajas" | "todos">("todos");
+  const [type, setType] = useState<TipoMovimientoUsuario>(
+    TipoMovimientoUsuario.TODOS,
+  );
   const [filters, setFilters] = useState<UsersHistoryFilters>({
     fechaDesde: "",
     fechaHasta: "",
     rol: "",
+    tipoMovimiento: TipoMovimientoUsuario.TODOS,
   });
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any[]>([]);
@@ -47,74 +50,46 @@ export default function HistoryReportSection() {
 
   // Cargar datos al montar y al cambiar filtros o tipo
   useEffect(() => {
+    setFilters((prev) => ({ ...prev, tipoMovimiento: type }));
+  }, [type]);
+
+  useEffect(() => {
     handleGenerate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, type]);
+  }, [filters]);
 
   const handleGenerate = async () => {
     setLoading(true);
     setError(null);
     try {
-      let altasData: any[] = [];
-      let bajasData: any[] = [];
-      let altasMeta: any[] = [];
-      let bajasMeta: any[] = [];
-
-      if (type === "altas" || type === "todos") {
-        const res = await getUsersAltas(filters);
-        altasData = res.data.map((u: any) => ({
-          ...u,
-          tipoMovimiento: "Alta",
-          fechaMovimiento: u.createdAt,
-        }));
-        altasMeta = res.meta || [];
-      }
-
-      if (type === "bajas" || type === "todos") {
-        const res = await getUsersBajas(filters);
-        bajasData = res.data.map((u: any) => ({
-          ...u,
-          tipoMovimiento: "Baja",
-          fechaMovimiento: u.deletedAt,
-        }));
-        bajasMeta = res.meta || [];
-      }
-
-      // Combinar datos para la tabla
-      const combinedData = [...altasData, ...bajasData].sort(
-        (a, b) =>
-          new Date(a.fechaMovimiento).getTime() -
-          new Date(b.fechaMovimiento).getTime(),
-      );
+      const result = await getUsersHistory(filters);
 
       // Agregar ID único para DataGrid
-      const tableRows = combinedData.map((item, index) => ({
+      const tableRows = result.history.map((item: any, index: number) => ({
         ...item,
+        // Mapeamos 'fecha' a 'fechaMovimiento' para la columna
+        fechaMovimiento: item.fecha,
         rowId: `${item.id}-${item.tipoMovimiento}-${index}`,
       }));
 
       setData(tableRows);
 
       // Preparar datos para el gráfico
-      const allDatesSet = new Set<string>();
-      altasMeta.forEach((m: any) => allDatesSet.add(m.fecha));
-      bajasMeta.forEach((m: any) => allDatesSet.add(m.fecha));
+      // El backend ahora devuelve chartData agrupado por fecha
+      // [{ fecha: '2023-01-01', altas: 2, bajas: 0 }, ...]
+      const chartMap = new Map<string, { altas: number; bajas: number }>();
 
-      const sortedDates = Array.from(allDatesSet).sort(
-        (a, b) => new Date(a).getTime() - new Date(b).getTime(),
-      );
+      // Procesamos el historial para el gráfico (o usamos lo que mande el backend si lo implementamos)
+      // En el backend implementamos chartData, usémoslo si viene, sino lo calculamos.
+      // El backend devuelve { history: [], chartData: [] }
 
-      const chartAltas = sortedDates.map((date) => {
-        const found = altasMeta.find((m: any) => m.fecha === date);
-        return found ? found.cantidad : 0;
-      });
-      const chartBajas = sortedDates.map((date) => {
-        const found = bajasMeta.find((m: any) => m.fecha === date);
-        return found ? found.cantidad : 0;
-      });
+      const backendChartData = result.chartData || [];
+
+      const dates = backendChartData.map((d: any) => d.fecha);
+      const chartAltas = backendChartData.map((d: any) => d.altas);
+      const chartBajas = backendChartData.map((d: any) => d.bajas);
 
       setChartData({
-        dates: sortedDates,
+        dates,
         altas: chartAltas,
         bajas: chartBajas,
       });
@@ -195,22 +170,34 @@ export default function HistoryReportSection() {
               </Typography>
               <ButtonGroup size="small">
                 <Button
-                  variant={type === "todos" ? "contained" : "outlined"}
-                  onClick={() => setType("todos")}
+                  variant={
+                    type === TipoMovimientoUsuario.TODOS
+                      ? "contained"
+                      : "outlined"
+                  }
+                  onClick={() => setType(TipoMovimientoUsuario.TODOS)}
                   color="info"
                 >
                   Todos
                 </Button>
                 <Button
-                  variant={type === "altas" ? "contained" : "outlined"}
-                  onClick={() => setType("altas")}
+                  variant={
+                    type === TipoMovimientoUsuario.ALTA
+                      ? "contained"
+                      : "outlined"
+                  }
+                  onClick={() => setType(TipoMovimientoUsuario.ALTA)}
                   color="primary"
                 >
                   Altas
                 </Button>
                 <Button
-                  variant={type === "bajas" ? "contained" : "outlined"}
-                  onClick={() => setType("bajas")}
+                  variant={
+                    type === TipoMovimientoUsuario.BAJA
+                      ? "contained"
+                      : "outlined"
+                  }
+                  onClick={() => setType(TipoMovimientoUsuario.BAJA)}
                   color="error"
                 >
                   Bajas
@@ -352,7 +339,8 @@ export default function HistoryReportSection() {
                   },
                 ]}
                 series={[
-                  ...(type === "altas" || type === "todos"
+                  ...(type === TipoMovimientoUsuario.ALTA ||
+                  type === TipoMovimientoUsuario.TODOS
                     ? [
                         {
                           data: chartData.altas,
@@ -361,7 +349,8 @@ export default function HistoryReportSection() {
                         },
                       ]
                     : []),
-                  ...(type === "bajas" || type === "todos"
+                  ...(type === TipoMovimientoUsuario.BAJA ||
+                  type === TipoMovimientoUsuario.TODOS
                     ? [
                         {
                           data: chartData.bajas,

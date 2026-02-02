@@ -10,6 +10,8 @@ import {
 
 export interface UsersSummaryFilters {
   fechaCorte?: string;
+  agruparPor?: AgrupacionUsuarios;
+  rol?: roles | "";
 }
 
 export enum AgrupacionUsuarios {
@@ -18,20 +20,17 @@ export enum AgrupacionUsuarios {
   AMBOS = "AMBOS",
 }
 
-export interface UsersDistributionFilters {
-  fechaCorte?: string;
-  agruparPor?: AgrupacionUsuarios;
+export enum TipoMovimientoUsuario {
+  TODOS = "Todos",
+  ALTA = "Alta",
+  BAJA = "Baja",
 }
 
 export interface UsersHistoryFilters {
   fechaDesde?: string;
   fechaHasta?: string;
   rol?: roles | "";
-}
-
-export interface UsersListFilters {
-  fechaCorte?: string;
-  rol?: roles | "";
+  tipoMovimiento?: TipoMovimientoUsuario;
 }
 
 export interface CoursesSummaryFilters {
@@ -172,43 +171,24 @@ export const getUsersSummary = async (params: UsersSummaryFilters) => {
   return response.data;
 };
 
-export const getUsersDistribution = async (
-  params: UsersDistributionFilters,
+export const getUsersSummaryPdf = async (
+  params: UsersSummaryFilters & { aPresentarA?: string },
 ) => {
   const cleanParams = Object.fromEntries(
     Object.entries(params).filter(([_, v]) => v !== ""),
   );
-  const response = await apiClient.get("/reportes/usuarios/distribucion", {
+  const response = await apiClient.get("/reportes/usuarios/resumen/pdf", {
     params: cleanParams,
+    responseType: "blob",
   });
   return response.data;
 };
 
-export const getUsersAltas = async (params: UsersHistoryFilters) => {
+export const getUsersHistory = async (params: UsersHistoryFilters) => {
   const cleanParams = Object.fromEntries(
     Object.entries(params).filter(([_, v]) => v !== ""),
   );
-  const response = await apiClient.get("/reportes/usuarios/altas", {
-    params: cleanParams,
-  });
-  return response.data;
-};
-
-export const getUsersBajas = async (params: UsersHistoryFilters) => {
-  const cleanParams = Object.fromEntries(
-    Object.entries(params).filter(([_, v]) => v !== ""),
-  );
-  const response = await apiClient.get("/reportes/usuarios/bajas", {
-    params: cleanParams,
-  });
-  return response.data;
-};
-
-export const getUsersList = async (params: UsersListFilters) => {
-  const cleanParams = Object.fromEntries(
-    Object.entries(params).filter(([_, v]) => v !== ""),
-  );
-  const response = await apiClient.get("/reportes/usuarios/listado", {
+  const response = await apiClient.get("/reportes/usuarios/historial", {
     params: cleanParams,
   });
   return response.data;
