@@ -20,10 +20,12 @@ import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
 import {
   getCoursesHistory,
+  getCoursesHistoryPdf,
   TipoMovimientoCurso,
   type CoursesHistoryFilters,
 } from "../../service/reports.service";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
+import ReportExportDialog from "../common/ReportExportDialog";
 
 export default function CoursesHistorySection() {
   const [type, setType] = useState<TipoMovimientoCurso>(
@@ -43,6 +45,10 @@ export default function CoursesHistorySection() {
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Estado para el Modal de Exportación
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
   // Sincronizar el tipo seleccionado con los filtros
   useEffect(() => {
     setFilters((prev) => ({ ...prev, tipoMovimiento: type }));
@@ -52,35 +58,25 @@ export default function CoursesHistorySection() {
     setLoading(true);
     setError(null);
     try {
-      const events = await getCoursesHistory(filters);
+      const result = await getCoursesHistory(filters);
 
       // Agregamos un ID único para el DataGrid y procesamos fechas
-      const rows = events.map((ev: any, index: number) => ({
+      const rows = result.history.map((ev: any, index: number) => ({
         ...ev,
         id: `${ev.tipo}-${index}`, // ID único compuesto
       }));
       setData(rows);
 
-      // Procesar datos para el gráfico (Agrupar por fecha)
-      const stats: Record<string, { altas: number; bajas: number }> = {};
-
-      events.forEach((ev: any) => {
-        const dateStr = new Date(ev.fecha).toISOString().split("T")[0];
-        if (!stats[dateStr]) stats[dateStr] = { altas: 0, bajas: 0 };
-
-        if (ev.tipo === "Alta") stats[dateStr].altas++;
-        else if (ev.tipo === "Baja") stats[dateStr].bajas++;
-      });
-
-      // Ordenar fechas ascendentemente para el gráfico
-      const sortedDates = Object.keys(stats).sort(
-        (a, b) => new Date(a).getTime() - new Date(b).getTime(),
-      );
+      // Usamos los datos del gráfico que vienen del backend
+      const backendChartData = result.chartData || [];
+      const dates = backendChartData.map((d: any) => d.fecha);
+      const chartAltas = backendChartData.map((d: any) => d.altas);
+      const chartBajas = backendChartData.map((d: any) => d.bajas);
 
       setChartData({
-        dates: sortedDates,
-        altas: sortedDates.map((d) => stats[d].altas),
-        bajas: sortedDates.map((d) => stats[d].bajas),
+        dates,
+        altas: chartAltas,
+        bajas: chartBajas,
       });
     } catch (err) {
       console.error(err);
@@ -102,6 +98,31 @@ export default function CoursesHistorySection() {
       fechaDesde: start,
       fechaHasta: end,
     }));
+  };
+
+  const handleOpenExportDialog = () => {
+    setIsExportDialogOpen(true);
+  };
+
+  const handleExportPdf = async (aPresentarA: string) => {
+    setPdfLoading(true);
+    try {
+      const params = { ...filters, aPresentarA };
+      const blob = await getCoursesHistoryPdf(params);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "historial-cursos.pdf");
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      setIsExportDialogOpen(false);
+    } catch (err) {
+      console.error(err);
+      setError("Error al descargar el PDF.");
+    } finally {
+      setPdfLoading(false);
+    }
   };
 
   const columns: GridColDef[] = [
@@ -280,8 +301,9 @@ export default function CoursesHistorySection() {
         <Button
           variant="outlined"
           startIcon={<PictureAsPdfIcon />}
-          disabled={data.length === 0}
+          disabled={data.length === 0 || pdfLoading}
           color="error"
+          onClick={handleOpenExportDialog}
         >
           Exportar PDF
         </Button>
@@ -379,6 +401,14 @@ export default function CoursesHistorySection() {
           )}
         </Box>
       </Stack>
+
+      {/* Modal de Exportación */}
+      <ReportExportDialog
+        open={isExportDialogOpen}
+        onClose={() => setIsExportDialogOpen(false)}
+        onExport={handleExportPdf}
+        isGenerating={pdfLoading}
+      />
     </Paper>
   );
 }

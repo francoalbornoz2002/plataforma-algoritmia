@@ -13,13 +13,21 @@ import {
   GetUsersSummaryDto,
   GetUsersSummaryPdfDto,
 } from '../dto/get-users-summary.dto';
-import { GetUsersHistoryDto } from '../dto/get-users-history.dto';
+import {
+  GetUsersHistoryDto,
+  GetUsersHistoryPdfDto,
+} from '../dto/get-users-history.dto';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { roles } from '@prisma/client';
-import { GetCoursesSummaryDto } from '../dto/get-courses-summary.dto';
-import { GetCoursesListDto } from '../dto/get-courses-list.dto';
-import { GetCoursesHistoryDto } from '../dto/get-courses-history.dto';
+import {
+  GetCoursesSummaryDto,
+  GetCoursesSummaryPdfDto,
+} from '../dto/get-courses-summary.dto';
+import {
+  GetCoursesHistoryDto,
+  GetCoursesHistoryPdfDto,
+} from '../dto/get-courses-history.dto';
 import { GetStudentEnrollmentHistoryDto } from '../dto/get-student-enrollment-history.dto';
 import { GetTeacherAssignmentHistoryDto } from '../dto/get-teacher-assignment-history.dto';
 import { GetCourseMissionsReportDto } from '../dto/get-course-missions-report.dto';
@@ -79,6 +87,26 @@ export class ReportesController {
     return this.reportesService.getUsersHistory(dto);
   }
 
+  @Get('usuarios/historial/pdf')
+  @Roles(roles.Administrador)
+  async getUsersHistoryPdf(
+    @Query() dto: GetUsersHistoryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.pdfService.getUsersHistoryPdf(
+      dto,
+      userId,
+      dto.aPresentarA,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="historial-usuarios.pdf"`,
+    });
+    return file;
+  }
+
   // --- REPORTES DE CURSOS (ADMIN) ---
 
   // Sección 1: Resumen de cursos (KPIs y Gráficos)
@@ -88,11 +116,24 @@ export class ReportesController {
     return this.reportesService.getCoursesSummary(dto);
   }
 
-  // Sección 1: Listado detallado de cursos
-  @Get('cursos/listado')
+  @Get('cursos/resumen/pdf')
   @Roles(roles.Administrador)
-  getCoursesList(@Query() dto: GetCoursesListDto) {
-    return this.reportesService.getCoursesList(dto);
+  async getCoursesSummaryPdf(
+    @Query() dto: GetCoursesSummaryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.pdfService.getCoursesSummaryPdf(
+      dto,
+      userId,
+      dto.aPresentarA,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="resumen-cursos.pdf"`,
+    });
+    return file;
   }
 
   // Sección 2: Historial de altas y bajas de cursos
@@ -100,6 +141,26 @@ export class ReportesController {
   @Roles(roles.Administrador)
   getCoursesHistory(@Query() dto: GetCoursesHistoryDto) {
     return this.reportesService.getCoursesHistory(dto);
+  }
+
+  @Get('cursos/historial/pdf')
+  @Roles(roles.Administrador)
+  async getCoursesHistoryPdf(
+    @Query() dto: GetCoursesHistoryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.pdfService.getCoursesHistoryPdf(
+      dto,
+      userId,
+      dto.aPresentarA,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="historial-cursos.pdf"`,
+    });
+    return file;
   }
 
   // Sección 3: Historial de inscripciones y bajas de alumnos

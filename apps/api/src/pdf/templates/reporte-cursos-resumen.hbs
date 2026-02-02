@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  {{> styles}}
+</head>
+<body>
+  {{> header}}
+
+  <!-- KPIs -->
+  <div class="kpi-container">
+    <div class="kpi-card">
+      <div class="kpi-value">{{kpis.total}}</div>
+      <div class="kpi-label">Total Cursos</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" style="color: #2e7d32;">{{kpis.activos}}</div>
+      <div class="kpi-label">Activos</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" style="color: #d32f2f;">{{kpis.inactivos}}</div>
+      <div class="kpi-label">Inactivos</div>
+    </div>
+  </div>
+
+  <!-- Gráfico -->
+  <div class="chart-container">
+    <canvas id="coursesChart"></canvas>
+  </div>
+
+  <!-- Tabla -->
+  <div style="margin-top: 20px;">
+    <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 5px; color: #1976d2;">Listado de Cursos</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Estado</th>
+          <th>Alumnos (Act)</th>
+          <th>Docentes (Act)</th>
+          <th>Fecha Creación</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each cursos}}
+        <tr>
+          <td>{{this.nombre}}</td>
+          <td>
+            <span class="badge {{#if (eq this.estado 'Activo')}}badge-Realizada{{else}}badge-No_realizada{{/if}}">
+              {{this.estado}}
+            </span>
+          </td>
+          <td class="text-center">{{this.alumnosActivos}}</td>
+          <td class="text-center">{{this.docentesActivos}}</td>
+          <td>{{this.createdAt}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+
+  {{> footer}}
+
+  <script>
+    {{{chartJsContent}}}
+
+    const ctx = document.getElementById('coursesChart').getContext('2d');
+    const config = {{{chartConfig}}};
+    
+    // Ajustes para impresión
+    config.options.animation = false;
+    config.options.responsive = true;
+    config.options.maintainAspectRatio = false;
+
+    new Chart(ctx, config);
+  </script>
+</body>
+</html>

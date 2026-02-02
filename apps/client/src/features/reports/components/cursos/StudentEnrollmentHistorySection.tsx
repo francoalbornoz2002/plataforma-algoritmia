@@ -22,7 +22,7 @@ import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
 import {
   getStudentEnrollmentHistory,
-  getCoursesList,
+  getCoursesSummary,
   TipoMovimientoInscripcion,
   type StudentEnrollmentHistoryFilters,
 } from "../../service/reports.service";
@@ -53,8 +53,8 @@ export default function StudentEnrollmentHistorySection() {
   useEffect(() => {
     const loadCourses = async () => {
       try {
-        const list = await getCoursesList({});
-        setCourses(list);
+        const result = await getCoursesSummary({});
+        setCourses(result.lista || []);
       } catch (err) {
         console.error("Error cargando cursos", err);
       }

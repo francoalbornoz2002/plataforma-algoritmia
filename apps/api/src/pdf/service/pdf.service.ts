@@ -6,6 +6,9 @@ import * as path from 'path';
 import { ReportesService } from '../../reportes/services/reportes.service';
 import { GetCourseClassesHistoryDto } from '../../reportes/dto/get-course-classes-history.dto';
 import { GetUsersSummaryDto } from '../../reportes/dto/get-users-summary.dto';
+import { GetUsersHistoryDto } from '../../reportes/dto/get-users-history.dto';
+import { GetCoursesHistoryDto } from '../../reportes/dto/get-courses-history.dto';
+import { GetCoursesSummaryDto } from '../../reportes/dto/get-courses-summary.dto';
 import { estado_clase_consulta } from '@prisma/client';
 
 @Injectable()
@@ -42,6 +45,56 @@ export class PdfService {
     hbs.registerPartial('footer', footer);
     // Helper básico para comparaciones
     hbs.registerHelper('eq', (a, b) => a === b);
+  }
+
+  /**
+   * Helper para leer la librería Chart.js una sola vez
+   */
+  private async getChartJsContent(): Promise<string> {
+    const chartJsMain = require.resolve('chart.js');
+    const chartJsPath = path.join(path.dirname(chartJsMain), 'chart.umd.js');
+    return readFile(chartJsPath, 'utf-8');
+  }
+
+  /**
+   * Helper para construir la estructura común de datos del reporte (Header/Footer)
+   */
+  private buildCommonTemplateData(
+    metadata: { institucion: any; usuario: any; logoBase64: string | null },
+    reportInfo: {
+      reporteDB: any;
+      filtrosTexto: string[];
+      titulo: string;
+      subtitulo?: string;
+      aPresentarA?: string;
+    },
+  ) {
+    const { institucion, usuario, logoBase64 } = metadata;
+    const { reporteDB, filtrosTexto, titulo, subtitulo, aPresentarA } =
+      reportInfo;
+
+    return {
+      institucion: {
+        nombre: institucion?.nombre || 'Plataforma Algoritmia',
+        direccion: institucion
+          ? `${institucion.direccion}, ${institucion.localidad.localidad}, ${institucion.localidad.provincia.provincia}`
+          : '',
+        email: institucion?.email || '',
+        telefono: institucion?.telefono || '',
+        logoUrl: logoBase64,
+      },
+      reporte: {
+        numero: reporteDB.nroReporte,
+        titulo: titulo,
+        subtitulo: subtitulo,
+        fechaEmision: new Date().toLocaleDateString(),
+        generadoPor: usuario
+          ? `${usuario.nombre} ${usuario.apellido}`
+          : 'Sistema',
+        filtrosTexto: filtrosTexto.join(' | '),
+        aPresentarA: aPresentarA,
+      },
+    };
   }
 
   async generatePdf(templateName: string, data: any): Promise<Buffer> {
@@ -156,9 +209,7 @@ export class PdfService {
     }));
 
     // 6. Preparar datos para el Gráfico (Chart.js)
-    const chartJsMain = require.resolve('chart.js');
-    const chartJsPath = path.join(path.dirname(chartJsMain), 'chart.umd.js');
-    const chartJsContent = await readFile(chartJsPath, 'utf-8');
+    const chartJsContent = await this.getChartJsContent();
 
     const chartConfig = {
       type: 'bar',
@@ -183,27 +234,19 @@ export class PdfService {
       },
     };
 
-    const templateData = {
-      institucion: {
-        nombre: institucion?.nombre || 'Plataforma Algoritmia',
-        direccion: institucion
-          ? `${institucion.direccion}, ${institucion.localidad.localidad}, ${institucion.localidad.provincia.provincia}`
-          : '',
-        email: institucion?.email || '',
-        telefono: institucion?.telefono || '',
-        logoUrl: logoBase64,
-      },
-      reporte: {
-        numero: reporteDB.nroReporte,
+    const commonData = this.buildCommonTemplateData(
+      { institucion, usuario, logoBase64 },
+      {
+        reporteDB,
+        filtrosTexto,
         titulo: 'Historial de Clases de Consulta',
         subtitulo: `Curso: ${curso?.nombre || 'Desconocido'}`,
-        fechaEmision: new Date().toLocaleDateString(),
-        generadoPor: usuario
-          ? `${usuario.nombre} ${usuario.apellido}`
-          : 'Sistema',
-        filtrosTexto: filtrosTexto.join(' | '),
         aPresentarA: dto.aPresentarA,
       },
+    );
+
+    const templateData = {
+      ...commonData,
       kpis: {
         total: totalClases,
         realizadas,
@@ -251,9 +294,7 @@ export class PdfService {
       );
 
     // 4. Configurar Gráfico
-    const chartJsMain = require.resolve('chart.js');
-    const chartJsPath = path.join(path.dirname(chartJsMain), 'chart.umd.js');
-    const chartJsContent = await readFile(chartJsPath, 'utf-8');
+    const chartJsContent = await this.getChartJsContent();
 
     // Preparar datos del gráfico según agrupación
     const agruparPor = summaryDto.agruparPor || 'ROL';
@@ -339,26 +380,18 @@ export class PdfService {
       });
     }
 
-    const templateData = {
-      institucion: {
-        nombre: institucion?.nombre || 'Plataforma Algoritmia',
-        direccion: institucion
-          ? `${institucion.direccion}, ${institucion.localidad.localidad}, ${institucion.localidad.provincia.provincia}`
-          : '',
-        email: institucion?.email || '',
-        telefono: institucion?.telefono || '',
-        logoUrl: logoBase64,
-      },
-      reporte: {
-        numero: reporteDB.nroReporte,
+    const commonData = this.buildCommonTemplateData(
+      { institucion, usuario, logoBase64 },
+      {
+        reporteDB,
+        filtrosTexto,
         titulo: 'Resumen de Usuarios',
-        fechaEmision: new Date().toLocaleDateString(),
-        generadoPor: usuario
-          ? `${usuario.nombre} ${usuario.apellido}`
-          : 'Sistema',
-        filtrosTexto: filtrosTexto.join(' | '),
         aPresentarA: aPresentarA,
       },
+    );
+
+    const templateData = {
+      ...commonData,
       kpis: summary,
       chartJsContent,
       chartConfig: JSON.stringify(chartConfig),
@@ -373,6 +406,322 @@ export class PdfService {
     return new StreamableFile(pdfBuffer, {
       type: 'application/pdf',
       disposition: `attachment; filename="resumen-usuarios.pdf"`,
+    });
+  }
+
+  async getUsersHistoryPdf(
+    dto: GetUsersHistoryDto,
+    userId: string,
+    aPresentarA?: string,
+  ): Promise<StreamableFile> {
+    // 1. Obtener datos (El servicio ya devuelve ordenado descendente por fecha)
+    const { history } = await this.reportesService.getUsersHistory(dto);
+
+    // 2. Metadatos
+    const { institucion, usuario, logoBase64 } =
+      await this.reportesService.getReportMetadata(userId);
+
+    // 3. Registrar Reporte
+    const { reporteDB, filtrosTexto } =
+      await this.reportesService.registerReport(
+        userId,
+        'Historial de Usuarios',
+        'Usuarios',
+        { ...dto, aPresentarA },
+      );
+
+    // 4. Configurar Gráfico (Línea de tiempo)
+    const chartJsContent = await this.getChartJsContent();
+
+    // Agrupar por fecha para el gráfico
+    const timelineMap = new Map<string, { altas: number; bajas: number }>();
+
+    // Ordenar cronológicamente (ascendente) para el gráfico
+    const sortedHistory = [...history].sort(
+      (a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime(),
+    );
+
+    sortedHistory.forEach((h) => {
+      const dateKey = h.fecha.toISOString().split('T')[0];
+      if (!timelineMap.has(dateKey)) {
+        timelineMap.set(dateKey, { altas: 0, bajas: 0 });
+      }
+      const entry = timelineMap.get(dateKey)!;
+      if (h.tipoMovimiento === 'Alta') entry.altas++;
+      else if (h.tipoMovimiento === 'Baja') entry.bajas++;
+    });
+
+    const labels = Array.from(timelineMap.keys());
+    const altasData = Array.from(timelineMap.values()).map((v) => v.altas);
+    const bajasData = Array.from(timelineMap.values()).map((v) => v.bajas);
+
+    const chartConfig = {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Altas',
+            data: altasData,
+            borderColor: '#1976d2',
+            backgroundColor: '#1976d2',
+            tension: 0.1,
+            fill: false,
+          },
+          {
+            label: 'Bajas',
+            data: bajasData,
+            borderColor: '#d32f2f',
+            backgroundColor: '#d32f2f',
+            tension: 0.1,
+            fill: false,
+          },
+        ],
+      },
+      options: {
+        scales: {
+          y: {
+            ticks: { stepSize: 1, precision: 0 },
+            beginAtZero: true,
+          },
+        },
+        plugins: {
+          title: { display: true, text: 'Evolución de Movimientos' },
+          legend: { position: 'top' },
+        },
+      },
+    };
+
+    // Formatear tabla para la vista (fechas legibles)
+    const historyFormatted = history.map((h) => ({
+      fecha: h.fecha.toISOString().split('T')[0],
+      nombre: h.nombre,
+      apellido: h.apellido,
+      email: h.email,
+      rol: h.rol,
+      tipo: h.tipoMovimiento,
+      esAlta: h.tipoMovimiento === 'Alta',
+    }));
+
+    const commonData = this.buildCommonTemplateData(
+      { institucion, usuario, logoBase64 },
+      {
+        reporteDB,
+        filtrosTexto,
+        titulo: 'Historial de Usuarios',
+        aPresentarA: aPresentarA,
+      },
+    );
+
+    const templateData = {
+      ...commonData,
+      chartJsContent,
+      chartConfig: JSON.stringify(chartConfig),
+      movimientos: historyFormatted,
+    };
+
+    const pdfBuffer = await this.generatePdf(
+      'reporte-usuarios-historial',
+      templateData,
+    );
+
+    return new StreamableFile(pdfBuffer, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="historial-usuarios.pdf"`,
+    });
+  }
+
+  async getCoursesHistoryPdf(
+    dto: GetCoursesHistoryDto,
+    userId: string,
+    aPresentarA?: string,
+  ): Promise<StreamableFile> {
+    const { history, chartData } =
+      await this.reportesService.getCoursesHistory(dto);
+
+    const { institucion, usuario, logoBase64 } =
+      await this.reportesService.getReportMetadata(userId);
+
+    const { reporteDB, filtrosTexto } =
+      await this.reportesService.registerReport(
+        userId,
+        'Historial de Cursos',
+        'Cursos',
+        { ...dto, aPresentarA },
+      );
+
+    const chartJsContent = await this.getChartJsContent();
+
+    const labels = chartData.map((d) => d.fecha);
+    const altasData = chartData.map((d) => d.altas);
+    const bajasData = chartData.map((d) => d.bajas);
+
+    const chartConfig = {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Altas',
+            data: altasData,
+            borderColor: '#1976d2',
+            backgroundColor: '#1976d2',
+            tension: 0.1,
+            fill: false,
+          },
+          {
+            label: 'Bajas',
+            data: bajasData,
+            borderColor: '#d32f2f',
+            backgroundColor: '#d32f2f',
+            tension: 0.1,
+            fill: false,
+          },
+        ],
+      },
+      options: {
+        scales: {
+          y: {
+            ticks: { stepSize: 1, precision: 0 },
+            beginAtZero: true,
+          },
+        },
+        plugins: {
+          title: { display: true, text: 'Evolución de Movimientos' },
+          legend: { position: 'top' },
+        },
+      },
+    };
+
+    const historyFormatted = history.map((h) => ({
+      fecha: h.fecha.toISOString().split('T')[0],
+      curso: h.curso,
+      tipo: h.tipo,
+      esAlta: h.tipo === 'Alta',
+      detalle:
+        typeof h.detalle === 'object'
+          ? `Docentes: ${h.detalle.docentes || 'Ninguno'} | Días: ${h.detalle.dias || 'Ninguno'}`
+          : h.detalle,
+    }));
+
+    const commonData = this.buildCommonTemplateData(
+      { institucion, usuario, logoBase64 },
+      {
+        reporteDB,
+        filtrosTexto,
+        titulo: 'Historial de Cursos',
+        aPresentarA: aPresentarA,
+      },
+    );
+
+    const templateData = {
+      ...commonData,
+      chartJsContent,
+      chartConfig: JSON.stringify(chartConfig),
+      movimientos: historyFormatted,
+    };
+
+    const pdfBuffer = await this.generatePdf(
+      'reporte-usuarios-historial', // Reutilizamos la plantilla de historial (es genérica)
+      templateData,
+    );
+
+    return new StreamableFile(pdfBuffer, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="historial-cursos.pdf"`,
+    });
+  }
+
+  async getCoursesSummaryPdf(
+    dto: GetCoursesSummaryDto,
+    userId: string,
+    aPresentarA?: string,
+  ): Promise<StreamableFile> {
+    // 1. Obtener datos
+    const { kpis, lista } = await this.reportesService.getCoursesSummary(dto);
+
+    // 2. Metadatos
+    const { institucion, usuario, logoBase64 } =
+      await this.reportesService.getReportMetadata(userId);
+
+    // 3. Registrar Reporte
+    const { reporteDB, filtrosTexto } =
+      await this.reportesService.registerReport(
+        userId,
+        'Resumen de Cursos',
+        'Cursos',
+        { ...dto, aPresentarA },
+      );
+
+    // 4. Configurar Gráfico
+    const chartJsContent = await this.getChartJsContent();
+
+    const chartConfig = {
+      type: 'bar',
+      data: {
+        labels: ['Total'],
+        datasets: [
+          {
+            label: `Activos (${kpis.activos})`,
+            data: [kpis.activos],
+            backgroundColor: '#2e7d32',
+          },
+          {
+            label: `Inactivos (${kpis.inactivos})`,
+            data: [kpis.inactivos],
+            backgroundColor: '#d32f2f',
+          },
+        ],
+      },
+      options: {
+        scales: {
+          y: {
+            ticks: { stepSize: 1, precision: 0 },
+            beginAtZero: true,
+          },
+        },
+        plugins: {
+          title: { display: true, text: 'Distribución de Cursos por Estado' },
+          legend: { position: 'right' },
+        },
+      },
+    };
+
+    // Formatear lista
+    const cursosFormatted = lista.map((c) => ({
+      nombre: c.nombre,
+      estado: c.estado,
+      alumnosActivos: c.alumnos.activos,
+      docentesActivos: c.docentes.activos,
+      createdAt: c.createdAt.toISOString().split('T')[0],
+    }));
+
+    const commonData = this.buildCommonTemplateData(
+      { institucion, usuario, logoBase64 },
+      {
+        reporteDB,
+        filtrosTexto,
+        titulo: 'Resumen de Cursos',
+        aPresentarA: aPresentarA,
+      },
+    );
+
+    const templateData = {
+      ...commonData,
+      kpis,
+      chartJsContent,
+      chartConfig: JSON.stringify(chartConfig),
+      cursos: cursosFormatted,
+    };
+
+    const pdfBuffer = await this.generatePdf(
+      'reporte-cursos-resumen',
+      templateData,
+    );
+
+    return new StreamableFile(pdfBuffer, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="resumen-cursos.pdf"`,
     });
   }
 }

@@ -24,10 +24,12 @@ import { roles } from "../../../../types";
 import { LineChart } from "@mui/x-charts/LineChart";
 import {
   getUsersHistory,
+  getUsersHistoryPdf,
   type UsersHistoryFilters,
   TipoMovimientoUsuario,
 } from "../../service/reports.service";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
+import ReportExportDialog from "../common/ReportExportDialog";
 
 export default function HistoryReportSection() {
   const [type, setType] = useState<TipoMovimientoUsuario>(
@@ -47,6 +49,10 @@ export default function HistoryReportSection() {
     bajas: number[];
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Estado para el Modal de Exportación
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   // Cargar datos al montar y al cambiar filtros o tipo
   useEffect(() => {
@@ -72,15 +78,6 @@ export default function HistoryReportSection() {
       }));
 
       setData(tableRows);
-
-      // Preparar datos para el gráfico
-      // El backend ahora devuelve chartData agrupado por fecha
-      // [{ fecha: '2023-01-01', altas: 2, bajas: 0 }, ...]
-      const chartMap = new Map<string, { altas: number; bajas: number }>();
-
-      // Procesamos el historial para el gráfico (o usamos lo que mande el backend si lo implementamos)
-      // En el backend implementamos chartData, usémoslo si viene, sino lo calculamos.
-      // El backend devuelve { history: [], chartData: [] }
 
       const backendChartData = result.chartData || [];
 
@@ -116,6 +113,31 @@ export default function HistoryReportSection() {
   ) => {
     const { name, value } = e.target;
     setFilters({ ...filters, [name as string]: value });
+  };
+
+  const handleOpenExportDialog = () => {
+    setIsExportDialogOpen(true);
+  };
+
+  const handleExportPdf = async (aPresentarA: string) => {
+    setPdfLoading(true);
+    try {
+      const params = { ...filters, aPresentarA };
+      const blob = await getUsersHistoryPdf(params);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "historial-usuarios.pdf");
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      setIsExportDialogOpen(false);
+    } catch (err) {
+      console.error(err);
+      setError("Error al descargar el PDF.");
+    } finally {
+      setPdfLoading(false);
+    }
   };
 
   const columns: GridColDef[] = [
@@ -281,10 +303,11 @@ export default function HistoryReportSection() {
         <Button
           variant="outlined"
           startIcon={<PictureAsPdfIcon />}
-          disabled={data.length === 0}
+          disabled={data.length === 0 || pdfLoading}
           color="error"
+          onClick={handleOpenExportDialog}
         >
-          Exportar PDF
+          {pdfLoading ? "Generando..." : "Exportar PDF"}
         </Button>
         <Button
           variant="outlined"
@@ -376,11 +399,19 @@ export default function HistoryReportSection() {
                 color: "text.secondary",
               }}
             >
-              <Typography>Genera el reporte para ver el gráfico</Typography>
+              <Typography>No hay datos para mostrar en el gráfico</Typography>
             </Paper>
           )}
         </Box>
       </Stack>
+
+      {/* Modal de Exportación */}
+      <ReportExportDialog
+        open={isExportDialogOpen}
+        onClose={() => setIsExportDialogOpen(false)}
+        onExport={handleExportPdf}
+        isGenerating={pdfLoading}
+      />
     </Paper>
   );
 }

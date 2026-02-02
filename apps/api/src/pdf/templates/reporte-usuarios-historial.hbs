@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  {{> styles}}
+</head>
+<body>
+  {{> header}}
+
+  <!-- Gráfico -->
+  <div class="chart-container">
+    <canvas id="historyChart"></canvas>
+  </div>
+
+  <!-- Tabla de Movimientos -->
+  <div style="margin-top: 20px;">
+    <h3 style="border-bottom: 1px solid #ddd; padding-bottom: 5px; color: #1976d2;">Detalle de Movimientos</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Tipo</th>
+          {{#if movimientos.[0].curso}}
+            <th>Curso</th>
+            <th>Detalle</th>
+          {{else}}
+            <th>Nombre</th>
+            <th>Apellido</th>
+            <th>Email</th>
+            <th>Rol</th>
+          {{/if}}
+        </tr>
+      </thead>
+      <tbody>
+        {{#each movimientos}}
+        <tr>
+          <td>{{this.fecha}}</td>
+          <td>
+            <span class="badge {{#if this.esAlta}}badge-Programada{{else}}badge-No_realizada{{/if}}">
+              {{this.tipo}}
+            </span>
+          </td>
+          {{#if this.curso}}
+            <td>{{this.curso}}</td>
+            <td style="font-size: 10px;">{{this.detalle}}</td>
+          {{else}}
+            <td>{{this.nombre}}</td>
+            <td>{{this.apellido}}</td>
+            <td>{{this.email}}</td>
+            <td>{{this.rol}}</td>
+          {{/if}}
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+
+  {{> footer}}
+
+  <!-- Script para renderizar el gráfico -->
+  <script>
+    {{{chartJsContent}}}
+
+    const ctx = document.getElementById('historyChart').getContext('2d');
+    const config = {{{chartConfig}}};
+    
+    // Ajustes para impresión
+    config.options.animation = false;
+    config.options.responsive = true;
+    config.options.maintainAspectRatio = false;
+
+    new Chart(ctx, config);
+  </script>
+</body>
+</html>

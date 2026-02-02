@@ -35,10 +35,6 @@ export interface UsersHistoryFilters {
 
 export interface CoursesSummaryFilters {
   fechaCorte?: string;
-}
-
-export interface CoursesListFilters {
-  fechaCorte?: string;
   estado?: estado_simple | "";
   search?: string;
 }
@@ -194,6 +190,19 @@ export const getUsersHistory = async (params: UsersHistoryFilters) => {
   return response.data;
 };
 
+export const getUsersHistoryPdf = async (
+  params: UsersHistoryFilters & { aPresentarA?: string },
+) => {
+  const cleanParams = Object.fromEntries(
+    Object.entries(params).filter(([_, v]) => v !== ""),
+  );
+  const response = await apiClient.get("/reportes/usuarios/historial/pdf", {
+    params: cleanParams,
+    responseType: "blob",
+  });
+  return response.data;
+};
+
 export const getCoursesSummary = async (params: CoursesSummaryFilters) => {
   const cleanParams = Object.fromEntries(
     Object.entries(params).filter(([_, v]) => v !== ""),
@@ -204,12 +213,15 @@ export const getCoursesSummary = async (params: CoursesSummaryFilters) => {
   return response.data;
 };
 
-export const getCoursesList = async (params: CoursesListFilters) => {
+export const getCoursesSummaryPdf = async (
+  params: CoursesSummaryFilters & { aPresentarA?: string },
+) => {
   const cleanParams = Object.fromEntries(
     Object.entries(params).filter(([_, v]) => v !== ""),
   );
-  const response = await apiClient.get("/reportes/cursos/listado", {
+  const response = await apiClient.get("/reportes/cursos/resumen/pdf", {
     params: cleanParams,
+    responseType: "blob",
   });
   return response.data;
 };
@@ -220,6 +232,19 @@ export const getCoursesHistory = async (params: CoursesHistoryFilters) => {
   );
   const response = await apiClient.get("/reportes/cursos/historial", {
     params: cleanParams,
+  });
+  return response.data;
+};
+
+export const getCoursesHistoryPdf = async (
+  params: CoursesHistoryFilters & { aPresentarA?: string },
+) => {
+  const cleanParams = Object.fromEntries(
+    Object.entries(params).filter(([_, v]) => v !== ""),
+  );
+  const response = await apiClient.get("/reportes/cursos/historial/pdf", {
+    params: cleanParams,
+    responseType: "blob",
   });
   return response.data;
 };

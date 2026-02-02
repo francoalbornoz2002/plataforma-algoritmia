@@ -1,4 +1,4 @@
-import { IsDateString, IsEnum, IsOptional } from 'class-validator';
+import { IsDateString, IsEnum, IsOptional, IsString } from 'class-validator';
 
 export enum TipoMovimientoCurso {
   TODOS = 'Todos',
@@ -18,4 +18,11 @@ export class GetCoursesHistoryDto {
   @IsOptional()
   @IsDateString()
   fechaHasta?: string;
+}
+
+// DTO Extendido exclusivo para la exportación PDF
+export class GetCoursesHistoryPdfDto extends GetCoursesHistoryDto {
+  @IsOptional()
+  @IsString()
+  aPresentarA?: string;
 }

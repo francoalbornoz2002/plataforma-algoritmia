@@ -9,7 +9,6 @@ import {
   TipoMovimientoUsuario,
 } from '../dto/get-users-history.dto';
 import { GetCoursesSummaryDto } from '../dto/get-courses-summary.dto';
-import { GetCoursesListDto } from '../dto/get-courses-list.dto';
 import {
   GetCoursesHistoryDto,
   TipoMovimientoCurso,
@@ -235,13 +234,39 @@ export class ReportesService {
       (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime(),
     );
 
-    return { history: events };
+    // Generar datos para el gráfico (agrupado por fecha)
+    const timelineMap = new Map<string, { altas: number; bajas: number }>();
+
+    // Ordenamos ascendente para el gráfico
+    const eventsAsc = [...events].sort(
+      (a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime(),
+    );
+
+    eventsAsc.forEach((e) => {
+      const dateKey = e.fecha.toISOString().split('T')[0];
+      if (!timelineMap.has(dateKey)) {
+        timelineMap.set(dateKey, { altas: 0, bajas: 0 });
+      }
+      const entry = timelineMap.get(dateKey)!;
+      if (e.tipoMovimiento === 'Alta') entry.altas++;
+      else if (e.tipoMovimiento === 'Baja') entry.bajas++;
+    });
+
+    const chartData = Array.from(timelineMap.entries()).map(
+      ([fecha, counts]) => ({
+        fecha,
+        altas: counts.altas,
+        bajas: counts.bajas,
+      }),
+    );
+
+    return { history: events, chartData };
   }
 
   // --- REPORTES DE CURSOS (ADMIN) ---
 
   async getCoursesSummary(dto: GetCoursesSummaryDto) {
-    const { fechaCorte } = dto;
+    const { fechaCorte, estado, search } = dto;
     const end = fechaCorte ? new Date(fechaCorte) : new Date();
     if (fechaCorte) {
       end.setUTCHours(23, 59, 59, 999);
@@ -270,32 +295,23 @@ export class ReportesService {
       this.prisma.curso.count({ where: whereInactive }),
     ]);
 
-    return { total, activos, inactivos };
-  }
-
-  async getCoursesList(dto: GetCoursesListDto) {
-    const { fechaCorte, estado, search } = dto;
-    const end = fechaCorte ? new Date(fechaCorte) : new Date();
-    if (fechaCorte) {
-      end.setUTCHours(23, 59, 59, 999);
-    }
-
-    const where: Prisma.CursoWhereInput = {
+    // --- LISTADO DE CURSOS ---
+    const whereList: Prisma.CursoWhereInput = {
       createdAt: { lte: end },
     };
 
     if (search) {
-      where.nombre = { contains: search, mode: 'insensitive' };
+      whereList.nombre = { contains: search, mode: 'insensitive' };
     }
 
     if (estado === estado_simple.Activo) {
-      where.OR = [{ deletedAt: null }, { deletedAt: { gt: end } }];
+      whereList.OR = [{ deletedAt: null }, { deletedAt: { gt: end } }];
     } else if (estado === estado_simple.Inactivo) {
-      where.deletedAt = { lte: end, not: null };
+      whereList.deletedAt = { lte: end, not: null };
     }
 
-    const courses = await this.prisma.curso.findMany({
-      where,
+    const coursesList = await this.prisma.curso.findMany({
+      where: whereList,
       orderBy: { nombre: 'asc' },
       select: {
         id: true,
@@ -313,7 +329,7 @@ export class ReportesService {
       },
     });
 
-    return courses.map((c) => {
+    const formattedList = coursesList.map((c) => {
       const isActive = !c.deletedAt || c.deletedAt > end;
 
       let alumnosActivos = 0;
@@ -340,6 +356,11 @@ export class ReportesService {
         docentes: { activos: docentesActivos, inactivos: docentesInactivos },
       };
     });
+
+    return {
+      kpis: { total, activos, inactivos },
+      lista: formattedList,
+    };
   }
 
   async getCoursesHistory(dto: GetCoursesHistoryDto) {
@@ -420,7 +441,36 @@ export class ReportesService {
       });
     }
 
-    return events.sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
+    // Ordenar descendente para la tabla
+    events.sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
+
+    // Generar datos para el gráfico (agrupado por fecha)
+    const timelineMap = new Map<string, { altas: number; bajas: number }>();
+
+    // Ordenamos ascendente para el gráfico
+    const eventsAsc = [...events].sort(
+      (a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime(),
+    );
+
+    eventsAsc.forEach((e) => {
+      const dateKey = e.fecha.toISOString().split('T')[0];
+      if (!timelineMap.has(dateKey)) {
+        timelineMap.set(dateKey, { altas: 0, bajas: 0 });
+      }
+      const entry = timelineMap.get(dateKey)!;
+      if (e.tipo === 'Alta') entry.altas++;
+      else if (e.tipo === 'Baja') entry.bajas++;
+    });
+
+    const chartData = Array.from(timelineMap.entries()).map(
+      ([fecha, counts]) => ({
+        fecha,
+        altas: counts.altas,
+        bajas: counts.bajas,
+      }),
+    );
+
+    return { history: events, chartData };
   }
 
   async getStudentEnrollmentHistory(dto: GetStudentEnrollmentHistoryDto) {

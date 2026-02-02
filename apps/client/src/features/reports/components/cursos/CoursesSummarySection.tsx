@@ -22,23 +22,26 @@ import { BarChart } from "@mui/x-charts/BarChart";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import {
   getCoursesSummary,
-  getCoursesList,
+  getCoursesSummaryPdf,
   type CoursesSummaryFilters,
-  type CoursesListFilters,
 } from "../../service/reports.service";
 import { useDebounce } from "../../../../hooks/useDebounce";
+import ReportExportDialog from "../common/ReportExportDialog";
 
 export default function CoursesSummarySection() {
-  const [filters, setFilters] = useState<
-    CoursesSummaryFilters & CoursesListFilters
-  >({
+  const [filters, setFilters] = useState<CoursesSummaryFilters>({
     fechaCorte: "",
     search: "",
+    estado: "",
   });
   const [loading, setLoading] = useState(false);
   const [summaryData, setSummaryData] = useState<any>(null);
   const [coursesList, setCoursesList] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  // Estado para el Modal de Exportación
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   // Estado para el filtro interactivo del gráfico (local)
   const [chartFilter, setChartFilter] = useState<{
@@ -58,18 +61,11 @@ export default function CoursesSummarySection() {
     setLoading(true);
     setError(null);
     try {
-      // Consultamos Resumen y Listado en paralelo
-      const [summary, list] = await Promise.all([
-        getCoursesSummary({ fechaCorte: filters.fechaCorte }),
-        getCoursesList({
-          fechaCorte: filters.fechaCorte,
-          search: filters.search,
-          // No enviamos 'estado' al backend para permitir filtrado local con el gráfico
-        }),
-      ]);
+      // Consultamos todo en una sola llamada (KPIs + Lista)
+      const result = await getCoursesSummary(filters);
 
-      setSummaryData(summary);
-      setCoursesList(list);
+      setSummaryData(result.kpis);
+      setCoursesList(result.lista);
     } catch (err) {
       console.error(err);
       setError("Error al cargar el resumen de cursos.");
@@ -140,6 +136,31 @@ export default function CoursesSummarySection() {
     const { seriesId } = identifier;
     if (typeof seriesId === "string") {
       setChartFilter({ estado: seriesId });
+    }
+  };
+
+  const handleOpenExportDialog = () => {
+    setIsExportDialogOpen(true);
+  };
+
+  const handleExportPdf = async (aPresentarA: string) => {
+    setPdfLoading(true);
+    try {
+      const params = { ...filters, aPresentarA };
+      const blob = await getCoursesSummaryPdf(params);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "resumen-cursos.pdf");
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      setIsExportDialogOpen(false);
+    } catch (err) {
+      console.error(err);
+      setError("Error al descargar el PDF.");
+    } finally {
+      setPdfLoading(false);
     }
   };
 
@@ -232,10 +253,11 @@ export default function CoursesSummarySection() {
         <Button
           variant="outlined"
           startIcon={<PictureAsPdfIcon />}
-          disabled={!summaryData}
+          disabled={!summaryData || pdfLoading}
           color="error"
+          onClick={handleOpenExportDialog}
         >
-          Exportar PDF
+          {pdfLoading ? "Generando..." : "Exportar PDF"}
         </Button>
         <Button
           variant="outlined"
@@ -377,6 +399,14 @@ export default function CoursesSummarySection() {
           </Box>
         </Stack>
       )}
+
+      {/* Modal de Exportación */}
+      <ReportExportDialog
+        open={isExportDialogOpen}
+        onClose={() => setIsExportDialogOpen(false)}
+        onExport={handleExportPdf}
+        isGenerating={pdfLoading}
+      />
     </Paper>
   );
 }

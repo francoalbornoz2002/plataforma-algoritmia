@@ -1,4 +1,4 @@
-import { IsOptional, IsDateString, IsEnum } from 'class-validator';
+import { IsOptional, IsDateString, IsEnum, IsString } from 'class-validator';
 import { roles } from '@prisma/client';
 
 export enum TipoMovimientoUsuario {
@@ -23,4 +23,11 @@ export class GetUsersHistoryDto {
   @IsOptional()
   @IsEnum(TipoMovimientoUsuario)
   tipoMovimiento?: TipoMovimientoUsuario = TipoMovimientoUsuario.TODOS;
+}
+
+// DTO Extendido exclusivo para la exportación PDF
+export class GetUsersHistoryPdfDto extends GetUsersHistoryDto {
+  @IsOptional()
+  @IsString()
+  aPresentarA?: string;
 }
