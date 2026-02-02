@@ -14,7 +14,6 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableOnIcon from "@mui/icons-material/TableChart";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
@@ -25,8 +24,7 @@ import {
   type CoursesHistoryFilters,
 } from "../../service/reports.service";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
-import ReportExportDialog from "../common/ReportExportDialog";
-import { handlePdfExport } from "../../utils/pdf-utils";
+import PdfExportButton from "../common/PdfExportButton";
 
 export default function CoursesHistorySection() {
   const [type, setType] = useState<TipoMovimientoCurso>(
@@ -45,10 +43,6 @@ export default function CoursesHistorySection() {
     bajas: number[];
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  // Estado para el Modal de Exportación
-  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
-  const [pdfLoading, setPdfLoading] = useState(false);
 
   // Sincronizar el tipo seleccionado con los filtros
   useEffect(() => {
@@ -99,22 +93,6 @@ export default function CoursesHistorySection() {
       fechaDesde: start,
       fechaHasta: end,
     }));
-  };
-
-  const handleOpenExportDialog = () => {
-    setIsExportDialogOpen(true);
-  };
-
-  const handleExportPdf = (aPresentarA: string) => {
-    handlePdfExport(
-      filters,
-      aPresentarA,
-      getCoursesHistoryPdf,
-      "historial-cursos.pdf",
-      setPdfLoading,
-      () => setIsExportDialogOpen(false),
-      setError,
-    );
   };
 
   const columns: GridColDef[] = [
@@ -290,15 +268,13 @@ export default function CoursesHistorySection() {
 
       {/* Acciones Exportar */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}>
-        <Button
-          variant="outlined"
-          startIcon={<PictureAsPdfIcon />}
-          disabled={data.length === 0 || pdfLoading}
-          color="error"
-          onClick={handleOpenExportDialog}
-        >
-          Exportar PDF
-        </Button>
+        <PdfExportButton
+          filters={filters}
+          exportFunction={getCoursesHistoryPdf}
+          fileName="historial-cursos.pdf"
+          disabled={data.length === 0}
+          onError={setError}
+        />
         <Button
           variant="outlined"
           startIcon={<TableOnIcon />}
@@ -393,14 +369,6 @@ export default function CoursesHistorySection() {
           )}
         </Box>
       </Stack>
-
-      {/* Modal de Exportación */}
-      <ReportExportDialog
-        open={isExportDialogOpen}
-        onClose={() => setIsExportDialogOpen(false)}
-        onExport={handleExportPdf}
-        isGenerating={pdfLoading}
-      />
     </Paper>
   );
 }

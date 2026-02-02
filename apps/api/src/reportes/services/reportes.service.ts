@@ -2024,7 +2024,7 @@ export class ReportesService {
     // 2. Generar texto genérico de filtros
     const filtrosTexto: string[] = [];
     if (dto) {
-      Object.entries(dto).forEach(([key, value]) => {
+      for (const [key, value] of Object.entries(dto)) {
         if (value && key !== 'aPresentarA') {
           // Formato simple: "Fecha Desde: 2023-01-01"
           const label = key
@@ -2036,9 +2036,19 @@ export class ReportesService {
             displayValue = 'ROL y ESTADO';
           }
 
+          if (key === 'cursoId' && typeof value === 'string') {
+            const curso = await this.prisma.curso.findUnique({
+              where: { id: value },
+              select: { nombre: true },
+            });
+            if (curso) {
+              displayValue = curso.nombre;
+            }
+          }
+
           filtrosTexto.push(`${label}: ${displayValue}`);
         }
-      });
+      }
     }
 
     return { reporteDB, filtrosTexto };

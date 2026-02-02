@@ -479,3 +479,16 @@ export const getTeacherAssignmentHistory = async (
   );
   return response.data;
 };
+
+export const getTeacherAssignmentHistoryPdf = async (
+  params: TeacherAssignmentHistoryFilters & { aPresentarA?: string },
+) => {
+  const cleanParams = Object.fromEntries(
+    Object.entries(params).filter(([_, v]) => v !== ""),
+  );
+  const response = await apiClient.get(
+    "/reportes/cursos/historial-asignaciones/pdf",
+    { params: cleanParams, responseType: "blob" },
+  );
+  return response.data;
+};

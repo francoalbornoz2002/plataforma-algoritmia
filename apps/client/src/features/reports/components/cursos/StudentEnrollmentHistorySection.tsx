@@ -16,7 +16,6 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableOnIcon from "@mui/icons-material/TableChart";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
@@ -28,8 +27,7 @@ import {
   type StudentEnrollmentHistoryFilters,
 } from "../../service/reports.service";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
-import ReportExportDialog from "../common/ReportExportDialog";
-import { handlePdfExport } from "../../utils/pdf-utils";
+import PdfExportButton from "../common/PdfExportButton";
 
 export default function StudentEnrollmentHistorySection() {
   const [type, setType] = useState<TipoMovimientoInscripcion>(
@@ -51,10 +49,6 @@ export default function StudentEnrollmentHistorySection() {
     bajas: number[];
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  // Estado para el Modal de Exportación
-  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
-  const [pdfLoading, setPdfLoading] = useState(false);
 
   // Cargar lista de cursos para el filtro
   useEffect(() => {
@@ -128,22 +122,6 @@ export default function StudentEnrollmentHistorySection() {
       fechaDesde: start,
       fechaHasta: end,
     }));
-  };
-
-  const handleOpenExportDialog = () => {
-    setIsExportDialogOpen(true);
-  };
-
-  const handleExportPdf = (aPresentarA: string) => {
-    handlePdfExport(
-      filters,
-      aPresentarA,
-      getStudentEnrollmentHistoryPdf,
-      "historial-inscripciones.pdf",
-      setPdfLoading,
-      () => setIsExportDialogOpen(false),
-      setError,
-    );
   };
 
   const columns: GridColDef[] = [
@@ -306,15 +284,13 @@ export default function StudentEnrollmentHistorySection() {
 
       {/* Acciones */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}>
-        <Button
-          variant="outlined"
-          startIcon={<PictureAsPdfIcon />}
-          disabled={data.length === 0 || pdfLoading}
-          color="error"
-          onClick={handleOpenExportDialog}
-        >
-          {pdfLoading ? "Generando..." : "Exportar PDF"}
-        </Button>
+        <PdfExportButton
+          filters={filters}
+          exportFunction={getStudentEnrollmentHistoryPdf}
+          fileName="historial-inscripciones.pdf"
+          disabled={data.length === 0}
+          onError={setError}
+        />
         <Button
           variant="outlined"
           startIcon={<TableOnIcon />}
@@ -409,14 +385,6 @@ export default function StudentEnrollmentHistorySection() {
           )}
         </Box>
       </Stack>
-
-      {/* Modal de Exportación */}
-      <ReportExportDialog
-        open={isExportDialogOpen}
-        onClose={() => setIsExportDialogOpen(false)}
-        onExport={handleExportPdf}
-        isGenerating={pdfLoading}
-      />
     </Paper>
   );
 }

@@ -10,6 +10,7 @@ import { GetUsersHistoryDto } from '../../reportes/dto/get-users-history.dto';
 import { GetCoursesHistoryDto } from '../../reportes/dto/get-courses-history.dto';
 import { GetCoursesSummaryDto } from '../../reportes/dto/get-courses-summary.dto';
 import { GetStudentEnrollmentHistoryDto } from '../../reportes/dto/get-student-enrollment-history.dto';
+import { GetTeacherAssignmentHistoryDto } from '../../reportes/dto/get-teacher-assignment-history.dto';
 import { estado_clase_consulta } from '@prisma/client';
 
 @Injectable()
@@ -40,10 +41,15 @@ export class PdfService {
       path.join(partialsDir, 'footer.hbs'),
       'utf-8',
     );
+    const chartSetup = await readFile(
+      path.join(partialsDir, 'chart-setup.hbs'),
+      'utf-8',
+    );
 
     hbs.registerPartial('styles', styles);
     hbs.registerPartial('header', header);
     hbs.registerPartial('footer', footer);
+    hbs.registerPartial('chartSetup', chartSetup);
     // Helper básico para comparaciones
     hbs.registerHelper('eq', (a, b) => a === b);
   }
@@ -844,6 +850,127 @@ export class PdfService {
     return new StreamableFile(pdfBuffer, {
       type: 'application/pdf',
       disposition: `attachment; filename="historial-inscripciones.pdf"`,
+    });
+  }
+
+  async getTeacherAssignmentHistoryPdf(
+    dto: GetTeacherAssignmentHistoryDto,
+    userId: string,
+    aPresentarA?: string,
+  ): Promise<StreamableFile> {
+    // 1. Obtener datos
+    const events = await this.reportesService.getTeacherAssignmentHistory(dto);
+
+    // 2. Metadatos
+    const { institucion, usuario, logoBase64 } =
+      await this.reportesService.getReportMetadata(userId);
+
+    // 3. Registrar Reporte
+    const { reporteDB, filtrosTexto } =
+      await this.reportesService.registerReport(
+        userId,
+        'Historial de Asignaciones',
+        'Cursos',
+        { ...dto, aPresentarA },
+      );
+
+    // 4. Configurar Gráfico
+    const chartJsContent = await this.getChartJsContent();
+
+    const timelineMap = new Map<
+      string,
+      { asignaciones: number; bajas: number }
+    >();
+
+    // Ordenar ascendente para el gráfico
+    const sortedEvents = [...events].sort(
+      (a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime(),
+    );
+
+    sortedEvents.forEach((e) => {
+      const dateKey = e.fecha.toISOString().split('T')[0];
+      if (!timelineMap.has(dateKey)) {
+        timelineMap.set(dateKey, { asignaciones: 0, bajas: 0 });
+      }
+      const entry = timelineMap.get(dateKey)!;
+      if (e.tipo === 'Asignación') entry.asignaciones++;
+      else if (e.tipo === 'Baja') entry.bajas++;
+    });
+
+    const labels = Array.from(timelineMap.keys());
+    const asignacionesData = Array.from(timelineMap.values()).map(
+      (v) => v.asignaciones,
+    );
+    const bajasData = Array.from(timelineMap.values()).map((v) => v.bajas);
+
+    const chartConfig = {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Asignaciones',
+            data: asignacionesData,
+            borderColor: '#2e7d32',
+            backgroundColor: '#2e7d32',
+            tension: 0.1,
+            fill: false,
+          },
+          {
+            label: 'Bajas',
+            data: bajasData,
+            borderColor: '#d32f2f',
+            backgroundColor: '#d32f2f',
+            tension: 0.1,
+            fill: false,
+          },
+        ],
+      },
+      options: {
+        scales: {
+          y: { ticks: { stepSize: 1, precision: 0 }, beginAtZero: true },
+        },
+        plugins: {
+          title: { display: true, text: 'Evolución de Asignaciones' },
+          legend: { position: 'top' },
+        },
+      },
+    };
+
+    // Formatear tabla
+    const historyFormatted = events.map((e) => ({
+      fecha: e.fecha.toISOString().split('T')[0],
+      tipo: e.tipo,
+      esAsignacion: e.tipo === 'Asignación',
+      docente: e.docente,
+      curso: e.curso,
+    }));
+
+    const commonData = this.buildCommonTemplateData(
+      { institucion, usuario, logoBase64 },
+      {
+        reporteDB,
+        filtrosTexto,
+        titulo: 'Historial de Asignaciones',
+        aPresentarA,
+      },
+    );
+
+    const templateData = {
+      ...commonData,
+      chartJsContent,
+      chartConfig: JSON.stringify(chartConfig),
+      movimientos: historyFormatted,
+    };
+
+    const pdfBuffer = await this.generatePdf(
+      'reporte-asignaciones-historial',
+      templateData,
+    );
+
+    return new StreamableFile(pdfBuffer, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="historial-asignaciones.pdf"`,
     });
   }
 }

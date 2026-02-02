@@ -15,7 +15,6 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableOnIcon from "@mui/icons-material/TableChart";
 import SearchIcon from "@mui/icons-material/Search";
 import { BarChart } from "@mui/x-charts/BarChart";
@@ -26,8 +25,7 @@ import {
   type CoursesSummaryFilters,
 } from "../../service/reports.service";
 import { useDebounce } from "../../../../hooks/useDebounce";
-import ReportExportDialog from "../common/ReportExportDialog";
-import { handlePdfExport } from "../../utils/pdf-utils";
+import PdfExportButton from "../common/PdfExportButton";
 
 export default function CoursesSummarySection() {
   const [filters, setFilters] = useState<CoursesSummaryFilters>({
@@ -39,10 +37,6 @@ export default function CoursesSummarySection() {
   const [summaryData, setSummaryData] = useState<any>(null);
   const [coursesList, setCoursesList] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
-
-  // Estado para el Modal de Exportación
-  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
-  const [pdfLoading, setPdfLoading] = useState(false);
 
   // Estado para el filtro interactivo del gráfico (local)
   const [chartFilter, setChartFilter] = useState<{
@@ -140,22 +134,6 @@ export default function CoursesSummarySection() {
     }
   };
 
-  const handleOpenExportDialog = () => {
-    setIsExportDialogOpen(true);
-  };
-
-  const handleExportPdf = (aPresentarA: string) => {
-    handlePdfExport(
-      filters,
-      aPresentarA,
-      getCoursesSummaryPdf,
-      "resumen-cursos.pdf",
-      setPdfLoading,
-      () => setIsExportDialogOpen(false),
-      setError,
-    );
-  };
-
   const columns: GridColDef[] = [
     { field: "nombre", headerName: "Curso", flex: 1.5, minWidth: 150 },
     {
@@ -242,15 +220,13 @@ export default function CoursesSummarySection() {
 
       {/* Acciones */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}>
-        <Button
-          variant="outlined"
-          startIcon={<PictureAsPdfIcon />}
-          disabled={!summaryData || pdfLoading}
-          color="error"
-          onClick={handleOpenExportDialog}
-        >
-          {pdfLoading ? "Generando..." : "Exportar PDF"}
-        </Button>
+        <PdfExportButton
+          filters={filters}
+          exportFunction={getCoursesSummaryPdf}
+          fileName="resumen-cursos.pdf"
+          disabled={!summaryData}
+          onError={setError}
+        />
         <Button
           variant="outlined"
           startIcon={<TableOnIcon />}
@@ -391,14 +367,6 @@ export default function CoursesSummarySection() {
           </Box>
         </Stack>
       )}
-
-      {/* Modal de Exportación */}
-      <ReportExportDialog
-        open={isExportDialogOpen}
-        onClose={() => setIsExportDialogOpen(false)}
-        onExport={handleExportPdf}
-        isGenerating={pdfLoading}
-      />
     </Paper>
   );
 }

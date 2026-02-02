@@ -16,17 +16,18 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableOnIcon from "@mui/icons-material/TableChart";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
 import {
   getTeacherAssignmentHistory,
+  getTeacherAssignmentHistoryPdf,
   getCoursesSummary,
   TipoMovimientoAsignacion,
   type TeacherAssignmentHistoryFilters,
 } from "../../service/reports.service";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
+import PdfExportButton from "../common/PdfExportButton";
 
 export default function TeacherAssignmentHistorySection() {
   const [type, setType] = useState<TipoMovimientoAsignacion>(
@@ -282,14 +283,13 @@ export default function TeacherAssignmentHistorySection() {
 
       {/* Acciones */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}>
-        <Button
-          variant="outlined"
-          startIcon={<PictureAsPdfIcon />}
+        <PdfExportButton
+          filters={filters}
+          exportFunction={getTeacherAssignmentHistoryPdf}
+          fileName="historial-asignaciones.pdf"
           disabled={data.length === 0}
-          color="error"
-        >
-          Exportar PDF
-        </Button>
+          onError={setError}
+        />
         <Button
           variant="outlined"
           startIcon={<TableOnIcon />}

@@ -17,7 +17,6 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableOnIcon from "@mui/icons-material/TableChart";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { roles } from "../../../../types";
@@ -29,8 +28,7 @@ import {
   TipoMovimientoUsuario,
 } from "../../service/reports.service";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
-import ReportExportDialog from "../common/ReportExportDialog";
-import { handlePdfExport } from "../../utils/pdf-utils";
+import PdfExportButton from "../common/PdfExportButton";
 
 export default function HistoryReportSection() {
   const [type, setType] = useState<TipoMovimientoUsuario>(
@@ -50,10 +48,6 @@ export default function HistoryReportSection() {
     bajas: number[];
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  // Estado para el Modal de Exportación
-  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
-  const [pdfLoading, setPdfLoading] = useState(false);
 
   // Cargar datos al montar y al cambiar filtros o tipo
   useEffect(() => {
@@ -114,22 +108,6 @@ export default function HistoryReportSection() {
   ) => {
     const { name, value } = e.target;
     setFilters({ ...filters, [name as string]: value });
-  };
-
-  const handleOpenExportDialog = () => {
-    setIsExportDialogOpen(true);
-  };
-
-  const handleExportPdf = (aPresentarA: string) => {
-    handlePdfExport(
-      filters,
-      aPresentarA,
-      getUsersHistoryPdf,
-      "historial-usuarios.pdf",
-      setPdfLoading,
-      () => setIsExportDialogOpen(false),
-      setError,
-    );
   };
 
   const columns: GridColDef[] = [
@@ -292,15 +270,13 @@ export default function HistoryReportSection() {
 
       {/* Acciones Exportar */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}>
-        <Button
-          variant="outlined"
-          startIcon={<PictureAsPdfIcon />}
-          disabled={data.length === 0 || pdfLoading}
-          color="error"
-          onClick={handleOpenExportDialog}
-        >
-          {pdfLoading ? "Generando..." : "Exportar PDF"}
-        </Button>
+        <PdfExportButton
+          filters={filters}
+          exportFunction={getUsersHistoryPdf}
+          fileName="historial-usuarios.pdf"
+          disabled={data.length === 0}
+          onError={setError}
+        />
         <Button
           variant="outlined"
           startIcon={<TableOnIcon />}
@@ -396,14 +372,6 @@ export default function HistoryReportSection() {
           )}
         </Box>
       </Stack>
-
-      {/* Modal de Exportación */}
-      <ReportExportDialog
-        open={isExportDialogOpen}
-        onClose={() => setIsExportDialogOpen(false)}
-        onExport={handleExportPdf}
-        isGenerating={pdfLoading}
-      />
     </Paper>
   );
 }

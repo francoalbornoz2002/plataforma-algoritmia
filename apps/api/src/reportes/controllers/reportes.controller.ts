@@ -32,7 +32,10 @@ import {
   GetStudentEnrollmentHistoryDto,
   GetStudentEnrollmentHistoryPdfDto,
 } from '../dto/get-student-enrollment-history.dto';
-import { GetTeacherAssignmentHistoryDto } from '../dto/get-teacher-assignment-history.dto';
+import {
+  GetTeacherAssignmentHistoryDto,
+  GetTeacherAssignmentHistoryPdfDto,
+} from '../dto/get-teacher-assignment-history.dto';
 import { GetCourseMissionsReportDto } from '../dto/get-course-missions-report.dto';
 import { GetCourseMissionDetailReportDto } from '../dto/get-course-mission-detail-report.dto';
 import { GetCourseProgressSummaryDto } from '../dto/get-course-progress-summary.dto';
@@ -198,6 +201,26 @@ export class ReportesController {
   @Roles(roles.Administrador)
   getTeacherAssignmentHistory(@Query() dto: GetTeacherAssignmentHistoryDto) {
     return this.reportesService.getTeacherAssignmentHistory(dto);
+  }
+
+  @Get('cursos/historial-asignaciones/pdf')
+  @Roles(roles.Administrador)
+  async getTeacherAssignmentHistoryPdf(
+    @Query() dto: GetTeacherAssignmentHistoryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.pdfService.getTeacherAssignmentHistoryPdf(
+      dto,
+      userId,
+      dto.aPresentarA,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="historial-asignaciones.pdf"`,
+    });
+    return file;
   }
 
   // --- REPORTES ESPECÍFICOS DE CURSO (ADMIN Y DOCENTE) ---

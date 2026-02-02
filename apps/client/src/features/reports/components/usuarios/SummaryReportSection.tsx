@@ -15,7 +15,6 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableOnIcon from "@mui/icons-material/TableChart";
 import { BarChart } from "@mui/x-charts/BarChart";
 import {
@@ -25,8 +24,7 @@ import {
   type UsersSummaryFilters,
 } from "../../service/reports.service";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
-import ReportExportDialog from "../common/ReportExportDialog";
-import { handlePdfExport } from "../../utils/pdf-utils";
+import PdfExportButton from "../common/PdfExportButton";
 
 // Definimos colores constantes para mantener consistencia
 const ROLE_COLORS: Record<string, string> = {
@@ -50,10 +48,6 @@ export default function SummaryReportSection() {
     rol?: string;
     estado?: string;
   } | null>(null);
-
-  // Estado para el Modal de Exportación
-  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
-  const [pdfLoading, setPdfLoading] = useState(false);
 
   const handleGenerate = async () => {
     setLoading(true);
@@ -275,22 +269,6 @@ export default function SummaryReportSection() {
     },
   ];
 
-  const handleOpenExportDialog = () => {
-    setIsExportDialogOpen(true);
-  };
-
-  const handleExportPdf = (aPresentarA: string) => {
-    handlePdfExport(
-      filters,
-      aPresentarA,
-      getUsersSummaryPdf,
-      "resumen-usuarios.pdf",
-      setPdfLoading,
-      () => setIsExportDialogOpen(false),
-      setError,
-    );
-  };
-
   return (
     <Paper elevation={5} component="section" sx={{ p: 2 }}>
       <Typography
@@ -342,15 +320,13 @@ export default function SummaryReportSection() {
 
       {/* Acciones de Exportación */}
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}>
-        <Button
-          variant="outlined"
-          startIcon={<PictureAsPdfIcon />}
-          disabled={!summaryData || pdfLoading}
-          color="error"
-          onClick={handleOpenExportDialog}
-        >
-          {pdfLoading ? "Generando..." : "Exportar PDF"}
-        </Button>
+        <PdfExportButton
+          filters={filters}
+          exportFunction={getUsersSummaryPdf}
+          fileName="resumen-usuarios.pdf"
+          disabled={!summaryData}
+          onError={setError}
+        />
         <Button
           variant="outlined"
           startIcon={<TableOnIcon />}
@@ -492,14 +468,6 @@ export default function SummaryReportSection() {
           </Box>
         </Stack>
       )}
-
-      {/* Modal de Exportación */}
-      <ReportExportDialog
-        open={isExportDialogOpen}
-        onClose={() => setIsExportDialogOpen(false)}
-        onExport={handleExportPdf}
-        isGenerating={pdfLoading}
-      />
     </Paper>
   );
 }
