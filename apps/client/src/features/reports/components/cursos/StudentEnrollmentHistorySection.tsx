@@ -22,11 +22,14 @@ import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
 import {
   getStudentEnrollmentHistory,
+  getStudentEnrollmentHistoryPdf,
   getCoursesSummary,
   TipoMovimientoInscripcion,
   type StudentEnrollmentHistoryFilters,
 } from "../../service/reports.service";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
+import ReportExportDialog from "../common/ReportExportDialog";
+import { handlePdfExport } from "../../utils/pdf-utils";
 
 export default function StudentEnrollmentHistorySection() {
   const [type, setType] = useState<TipoMovimientoInscripcion>(
@@ -48,6 +51,10 @@ export default function StudentEnrollmentHistorySection() {
     bajas: number[];
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Estado para el Modal de Exportación
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   // Cargar lista de cursos para el filtro
   useEffect(() => {
@@ -121,6 +128,22 @@ export default function StudentEnrollmentHistorySection() {
       fechaDesde: start,
       fechaHasta: end,
     }));
+  };
+
+  const handleOpenExportDialog = () => {
+    setIsExportDialogOpen(true);
+  };
+
+  const handleExportPdf = (aPresentarA: string) => {
+    handlePdfExport(
+      filters,
+      aPresentarA,
+      getStudentEnrollmentHistoryPdf,
+      "historial-inscripciones.pdf",
+      setPdfLoading,
+      () => setIsExportDialogOpen(false),
+      setError,
+    );
   };
 
   const columns: GridColDef[] = [
@@ -286,10 +309,11 @@ export default function StudentEnrollmentHistorySection() {
         <Button
           variant="outlined"
           startIcon={<PictureAsPdfIcon />}
-          disabled={data.length === 0}
+          disabled={data.length === 0 || pdfLoading}
           color="error"
+          onClick={handleOpenExportDialog}
         >
-          Exportar PDF
+          {pdfLoading ? "Generando..." : "Exportar PDF"}
         </Button>
         <Button
           variant="outlined"
@@ -385,6 +409,14 @@ export default function StudentEnrollmentHistorySection() {
           )}
         </Box>
       </Stack>
+
+      {/* Modal de Exportación */}
+      <ReportExportDialog
+        open={isExportDialogOpen}
+        onClose={() => setIsExportDialogOpen(false)}
+        onExport={handleExportPdf}
+        isGenerating={pdfLoading}
+      />
     </Paper>
   );
 }

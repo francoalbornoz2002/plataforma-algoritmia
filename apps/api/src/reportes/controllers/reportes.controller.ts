@@ -28,7 +28,10 @@ import {
   GetCoursesHistoryDto,
   GetCoursesHistoryPdfDto,
 } from '../dto/get-courses-history.dto';
-import { GetStudentEnrollmentHistoryDto } from '../dto/get-student-enrollment-history.dto';
+import {
+  GetStudentEnrollmentHistoryDto,
+  GetStudentEnrollmentHistoryPdfDto,
+} from '../dto/get-student-enrollment-history.dto';
 import { GetTeacherAssignmentHistoryDto } from '../dto/get-teacher-assignment-history.dto';
 import { GetCourseMissionsReportDto } from '../dto/get-course-missions-report.dto';
 import { GetCourseMissionDetailReportDto } from '../dto/get-course-mission-detail-report.dto';
@@ -168,6 +171,26 @@ export class ReportesController {
   @Roles(roles.Administrador)
   getStudentEnrollmentHistory(@Query() dto: GetStudentEnrollmentHistoryDto) {
     return this.reportesService.getStudentEnrollmentHistory(dto);
+  }
+
+  @Get('cursos/historial-inscripciones/pdf')
+  @Roles(roles.Administrador)
+  async getStudentEnrollmentHistoryPdf(
+    @Query() dto: GetStudentEnrollmentHistoryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.pdfService.getStudentEnrollmentHistoryPdf(
+      dto,
+      userId,
+      dto.aPresentarA,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="historial-inscripciones.pdf"`,
+    });
+    return file;
   }
 
   // Sección 4: Historial de asignaciones y bajas de docentes

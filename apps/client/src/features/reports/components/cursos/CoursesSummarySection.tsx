@@ -27,6 +27,7 @@ import {
 } from "../../service/reports.service";
 import { useDebounce } from "../../../../hooks/useDebounce";
 import ReportExportDialog from "../common/ReportExportDialog";
+import { handlePdfExport } from "../../utils/pdf-utils";
 
 export default function CoursesSummarySection() {
   const [filters, setFilters] = useState<CoursesSummaryFilters>({
@@ -143,25 +144,16 @@ export default function CoursesSummarySection() {
     setIsExportDialogOpen(true);
   };
 
-  const handleExportPdf = async (aPresentarA: string) => {
-    setPdfLoading(true);
-    try {
-      const params = { ...filters, aPresentarA };
-      const blob = await getCoursesSummaryPdf(params);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "resumen-cursos.pdf");
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode?.removeChild(link);
-      setIsExportDialogOpen(false);
-    } catch (err) {
-      console.error(err);
-      setError("Error al descargar el PDF.");
-    } finally {
-      setPdfLoading(false);
-    }
+  const handleExportPdf = (aPresentarA: string) => {
+    handlePdfExport(
+      filters,
+      aPresentarA,
+      getCoursesSummaryPdf,
+      "resumen-cursos.pdf",
+      setPdfLoading,
+      () => setIsExportDialogOpen(false),
+      setError,
+    );
   };
 
   const columns: GridColDef[] = [

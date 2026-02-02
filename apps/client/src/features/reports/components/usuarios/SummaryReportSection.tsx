@@ -26,6 +26,7 @@ import {
 } from "../../service/reports.service";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import ReportExportDialog from "../common/ReportExportDialog";
+import { handlePdfExport } from "../../utils/pdf-utils";
 
 // Definimos colores constantes para mantener consistencia
 const ROLE_COLORS: Record<string, string> = {
@@ -278,25 +279,16 @@ export default function SummaryReportSection() {
     setIsExportDialogOpen(true);
   };
 
-  const handleExportPdf = async (aPresentarA: string) => {
-    setPdfLoading(true);
-    try {
-      const params = { ...filters, aPresentarA };
-      const blob = await getUsersSummaryPdf(params);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "resumen-usuarios.pdf");
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode?.removeChild(link);
-      setIsExportDialogOpen(false);
-    } catch (err) {
-      console.error(err);
-      setError("Error al descargar el PDF.");
-    } finally {
-      setPdfLoading(false);
-    }
+  const handleExportPdf = (aPresentarA: string) => {
+    handlePdfExport(
+      filters,
+      aPresentarA,
+      getUsersSummaryPdf,
+      "resumen-usuarios.pdf",
+      setPdfLoading,
+      () => setIsExportDialogOpen(false),
+      setError,
+    );
   };
 
   return (

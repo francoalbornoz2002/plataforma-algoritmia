@@ -9,6 +9,7 @@ import { GetUsersSummaryDto } from '../../reportes/dto/get-users-summary.dto';
 import { GetUsersHistoryDto } from '../../reportes/dto/get-users-history.dto';
 import { GetCoursesHistoryDto } from '../../reportes/dto/get-courses-history.dto';
 import { GetCoursesSummaryDto } from '../../reportes/dto/get-courses-summary.dto';
+import { GetStudentEnrollmentHistoryDto } from '../../reportes/dto/get-student-enrollment-history.dto';
 import { estado_clase_consulta } from '@prisma/client';
 
 @Injectable()
@@ -722,6 +723,127 @@ export class PdfService {
     return new StreamableFile(pdfBuffer, {
       type: 'application/pdf',
       disposition: `attachment; filename="resumen-cursos.pdf"`,
+    });
+  }
+
+  async getStudentEnrollmentHistoryPdf(
+    dto: GetStudentEnrollmentHistoryDto,
+    userId: string,
+    aPresentarA?: string,
+  ): Promise<StreamableFile> {
+    // 1. Obtener datos
+    const events = await this.reportesService.getStudentEnrollmentHistory(dto);
+
+    // 2. Metadatos
+    const { institucion, usuario, logoBase64 } =
+      await this.reportesService.getReportMetadata(userId);
+
+    // 3. Registrar Reporte
+    const { reporteDB, filtrosTexto } =
+      await this.reportesService.registerReport(
+        userId,
+        'Historial de Inscripciones',
+        'Cursos',
+        { ...dto, aPresentarA },
+      );
+
+    // 4. Configurar Gráfico (Agrupación manual ya que el servicio devuelve array plano)
+    const chartJsContent = await this.getChartJsContent();
+
+    const timelineMap = new Map<
+      string,
+      { inscripciones: number; bajas: number }
+    >();
+
+    // Ordenar ascendente para el gráfico
+    const sortedEvents = [...events].sort(
+      (a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime(),
+    );
+
+    sortedEvents.forEach((e) => {
+      const dateKey = e.fecha.toISOString().split('T')[0];
+      if (!timelineMap.has(dateKey)) {
+        timelineMap.set(dateKey, { inscripciones: 0, bajas: 0 });
+      }
+      const entry = timelineMap.get(dateKey)!;
+      if (e.tipo === 'Inscripción') entry.inscripciones++;
+      else if (e.tipo === 'Baja') entry.bajas++;
+    });
+
+    const labels = Array.from(timelineMap.keys());
+    const inscripcionesData = Array.from(timelineMap.values()).map(
+      (v) => v.inscripciones,
+    );
+    const bajasData = Array.from(timelineMap.values()).map((v) => v.bajas);
+
+    const chartConfig = {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Inscripciones',
+            data: inscripcionesData,
+            borderColor: '#2e7d32',
+            backgroundColor: '#2e7d32',
+            tension: 0.1,
+            fill: false,
+          },
+          {
+            label: 'Bajas',
+            data: bajasData,
+            borderColor: '#d32f2f',
+            backgroundColor: '#d32f2f',
+            tension: 0.1,
+            fill: false,
+          },
+        ],
+      },
+      options: {
+        scales: {
+          y: { ticks: { stepSize: 1, precision: 0 }, beginAtZero: true },
+        },
+        plugins: {
+          title: { display: true, text: 'Evolución de Inscripciones' },
+          legend: { position: 'top' },
+        },
+      },
+    };
+
+    // Formatear tabla
+    const historyFormatted = events.map((e) => ({
+      fecha: e.fecha.toISOString().split('T')[0],
+      tipo: e.tipo,
+      esInscripcion: e.tipo === 'Inscripción',
+      alumno: e.alumno,
+      curso: e.curso,
+    }));
+
+    const commonData = this.buildCommonTemplateData(
+      { institucion, usuario, logoBase64 },
+      {
+        reporteDB,
+        filtrosTexto,
+        titulo: 'Historial de Inscripciones',
+        aPresentarA,
+      },
+    );
+
+    const templateData = {
+      ...commonData,
+      chartJsContent,
+      chartConfig: JSON.stringify(chartConfig),
+      movimientos: historyFormatted,
+    };
+
+    const pdfBuffer = await this.generatePdf(
+      'reporte-inscripciones-historial',
+      templateData,
+    );
+
+    return new StreamableFile(pdfBuffer, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="historial-inscripciones.pdf"`,
     });
   }
 }

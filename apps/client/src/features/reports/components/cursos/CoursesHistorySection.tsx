@@ -26,6 +26,7 @@ import {
 } from "../../service/reports.service";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import ReportExportDialog from "../common/ReportExportDialog";
+import { handlePdfExport } from "../../utils/pdf-utils";
 
 export default function CoursesHistorySection() {
   const [type, setType] = useState<TipoMovimientoCurso>(
@@ -104,25 +105,16 @@ export default function CoursesHistorySection() {
     setIsExportDialogOpen(true);
   };
 
-  const handleExportPdf = async (aPresentarA: string) => {
-    setPdfLoading(true);
-    try {
-      const params = { ...filters, aPresentarA };
-      const blob = await getCoursesHistoryPdf(params);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "historial-cursos.pdf");
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode?.removeChild(link);
-      setIsExportDialogOpen(false);
-    } catch (err) {
-      console.error(err);
-      setError("Error al descargar el PDF.");
-    } finally {
-      setPdfLoading(false);
-    }
+  const handleExportPdf = (aPresentarA: string) => {
+    handlePdfExport(
+      filters,
+      aPresentarA,
+      getCoursesHistoryPdf,
+      "historial-cursos.pdf",
+      setPdfLoading,
+      () => setIsExportDialogOpen(false),
+      setError,
+    );
   };
 
   const columns: GridColDef[] = [

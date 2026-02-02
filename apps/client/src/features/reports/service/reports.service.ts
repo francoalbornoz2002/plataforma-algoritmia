@@ -264,6 +264,19 @@ export const getStudentEnrollmentHistory = async (
   return response.data;
 };
 
+export const getStudentEnrollmentHistoryPdf = async (
+  params: StudentEnrollmentHistoryFilters & { aPresentarA?: string },
+) => {
+  const cleanParams = Object.fromEntries(
+    Object.entries(params).filter(([_, v]) => v !== ""),
+  );
+  const response = await apiClient.get(
+    "/reportes/cursos/historial-inscripciones/pdf",
+    { params: cleanParams, responseType: "blob" },
+  );
+  return response.data;
+};
+
 // --- Endpoints de Reportes de Curso Específico (Progreso) ---
 
 export const getCourseProgressSummary = async (
