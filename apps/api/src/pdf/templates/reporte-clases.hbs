@@ -61,38 +61,19 @@
   <script>
     {{{chartJsContent}}}
   </script>
+  {{> chartSetup}}
 
   {{!-- Renderizamos el gráfico --}}
   <script>
     const ctx = document.getElementById('classesChart').getContext('2d');
     const config = {{{chartConfig}}};
     
-    // Ajustes para impresión
-    config.options = {
-      animation: false, // CRÍTICO: Desactivar animación para que salga en el PDF
-      responsive: true,
-      devicePixelRatio: 2, // MEJORA: Aumenta la nitidez del gráfico en el PDF
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          labels: {
-            font: { family: "'Roboto', sans-serif", size: 10 }
-          }
-        },
-        tooltip: { enabled: false } // MEJORA: No necesitamos tooltips en un PDF
-      },
-      scales: {
-        x: { 
-          stacked: true,
-          ticks: { font: { family: "'Roboto', sans-serif", size: 9 } }
-        },
-        y: { 
-          stacked: true, 
-          beginAtZero: true,
-          ticks: { font: { family: "'Roboto', sans-serif", size: 9 } }
-        }
-      }
-    };
+    applyChartPrintConfig(config);
+    
+    // Ajustes específicos para este reporte (Barras apiladas)
+    config.options.scales.x.stacked = true;
+    config.options.scales.y.stacked = true;
+    config.options.scales.y.beginAtZero = true;
 
     new Chart(ctx, config);
   </script>

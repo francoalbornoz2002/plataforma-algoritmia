@@ -1,0 +1,29 @@
+<script>
+  function applyChartPrintConfig(config) {
+    config.options = config.options || {};
+    
+    // Ajustes críticos para impresión (PDF)
+    config.options.animation = false;
+    config.options.responsive = true;
+    config.options.devicePixelRatio = 2; // Mejora la nitidez
+    config.options.maintainAspectRatio = false;
+    
+    // Plugins
+    config.options.plugins = config.options.plugins || {};
+    config.options.plugins.tooltip = { enabled: false }; // No tooltips en PDF
+    
+    config.options.plugins.legend = config.options.plugins.legend || {};
+    config.options.plugins.legend.labels = config.options.plugins.legend.labels || {};
+    config.options.plugins.legend.labels.font = { family: "'Roboto', sans-serif", size: 10 };
+    
+    // Escalas (Fuentes unificadas)
+    config.options.scales = config.options.scales || {};
+    ['x', 'y'].forEach(axis => {
+        config.options.scales[axis] = config.options.scales[axis] || {};
+        config.options.scales[axis].ticks = config.options.scales[axis].ticks || {};
+        config.options.scales[axis].ticks.font = { family: "'Roboto', sans-serif", size: 9 };
+    });
+    
+    // Nota: 'stacked' y 'beginAtZero' se respetan si ya vienen en 'config' o se configuran después.
+  }
+</script>

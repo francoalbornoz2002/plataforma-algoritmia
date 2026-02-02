@@ -60,16 +60,16 @@
   <!-- Script para renderizar el gráfico -->
   <script>
     {{{chartJsContent}}}
+    </script>
+    {{> chartSetup}}
+    <script>
 
-    const ctx = document.getElementById('historyChart').getContext('2d');
-    const config = {{{chartConfig}}};
+      const ctx = document.getElementById('historyChart').getContext('2d');
+      const config = {{{chartConfig}}};
     
-    // Ajustes para impresión
-    config.options.animation = false;
-    config.options.responsive = true;
-    config.options.maintainAspectRatio = false;
+      applyChartPrintConfig(config);
 
-    new Chart(ctx, config);
+      new Chart(ctx, config);
   </script>
 </body>
 </html>

@@ -20,7 +20,7 @@
         <tr>
           <th>Fecha</th>
           <th>Movimiento</th>
-          <th>Alumno</th>
+          <th>Docente</th>
           <th>Curso</th>
         </tr>
       </thead>
@@ -29,11 +29,11 @@
         <tr>
           <td>{{this.fecha}}</td>
           <td>
-            <span class="badge {{#if this.esInscripcion}}badge-Realizada{{else}}badge-No_realizada{{/if}}">
+            <span class="badge {{#if this.esAsignacion}}badge-Realizada{{else}}badge-No_realizada{{/if}}">
               {{this.tipo}}
             </span>
           </td>
-          <td>{{this.alumno}}</td>
+          <td>{{this.docente}}</td>
           <td>{{this.curso}}</td>
         </tr>
         {{/each}}
@@ -46,13 +46,11 @@
   <!-- Script para renderizar el gráfico -->
   <script>
     {{{chartJsContent}}}
-    </script>
-    {{> chartSetup}}
-    <script>
-
+  </script>
+  {{> chartSetup}}
+  <script>
     const ctx = document.getElementById('historyChart').getContext('2d');
     const config = {{{chartConfig}}};
-    
     applyChartPrintConfig(config);
 
     new Chart(ctx, config);
