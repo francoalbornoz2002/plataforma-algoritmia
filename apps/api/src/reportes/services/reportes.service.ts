@@ -624,6 +624,8 @@ export class ReportesService {
 
     let progreso: any;
     let totalAlumnos = 0;
+    let studentStats: { nombre: string; apellido: string; misiones: number }[] =
+      [];
 
     if (fechaCorte) {
       // --- MODO HISTÓRICO ---
@@ -651,13 +653,34 @@ export class ReportesService {
       };
 
       // 2. Calcular alumnos activos a esa fecha
-      totalAlumnos = await this.prisma.alumnoCurso.count({
+      const students = await this.prisma.alumnoCurso.findMany({
         where: {
           idCurso: idCurso,
           fechaInscripcion: { lte: end },
           OR: [{ fechaBaja: null }, { fechaBaja: { gt: end } }],
         },
+        select: {
+          idProgreso: true,
+          alumno: { select: { nombre: true, apellido: true } },
+        },
       });
+      totalAlumnos = students.length;
+
+      // 3. Obtener stats individuales históricos
+      studentStats = await Promise.all(
+        students.map(async (s) => {
+          const hist = await this.prisma.historialProgresoAlumno.findFirst({
+            where: { idProgreso: s.idProgreso, fechaRegistro: { lte: end } },
+            orderBy: { fechaRegistro: 'desc' },
+            select: { cantMisionesCompletadas: true },
+          });
+          return {
+            nombre: s.alumno.nombre,
+            apellido: s.alumno.apellido,
+            misiones: hist?.cantMisionesCompletadas || 0,
+          };
+        }),
+      );
     } else {
       // --- MODO ACTUAL ---
       progreso = await this.prisma.progresoCurso.findUnique({
@@ -666,9 +689,20 @@ export class ReportesService {
 
       if (!progreso) throw new NotFoundException('Progreso no inicializado.');
 
-      totalAlumnos = await this.prisma.alumnoCurso.count({
+      const students = await this.prisma.alumnoCurso.findMany({
         where: { idCurso: idCurso, estado: estado_simple.Activo },
+        select: {
+          alumno: { select: { nombre: true, apellido: true } },
+          progresoAlumno: { select: { cantMisionesCompletadas: true } },
+        },
       });
+      totalAlumnos = students.length;
+
+      studentStats = students.map((s) => ({
+        nombre: s.alumno.nombre,
+        apellido: s.alumno.apellido,
+        misiones: s.progresoAlumno?.cantMisionesCompletadas || 0,
+      }));
     }
 
     // Parse Decimals
@@ -682,6 +716,35 @@ export class ReportesService {
       { label: 'Restante', value: 100 - pctCompletadas, color: '#e0e0e0' },
     ];
 
+    // --- CÁLCULO DE TOPS ---
+    const avgMissions =
+      totalAlumnos > 0 ? progreso.misionesCompletadas / totalAlumnos : 0;
+
+    // Helper para calcular porcentaje relativo
+    const getPctDiff = (val: number) =>
+      avgMissions > 0 ? ((val - avgMissions) / avgMissions) * 100 : 0;
+
+    // Top Activos (Mayor cantidad de misiones)
+    const topActive = [...studentStats]
+      .sort((a, b) => b.misiones - a.misiones)
+      .slice(0, 5)
+      .map((s) => ({
+        nombre: `${s.nombre} ${s.apellido}`,
+        misiones: s.misiones,
+        diferenciaPorcentual: getPctDiff(s.misiones),
+      }));
+
+    // Top Inactivos (Menor cantidad de misiones)
+    // Filtramos los que tienen 0 misiones o muy pocas
+    const topInactive = [...studentStats]
+      .sort((a, b) => a.misiones - b.misiones)
+      .slice(0, 5)
+      .map((s) => ({
+        nombre: `${s.nombre} ${s.apellido}`,
+        misiones: s.misiones,
+        diferenciaPorcentual: getPctDiff(s.misiones),
+      }));
+
     return {
       resumen: {
         progresoTotal: pctCompletadas,
@@ -692,8 +755,13 @@ export class ReportesService {
         promEstrellas,
         promIntentos,
         totalAlumnos,
+        promedioMisiones: avgMissions,
       },
       grafico: pieChartData,
+      tops: {
+        activos: topActive,
+        inactivos: topInactive,
+      },
     };
   }
 
