@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  {{> styles}}
+</head>
+<body>
+  {{> header}}
+
+  <!-- KPIs Principales -->
+  <div class="kpi-container">
+    <div class="kpi-card">
+      <div class="kpi-value">{{kpis.totalConsultas}}</div>
+      <div class="kpi-label">Total Consultas</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" style="color: #2e7d32;">{{kpis.activas}}</div>
+      <div class="kpi-label">Activas</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" style="color: #d32f2f;">{{kpis.inactivas}}</div>
+      <div class="kpi-label">Inactivos</div>
+    </div>
+  </div>
+
+  <!-- KPIs Detallados -->
+  <div class="stats-grid">
+    <div class="stat-card" style="border-left: 4px solid #4caf50;">
+      <div class="stat-title">Resueltas</div>
+      <div class="stat-value" style="color: #4caf50;">{{kpis.resueltas.count}} <span style="font-size: 12px;">({{fixed kpis.resueltas.percentage 1}}%)</span></div>
+      <div class="stat-desc">Con respuesta y valoración</div>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #ff9800;">
+      <div class="stat-title">Por Atender</div>
+      <div class="stat-value" style="color: #ff9800;">{{kpis.pendientes.count}} <span style="font-size: 12px;">({{fixed kpis.pendientes.percentage 1}}%)</span></div>
+      <div class="stat-desc">Pendientes o a revisar</div>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #0288d1;">
+      <div class="stat-title">Atendidas en Clase</div>
+      <div class="stat-value" style="color: #0288d1;">{{kpis.impactoClases.revisadas.count}} <span style="font-size: 12px;">({{fixed kpis.impactoClases.revisadas.percentage 1}}%)</span></div>
+      <div class="stat-desc">Revisadas en vivo</div>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #2e7d32;">
+      <div class="stat-title">Resueltas vía Clase</div>
+      <div class="stat-value" style="color: #2e7d32;">{{kpis.impactoClases.resueltas.count}} <span style="font-size: 12px;">({{fixed kpis.impactoClases.resueltas.percentage 1}}%)</span></div>
+      <div class="stat-desc">Tras revisión en clase</div>
+    </div>
+  </div>
+
+  <!-- Gráfico -->
+  <div class="chart-container" style="height: 250px;">
+    <canvas id="consultasChart"></canvas>
+  </div>
+
+  <!-- Top Stats -->
+  <div class="top-section">
+    <h3 style="color: #1976d2; margin-bottom: 10px; font-size: 14px;">Estadísticas Destacadas</h3>
+    
+    <div class="top-stats-grid">
+      <div class="top-card" style="border-top: 4px solid #1976d2;">
+        <div class="stat-title">Docente con más actividad</div>
+        <div class="stat-value" style="color: #1976d2; font-size: 18px; margin-bottom: 5px;">{{topStats.teacher.name}}</div>
+        <div class="stat-desc">Ha respondido o atendido {{topStats.teacher.count}} consultas ({{fixed topStats.teacher.percentage 1}}% del total).</div>
+      </div>
+
+      <div class="top-card" style="border-top: 4px solid #9c27b0;">
+        <div class="stat-title">Alumno con más consultas</div>
+        <div class="stat-value" style="color: #9c27b0; font-size: 18px; margin-bottom: 5px;">{{topStats.student.name}}</div>
+        <div class="stat-desc">Realizó {{topStats.student.count}} consultas ({{fixed topStats.student.percentage 1}}% del total).</div>
+      </div>
+
+      <div class="top-card" style="border-top: 4px solid #ed6c02;">
+        <div class="stat-title">Tema más consultado</div>
+        <div class="stat-value" style="color: #ed6c02; font-size: 18px; margin-bottom: 5px;">{{topStats.topic.name}}</div>
+        <div class="stat-desc">Concentra {{topStats.topic.count}} consultas ({{fixed topStats.topic.percentage 1}}% del total).</div>
+      </div>
+    </div>
+  </div>
+
+  {{> footer}}
+
+  <script>
+    {{{chartJsContent}}}
+  </script>
+  {{> chartSetup}}
+  <script>
+    const ctx = document.getElementById('consultasChart').getContext('2d');
+    const config = {{{chartConfig}}};
+    
+    applyChartPrintConfig(config);
+
+    new Chart(ctx, config);
+  </script>
+</body>
+</html>

@@ -12,6 +12,7 @@ import { GetCoursesSummaryDto } from '../../reportes/dto/get-courses-summary.dto
 import { GetStudentEnrollmentHistoryDto } from '../../reportes/dto/get-student-enrollment-history.dto';
 import { GetTeacherAssignmentHistoryDto } from '../../reportes/dto/get-teacher-assignment-history.dto';
 import { estado_clase_consulta } from '@prisma/client';
+import { GetCourseConsultationsSummaryPdfDto } from 'src/reportes/dto/get-course-consultations-summary.dto';
 
 @Injectable()
 export class PdfService {
@@ -52,6 +53,8 @@ export class PdfService {
     hbs.registerPartial('chartSetup', chartSetup);
     // Helper básico para comparaciones
     hbs.registerHelper('eq', (a, b) => a === b);
+    // Helper para formatear decimales
+    hbs.registerHelper('fixed', (n, d) => Number(n).toFixed(d));
   }
 
   /**
@@ -971,6 +974,175 @@ export class PdfService {
     return new StreamableFile(pdfBuffer, {
       type: 'application/pdf',
       disposition: `attachment; filename="historial-asignaciones.pdf"`,
+    });
+  }
+
+  async getCourseConsultationsSummaryPdf(
+    idCurso: string,
+    dto: GetCourseConsultationsSummaryPdfDto,
+    userId: string,
+    aPresentarA?: string,
+  ): Promise<StreamableFile> {
+    // 1. Obtener datos
+    const data = await this.reportesService.getCourseConsultationsSummary(
+      idCurso,
+      dto,
+    );
+
+    // 2. Metadatos
+    const { curso, institucion, usuario, logoBase64 } =
+      await this.reportesService.getReportMetadata(userId, idCurso);
+
+    // 3. Registrar Reporte
+    const { reporteDB, filtrosTexto } =
+      await this.reportesService.registerReport(
+        userId,
+        'Resumen de Consultas',
+        'Cursos',
+        { ...dto, cursoId: idCurso, aPresentarA },
+      );
+
+    // 4. Configurar Gráfico según agrupación
+    const chartJsContent = await this.getChartJsContent();
+    let chartConfig: any;
+
+    if (dto.agruparPor === 'AMBOS') {
+      // Gráfico de Barras Apiladas (Tema x Estado)
+      const labels = data.graficoTemasEstados.map((d) => d.tema);
+      const statuses = [
+        { key: 'Pendiente', color: '#ff9800', label: 'Pendiente' },
+        { key: 'A_revisar', color: '#2196f3', label: 'A revisar' },
+        { key: 'Revisada', color: '#9c27b0', label: 'Revisada' },
+        { key: 'Resuelta', color: '#4caf50', label: 'Resuelta' },
+      ];
+
+      const datasets = statuses.map((s) => ({
+        label: s.label,
+        data: data.graficoTemasEstados.map((d) => d[s.key] || 0),
+        backgroundColor: s.color,
+        stack: 'Stack 0',
+      }));
+
+      chartConfig = {
+        type: 'bar',
+        data: { labels, datasets },
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: 'Distribución de consultas por ESTADO y TEMA',
+            },
+            legend: { position: 'bottom' },
+          },
+          scales: {
+            x: {
+              stacked: true,
+              title: { display: true, text: 'Temas' },
+            },
+            y: {
+              stacked: true,
+              title: { display: true, text: 'Cantidad de Consultas' },
+              beginAtZero: true,
+            },
+          },
+        },
+      };
+    } else if (dto.agruparPor === 'TEMA') {
+      // Gráfico de Torta (Por Tema)
+      chartConfig = {
+        type: 'pie',
+        data: {
+          labels: data.graficoTemas.map((d) => `${d.label} (${d.value})`),
+          datasets: [
+            {
+              data: data.graficoTemas.map((d) => d.value),
+              backgroundColor: [
+                '#3f51b5',
+                '#e91e63',
+                '#009688',
+                '#ffc107',
+                '#607d8b',
+                '#ff5722',
+                '#795548',
+                '#9e9e9e',
+              ],
+            },
+          ],
+        },
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: 'Distribución de consultas por TEMA',
+            },
+            legend: { position: 'bottom' },
+          },
+          scales: {
+            x: { display: false },
+            y: { display: false },
+          },
+        },
+      };
+    } else {
+      // Gráfico de Torta (Por Estado - Default)
+      chartConfig = {
+        type: 'pie',
+        data: {
+          labels: data.graficoEstados.map((d) => `${d.label} (${d.value})`),
+          datasets: [
+            {
+              data: data.graficoEstados.map((d) => d.value),
+              backgroundColor: data.graficoEstados.map((d) => d.color),
+            },
+          ],
+        },
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: 'Distribución de consultas por ESTADO',
+            },
+            legend: { position: 'bottom' },
+          },
+          scales: {
+            x: { display: false },
+            y: { display: false },
+          },
+        },
+      };
+    }
+
+    const commonData = this.buildCommonTemplateData(
+      { institucion, usuario, logoBase64 },
+      {
+        reporteDB,
+        filtrosTexto,
+        titulo: 'Resumen de Consultas',
+        subtitulo: `Curso: ${curso?.nombre || 'Desconocido'}`,
+        aPresentarA,
+      },
+    );
+
+    const templateData = {
+      ...commonData,
+      kpis: data.kpis,
+      topStats: {
+        student: data.topStudent,
+        teacher: data.topTeacher,
+        topic: data.topTopic,
+      },
+      chartJsContent,
+      chartConfig: JSON.stringify(chartConfig),
+    };
+
+    const pdfBuffer = await this.generatePdf(
+      'reporte-consultas-resumen',
+      templateData,
+    );
+
+    return new StreamableFile(pdfBuffer, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="resumen-consultas.pdf"`,
     });
   }
 }

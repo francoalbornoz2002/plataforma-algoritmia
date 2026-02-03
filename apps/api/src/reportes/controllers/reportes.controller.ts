@@ -42,7 +42,10 @@ import { GetCourseProgressSummaryDto } from '../dto/get-course-progress-summary.
 import { GetCourseDifficultiesReportDto } from '../dto/get-course-difficulties-report.dto';
 import { GetCourseDifficultiesHistoryDto } from '../dto/get-course-difficulties-history.dto';
 import { GetStudentDifficultiesReportDto } from '../dto/get-student-difficulties-report.dto';
-import { GetCourseConsultationsSummaryDto } from '../dto/get-course-consultations-summary.dto';
+import {
+  GetCourseConsultationsSummaryDto,
+  GetCourseConsultationsSummaryPdfDto,
+} from '../dto/get-course-consultations-summary.dto';
 import { GetCourseConsultationsHistoryDto } from '../dto/get-course-consultations-history.dto';
 import { GetCourseClassesSummaryDto } from '../dto/get-course-classes-summary.dto';
 import { GetCourseClassesHistoryDto } from '../dto/get-course-classes-history.dto';
@@ -293,6 +296,28 @@ export class ReportesController {
     @Query() dto: GetCourseConsultationsSummaryDto,
   ) {
     return this.reportesService.getCourseConsultationsSummary(id, dto);
+  }
+
+  @Get('cursos/:id/consultas/resumen/pdf')
+  @Roles(roles.Administrador, roles.Docente)
+  async getCourseConsultationsSummaryPdf(
+    @Param('id') id: string,
+    @Query() dto: GetCourseConsultationsSummaryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.pdfService.getCourseConsultationsSummaryPdf(
+      id,
+      dto,
+      userId,
+      dto.aPresentarA,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="resumen-consultas.pdf"`,
+    });
+    return file;
   }
 
   // Consultas - Sección 2: Historial de Consultas

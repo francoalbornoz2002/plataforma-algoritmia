@@ -1516,9 +1516,29 @@ export class ReportesService {
       [estado_consulta.Resuelta]: 0,
     };
 
+    const topicCounts: Record<string, number> = {};
+    const topicStatusCounts: Record<string, Record<string, number>> = {};
+
     activeConsultations.forEach((c) => {
       if (statusCounts[c.estado] !== undefined) {
         statusCounts[c.estado]++;
+      }
+
+      // Agrupación por Tema
+      const tema = c.tema;
+      topicCounts[tema] = (topicCounts[tema] || 0) + 1;
+
+      // Agrupación por Tema y Estado (para gráfico de barras)
+      if (!topicStatusCounts[tema]) {
+        topicStatusCounts[tema] = {
+          [estado_consulta.Pendiente]: 0,
+          [estado_consulta.A_revisar]: 0,
+          [estado_consulta.Revisada]: 0,
+          [estado_consulta.Resuelta]: 0,
+        };
+      }
+      if (topicStatusCounts[tema][c.estado] !== undefined) {
+        topicStatusCounts[tema][c.estado]++;
       }
     });
 
@@ -1544,6 +1564,20 @@ export class ReportesService {
         color: '#4caf50',
       }, // Verde
     ];
+
+    // Gráfico de Temas (Simple)
+    const graficoTemas = Object.entries(topicCounts).map(([label, value]) => ({
+      label,
+      value,
+    }));
+
+    // Gráfico de Temas x Estados (Dataset para BarChart)
+    const graficoTemasEstados = Object.entries(topicStatusCounts).map(
+      ([tema, counts]) => ({
+        tema,
+        ...counts,
+      }),
+    );
 
     // 4. Estadísticas
 
@@ -1610,6 +1644,18 @@ export class ReportesService {
       }
     }
 
+    // F. Tema más frecuente
+    let topTopic = { name: 'Ninguno', count: 0, percentage: 0 };
+    for (const [name, count] of Object.entries(topicCounts)) {
+      if (count > topTopic.count) {
+        topTopic = {
+          name,
+          count,
+          percentage: activeCount > 0 ? (count / activeCount) * 100 : 0,
+        };
+      }
+    }
+
     // C. Porcentaje Resueltas
     const resolvedCount = statusCounts[estado_consulta.Resuelta];
     const resolvedPct =
@@ -1664,8 +1710,11 @@ export class ReportesService {
         },
       },
       graficoEstados,
+      graficoTemas,
+      graficoTemasEstados,
       topStudent,
       topTeacher,
+      topTopic,
     };
   }
 

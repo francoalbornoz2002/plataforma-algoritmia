@@ -381,6 +381,24 @@ export const getCourseConsultationsSummary = async (
   return response.data;
 };
 
+export const getCourseConsultationsSummaryPdf = async (
+  params: CourseConsultationsSummaryFilters & {
+    courseId: string;
+    aPresentarA?: string;
+    agruparPor?: "ESTADO" | "TEMA" | "AMBOS";
+  },
+) => {
+  const { courseId, ...rest } = params;
+  const cleanParams = Object.fromEntries(
+    Object.entries(rest).filter(([_, v]) => v !== ""),
+  );
+  const response = await apiClient.get(
+    `/reportes/cursos/${courseId}/consultas/resumen/pdf`,
+    { params: cleanParams, responseType: "blob" },
+  );
+  return response.data;
+};
+
 export const getCourseConsultationsHistory = async (
   courseId: string,
   params: CourseConsultationsHistoryFilters,
