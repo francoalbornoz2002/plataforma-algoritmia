@@ -6,7 +6,7 @@ interface ReportStatCardProps {
   title: string;
   subtitle: string;
   count: number;
-  percentage: number;
+  percentage?: number;
   color: "primary" | "secondary" | "error" | "info" | "success" | "warning";
 }
 
@@ -46,9 +46,11 @@ export default function ReportStatCard({
           <Typography variant="h4" color={`${color}.main`} fontWeight="bold">
             {count}
           </Typography>
-          <Typography variant="caption" color={`${color}.main`}>
-            ({percentage.toFixed(1)}%)
-          </Typography>
+          {percentage !== undefined && (
+            <Typography variant="caption" color={`${color}.main`}>
+              ({percentage.toFixed(1)}%)
+            </Typography>
+          )}
         </Stack>
       </Stack>
     </Paper>

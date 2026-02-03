@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 interface ReportTotalCardProps {
   resourceName: string;
   total: number;
-  active: number;
-  inactive: number;
+  active?: number;
+  inactive?: number;
   icon?: ReactNode;
 }
 
@@ -31,27 +31,41 @@ export default function ReportTotalCard({
           {icon && (
             <Box sx={{ color: "primary.main", display: "flex" }}>{icon}</Box>
           )}
-          <Typography variant="subtitle2" color="text.secondary">
-            Total {resourceName}
+          <Typography
+            variant="subtitle2"
+            color="text.secondary"
+            fontWeight="bold"
+          >
+            Total de {resourceName}
           </Typography>
         </Stack>
 
         <Typography variant="h4" color="primary.main" fontWeight="bold">
           {total}
         </Typography>
-        <Stack direction="row" spacing={2}>
-          <Typography
-            variant="caption"
-            display="block"
-            color="success.main"
-            fontWeight="bold"
-          >
-            Activas: {active}
-          </Typography>
-          <Typography variant="caption" display="block" color="text.disabled">
-            Inactivas: {inactive}
-          </Typography>
-        </Stack>
+        {(active !== undefined || inactive !== undefined) && (
+          <Stack direction="row" spacing={2}>
+            {active !== undefined && (
+              <Typography
+                variant="caption"
+                display="block"
+                color="success.main"
+                fontWeight="bold"
+              >
+                Activas: {active}
+              </Typography>
+            )}
+            {inactive !== undefined && (
+              <Typography
+                variant="caption"
+                display="block"
+                color="text.disabled"
+              >
+                Inactivas: {inactive}
+              </Typography>
+            )}
+          </Stack>
+        )}
       </Stack>
     </Paper>
   );

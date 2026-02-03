@@ -1811,15 +1811,23 @@ export class ReportesService {
     const totalConsultas = consultas.length;
 
     // Calcular diferencia de días real entre el rango seleccionado (o el rango de datos si no se seleccionó)
-    const effectiveStart = fechaDesde
-      ? start
-      : consultas.length > 0
-        ? consultas[consultas.length - 1].fechaConsulta
-        : new Date();
+    let effectiveStart: Date;
+
+    if (fechaDesde) {
+      effectiveStart = start;
+    } else {
+      const curso = await this.prisma.curso.findUnique({
+        where: { id: idCurso },
+        select: { createdAt: true },
+      });
+      effectiveStart = curso?.createdAt || new Date();
+    }
+
     const effectiveEnd = fechaHasta ? end : new Date();
 
-    const diffTime = Math.abs(
+    const diffTime = Math.max(
       effectiveEnd.getTime() - effectiveStart.getTime(),
+      0,
     );
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1; // Mínimo 1 día para evitar división por 0
     const diffWeeks = Math.max(diffDays / 7, 1);

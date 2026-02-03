@@ -18,7 +18,6 @@ import {
   OutlinedInput,
   Autocomplete,
   TextField,
-  ButtonGroup,
   Chip,
   type SelectChangeEvent,
 } from "@mui/material";
@@ -28,6 +27,9 @@ import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableOnIcon from "@mui/icons-material/TableChart";
+import FunctionsIcon from "@mui/icons-material/Functions";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import DateRangeIcon from "@mui/icons-material/DateRange";
 
 import {
   getCourseConsultationsHistory,
@@ -37,6 +39,8 @@ import { getStudentProgressList } from "../../../users/services/docentes.service
 import { useDebounce } from "../../../../hooks/useDebounce";
 import { temas, estado_consulta } from "../../../../types";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
+import ReportTotalCard from "../common/ReportTotalCard";
+import ReportStatCard from "../common/ReportStatCard";
 
 interface Props {
   courseId: string;
@@ -263,9 +267,6 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
       <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
         <Stack spacing={2}>
           <QuickDateFilter onApply={handleQuickFilter} />
-
-          <Divider />
-
           <Stack
             direction={{ xs: "column", md: "row" }}
             spacing={2}
@@ -376,35 +377,32 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
         <Stack spacing={4}>
           {/* --- Stats Cards --- */}
           <Grid container spacing={2}>
-            <Grid>
-              <Paper elevation={3} sx={{ p: 2, textAlign: "center" }}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Total Consultas (Periodo)
-                </Typography>
-                <Typography variant="h4" color="primary" fontWeight="bold">
-                  {data.stats.total}
-                </Typography>
-              </Paper>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <ReportStatCard
+                icon={<FunctionsIcon fontSize="small" />}
+                title="Total de Consultas"
+                subtitle="Cantidad de consultas realizadas en el periodo indicado"
+                count={data.stats.total}
+                color="primary"
+              />
             </Grid>
-            <Grid>
-              <Paper elevation={3} sx={{ p: 2, textAlign: "center" }}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Promedio Diario
-                </Typography>
-                <Typography variant="h4" fontWeight="bold">
-                  {data.stats.promedioDiario.toFixed(1)}
-                </Typography>
-              </Paper>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <ReportStatCard
+                icon={<CalendarTodayIcon fontSize="small" />}
+                title="Promedio Diario"
+                subtitle="Consultas realizada por día en el periodo indicado"
+                count={Number(data.stats.promedioDiario.toFixed(1))}
+                color="info"
+              />
             </Grid>
-            <Grid>
-              <Paper elevation={3} sx={{ p: 2, textAlign: "center" }}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Promedio Semanal
-                </Typography>
-                <Typography variant="h4" fontWeight="bold">
-                  {data.stats.promedioSemanal.toFixed(1)}
-                </Typography>
-              </Paper>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <ReportStatCard
+                icon={<DateRangeIcon fontSize="small" />}
+                title="Promedio Semanal"
+                subtitle="Consultas realizada por semana en el periodo indicado"
+                count={Number(data.stats.promedioSemanal.toFixed(1))}
+                color="success"
+              />
             </Grid>
           </Grid>
 
@@ -418,6 +416,14 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
             {data.timeline.length > 0 ? (
               <LineChart
                 dataset={data.timeline}
+                yAxis={[
+                  {
+                    label: "Consultas realizadas",
+                    min: 0,
+                    valueFormatter: (value: number) =>
+                      Number.isInteger(value) ? value.toString() : "",
+                  },
+                ]}
                 xAxis={[
                   {
                     scaleType: "point",
@@ -431,11 +437,9 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
                     dataKey: "cantidad",
                     label: "Cantidad de Consultas",
                     color: "#1976d2",
-                    area: true,
                   },
                 ]}
                 height={300}
-                margin={{ left: 50, right: 20, top: 20, bottom: 30 }}
               />
             ) : (
               <Typography align="center" color="text.secondary" sx={{ py: 4 }}>
