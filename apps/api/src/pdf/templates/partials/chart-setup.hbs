@@ -22,6 +22,7 @@
         config.options.scales[axis] = config.options.scales[axis] || {};
         config.options.scales[axis].ticks = config.options.scales[axis].ticks || {};
         config.options.scales[axis].ticks.font = { family: "'Roboto', sans-serif", size: 9 };
+        config.options.scales[axis].ticks.precision = 0;
     });
     
     // Nota: 'stacked' y 'beginAtZero' se respetan si ya vienen en 'config' o se configuran después.
