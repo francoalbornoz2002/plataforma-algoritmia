@@ -271,13 +271,34 @@ export default function SummaryReportSection() {
 
   return (
     <Paper elevation={5} component="section" sx={{ p: 2 }}>
-      <Typography
-        variant="h5"
-        gutterBottom
-        sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}
-      >
-        Resumen de usuarios
-      </Typography>
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Typography
+          variant="h5"
+          gutterBottom
+          sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}
+        >
+          Resumen de usuarios
+        </Typography>
+        <Box
+          sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
+        >
+          <PdfExportButton
+            filters={filters}
+            exportFunction={getUsersSummaryPdf}
+            fileName="resumen-usuarios.pdf"
+            disabled={!summaryData}
+            onError={setError}
+          />
+          <Button
+            variant="outlined"
+            startIcon={<TableOnIcon />}
+            disabled={!summaryData}
+            color="success"
+          >
+            Exportar Excel
+          </Button>
+        </Box>
+      </Stack>
       {/* Filtros */}
       <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
         <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
@@ -317,25 +338,6 @@ export default function SummaryReportSection() {
           </FormControl>
         </Stack>
       </Paper>
-
-      {/* Acciones de Exportación */}
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}>
-        <PdfExportButton
-          filters={filters}
-          exportFunction={getUsersSummaryPdf}
-          fileName="resumen-usuarios.pdf"
-          disabled={!summaryData}
-          onError={setError}
-        />
-        <Button
-          variant="outlined"
-          startIcon={<TableOnIcon />}
-          disabled={!summaryData}
-          color="success"
-        >
-          Exportar Excel
-        </Button>
-      </Box>
 
       {error && <Alert severity="error">{error}</Alert>}
 

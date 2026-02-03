@@ -22,6 +22,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PendingIcon from "@mui/icons-material/Pending";
 import ClassIcon from "@mui/icons-material/Class";
 import CategoryIcon from "@mui/icons-material/Category";
+import FunctionsIcon from "@mui/icons-material/Functions";
 import { PieChart } from "@mui/x-charts/PieChart";
 import { BarChart } from "@mui/x-charts/BarChart";
 
@@ -32,6 +33,9 @@ import {
 } from "../../service/reports.service";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import PdfExportButton from "../common/PdfExportButton";
+import ReportTotalCard from "../common/ReportTotalCard";
+import ReportStatCard from "../common/ReportStatCard";
+import ReportTextualCard from "../common/ReportTextualCard";
 
 interface Props {
   courseId: string;
@@ -168,159 +172,51 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
           {/* KPIs */}
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 3 }}>
-              <Paper
-                elevation={3}
-                sx={{
-                  p: 2,
-                  height: "100%",
-                  borderLeft: "4px solid",
-                  borderColor: "primary.main",
-                }}
-              >
-                <Stack spacing={0.5} justifyContent="center">
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Total Consultas
-                  </Typography>
-                  <Typography
-                    variant="h4"
-                    color="primary.main"
-                    fontWeight="bold"
-                  >
-                    {data.kpis.totalConsultas}
-                  </Typography>
-                  <Stack direction="row" spacing={2}>
-                    <Typography
-                      variant="caption"
-                      display="block"
-                      color="success.main"
-                      fontWeight="bold"
-                    >
-                      Activas: {data.kpis.activas}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      display="block"
-                      color="text.disabled"
-                    >
-                      Inactivas: {data.kpis.inactivas}
-                    </Typography>
-                  </Stack>
-                </Stack>
-              </Paper>
+              <ReportTotalCard
+                resourceName="Consultas"
+                total={data.kpis.totalConsultas}
+                active={data.kpis.activas}
+                inactive={data.kpis.inactivas}
+                icon={<FunctionsIcon fontSize="small" />}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
               {/* --- Consultas resueltas --- */}
-              <Paper
-                elevation={3}
-                sx={{
-                  p: 2,
-                  height: "100%",
-                  borderLeft: "4px solid",
-                  borderColor: "success.main",
-                }}
-              >
-                <Stack spacing={0.5}>
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <CheckCircleIcon color="success" fontSize="small" />
-                    <Typography
-                      variant="subtitle2"
-                      color="text.secondary"
-                      fontWeight="bold"
-                    >
-                      Consultas resueltas
-                    </Typography>
-                  </Stack>
-                  <Typography variant="caption">
-                    Que poseen respuesta y valoración
-                  </Typography>
-                  <Stack direction="row" spacing={1} alignItems="baseline">
-                    <Typography
-                      variant="h4"
-                      color="success.main"
-                      fontWeight="bold"
-                    >
-                      {data.kpis.resueltas.count}
-                    </Typography>
-                    <Typography variant="caption" color="success.main">
-                      ({data.kpis.resueltas.percentage.toFixed(1)}%)
-                    </Typography>
-                  </Stack>
-                </Stack>
-              </Paper>
+              <ReportStatCard
+                icon={<CheckCircleIcon fontSize="small" />}
+                title="Consultas resueltas"
+                subtitle="Que poseen respuesta y valoración"
+                count={data.kpis.resueltas.count}
+                percentage={data.kpis.resueltas.percentage}
+                color="success"
+              />
             </Grid>
 
             {/* --- Consultas por atender --- */}
             <Grid size={{ xs: 12, md: 3 }}>
-              <Paper
-                elevation={3}
-                sx={{
-                  p: 2,
-                  height: "100%",
-                  borderLeft: "4px solid",
-                  borderColor: "warning.main",
-                }}
-              >
-                <Stack spacing={0.5}>
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <PendingIcon color="warning" fontSize="small" />
-                    <Typography
-                      variant="subtitle2"
-                      color="text.secondary"
-                      fontWeight="bold"
-                    >
-                      Consultas por atender
-                    </Typography>
-                  </Stack>
-                  <Typography variant="caption">
-                    Pendientes o a revisar
-                  </Typography>
-                  <Stack direction="row" spacing={1} alignItems="baseline">
-                    <Typography
-                      variant="h4"
-                      color="warning.main"
-                      fontWeight="bold"
-                    >
-                      {data.kpis.pendientes.count}
-                    </Typography>
-                    <Typography variant="caption" color="warning.main">
-                      ({data.kpis.pendientes.percentage.toFixed(1)}%)
-                    </Typography>
-                  </Stack>
-                </Stack>
-              </Paper>
+              <ReportStatCard
+                icon={<PendingIcon fontSize="small" />}
+                title="Consultas por atender"
+                subtitle="Pendientes o a revisar"
+                count={data.kpis.pendientes.count}
+                percentage={data.kpis.pendientes.percentage}
+                color="warning"
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
               {/* Top Tema */}
-              <Paper
-                elevation={3}
-                sx={{
-                  p: 2,
-                  height: "100%",
-                  bgcolor: "warning.50",
-                  borderLeft: "4px solid",
-                  borderColor: "info.main",
-                }}
-              >
-                <Stack spacing={0.5}>
-                  <Stack direction="row" spacing={1} alignItems="center" mb={1}>
-                    <CategoryIcon color="info" />
-                    <Typography
-                      variant="subtitle2"
-                      color="text.secondary"
-                      fontWeight="bold"
-                    >
-                      Tema más consultado
-                    </Typography>
-                  </Stack>
-                  <Typography variant="h6" fontWeight="bold">
-                    {data.topTopic.name}
-                  </Typography>
-                  <Typography variant="caption">
+              <ReportTextualCard
+                icon={<CategoryIcon />}
+                title="Tema más consultado"
+                value={data.topTopic.name}
+                description={
+                  <>
                     Concentra <b>{data.topTopic.count}</b> consultas (
                     <b>{data.topTopic.percentage.toFixed(1)}%</b> del total).
-                  </Typography>
-                </Stack>
-              </Paper>
+                  </>
+                }
+                color="info"
+              />
             </Grid>
           </Grid>
 
@@ -433,175 +329,59 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
             <Grid size={{ xs: 12, md: 6 }}>
               <Stack spacing={2}>
                 {/* Top Docente */}
-                <Paper
-                  elevation={3}
-                  sx={{
-                    p: 2,
-                    borderLeft: "4px solid",
-                    borderColor: "primary.main",
-                  }}
-                >
-                  <Stack direction="column" spacing={0.5}>
-                    <Stack
-                      direction="row"
-                      spacing={1}
-                      alignItems="center"
-                      mb={1}
-                    >
-                      <SchoolIcon color="primary" />
-                      <Typography
-                        variant="subtitle2"
-                        color="textSecondary"
-                        fontWeight="bold"
-                      >
-                        Docente más qué más consultas responde
-                      </Typography>
-                    </Stack>
-                    <Typography variant="h6" fontWeight="bold" gutterBottom>
-                      {data.topTeacher.name}
-                    </Typography>
-                    <Typography variant="caption">
+                <ReportTextualCard
+                  icon={<SchoolIcon />}
+                  title="Docente más qué más consultas responde"
+                  value={data.topTeacher.name}
+                  description={
+                    <>
                       Ha respondido o atendido <b>{data.topTeacher.count}</b>{" "}
                       consultas, lo que representa el{" "}
                       <b>{data.topTeacher.percentage.toFixed(1)}%</b> del total
                       de consultas del curso.
-                    </Typography>
-                  </Stack>
-                </Paper>
+                    </>
+                  }
+                  color="primary"
+                />
                 {/* Top Alumno */}
-                <Paper
-                  elevation={3}
-                  sx={{
-                    p: 2,
-                    borderLeft: "4px solid",
-                    borderColor: "primary.main",
-                  }}
-                >
-                  <Stack direction="column" spacing={0.5}>
-                    <Stack
-                      direction="row"
-                      spacing={1}
-                      alignItems="center"
-                      mb={1}
-                    >
-                      <PersonIcon color="primary" />
-                      <Typography
-                        variant="subtitle2"
-                        color="textSecondary"
-                        fontWeight="bold"
-                      >
-                        Alumno con más consultas realizadas
-                      </Typography>
-                    </Stack>
-                    <Typography variant="h6" fontWeight="bold" gutterBottom>
-                      {data.topStudent.name}
-                    </Typography>
-                    <Typography variant="caption">
+                <ReportTextualCard
+                  icon={<PersonIcon />}
+                  title="Alumno con más consultas realizadas"
+                  value={data.topStudent.name}
+                  description={
+                    <>
                       Realizó un total de <b>{data.topStudent.count}</b>{" "}
                       consultas, representando el{" "}
                       <b>{data.topStudent.percentage.toFixed(1)}%</b> de las
                       consultas realizadas en el curso.
-                    </Typography>
-                  </Stack>
-                </Paper>
+                    </>
+                  }
+                  color="primary"
+                />
                 {/* KPIs De consultas */}
                 <Grid container spacing={2}>
                   {/* --- Atendidas en clases de consulta --- */}
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <Paper
-                      elevation={3}
-                      sx={{
-                        p: 2,
-                        height: "100%",
-                        borderLeft: "4px solid",
-                        borderColor: "info.main",
-                      }}
-                    >
-                      <Stack spacing={1}>
-                        <Stack direction="row" alignItems="center" spacing={1}>
-                          <ClassIcon color="info" fontSize="small" />
-                          <Typography
-                            variant="subtitle2"
-                            color="text.secondary"
-                            fontWeight="bold"
-                          >
-                            Atendidas en Clases de Consulta
-                          </Typography>
-                        </Stack>
-                        <Typography variant="caption">
-                          Consultas revisadas en vivo durante una clase
-                        </Typography>
-                        <Stack
-                          direction="row"
-                          spacing={1}
-                          alignItems="baseline"
-                        >
-                          <Typography
-                            variant="h4"
-                            color="info.main"
-                            fontWeight="bold"
-                          >
-                            {data.kpis.impactoClases.revisadas.count}
-                          </Typography>
-                          <Typography variant="caption" color="info.main">
-                            (
-                            {data.kpis.impactoClases.revisadas.percentage.toFixed(
-                              1,
-                            )}
-                            %)
-                          </Typography>
-                        </Stack>
-                      </Stack>
-                    </Paper>
+                    <ReportStatCard
+                      icon={<ClassIcon fontSize="small" />}
+                      title="Atendidas en Clases de Consulta"
+                      subtitle="Consultas revisadas en vivo durante una clase"
+                      count={data.kpis.impactoClases.revisadas.count}
+                      percentage={data.kpis.impactoClases.revisadas.percentage}
+                      color="info"
+                    />
                   </Grid>
 
                   {/* --- Resueltas via clase --- */}
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <Paper
-                      elevation={3}
-                      sx={{
-                        p: 2,
-                        height: "100%",
-                        borderLeft: "4px solid",
-                        borderColor: "success.main",
-                      }}
-                    >
-                      <Stack spacing={1}>
-                        <Stack direction="row" alignItems="center" spacing={1}>
-                          <CheckCircleIcon color="success" fontSize="small" />
-                          <Typography
-                            variant="subtitle2"
-                            color="text.secondary"
-                            fontWeight="bold"
-                          >
-                            Resueltas vía Clase
-                          </Typography>
-                        </Stack>
-                        <Typography variant="caption">
-                          Consultas resueltas tras ser revisadas en clase
-                        </Typography>
-                        <Stack
-                          direction="row"
-                          spacing={1}
-                          alignItems="baseline"
-                        >
-                          <Typography
-                            variant="h4"
-                            color="success.main"
-                            fontWeight="bold"
-                          >
-                            {data.kpis.impactoClases.resueltas.count}
-                          </Typography>
-                          <Typography variant="caption" color="success.main">
-                            (
-                            {data.kpis.impactoClases.resueltas.percentage.toFixed(
-                              1,
-                            )}
-                            %)
-                          </Typography>
-                        </Stack>
-                      </Stack>
-                    </Paper>
+                    <ReportStatCard
+                      icon={<CheckCircleIcon fontSize="small" />}
+                      title="Resueltas vía Clase"
+                      subtitle="Consultas resueltas tras ser revisadas en clase"
+                      count={data.kpis.impactoClases.resueltas.count}
+                      percentage={data.kpis.impactoClases.resueltas.percentage}
+                      color="success"
+                    />
                   </Grid>
                 </Grid>
               </Stack>

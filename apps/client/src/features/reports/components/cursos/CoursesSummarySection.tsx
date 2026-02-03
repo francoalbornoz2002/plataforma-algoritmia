@@ -172,13 +172,34 @@ export default function CoursesSummarySection() {
 
   return (
     <Paper elevation={5} component="section" sx={{ p: 2 }}>
-      <Typography
-        variant="h5"
-        gutterBottom
-        sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}
-      >
-        Resumen de Cursos
-      </Typography>
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Typography
+          variant="h5"
+          gutterBottom
+          sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}
+        >
+          Resumen de Cursos
+        </Typography>
+        <Box
+          sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
+        >
+          <PdfExportButton
+            filters={filters}
+            exportFunction={getCoursesSummaryPdf}
+            fileName="resumen-cursos.pdf"
+            disabled={!summaryData}
+            onError={setError}
+          />
+          <Button
+            variant="outlined"
+            startIcon={<TableOnIcon />}
+            disabled={!summaryData}
+            color="success"
+          >
+            Exportar Excel
+          </Button>
+        </Box>
+      </Stack>
 
       {/* Filtros */}
       <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
@@ -217,25 +238,6 @@ export default function CoursesSummarySection() {
           />
         </Stack>
       </Paper>
-
-      {/* Acciones */}
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}>
-        <PdfExportButton
-          filters={filters}
-          exportFunction={getCoursesSummaryPdf}
-          fileName="resumen-cursos.pdf"
-          disabled={!summaryData}
-          onError={setError}
-        />
-        <Button
-          variant="outlined"
-          startIcon={<TableOnIcon />}
-          disabled={!summaryData}
-          color="success"
-        >
-          Exportar Excel
-        </Button>
-      </Box>
 
       {error && <Alert severity="error">{error}</Alert>}
 

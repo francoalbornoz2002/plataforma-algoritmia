@@ -139,13 +139,34 @@ export default function HistoryReportSection() {
 
   return (
     <Paper elevation={5} component="section" sx={{ p: 2 }}>
-      <Typography
-        variant="h5"
-        gutterBottom
-        sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}
-      >
-        Historial de Movimientos
-      </Typography>
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Typography
+          variant="h5"
+          gutterBottom
+          sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}
+        >
+          Historial de Movimientos
+        </Typography>
+        <Box
+          sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
+        >
+          <PdfExportButton
+            filters={filters}
+            exportFunction={getUsersHistoryPdf}
+            fileName="historial-usuarios.pdf"
+            disabled={data.length === 0}
+            onError={setError}
+          />
+          <Button
+            variant="outlined"
+            startIcon={<TableOnIcon />}
+            disabled={data.length === 0}
+            color="success"
+          >
+            Exportar Excel
+          </Button>
+        </Box>
+      </Stack>
       <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
         <Stack spacing={2}>
           {/* Fila Superior: Tipo de Reporte y Filtros Rápidos */}
@@ -267,25 +288,6 @@ export default function HistoryReportSection() {
           </Stack>
         </Stack>
       </Paper>
-
-      {/* Acciones Exportar */}
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}>
-        <PdfExportButton
-          filters={filters}
-          exportFunction={getUsersHistoryPdf}
-          fileName="historial-usuarios.pdf"
-          disabled={data.length === 0}
-          onError={setError}
-        />
-        <Button
-          variant="outlined"
-          startIcon={<TableOnIcon />}
-          disabled={data.length === 0}
-          color="success"
-        >
-          Exportar Excel
-        </Button>
-      </Box>
 
       {error && <Alert severity="error">{error}</Alert>}
 

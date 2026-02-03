@@ -22,6 +22,8 @@ import { format } from "date-fns";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import TableOnIcon from "@mui/icons-material/TableChart";
 
 import {
   getCourseSessionsHistory,
@@ -201,14 +203,36 @@ export default function CourseSessionsHistory({ courseId }: Props) {
 
   return (
     <Paper elevation={5} component="section" sx={{ p: 2 }}>
-      <Typography
-        variant="h5"
-        gutterBottom
-        color="primary.main"
-        sx={{ mb: 2, fontWeight: "bold" }}
-      >
-        Historial de Sesiones Generadas
-      </Typography>
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Typography
+          variant="h5"
+          gutterBottom
+          color="primary.main"
+          sx={{ mb: 2, fontWeight: "bold" }}
+        >
+          Historial de Sesiones Generadas
+        </Typography>
+        <Box
+          sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
+        >
+          <Button
+            variant="outlined"
+            startIcon={<PictureAsPdfIcon />}
+            disabled={!data}
+            color="error"
+          >
+            Exportar PDF
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<TableOnIcon />}
+            disabled={!data}
+            color="success"
+          >
+            Exportar Excel
+          </Button>
+        </Box>
+      </Stack>
 
       {/* --- Filtros --- */}
       <Paper elevation={3} sx={{ p: 2, mb: 3 }}>

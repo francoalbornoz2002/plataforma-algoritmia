@@ -229,14 +229,43 @@ export default function CourseClassesHistory({ courseId }: Props) {
 
   return (
     <Paper elevation={5} component="section" sx={{ p: 2 }}>
-      <Typography
-        variant="h5"
-        gutterBottom
-        color="primary.main"
-        sx={{ mb: 2, fontWeight: "bold" }}
-      >
-        Historial de Clases de Consulta Realizadas
-      </Typography>
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Typography
+          variant="h5"
+          gutterBottom
+          color="primary.main"
+          sx={{ mb: 2, fontWeight: "bold" }}
+        >
+          Historial de Clases de Consulta Realizadas
+        </Typography>
+        <Box
+          sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
+        >
+          <Button
+            variant="outlined"
+            startIcon={
+              pdfLoading ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                <PictureAsPdfIcon />
+              )
+            }
+            disabled={!data || pdfLoading}
+            color="error"
+            onClick={handleOpenExportDialog}
+          >
+            {pdfLoading ? "Generando..." : "Exportar PDF"}
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<TableOnIcon />}
+            disabled={!data}
+            color="success"
+          >
+            Exportar Excel
+          </Button>
+        </Box>
+      </Stack>
 
       {/* --- Filtros --- */}
       <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
@@ -305,33 +334,6 @@ export default function CourseClassesHistory({ courseId }: Props) {
           </Stack>
         </Stack>
       </Paper>
-
-      {/* Acciones */}
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}>
-        <Button
-          variant="outlined"
-          startIcon={
-            pdfLoading ? (
-              <CircularProgress size={20} color="inherit" />
-            ) : (
-              <PictureAsPdfIcon />
-            )
-          }
-          disabled={!data || pdfLoading}
-          color="error"
-          onClick={handleOpenExportDialog}
-        >
-          {pdfLoading ? "Generando..." : "Exportar PDF"}
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<TableOnIcon />}
-          disabled={!data}
-          color="success"
-        >
-          Exportar Excel
-        </Button>
-      </Box>
 
       {showLoading && (
         <CircularProgress sx={{ display: "block", mx: "auto", my: 4 }} />

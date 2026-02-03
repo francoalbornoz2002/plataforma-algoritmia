@@ -16,11 +16,16 @@ import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableOnIcon from "@mui/icons-material/TableChart";
 import { PieChart } from "@mui/x-charts/PieChart";
 import { BarChart } from "@mui/x-charts/BarChart";
+import FunctionsIcon from "@mui/icons-material/Functions";
+import CategoryIcon from "@mui/icons-material/Category";
+import WarningIcon from "@mui/icons-material/Warning";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import {
   getCourseDifficultiesReport,
   type CourseDifficultiesReportFilters,
 } from "../../service/reports.service";
 import { useOptionalCourseContext } from "../../../../context/CourseContext";
+import ReportTextualCard from "../common/ReportTextualCard";
 
 interface Props {
   courseId: string;
@@ -85,14 +90,36 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
 
   return (
     <Paper elevation={5} component="section" sx={{ p: 2 }}>
-      <Typography
-        variant="h5"
-        gutterBottom
-        color="primary.main"
-        sx={{ mb: 2, fontWeight: "bold" }}
-      >
-        Resumen de Dificultades del Curso
-      </Typography>
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Typography
+          variant="h5"
+          gutterBottom
+          color="primary.main"
+          sx={{ mb: 2, fontWeight: "bold" }}
+        >
+          Resumen de Dificultades del Curso
+        </Typography>
+        <Box
+          sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
+        >
+          <Button
+            variant="outlined"
+            startIcon={<PictureAsPdfIcon />}
+            disabled={!data}
+            color="error"
+          >
+            Exportar PDF
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<TableOnIcon />}
+            disabled={!data}
+            color="success"
+          >
+            Exportar Excel
+          </Button>
+        </Box>
+      </Stack>
 
       {/* Filtros */}
       <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
@@ -122,26 +149,6 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
         </Stack>
       </Paper>
 
-      {/* Acciones */}
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}>
-        <Button
-          variant="outlined"
-          startIcon={<PictureAsPdfIcon />}
-          disabled={!data}
-          color="error"
-        >
-          Exportar PDF
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<TableOnIcon />}
-          disabled={!data}
-          color="success"
-        >
-          Exportar Excel
-        </Button>
-      </Box>
-
       {showLoading && (
         <CircularProgress sx={{ display: "block", mx: "auto", my: 4 }} />
       )}
@@ -152,75 +159,58 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
           {/* KPIs */}
           <Grid container spacing={2}>
             <Grid sx={{ xs: 12, md: 3 }}>
-              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-                <Stack spacing={1}>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Promedio Dificultades por Alumno
-                  </Typography>
-                  <Typography
-                    variant="h4"
-                    color="primary.main"
-                    fontWeight="bold"
-                  >
-                    {data.kpis.promDificultades.toFixed(1)}
-                  </Typography>
-                  <Typography variant="caption">
-                    Total Alumnos: {data.kpis.totalAlumnos}
-                  </Typography>
-                </Stack>
-              </Paper>
+              <ReportTextualCard
+                icon={<FunctionsIcon />}
+                title="Promedio Dificultades"
+                value={data.kpis.promDificultades.toFixed(1)}
+                description={`Promedio por alumno. Total alumnos: ${data.kpis.totalAlumnos}`}
+                color="primary"
+              />
             </Grid>
             <Grid sx={{ xs: 12, md: 3 }}>
-              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-                <Stack spacing={1}>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Tema de dificultad Más Frecuente
-                  </Typography>
-                  <Typography variant="h6" fontWeight="bold">
-                    {data.kpis.temaFrecuente.nombre}
-                  </Typography>
-                  <Alert severity="error" variant="outlined">
-                    <Typography variant="caption">
-                      El {data.kpis.temaFrecuente.pctAlumnos.toFixed(1)}% de
-                      alumnos poseen alguna dificultad de este tema
-                    </Typography>
-                  </Alert>
-                </Stack>
-              </Paper>
+              <ReportTextualCard
+                icon={<CategoryIcon />}
+                title="Tema Más Frecuente"
+                value={data.kpis.temaFrecuente.nombre}
+                description={
+                  <>
+                    El <b>{data.kpis.temaFrecuente.pctAlumnos.toFixed(1)}%</b>{" "}
+                    de alumnos poseen alguna dificultad de este tema.
+                  </>
+                }
+                color="info"
+              />
             </Grid>
             <Grid sx={{ xs: 12, md: 3 }}>
-              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-                <Stack spacing={1}>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Dificultad Más Frecuente
-                  </Typography>
-                  <Typography variant="h6" fontWeight="bold">
-                    {data.kpis.dificultadFrecuente.nombre}
-                  </Typography>
-                  <Alert severity="warning" variant="outlined">
-                    <Typography variant="caption">
-                      El {data.kpis.dificultadFrecuente.pctAlumnos.toFixed(1)}%
-                      de alumnos del curso poseen esta dificultad
-                    </Typography>
-                  </Alert>
-                </Stack>
-              </Paper>
+              <ReportTextualCard
+                icon={<WarningIcon />}
+                title="Dificultad Más Frecuente"
+                value={data.kpis.dificultadFrecuente.nombre}
+                description={
+                  <>
+                    El{" "}
+                    <b>
+                      {data.kpis.dificultadFrecuente.pctAlumnos.toFixed(1)}%
+                    </b>{" "}
+                    de alumnos del curso poseen esta dificultad.
+                  </>
+                }
+                color="warning"
+              />
             </Grid>
             <Grid sx={{ xs: 12, md: 3 }}>
-              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-                <Stack spacing={1}>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Alumnos con dificultades en Grado Alto
-                  </Typography>
-                  <Typography variant="h4" color="error.main" fontWeight="bold">
-                    {data.kpis.gradoAlto.pctAlumnos.toFixed(1)}%
-                  </Typography>
-                  <Typography variant="caption">
+              <ReportTextualCard
+                icon={<TrendingUpIcon />}
+                title="Dificultades Grado Alto"
+                value={`${data.kpis.gradoAlto.pctAlumnos.toFixed(1)}%`}
+                description={
+                  <>
                     Dificultad de grado Alto más frecuente:{" "}
-                    {data.kpis.gradoAlto.modaNombre}
-                  </Typography>
-                </Stack>
-              </Paper>
+                    <b>{data.kpis.gradoAlto.modaNombre}</b>
+                  </>
+                }
+                color="error"
+              />
             </Grid>
           </Grid>
 

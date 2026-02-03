@@ -271,13 +271,35 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
 
   return (
     <Paper elevation={5} component="section" sx={{ p: 2 }}>
-      <Typography
-        variant="h5"
-        gutterBottom
-        sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}
-      >
-        Historial de Dificultades
-      </Typography>
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Typography
+          variant="h5"
+          gutterBottom
+          sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}
+        >
+          Historial de Dificultades
+        </Typography>
+        <Box
+          sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
+        >
+          <Button
+            variant="outlined"
+            startIcon={<PictureAsPdfIcon />}
+            disabled={!data || data.tabla.length === 0}
+            color="error"
+          >
+            Exportar PDF
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<TableOnIcon />}
+            disabled={!data || data.tabla.length === 0}
+            color="success"
+          >
+            Exportar Excel
+          </Button>
+        </Box>
+      </Stack>
 
       {/* --- Filtros --- */}
       <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
@@ -406,26 +428,6 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
           </Stack>
         </Stack>
       </Paper>
-
-      {/* --- Acciones Exportar --- */}
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}>
-        <Button
-          variant="outlined"
-          startIcon={<PictureAsPdfIcon />}
-          disabled={!data || data.tabla.length === 0}
-          color="error"
-        >
-          Exportar PDF
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<TableOnIcon />}
-          disabled={!data || data.tabla.length === 0}
-          color="success"
-        >
-          Exportar Excel
-        </Button>
-      </Box>
 
       {error && <Alert severity="error">{error}</Alert>}
       {loading && !data && (

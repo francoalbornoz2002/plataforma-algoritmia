@@ -18,6 +18,7 @@ import SchoolIcon from "@mui/icons-material/School";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import FunctionsIcon from "@mui/icons-material/Functions";
 import { PieChart } from "@mui/x-charts/PieChart";
 
 import {
@@ -25,6 +26,8 @@ import {
   type CourseClassesSummaryFilters,
 } from "../../service/reports.service";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
+import ReportTotalCard from "../common/ReportTotalCard";
+import ReportTextualCard from "../common/ReportTextualCard";
 
 interface Props {
   courseId: string;
@@ -72,14 +75,36 @@ export default function CourseClassesSummary({ courseId }: Props) {
 
   return (
     <Paper elevation={5} component="section" sx={{ p: 2 }}>
-      <Typography
-        variant="h5"
-        gutterBottom
-        color="primary.main"
-        sx={{ mb: 2, fontWeight: "bold" }}
-      >
-        Resumen de Clases de Consulta
-      </Typography>
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Typography
+          variant="h5"
+          gutterBottom
+          color="primary.main"
+          sx={{ mb: 2, fontWeight: "bold" }}
+        >
+          Resumen de Clases de Consulta
+        </Typography>
+        <Box
+          sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
+        >
+          <Button
+            variant="outlined"
+            startIcon={<PictureAsPdfIcon />}
+            disabled={!data}
+            color="error"
+          >
+            Exportar PDF
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<TableOnIcon />}
+            disabled={!data}
+            color="success"
+          >
+            Exportar Excel
+          </Button>
+        </Box>
+      </Stack>
 
       {/* Filtros */}
       <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
@@ -126,26 +151,6 @@ export default function CourseClassesSummary({ courseId }: Props) {
         </Stack>
       </Paper>
 
-      {/* Acciones */}
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}>
-        <Button
-          variant="outlined"
-          startIcon={<PictureAsPdfIcon />}
-          disabled={!data}
-          color="error"
-        >
-          Exportar PDF
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<TableOnIcon />}
-          disabled={!data}
-          color="success"
-        >
-          Exportar Excel
-        </Button>
-      </Box>
-
       {showLoading && (
         <CircularProgress sx={{ display: "block", mx: "auto", my: 4 }} />
       )}
@@ -156,69 +161,39 @@ export default function CourseClassesSummary({ courseId }: Props) {
           {/* KPIs Generales */}
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 3 }}>
-              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-                <Stack spacing={1}>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Total Clases
-                  </Typography>
-                  <Typography
-                    variant="h4"
-                    color="primary.main"
-                    fontWeight="bold"
-                  >
-                    {data.kpis.totalClases}
-                  </Typography>
-                  <Stack direction="row" spacing={2}>
-                    <Typography variant="caption" color="success.main">
-                      Activas: {data.kpis.activas}
-                    </Typography>
-                    <Typography variant="caption" color="text.disabled">
-                      Inactivas: {data.kpis.inactivas}
-                    </Typography>
-                  </Stack>
-                </Stack>
-              </Paper>
+              <ReportTotalCard
+                resourceName="Clases"
+                total={data.kpis.totalClases}
+                active={data.kpis.activas}
+                inactive={data.kpis.inactivas}
+                icon={<FunctionsIcon fontSize="small" />}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
-              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-                <Stack spacing={1}>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Promedio Consultas/Clase
-                  </Typography>
-                  <Typography variant="h4" fontWeight="bold">
-                    {data.kpis.promConsultasPorClase.toFixed(1)}
-                  </Typography>
-                  <Typography variant="caption">
-                    Consultas agendadas por clase activa
-                  </Typography>
-                </Stack>
-              </Paper>
+              <ReportTextualCard
+                icon={<FunctionsIcon />}
+                title="Promedio Consultas/Clase"
+                value={data.kpis.promConsultasPorClase.toFixed(1)}
+                description="Consultas agendadas por clase activa."
+                color="primary"
+              />
             </Grid>
 
             {/* Efectividad de Revisión */}
             <Grid size={{ xs: 12, md: 6 }}>
-              <Paper
-                elevation={3}
-                sx={{ p: 2, height: "100%", bgcolor: "info.50" }}
-              >
-                <Stack spacing={1}>
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <FactCheckIcon color="info" fontSize="small" />
-                    <Typography variant="subtitle2" color="text.secondary">
-                      Efectividad de Revisión en Vivo
-                    </Typography>
-                  </Stack>
-                  <Typography variant="h5" color="info.main" fontWeight="bold">
-                    {data.efectividad.promedioRevisadasPct.toFixed(1)}%
-                  </Typography>
-                  <Typography variant="body2">
+              <ReportTextualCard
+                icon={<FactCheckIcon />}
+                title="Efectividad de Revisión en Vivo"
+                value={`${data.efectividad.promedioRevisadasPct.toFixed(1)}%`}
+                description={
+                  <>
                     En promedio, el{" "}
                     <b>{data.efectividad.promedioRevisadasPct.toFixed(1)}%</b>{" "}
-                    de las consultas agendadas son revisadas y tratadas durante
-                    la clase.
-                  </Typography>
-                </Stack>
-              </Paper>
+                    de las consultas agendadas son revisadas en clase.
+                  </>
+                }
+                color="info"
+              />
             </Grid>
           </Grid>
 
@@ -313,68 +288,49 @@ export default function CourseClassesSummary({ courseId }: Props) {
             <Grid size={{ xs: 12, md: 7 }}>
               <Stack spacing={3} sx={{ height: "100%" }}>
                 {/* Impacto en Resolución */}
-                <Paper
-                  elevation={3}
-                  sx={{ p: 3, flex: 1, bgcolor: "success.50" }}
-                >
-                  <Stack direction="row" spacing={2} alignItems="center" mb={1}>
-                    <CheckCircleIcon color="success" fontSize="large" />
-                    <Typography variant="h6">Impacto en Resolución</Typography>
-                  </Stack>
-                  <Typography
-                    variant="h4"
-                    fontWeight="bold"
-                    color="success.main"
-                    gutterBottom
-                  >
-                    {data.impacto.porcentaje.toFixed(1)}%
-                  </Typography>
-                  <Typography variant="body1">
-                    El <b>{data.impacto.porcentaje.toFixed(1)}%</b> de las
-                    consultas resueltas del curso fueron tratadas en una clase
-                    de consulta.
-                  </Typography>
-                </Paper>
+                <ReportTextualCard
+                  icon={<CheckCircleIcon />}
+                  title="Impacto en Resolución"
+                  value={`${data.impacto.porcentaje.toFixed(1)}%`}
+                  description={
+                    <>
+                      El <b>{data.impacto.porcentaje.toFixed(1)}%</b> de las
+                      consultas resueltas del curso fueron tratadas en una clase
+                      de consulta.
+                    </>
+                  }
+                  color="success"
+                />
 
                 {/* Top Docente */}
-                <Paper elevation={3} sx={{ p: 3, flex: 1 }}>
-                  <Stack direction="row" spacing={2} alignItems="center" mb={1}>
-                    <SchoolIcon color="primary" fontSize="large" />
-                    <Typography variant="h6">
-                      Docente con más clases de consulta realizadas
-                    </Typography>
-                  </Stack>
-                  <Typography variant="h5" fontWeight="bold" gutterBottom>
-                    {data.topTeacher.name}
-                  </Typography>
-                  <Typography variant="body2">
-                    Ha llevado a cabo un total de <b>{data.topTeacher.count}</b>{" "}
-                    clases de consulta realizadas.
-                  </Typography>
-                </Paper>
+                <ReportTextualCard
+                  icon={<SchoolIcon />}
+                  title="Docente con más clases realizadas"
+                  value={data.topTeacher.name}
+                  description={
+                    <>
+                      Ha llevado a cabo un total de{" "}
+                      <b>{data.topTeacher.count}</b> clases de consulta
+                      realizadas.
+                    </>
+                  }
+                  color="primary"
+                />
+
                 {/* Efectividad Sistema */}
-                <Paper
-                  elevation={3}
-                  sx={{ p: 3, flex: 1, bgcolor: "secondary.50" }}
-                >
-                  <Stack direction="row" spacing={2} alignItems="center" mb={1}>
-                    <AutoAwesomeIcon color="secondary" fontSize="large" />
-                    <Typography variant="h6">Efectividad Automática</Typography>
-                  </Stack>
-                  <Typography
-                    variant="h4"
-                    fontWeight="bold"
-                    color="secondary.main"
-                    gutterBottom
-                  >
-                    {data.kpis.origen.pctSistemaRealizadas.toFixed(1)}%
-                  </Typography>
-                  <Typography variant="body2">
-                    De las clases generadas por el sistema, el{" "}
-                    <b>{data.kpis.origen.pctSistemaRealizadas.toFixed(1)}%</b>{" "}
-                    fueron efectivamente realizadas por un docente.
-                  </Typography>
-                </Paper>
+                <ReportTextualCard
+                  icon={<AutoAwesomeIcon />}
+                  title="Efectividad Automática"
+                  value={`${data.kpis.origen.pctSistemaRealizadas.toFixed(1)}%`}
+                  description={
+                    <>
+                      De las clases generadas por el sistema, el{" "}
+                      <b>{data.kpis.origen.pctSistemaRealizadas.toFixed(1)}%</b>{" "}
+                      fueron efectivamente realizadas por un docente.
+                    </>
+                  }
+                  color="secondary"
+                />
               </Stack>
             </Grid>
           </Grid>

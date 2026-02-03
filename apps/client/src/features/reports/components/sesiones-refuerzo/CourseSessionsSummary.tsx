@@ -22,6 +22,7 @@ import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import PsychologyIcon from "@mui/icons-material/Psychology";
 import WarningIcon from "@mui/icons-material/Warning";
 import TopicIcon from "@mui/icons-material/Topic";
+import FunctionsIcon from "@mui/icons-material/Functions";
 import { PieChart } from "@mui/x-charts/PieChart";
 
 import {
@@ -29,6 +30,8 @@ import {
   type CourseSessionsSummaryFilters,
 } from "../../service/reports.service";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
+import ReportTotalCard from "../common/ReportTotalCard";
+import ReportTextualCard from "../common/ReportTextualCard";
 
 interface Props {
   courseId: string;
@@ -80,14 +83,36 @@ export default function CourseSessionsSummary({ courseId }: Props) {
 
   return (
     <Paper elevation={5} component="section" sx={{ p: 2 }}>
-      <Typography
-        variant="h5"
-        gutterBottom
-        color="primary.main"
-        sx={{ mb: 2, fontWeight: "bold" }}
-      >
-        Resumen de Sesiones de Refuerzo
-      </Typography>
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Typography
+          variant="h5"
+          gutterBottom
+          color="primary.main"
+          sx={{ mb: 2, fontWeight: "bold" }}
+        >
+          Resumen de Sesiones de Refuerzo
+        </Typography>
+        <Box
+          sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
+        >
+          <Button
+            variant="outlined"
+            startIcon={<PictureAsPdfIcon />}
+            disabled={!data}
+            color="error"
+          >
+            Exportar PDF
+          </Button>
+          <Button
+            variant="outlined"
+            startIcon={<TableOnIcon />}
+            disabled={!data}
+            color="success"
+          >
+            Exportar Excel
+          </Button>
+        </Box>
+      </Stack>
 
       {/* Filtros */}
       <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
@@ -134,26 +159,6 @@ export default function CourseSessionsSummary({ courseId }: Props) {
         </Stack>
       </Paper>
 
-      {/* Acciones */}
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}>
-        <Button
-          variant="outlined"
-          startIcon={<PictureAsPdfIcon />}
-          disabled={!data}
-          color="error"
-        >
-          Exportar PDF
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<TableOnIcon />}
-          disabled={!data}
-          color="success"
-        >
-          Exportar Excel
-        </Button>
-      </Box>
-
       {showLoading && (
         <CircularProgress sx={{ display: "block", mx: "auto", my: 4 }} />
       )}
@@ -164,28 +169,13 @@ export default function CourseSessionsSummary({ courseId }: Props) {
           {/* Fila 1: KPIs Generales */}
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 4 }}>
-              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-                <Stack spacing={1}>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Total Sesiones Generadas
-                  </Typography>
-                  <Typography
-                    variant="h3"
-                    color="primary.main"
-                    fontWeight="bold"
-                  >
-                    {data.kpis.total}
-                  </Typography>
-                  <Stack direction="row" spacing={2}>
-                    <Typography variant="caption" color="success.main">
-                      Activas: {data.kpis.activas}
-                    </Typography>
-                    <Typography variant="caption" color="text.disabled">
-                      Inactivas: {data.kpis.inactivas}
-                    </Typography>
-                  </Stack>
-                </Stack>
-              </Paper>
+              <ReportTotalCard
+                resourceName="Sesiones"
+                total={data.kpis.total}
+                active={data.kpis.activas}
+                inactive={data.kpis.inactivas}
+                icon={<FunctionsIcon fontSize="small" />}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
@@ -291,76 +281,56 @@ export default function CourseSessionsSummary({ courseId }: Props) {
           </Typography>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-                <Stack spacing={1} alignItems="center" textAlign="center">
-                  <PersonIcon color="primary" fontSize="large" />
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Alumno con más sesiones
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {data.tops.alumno.name}
-                  </Typography>
-                  <Chip
-                    label={`${data.tops.alumno.count} sesiones`}
-                    size="small"
-                  />
-                </Stack>
-              </Paper>
+              <ReportTextualCard
+                icon={<PersonIcon />}
+                title="Alumno con más sesiones"
+                value={data.tops.alumno.name}
+                description={
+                  <>
+                    Tiene <b>{data.tops.alumno.count}</b> sesiones asignadas.
+                  </>
+                }
+                color="primary"
+              />
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-                <Stack spacing={1} alignItems="center" textAlign="center">
-                  <SchoolIcon color="secondary" fontSize="large" />
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Docente que más asigna
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {data.tops.docente.name}
-                  </Typography>
-                  <Chip
-                    label={`${data.tops.docente.count} asignadas`}
-                    size="small"
-                  />
-                </Stack>
-              </Paper>
+              <ReportTextualCard
+                icon={<SchoolIcon />}
+                title="Docente que más asigna"
+                value={data.tops.docente.name}
+                description={
+                  <>
+                    Ha asignado <b>{data.tops.docente.count}</b> sesiones.
+                  </>
+                }
+                color="secondary"
+              />
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-                <Stack spacing={1} alignItems="center" textAlign="center">
-                  <WarningIcon color="error" fontSize="large" />
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Dificultad más frecuente
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {data.tops.dificultad.name}
-                  </Typography>
-                  <Chip
-                    label={`${data.tops.dificultad.count} sesiones`}
-                    size="small"
-                    color="error"
-                    variant="outlined"
-                  />
-                </Stack>
-              </Paper>
+              <ReportTextualCard
+                icon={<WarningIcon />}
+                title="Dificultad más frecuente"
+                value={data.tops.dificultad.name}
+                description={
+                  <>
+                    Presente en <b>{data.tops.dificultad.count}</b> sesiones.
+                  </>
+                }
+                color="error"
+              />
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-                <Stack spacing={1} alignItems="center" textAlign="center">
-                  <TopicIcon color="info" fontSize="large" />
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Tema más frecuente
-                  </Typography>
-                  <Typography variant="body1" fontWeight="bold">
-                    {data.tops.tema.label}
-                  </Typography>
-                  <Chip
-                    label={`${data.tops.tema.value} sesiones`}
-                    size="small"
-                    color="info"
-                    variant="outlined"
-                  />
-                </Stack>
-              </Paper>
+              <ReportTextualCard
+                icon={<TopicIcon />}
+                title="Tema más frecuente"
+                value={data.tops.tema.label}
+                description={
+                  <>
+                    Abarca <b>{data.tops.tema.value}</b> sesiones.
+                  </>
+                }
+                color="info"
+              />
             </Grid>
           </Grid>
 
