@@ -9,25 +9,32 @@ import {
   Button,
   Grid,
   Divider,
+  FormControl,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableOnIcon from "@mui/icons-material/TableChart";
 import SchoolIcon from "@mui/icons-material/School";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import FunctionsIcon from "@mui/icons-material/Functions";
+import CategoryIcon from "@mui/icons-material/Category";
 import { PieChart } from "@mui/x-charts/PieChart";
+import { BarChart } from "@mui/x-charts/BarChart";
 
 import {
   getCourseClassesSummary,
+  getCourseClassesSummaryPdf,
   type CourseClassesSummaryFilters,
 } from "../../service/reports.service";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import ReportTotalCard from "../common/ReportTotalCard";
 import ReportTextualCard from "../common/ReportTextualCard";
+import ReportStatCard from "../common/ReportStatCard";
+import PdfExportButton from "../common/PdfExportButton";
 
 interface Props {
   courseId: string;
@@ -41,6 +48,9 @@ export default function CourseClassesSummary({ courseId }: Props) {
     fechaDesde: "",
     fechaHasta: "",
   });
+  const [chartGrouping, setChartGrouping] = useState<
+    "ESTADO" | "ORIGEN" | "AMBOS"
+  >("ESTADO");
 
   useEffect(() => {
     const loadData = async () => {
@@ -87,14 +97,13 @@ export default function CourseClassesSummary({ courseId }: Props) {
         <Box
           sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
         >
-          <Button
-            variant="outlined"
-            startIcon={<PictureAsPdfIcon />}
+          <PdfExportButton
+            filters={{ ...filters, courseId, agruparPor: chartGrouping }}
+            exportFunction={getCourseClassesSummaryPdf}
+            fileName="resumen-clases.pdf"
             disabled={!data}
-            color="error"
-          >
-            Exportar PDF
-          </Button>
+            onError={setError}
+          />
           <Button
             variant="outlined"
             startIcon={<TableOnIcon />}
@@ -160,7 +169,7 @@ export default function CourseClassesSummary({ courseId }: Props) {
         <Stack spacing={3}>
           {/* KPIs Generales */}
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 12, md: 2 }}>
               <ReportTotalCard
                 resourceName="Clases"
                 total={data.kpis.totalClases}
@@ -170,29 +179,44 @@ export default function CourseClassesSummary({ courseId }: Props) {
               />
             </Grid>
             <Grid size={{ xs: 12, md: 3 }}>
-              <ReportTextualCard
+              <ReportStatCard
                 icon={<FunctionsIcon />}
-                title="Promedio Consultas/Clase"
-                value={data.kpis.promConsultasPorClase.toFixed(1)}
-                description="Consultas agendadas por clase activa."
+                title="Promedio Consultas por Clase"
+                subtitle="Consultas agendadas por clase activa."
+                count={data.kpis.promConsultasPorClase.toFixed(1)}
                 color="primary"
               />
             </Grid>
 
             {/* Efectividad de Revisión */}
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 3.5 }}>
               <ReportTextualCard
-                icon={<FactCheckIcon />}
-                title="Efectividad de Revisión en Vivo"
-                value={`${data.efectividad.promedioRevisadasPct.toFixed(1)}%`}
+                icon={<CategoryIcon />}
+                title="Tema de consulta más frecuente en clases"
+                value={data.topTopic.name}
                 description={
                   <>
-                    En promedio, el{" "}
-                    <b>{data.efectividad.promedioRevisadasPct.toFixed(1)}%</b>{" "}
-                    de las consultas agendadas son revisadas en clase.
+                    Presente en <b>{data.topTopic.count}</b> consultas tratadas
+                    en clases (<b>{data.topTopic.percentage.toFixed(1)}%</b> del
+                    total).
                   </>
                 }
                 color="info"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 3.5 }}>
+              {/* Top Docente */}
+              <ReportTextualCard
+                icon={<SchoolIcon />}
+                title="Docente con más clases realizadas"
+                value={data.topTeacher.name}
+                description={
+                  <>
+                    Ha llevado a cabo un total de <b>{data.topTeacher.count}</b>{" "}
+                    clases de consulta realizadas.
+                  </>
+                }
+                color="primary"
               />
             </Grid>
           </Grid>
@@ -200,8 +224,8 @@ export default function CourseClassesSummary({ courseId }: Props) {
           <Divider />
 
           <Grid container spacing={3}>
-            {/* Gráfico de Estados */}
-            <Grid size={{ xs: 12, md: 5 }}>
+            {/* Gráfico Agrupado */}
+            <Grid size={{ xs: 12, md: 6 }}>
               <Paper
                 elevation={3}
                 sx={{
@@ -213,80 +237,99 @@ export default function CourseClassesSummary({ courseId }: Props) {
                   width: "100%",
                 }}
               >
-                <Typography variant="h6" gutterBottom align="center">
-                  Estado de Clases
-                </Typography>
-                <PieChart
-                  series={[
-                    {
-                      data: data.graficoEstados,
-                      innerRadius: 30,
-                      paddingAngle: 2,
-                      cornerRadius: 4,
-                      highlightScope: { fade: "global", highlight: "item" },
-                    },
-                  ]}
-                  height={250}
-                  slotProps={{
-                    legend: {
-                      direction: "horizontal",
-                      position: { vertical: "bottom", horizontal: "center" },
-                    },
-                  }}
-                />
-              </Paper>
-            </Grid>
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  width="100%"
+                  mb={2}
+                >
+                  <Typography variant="h6">Distribución de Clases</Typography>
+                  <FormControl size="small" variant="standard">
+                    <Select
+                      value={chartGrouping}
+                      onChange={(e) => setChartGrouping(e.target.value as any)}
+                      disableUnderline
+                      sx={{ fontSize: "0.875rem", fontWeight: "bold" }}
+                    >
+                      <MenuItem value="ESTADO">Por Estado</MenuItem>
+                      <MenuItem value="ORIGEN">Por Origen</MenuItem>
+                      <MenuItem value="AMBOS">Estado y Origen</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Stack>
 
-            {/* Gráfico de Origen */}
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Paper
-                elevation={3}
-                sx={{
-                  p: 2,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  height: "100%",
-                  width: "100%",
-                }}
-              >
-                <Typography variant="h6" gutterBottom align="center">
-                  Origen de Clases
-                </Typography>
-                <PieChart
-                  series={[
-                    {
-                      data: [
-                        {
-                          label: "Sistema",
-                          value: data.kpis.origen.sistema,
-                          color: "#9c27b0",
-                        },
-                        {
-                          label: "Docente",
-                          value: data.kpis.origen.docente,
-                          color: "#ff9800",
-                        },
-                      ],
-                      innerRadius: 30,
-                      paddingAngle: 2,
-                      cornerRadius: 4,
-                    },
-                  ]}
-                  height={250}
-                  slotProps={{
-                    legend: {
-                      direction: "horizontal",
-                      position: { vertical: "bottom", horizontal: "center" },
-                    },
-                  }}
-                />
+                {chartGrouping === "AMBOS" ? (
+                  <BarChart
+                    dataset={data.graficoEstadosOrigen}
+                    xAxis={[{ scaleType: "band", dataKey: "estado" }]}
+                    series={[
+                      {
+                        dataKey: "Sistema",
+                        label: "Sistema",
+                        color: "#9c27b0",
+                        stack: "A",
+                      },
+                      {
+                        dataKey: "Docente",
+                        label: "Docente",
+                        color: "#ff9800",
+                        stack: "A",
+                      },
+                    ]}
+                    height={280}
+                    width={500}
+                    slotProps={{
+                      legend: {
+                        direction: "horizontal",
+                        position: { vertical: "bottom", horizontal: "center" },
+                      },
+                    }}
+                  />
+                ) : (
+                  <PieChart
+                    series={[
+                      {
+                        data:
+                          chartGrouping === "ESTADO"
+                            ? data.graficoEstados
+                            : data.graficoOrigen,
+                        innerRadius: 30,
+                        paddingAngle: 2,
+                        cornerRadius: 4,
+                        highlightScope: { fade: "global", highlight: "item" },
+                      },
+                    ]}
+                    height={280}
+                    slotProps={{
+                      legend: {
+                        direction: "horizontal",
+                        position: { vertical: "bottom", horizontal: "center" },
+                      },
+                    }}
+                  />
+                )}
               </Paper>
             </Grid>
 
             {/* Stats Detalladas */}
-            <Grid size={{ xs: 12, md: 7 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Stack spacing={3} sx={{ height: "100%" }}>
+                {/* Top Topic */}
+                <ReportTextualCard
+                  icon={<FactCheckIcon />}
+                  title="Efectividad de Revisión en Vivo"
+                  value={`${data.efectividad.promedioRevisadasPct.toFixed(1)}%`}
+                  description={
+                    <>
+                      En promedio, el{" "}
+                      <b>{data.efectividad.promedioRevisadasPct.toFixed(1)}%</b>{" "}
+                      de las consultas agendadas son revisadas en clase.
+                    </>
+                  }
+                  color="info"
+                />
+
                 {/* Impacto en Resolución */}
                 <ReportTextualCard
                   icon={<CheckCircleIcon />}
@@ -302,25 +345,10 @@ export default function CourseClassesSummary({ courseId }: Props) {
                   color="success"
                 />
 
-                {/* Top Docente */}
-                <ReportTextualCard
-                  icon={<SchoolIcon />}
-                  title="Docente con más clases realizadas"
-                  value={data.topTeacher.name}
-                  description={
-                    <>
-                      Ha llevado a cabo un total de{" "}
-                      <b>{data.topTeacher.count}</b> clases de consulta
-                      realizadas.
-                    </>
-                  }
-                  color="primary"
-                />
-
                 {/* Efectividad Sistema */}
                 <ReportTextualCard
                   icon={<AutoAwesomeIcon />}
-                  title="Efectividad Automática"
+                  title="Efectividad de Clases de Consulta Automáticas"
                   value={`${data.kpis.origen.pctSistemaRealizadas.toFixed(1)}%`}
                   description={
                     <>

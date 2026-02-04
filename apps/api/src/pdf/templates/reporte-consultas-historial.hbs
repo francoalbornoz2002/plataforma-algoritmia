@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  {{> styles}}
+</head>
+<body>
+  {{> header}}
+
+  <!-- KPIs Resumen del Periodo -->
+  <div class="kpi-container">
+    <div class="kpi-card">
+      <div class="kpi-value">{{stats.total}}</div>
+      <div class="kpi-label">Total Consultas</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" style="color: #0288d1;">{{fixed stats.promedioDiario 1}}</div>
+      <div class="kpi-label">Promedio Diario</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" style="color: #2e7d32;">{{fixed stats.promedioSemanal 1}}</div>
+      <div class="kpi-label">Promedio Semanal</div>
+    </div>
+  </div>
+
+  <!-- Gráfico de Evolución -->
+  <div class="chart-container" style="height: 250px;">
+    <canvas id="historyChart"></canvas>
+  </div>
+
+  <!-- Tabla Detallada -->
+  <h3 style="color: #1976d2; margin-bottom: 10px; font-size: 14px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Detalle de Consultas</h3>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 12%;">Fecha</th>
+        <th style="width: 20%;">Título</th>
+        <th style="width: 15%;">Tema</th>
+        <th style="width: 15%;">Alumno</th>
+        <th style="width: 10%;">Estado</th>
+        <th style="width: 18%;">Atendido por</th>
+        <th style="width: 10%;">Valoración</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each consultas}}
+      <tr>
+        <td>{{fecha}}</td>
+        <td>{{titulo}}</td>
+        <td>{{tema}}</td>
+        <td>{{alumno}}</td>
+        <td><span class="badge badge-{{estadoRaw}}" style="background-color: {{#if (eq estadoRaw 'Pendiente')}}#ed6c02{{else if (eq estadoRaw 'A_revisar')}}#0288d1{{else if (eq estadoRaw 'Revisada')}}#9c27b0{{else if (eq estadoRaw 'Resuelta')}}#2e7d32{{else}}#9e9e9e{{/if}};">{{estado}}</span></td>
+        <td>{{docente}}</td>
+        <td class="text-center">{{valoracion}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+
+  {{> footer}}
+
+  <script>
+    {{{chartJsContent}}}
+  </script>
+  {{> chartSetup}}
+  <script>
+    const ctx = document.getElementById('historyChart').getContext('2d');
+    const config = {{{chartConfig}}};
+    applyChartPrintConfig(config);
+    new Chart(ctx, config);
+  </script>
+</body>
+</html>

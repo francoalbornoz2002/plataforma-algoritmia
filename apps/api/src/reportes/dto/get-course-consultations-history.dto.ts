@@ -21,3 +21,9 @@ export class GetCourseConsultationsHistoryDto {
   @IsDateString()
   fechaHasta?: string;
 }
+
+export class GetCourseConsultationsHistoryPdfDto extends GetCourseConsultationsHistoryDto {
+  @IsOptional()
+  @IsString()
+  aPresentarA?: string;
+}

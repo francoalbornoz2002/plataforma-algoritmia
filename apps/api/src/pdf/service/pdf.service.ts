@@ -13,6 +13,8 @@ import { GetStudentEnrollmentHistoryDto } from '../../reportes/dto/get-student-e
 import { GetTeacherAssignmentHistoryDto } from '../../reportes/dto/get-teacher-assignment-history.dto';
 import { estado_clase_consulta } from '@prisma/client';
 import { GetCourseConsultationsSummaryPdfDto } from 'src/reportes/dto/get-course-consultations-summary.dto';
+import { GetCourseConsultationsHistoryPdfDto } from 'src/reportes/dto/get-course-consultations-history.dto';
+import { GetCourseClassesSummaryPdfDto } from 'src/reportes/dto/get-course-classes-summary.dto';
 
 @Injectable()
 export class PdfService {
@@ -238,6 +240,24 @@ export class PdfService {
             label: 'No Revisadas',
             data: data.chartData.map((d) => d.noRevisadas),
             backgroundColor: '#ed6c02',
+            stack: 'Stack 0',
+          },
+          {
+            label: 'No Realizada (Pendientes)',
+            data: data.chartData.map((d) => d.pendientes),
+            backgroundColor: '#9e9e9e', // Gris
+            stack: 'Stack 0',
+          },
+          {
+            label: 'Programadas',
+            data: data.chartData.map((d) => d.programadas),
+            backgroundColor: '#1976d2', // Azul
+            stack: 'Stack 0',
+          },
+          {
+            label: 'Cancelada',
+            data: data.chartData.map((d) => d.cancelada),
+            backgroundColor: '#d32f2f', // Rojo
             stack: 'Stack 0',
           },
         ],
@@ -1143,6 +1163,257 @@ export class PdfService {
     return new StreamableFile(pdfBuffer, {
       type: 'application/pdf',
       disposition: `attachment; filename="resumen-consultas.pdf"`,
+    });
+  }
+
+  async getCourseConsultationsHistoryPdf(
+    idCurso: string,
+    dto: GetCourseConsultationsHistoryPdfDto,
+    userId: string,
+  ): Promise<StreamableFile> {
+    // 1. Obtener datos
+    const data = await this.reportesService.getCourseConsultationsHistory(
+      idCurso,
+      dto,
+    );
+
+    // 2. Metadatos
+    const { curso, institucion, usuario, logoBase64 } =
+      await this.reportesService.getReportMetadata(userId, idCurso);
+
+    // 3. Registrar Reporte
+    const { reporteDB, filtrosTexto } =
+      await this.reportesService.registerReport(
+        userId,
+        'Historial de Consultas',
+        'Cursos',
+        dto,
+      );
+
+    // 4. Configurar Gráfico
+    const chartJsContent = await this.getChartJsContent();
+
+    const chartConfig = {
+      type: 'line',
+      data: {
+        labels: data.timeline.map((d) =>
+          d.fecha.split('-').slice(1).reverse().join('/'),
+        ),
+        datasets: [
+          {
+            label: 'Consultas Realizadas',
+            data: data.timeline.map((d) => d.cantidad),
+            borderColor: '#1976d2',
+            backgroundColor: '#1976d2',
+            tension: 0.1,
+            fill: false,
+          },
+        ],
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Cantidad de consultas',
+            },
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Fecha',
+            },
+          },
+        },
+      },
+    };
+
+    // 5. Formatear Tabla
+    const consultasFormatted = data.tabla.map((c) => ({
+      fecha: c.fecha.toISOString().split('T')[0],
+      titulo: c.titulo,
+      tema: c.tema,
+      alumno: c.alumno,
+      estado: c.estado.replace('_', ' '),
+      estadoRaw: c.estado,
+      docente: c.docente,
+      valoracion: c.valoracion ? `${c.valoracion} ⭐` : '-',
+    }));
+
+    const commonData = this.buildCommonTemplateData(
+      { institucion, usuario, logoBase64 },
+      {
+        reporteDB,
+        filtrosTexto,
+        titulo: 'Historial de Consultas',
+        subtitulo: `Curso: ${curso?.nombre || 'Desconocido'}`,
+        aPresentarA: dto.aPresentarA,
+      },
+    );
+
+    const templateData = {
+      ...commonData,
+      stats: data.stats,
+      chartJsContent,
+      chartConfig: JSON.stringify(chartConfig),
+      consultas: consultasFormatted,
+    };
+
+    const pdfBuffer = await this.generatePdf(
+      'reporte-consultas-historial',
+      templateData,
+    );
+
+    return new StreamableFile(pdfBuffer, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="historial-consultas-${idCurso}.pdf"`,
+    });
+  }
+
+  async getCourseClassesSummaryPdf(
+    idCurso: string,
+    dto: GetCourseClassesSummaryPdfDto,
+    userId: string,
+  ): Promise<StreamableFile> {
+    // 1. Obtener datos
+    const data = await this.reportesService.getCourseClassesSummary(
+      idCurso,
+      dto,
+    );
+
+    // 2. Metadatos
+    const { curso, institucion, usuario, logoBase64 } =
+      await this.reportesService.getReportMetadata(userId, idCurso);
+
+    // 3. Registrar Reporte
+    const { reporteDB, filtrosTexto } =
+      await this.reportesService.registerReport(
+        userId,
+        'Resumen de Clases de Consulta',
+        'Cursos',
+        { ...dto, cursoId: idCurso },
+      );
+
+    // 4. Configurar Gráfico
+    const chartJsContent = await this.getChartJsContent();
+    let chartConfig: any;
+
+    if (dto.agruparPor === 'AMBOS') {
+      // Barras Apiladas (Estado x Origen)
+      const labels = data.graficoEstadosOrigen.map((d) => d.estado);
+      const datasets = [
+        {
+          label: 'Sistema',
+          data: data.graficoEstadosOrigen.map((d) => d.Sistema),
+          backgroundColor: '#9c27b0',
+          stack: 'Stack 0',
+        },
+        {
+          label: 'Docente',
+          data: data.graficoEstadosOrigen.map((d) => d.Docente),
+          backgroundColor: '#ff9800',
+          stack: 'Stack 0',
+        },
+      ];
+
+      chartConfig = {
+        type: 'bar',
+        data: { labels, datasets },
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: 'Distribución de Clases de Consulta por ESTADO y ORIGEN',
+            },
+            legend: { position: 'bottom' },
+          },
+          scales: {
+            x: { stacked: true },
+            y: { stacked: true, beginAtZero: true },
+          },
+        },
+      };
+    } else if (dto.agruparPor === 'ORIGEN') {
+      // Torta (Origen)
+      chartConfig = {
+        type: 'pie',
+        data: {
+          labels: data.graficoOrigen.map((d) => `${d.label} (${d.value})`),
+          datasets: [
+            {
+              data: data.graficoOrigen.map((d) => d.value),
+              backgroundColor: data.graficoOrigen.map((d) => d.color),
+            },
+          ],
+        },
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: 'Distribución de Clases de Consulta por ORIGEN',
+            },
+            legend: { position: 'right' },
+          },
+          scales: { x: { display: false }, y: { display: false } },
+        },
+      };
+    } else {
+      // Torta (Estado - Default)
+      chartConfig = {
+        type: 'pie',
+        data: {
+          labels: data.graficoEstados.map((d) => `${d.label} (${d.value})`),
+          datasets: [
+            {
+              data: data.graficoEstados.map((d) => d.value),
+              backgroundColor: data.graficoEstados.map((d) => d.color),
+            },
+          ],
+        },
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: 'Distribución de Clases de Consulta por ESTADO',
+            },
+            legend: { position: 'right' },
+          },
+          scales: { x: { display: false }, y: { display: false } },
+        },
+      };
+    }
+
+    const commonData = this.buildCommonTemplateData(
+      { institucion, usuario, logoBase64 },
+      {
+        reporteDB,
+        filtrosTexto,
+        titulo: 'Resumen de Clases de Consulta',
+        subtitulo: `Curso: ${curso?.nombre || 'Desconocido'}`,
+        aPresentarA: dto.aPresentarA,
+      },
+    );
+
+    const templateData = {
+      ...commonData,
+      kpis: data.kpis,
+      efectividad: data.efectividad,
+      impacto: data.impacto,
+      topTopic: data.topTopic,
+      topTeacher: data.topTeacher,
+      chartJsContent,
+      chartConfig: JSON.stringify(chartConfig),
+    };
+
+    const pdfBuffer = await this.generatePdf(
+      'reporte-clases-resumen',
+      templateData,
+    );
+
+    return new StreamableFile(pdfBuffer, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="resumen-clases-${idCurso}.pdf"`,
     });
   }
 }

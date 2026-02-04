@@ -1854,20 +1854,27 @@ export class ReportesService {
     const { fechaDesde, fechaHasta } = dto;
     const start = fechaDesde ? new Date(fechaDesde) : new Date(0);
     if (fechaDesde) start.setUTCHours(0, 0, 0, 0);
-    const end = fechaHasta ? new Date(fechaHasta) : new Date();
-    end.setUTCHours(23, 59, 59, 999);
+
+    // Si no hay fechaHasta, no limitamos el fin (para ver clases futuras/pendientes)
+    let end: Date | undefined;
+    if (fechaHasta) {
+      end = new Date(fechaHasta);
+      end.setUTCHours(23, 59, 59, 999);
+    }
 
     // 1. Obtener Clases
     const allClasses = await this.prisma.claseConsulta.findMany({
       where: {
         idCurso,
-        fechaClase: { gte: start, lte: end },
+        fechaClase: { gte: start, ...(end && { lte: end }) },
       },
       include: {
         docenteResponsable: {
           select: { id: true, nombre: true, apellido: true },
         },
-        consultasEnClase: true,
+        consultasEnClase: {
+          include: { consulta: { select: { tema: true } } },
+        },
       },
     });
 
@@ -1877,6 +1884,9 @@ export class ReportesService {
     const activeClasses: any[] = [];
     const realizedClasses: any[] = [];
     const statusCounts: Record<string, number> = {};
+    const originCounts: Record<string, number> = { Sistema: 0, Docente: 0 };
+    const stateOriginCounts: Record<string, Record<string, number>> = {};
+    const topicCounts: Record<string, number> = {};
 
     let systemCount = 0;
     let teacherCount = 0;
@@ -1903,6 +1913,23 @@ export class ReportesService {
       }
 
       // Conteo por Origen
+      const origen = c.esAutomatica ? 'Sistema' : 'Docente';
+      originCounts[origen]++;
+
+      // Conteo Estado x Origen
+      if (!stateOriginCounts[estado]) {
+        stateOriginCounts[estado] = { Sistema: 0, Docente: 0 };
+      }
+      stateOriginCounts[estado][origen]++;
+
+      // Conteo de Temas
+      c.consultasEnClase.forEach((cc) => {
+        if (cc.consulta?.tema) {
+          const t = cc.consulta.tema;
+          topicCounts[t] = (topicCounts[t] || 0) + 1;
+        }
+      });
+
       if (c.esAutomatica) {
         systemCount++;
         if (c.estadoClase === estado_clase_consulta.Realizada) {
@@ -1913,12 +1940,50 @@ export class ReportesService {
       }
     });
 
+    const stateColors: Record<string, string> = {
+      [estado_clase_consulta.Pendiente_Asignacion]: '#ed6c02', // Naranja (Warning)
+      [estado_clase_consulta.Programada]: '#1976d2', // Azul (Primary)
+      [estado_clase_consulta.En_curso]: '#0288d1', // Celeste (Info)
+      [estado_clase_consulta.Finalizada]: '#7b1fa2', // Violeta
+      [estado_clase_consulta.Realizada]: '#2e7d32', // Verde (Success)
+      [estado_clase_consulta.No_realizada]: '#d32f2f', // Rojo (Error)
+      [estado_clase_consulta.Cancelada]: '#9e9e9e', // Gris
+    };
+
     const graficoEstados = Object.entries(statusCounts).map(
       ([label, value]) => ({
-        label: label.replace('_', ' '),
+        label: label.replace(/_/g, ' '),
         value,
+        color: stateColors[label] || '#9e9e9e',
       }),
     );
+
+    const graficoOrigen = [
+      { label: 'Sistema', value: originCounts.Sistema, color: '#9c27b0' },
+      { label: 'Docente', value: originCounts.Docente, color: '#ff9800' },
+    ];
+
+    const graficoEstadosOrigen = Object.entries(stateOriginCounts).map(
+      ([estado, counts]) => ({
+        estado: estado.replace(/_/g, ' '),
+        Sistema: counts['Sistema'] || 0,
+        Docente: counts['Docente'] || 0,
+      }),
+    );
+
+    // Tema más frecuente
+    let topTopic = { name: 'Ninguno', count: 0, percentage: 0 };
+    const totalTopics = Object.values(topicCounts).reduce((a, b) => a + b, 0);
+
+    for (const [name, count] of Object.entries(topicCounts)) {
+      if (count > topTopic.count) {
+        topTopic = {
+          name,
+          count,
+          percentage: totalTopics > 0 ? (count / totalTopics) * 100 : 0,
+        };
+      }
+    }
 
     // 3. Promedio de consultas por clase (Sobre clases activas)
     let totalConsultasAgendadas = 0;
@@ -2016,6 +2081,9 @@ export class ReportesService {
         },
       },
       graficoEstados,
+      graficoOrigen,
+      graficoEstadosOrigen,
+      topTopic,
       efectividad: {
         promedioRevisadasPct: promPorcentajeRevisadas,
         promedioRevisadasCount: promCantidadRevisadas,
@@ -2036,12 +2104,16 @@ export class ReportesService {
     const { fechaDesde, fechaHasta, docenteId } = dto;
     const start = fechaDesde ? new Date(fechaDesde) : new Date(0);
     if (fechaDesde) start.setUTCHours(0, 0, 0, 0);
-    const end = fechaHasta ? new Date(fechaHasta) : new Date();
-    end.setUTCHours(23, 59, 59, 999);
+
+    let end: Date | undefined;
+    if (fechaHasta) {
+      end = new Date(fechaHasta);
+      end.setUTCHours(23, 59, 59, 999);
+    }
 
     const where: Prisma.ClaseConsultaWhereInput = {
       idCurso,
-      fechaClase: { gte: start, lte: end },
+      fechaClase: { gte: start, ...(end && { lte: end }) },
     };
 
     if (docenteId) {
@@ -2084,19 +2156,37 @@ export class ReportesService {
       ).length;
       const noRevisadas = totalConsultas - revisadas;
 
-      // Solo agregamos al gráfico si la clase tiene consultas y (opcionalmente) si está realizada
-      // Para mostrar historial completo, podemos incluir todas, pero visualmente es mejor las realizadas.
-      if (c.estadoClase === estado_clase_consulta.Realizada) {
-        chartData.push({
-          fecha: c.fechaClase.toISOString().split('T')[0],
-          nombre: c.nombre,
-          revisadas,
-          noRevisadas,
-          total: totalConsultas,
-          pctRevisadas:
-            totalConsultas > 0 ? (revisadas / totalConsultas) * 100 : 0,
-        });
+      // Lógica de Gráfico: Mapear estado a series de datos
+      const chartEntry = {
+        fecha: c.fechaClase.toISOString().split('T')[0],
+        nombre: c.nombre,
+        estado: c.estadoClase,
+        revisadas: 0,
+        noRevisadas: 0,
+        pendientes: 0, // Para No Realizada
+        programadas: 0, // Para Programada/En Curso
+        cancelada: 0, // Valor visual para Cancelada
+        total: totalConsultas,
+      };
+
+      switch (c.estadoClase) {
+        case estado_clase_consulta.Realizada:
+          chartEntry.revisadas = revisadas;
+          chartEntry.noRevisadas = noRevisadas;
+          break;
+        case estado_clase_consulta.No_realizada:
+          chartEntry.pendientes = totalConsultas;
+          break;
+        case estado_clase_consulta.Cancelada:
+          chartEntry.cancelada = 0.3; // Valor pequeño para mostrar una "marca" en el gráfico
+          break;
+        default:
+          // Programada, En_curso, Pendiente_Asignacion, Finalizada (sin realizar)
+          chartEntry.programadas = totalConsultas;
+          break;
       }
+
+      chartData.push(chartEntry);
 
       // Lógica para fecha de realización
       const fechaRealizacion =
@@ -2168,6 +2258,22 @@ export class ReportesService {
             });
             if (curso) {
               displayValue = curso.nombre;
+            }
+          }
+
+          // Traducir IDs de alumnos a Nombres
+          if (key === 'alumnos' && typeof value === 'string') {
+            const ids = value.split(',').filter(Boolean);
+            if (ids.length > 0) {
+              const students = await this.prisma.usuario.findMany({
+                where: { id: { in: ids } },
+                select: { nombre: true, apellido: true },
+              });
+              if (students.length > 0) {
+                displayValue = students
+                  .map((s) => `${s.nombre} ${s.apellido}`)
+                  .join(', ');
+              }
             }
           }
 

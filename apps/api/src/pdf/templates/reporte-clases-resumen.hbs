@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  {{> styles}}
+</head>
+<body>
+  {{> header}}
+
+  <!-- KPIs Principales -->
+  <div class="kpi-container">
+    <div class="kpi-card">
+      <div class="kpi-value">{{kpis.totalClases}}</div>
+      <div class="kpi-label">Total Clases</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" style="color: #2e7d32;">{{kpis.activas}}</div>
+      <div class="kpi-label">Activas</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" style="color: #d32f2f;">{{kpis.inactivas}}</div>
+      <div class="kpi-label">Inactivas</div>
+    </div>
+  </div>
+
+  <!-- KPIs Detallados -->
+  <div class="stats-grid">
+    <div class="stat-card" style="border-left: 4px solid #1976d2;">
+      <div class="stat-title">Promedio Consultas</div>
+      <div class="stat-value" style="color: #1976d2;">{{fixed kpis.promConsultasPorClase 1}}</div>
+      <div class="stat-desc">Consultas por clase activa</div>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #0288d1;">
+      <div class="stat-title">Efectividad Revisión</div>
+      <div class="stat-value" style="color: #0288d1;">{{fixed efectividad.promedioRevisadasPct 1}}%</div>
+      <div class="stat-desc">Consultas revisadas en vivo</div>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #2e7d32;">
+      <div class="stat-title">Impacto Resolución</div>
+      <div class="stat-value" style="color: #2e7d32;">{{fixed impacto.porcentaje 1}}%</div>
+      <div class="stat-desc">Resueltas tras clase</div>
+    </div>
+    <div class="stat-card" style="border-left: 4px solid #9c27b0;">
+      <div class="stat-title">Efectividad Auto</div>
+      <div class="stat-value" style="color: #9c27b0;">{{fixed kpis.origen.pctSistemaRealizadas 1}}%</div>
+      <div class="stat-desc">Clases auto. realizadas</div>
+    </div>
+  </div>
+
+  <!-- Gráfico -->
+  <div class="chart-container" style="height: 250px;">
+    <canvas id="clasesChart"></canvas>
+  </div>
+
+  <!-- Top Stats -->
+  <div class="top-section">
+    <h3 style="color: #1976d2; margin-bottom: 10px; font-size: 14px;">Estadísticas Destacadas</h3>
+    
+    <div class="top-stats-grid">
+      <div class="top-card" style="border-top: 4px solid #ed6c02;">
+        <div class="stat-title">Tema más frecuente</div>
+        <div class="stat-value" style="color: #ed6c02; font-size: 18px; margin-bottom: 5px;">{{topTopic.name}}</div>
+        <div class="stat-desc">Presente en {{topTopic.count}} consultas tratadas en clases ({{fixed topTopic.percentage 1}}% del total).</div>
+      </div>
+
+      <div class="top-card" style="border-top: 4px solid #1976d2;">
+        <div class="stat-title">Docente con más clases</div>
+        <div class="stat-value" style="color: #1976d2; font-size: 18px; margin-bottom: 5px;">{{topTeacher.name}}</div>
+        <div class="stat-desc">Ha llevado a cabo un total de {{topTeacher.count}} clases de consulta realizadas.</div>
+      </div>
+      
+      <!-- Placeholder para mantener la grilla de 3 si es necesario, o dejar vacío -->
+      <div class="top-card" style="border-top: 4px solid #9c27b0;">
+        <div class="stat-title">Generadas por Sistema</div>
+        <div class="stat-value" style="color: #9c27b0; font-size: 18px; margin-bottom: 5px;">{{kpis.origen.sistema}}</div>
+        <div class="stat-desc">Clases propuestas automáticamente por la plataforma.</div>
+      </div>
+    </div>
+  </div>
+
+  {{> footer}}
+
+  <script>
+    {{{chartJsContent}}}
+  </script>
+  {{> chartSetup}}
+  <script>
+    const ctx = document.getElementById('clasesChart').getContext('2d');
+    const config = {{{chartConfig}}};
+    applyChartPrintConfig(config);
+    new Chart(ctx, config);
+  </script>
+</body>
+</html>

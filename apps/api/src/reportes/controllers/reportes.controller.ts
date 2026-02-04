@@ -46,8 +46,14 @@ import {
   GetCourseConsultationsSummaryDto,
   GetCourseConsultationsSummaryPdfDto,
 } from '../dto/get-course-consultations-summary.dto';
-import { GetCourseConsultationsHistoryDto } from '../dto/get-course-consultations-history.dto';
-import { GetCourseClassesSummaryDto } from '../dto/get-course-classes-summary.dto';
+import {
+  GetCourseConsultationsHistoryDto,
+  GetCourseConsultationsHistoryPdfDto,
+} from '../dto/get-course-consultations-history.dto';
+import {
+  GetCourseClassesSummaryDto,
+  GetCourseClassesSummaryPdfDto,
+} from '../dto/get-course-classes-summary.dto';
 import { GetCourseClassesHistoryDto } from '../dto/get-course-classes-history.dto';
 import { GetCourseSessionsSummaryDto } from '../dto/get-course-sessions-summary.dto';
 import { GetCourseSessionsHistoryDto } from '../dto/get-course-sessions-history.dto';
@@ -330,6 +336,27 @@ export class ReportesController {
     return this.reportesService.getCourseConsultationsHistory(id, dto);
   }
 
+  @Get('cursos/:id/consultas/historial/pdf')
+  @Roles(roles.Administrador, roles.Docente)
+  async getCourseConsultationsHistoryPdf(
+    @Param('id') id: string,
+    @Query() dto: GetCourseConsultationsHistoryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.pdfService.getCourseConsultationsHistoryPdf(
+      id,
+      dto,
+      userId,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="historial-consultas.pdf"`,
+    });
+    return file;
+  }
+
   // Clases de Consulta - Sección 1: Resumen
   @Get('cursos/:id/clases-consulta/resumen')
   @Roles(roles.Administrador, roles.Docente)
@@ -338,6 +365,27 @@ export class ReportesController {
     @Query() dto: GetCourseClassesSummaryDto,
   ) {
     return this.reportesService.getCourseClassesSummary(id, dto);
+  }
+
+  @Get('cursos/:id/clases-consulta/resumen/pdf')
+  @Roles(roles.Administrador, roles.Docente)
+  async getCourseClassesSummaryPdf(
+    @Param('id') id: string,
+    @Query() dto: GetCourseClassesSummaryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.pdfService.getCourseClassesSummaryPdf(
+      id,
+      dto,
+      userId,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="resumen-clases-${id}.pdf"`,
+    });
+    return file;
   }
 
   // Clases de Consulta - Sección 2: Historial

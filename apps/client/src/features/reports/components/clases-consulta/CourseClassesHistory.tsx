@@ -14,7 +14,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { BarChart } from "@mui/x-charts/BarChart";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
@@ -34,15 +34,6 @@ import QuickDateFilter from "../../../../components/QuickDateFilter";
 interface Props {
   courseId: string;
 }
-
-// Helper para mostrar fechas UTC tal cual (sin que la zona horaria local cambie el día)
-const formatUTCDate = (dateString: string, fmt: string = "dd/MM/yyyy") => {
-  if (!dateString) return "-";
-  const date = new Date(dateString);
-  const userTimezoneOffset = date.getTimezoneOffset() * 60000;
-  const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
-  return format(adjustedDate, fmt);
-};
 
 export default function CourseClassesHistory({ courseId }: Props) {
   // --- Estados ---
@@ -77,6 +68,12 @@ export default function CourseClassesHistory({ courseId }: Props) {
       setLoading(true);
       try {
         const result = await getCourseClassesHistory(courseId, filters);
+        if (result.chartData) {
+          result.chartData = result.chartData.map((d: any) => ({
+            ...d,
+            fecha: parse(d.fecha, "yyyy-MM-dd", new Date()),
+          }));
+        }
         setData(result);
       } catch (err) {
         console.error(err);
@@ -145,7 +142,8 @@ export default function CourseClassesHistory({ courseId }: Props) {
       field: "fechaAgenda",
       headerName: "Fecha Agenda",
       width: 140,
-      valueFormatter: (value: string) => formatUTCDate(value),
+      valueFormatter: (value: string) =>
+        value ? format(new Date(value), "dd/MM/yyyy") : "-",
     },
     { field: "nombre", headerName: "Nombre Clase", width: 200 },
     { field: "docente", headerName: "Docente", width: 180 },
@@ -344,12 +342,9 @@ export default function CourseClassesHistory({ courseId }: Props) {
         <Stack spacing={4}>
           {/* --- Gráfico Apilado --- */}
           <Paper elevation={3} sx={{ p: 2 }}>
-            <Typography variant="h6">
-              Efectividad por Clase (Consultas Revisadas vs Pendientes)
-            </Typography>
+            <Typography variant="h6">Evolución y Estado de Clases</Typography>
             <Typography variant="caption" color="text.secondary" gutterBottom>
-              Solo se muestran clases realizadas o no realizadas en el periodo
-              seleccionado.
+              Cantidad de consultas agendadas por clase según su estado.
             </Typography>
 
             {data.chartData.length > 0 ? (
@@ -366,7 +361,7 @@ export default function CourseClassesHistory({ courseId }: Props) {
                     scaleType: "band",
                     dataKey: "fecha",
                     label: "Fecha de Clase",
-                    valueFormatter: (val) => formatUTCDate(val, "dd/MM"),
+                    valueFormatter: (val) => format(val, "dd/MM"),
                   },
                 ]}
                 series={[
@@ -382,6 +377,24 @@ export default function CourseClassesHistory({ courseId }: Props) {
                     stack: "total",
                     color: "#ff9800", // Naranja
                   },
+                  {
+                    dataKey: "pendientes",
+                    label: "No Realizada (Pendientes)",
+                    stack: "total",
+                    color: "#9e9e9e", // Gris
+                  },
+                  {
+                    dataKey: "programadas",
+                    label: "Programadas",
+                    stack: "total",
+                    color: "#1976d2", // Azul
+                  },
+                  {
+                    dataKey: "cancelada",
+                    label: "Cancelada",
+                    stack: "total",
+                    color: "#d32f2f", // Rojo
+                  },
                 ]}
                 height={500}
                 slotProps={{
@@ -393,8 +406,7 @@ export default function CourseClassesHistory({ courseId }: Props) {
               />
             ) : (
               <Typography align="center" color="text.secondary" sx={{ py: 4 }}>
-                No hay clases realizadas con consultas para mostrar en el
-                gráfico.
+                No hay clases para mostrar en el gráfico.
               </Typography>
             )}
           </Paper>

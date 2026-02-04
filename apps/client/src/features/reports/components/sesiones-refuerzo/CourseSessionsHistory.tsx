@@ -18,7 +18,7 @@ import {
   InputLabel,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -36,15 +36,6 @@ import QuickDateFilter from "../../../../components/QuickDateFilter";
 interface Props {
   courseId: string;
 }
-
-// Helper para fechas UTC
-const formatUTCDate = (dateString: string, fmt: string = "dd/MM/yyyy") => {
-  if (!dateString) return "-";
-  const date = new Date(dateString);
-  const userTimezoneOffset = date.getTimezoneOffset() * 60000;
-  const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
-  return format(adjustedDate, fmt);
-};
 
 export default function CourseSessionsHistory({ courseId }: Props) {
   const [loading, setLoading] = useState(false);
@@ -73,6 +64,12 @@ export default function CourseSessionsHistory({ courseId }: Props) {
       setLoading(true);
       try {
         const result = await getCourseSessionsHistory(courseId, filters);
+        if (result.chartData) {
+          result.chartData = result.chartData.map((d: any) => ({
+            ...d,
+            fecha: parse(d.fecha, "yyyy-MM-dd", new Date()),
+          }));
+        }
         setData(result);
       } catch (err) {
         console.error(err);
@@ -113,7 +110,8 @@ export default function CourseSessionsHistory({ courseId }: Props) {
       field: "fechaGrafico",
       headerName: "Fecha Ref.",
       width: 120,
-      valueFormatter: (val) => formatUTCDate(val),
+      valueFormatter: (val) =>
+        val ? format(new Date(val), "dd/MM/yyyy") : "-",
     },
     {
       field: "alumno",
@@ -433,9 +431,9 @@ export default function CourseSessionsHistory({ courseId }: Props) {
                 dataset={data.chartData}
                 xAxis={[
                   {
-                    scaleType: "band",
+                    scaleType: "point",
                     dataKey: "fecha",
-                    valueFormatter: (val) => formatUTCDate(val, "dd/MM"),
+                    valueFormatter: (val) => format(val, "dd/MM"),
                   },
                 ]}
                 series={[

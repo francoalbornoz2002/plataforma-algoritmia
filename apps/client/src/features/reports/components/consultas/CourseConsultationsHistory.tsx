@@ -22,10 +22,9 @@ import {
   type SelectChangeEvent,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableOnIcon from "@mui/icons-material/TableChart";
 import FunctionsIcon from "@mui/icons-material/Functions";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
@@ -33,14 +32,15 @@ import DateRangeIcon from "@mui/icons-material/DateRange";
 
 import {
   getCourseConsultationsHistory,
+  getCourseConsultationsHistoryPdf,
   type CourseConsultationsHistoryFilters,
 } from "../../service/reports.service";
 import { getStudentProgressList } from "../../../users/services/docentes.service";
 import { useDebounce } from "../../../../hooks/useDebounce";
 import { temas, estado_consulta } from "../../../../types";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
-import ReportTotalCard from "../common/ReportTotalCard";
 import ReportStatCard from "../common/ReportStatCard";
+import PdfExportButton from "../common/PdfExportButton";
 
 interface Props {
   courseId: string;
@@ -124,7 +124,7 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
         if (result.timeline) {
           result.timeline = result.timeline.map((t: any) => ({
             ...t,
-            fecha: new Date(t.fecha),
+            fecha: parse(t.fecha, "yyyy-MM-dd", new Date()),
           }));
         }
         setData(result);
@@ -239,19 +239,18 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
           color="primary.main"
           sx={{ mb: 2, fontWeight: "bold" }}
         >
-          Historial de Consultas
+          Historial de Consultas Realizadas
         </Typography>
         <Box
           sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
         >
-          <Button
-            variant="outlined"
-            startIcon={<PictureAsPdfIcon />}
+          <PdfExportButton
+            filters={{ ...filters, courseId }}
+            exportFunction={getCourseConsultationsHistoryPdf}
+            fileName="historial-consultas.pdf"
             disabled={!data}
-            color="error"
-          >
-            Exportar PDF
-          </Button>
+            onError={setError}
+          />
           <Button
             variant="outlined"
             startIcon={<TableOnIcon />}
@@ -390,7 +389,7 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
               <ReportStatCard
                 icon={<CalendarTodayIcon fontSize="small" />}
                 title="Promedio Diario"
-                subtitle="Consultas realizada por día en el periodo indicado"
+                subtitle="Consultas realizadas por día en el periodo indicado"
                 count={Number(data.stats.promedioDiario.toFixed(1))}
                 color="info"
               />
@@ -399,7 +398,7 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
               <ReportStatCard
                 icon={<DateRangeIcon fontSize="small" />}
                 title="Promedio Semanal"
-                subtitle="Consultas realizada por semana en el periodo indicado"
+                subtitle="Consultas realizadas por semana en el periodo indicado"
                 count={Number(data.stats.promedioSemanal.toFixed(1))}
                 color="success"
               />
