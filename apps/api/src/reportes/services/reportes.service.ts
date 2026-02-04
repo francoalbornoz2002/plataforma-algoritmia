@@ -2349,31 +2349,45 @@ export class ReportesService {
       },
     });
 
-    // 2. Procesamiento de Datos
+    // 2. Inicialización de Contadores
     let activeCount = 0;
     let inactiveCount = 0;
-
-    const stateCounts = {
-      Pendiente: 0,
-      En_curso: 0,
-      Completada: 0,
-      No_completada: 0,
-    };
-
-    const studentCounts = new Map<string, { count: number; name: string }>();
-    const teacherCounts = new Map<string, { count: number; name: string }>();
-    const difficultyCounts = new Map<string, { count: number; name: string }>();
-    const topicCounts = new Map<string, number>();
-
     let systemGeneratedCount = 0;
     let teacherGeneratedCount = 0;
 
+    // Contadores para Gráficos
+    const statusCounts: Record<string, number> = {};
+    const originCounts: Record<string, number> = { Sistema: 0, Docente: 0 };
+    const stateOriginCounts: Record<string, Record<string, number>> = {};
+    const topicCounts: Record<string, number> = {};
+    const difficultyNameCounts: Record<string, number> = {}; // Por nombre para gráfico
+    const topicDifficultyCounts: Record<string, Record<string, number>> = {};
+
+    // Contadores para Tops (Maps para unicidad por ID)
+    const studentCounts = new Map<string, { count: number; name: string }>();
+    const teacherCounts = new Map<string, { count: number; name: string }>();
+    const difficultyIdCounts = new Map<
+      string,
+      { count: number; name: string }
+    >();
+
+    // Contadores para Promedios y Efectividad
+    let totalGradePoints = 0;
+    let totalGradedSessions = 0;
     // Efectividad: [Total, Nivel1(40-60), Nivel2(60-85), Nivel3(85+)]
     const effectiveness = {
       sistema: { total: 0, level1: 0, level2: 0, level3: 0 },
       docente: { total: 0, level1: 0, level2: 0, level3: 0 },
     };
 
+    const gradeWeights = {
+      [grado_dificultad.Ninguno]: 0,
+      [grado_dificultad.Bajo]: 1,
+      [grado_dificultad.Medio]: 2,
+      [grado_dificultad.Alto]: 3,
+    };
+
+    // 3. Iteración Única
     sessions.forEach((s) => {
       // A. Activas vs Inactivas
       const isInactive =
@@ -2381,52 +2395,78 @@ export class ReportesService {
       if (isInactive) inactiveCount++;
       else activeCount++;
 
-      // B. Estados (Lógica visual)
-      if (s.estado === estado_sesion.Completada) stateCounts.Completada++;
-      else if (
-        s.estado === estado_sesion.Incompleta ||
-        s.estado === estado_sesion.No_realizada
-      )
-        stateCounts.No_completada++;
-      else if (s.estado === estado_sesion.Pendiente) {
-        if (s.fechaInicioReal) stateCounts.En_curso++;
-        else stateCounts.Pendiente++;
+      // B. Estados (Normalización para gráfico)
+      let chartState = s.estado as string;
+      if (s.estado === estado_sesion.Pendiente && s.fechaInicioReal) {
+        chartState = 'En_curso';
+      }
+      statusCounts[chartState] = (statusCounts[chartState] || 0) + 1;
+
+      // C. Origen
+      const origen = s.idDocente ? 'Docente' : 'Sistema';
+      originCounts[origen]++;
+      if (s.idDocente) teacherGeneratedCount++;
+      else systemGeneratedCount++;
+
+      // D. Estado x Origen
+      if (!stateOriginCounts[chartState]) {
+        stateOriginCounts[chartState] = { Sistema: 0, Docente: 0 };
+      }
+      stateOriginCounts[chartState][origen]++;
+
+      // E. Tema y Dificultad (Gráficos)
+      const tema = s.dificultad.tema;
+      const dificultadNombre = s.dificultad.nombre;
+
+      topicCounts[tema] = (topicCounts[tema] || 0) + 1;
+      difficultyNameCounts[dificultadNombre] =
+        (difficultyNameCounts[dificultadNombre] || 0) + 1;
+
+      if (!topicDifficultyCounts[tema]) {
+        topicDifficultyCounts[tema] = {};
+      }
+      topicDifficultyCounts[tema][dificultadNombre] =
+        (topicDifficultyCounts[tema][dificultadNombre] || 0) + 1;
+
+      // F. Grado Promedio
+      if (s.gradoSesion !== grado_dificultad.Ninguno) {
+        totalGradePoints += gradeWeights[s.gradoSesion];
+        totalGradedSessions++;
       }
 
-      // C. Agrupaciones (Usamos todas las sesiones para historial de asignación)
-      // Alumno
+      // G. Tops (Alumnos)
       const sId = s.idAlumno;
-      if (!studentCounts.has(sId))
+      if (!studentCounts.has(sId)) {
         studentCounts.set(sId, {
           count: 0,
           name: `${s.alumno.nombre} ${s.alumno.apellido}`,
         });
+      }
       studentCounts.get(sId)!.count++;
 
-      // Docente vs Sistema
+      // H. Tops (Docentes)
       if (s.idDocente) {
-        teacherGeneratedCount++;
         const tId = s.idDocente;
-        if (!teacherCounts.has(tId))
+        if (!teacherCounts.has(tId)) {
           teacherCounts.set(tId, {
             count: 0,
             name: `${s.docente!.nombre} ${s.docente!.apellido}`,
           });
+        }
         teacherCounts.get(tId)!.count++;
-      } else {
-        systemGeneratedCount++;
       }
 
-      // Dificultad y Tema
+      // I. Tops (Dificultad por ID)
       const dId = s.idDificultad;
-      if (!difficultyCounts.has(dId))
-        difficultyCounts.set(dId, { count: 0, name: s.dificultad.nombre });
-      difficultyCounts.get(dId)!.count++;
+      if (!difficultyIdCounts.has(dId)) {
+        difficultyIdCounts.set(dId, {
+          count: 0,
+          name: s.dificultad.nombre,
+        });
+      }
+      difficultyIdCounts.get(dId)!.count++;
 
-      const topic = s.dificultad.tema;
-      topicCounts.set(topic, (topicCounts.get(topic) || 0) + 1);
-
-      // D. Efectividad (Solo completadas)
+      // J. Efectividad (Solo completadas con resultado)
       if (s.estado === estado_sesion.Completada && s.resultadoSesion) {
         const pct = Number(s.resultadoSesion.pctAciertos);
         const target = s.idDocente
@@ -2440,7 +2480,72 @@ export class ReportesService {
       }
     });
 
-    // 3. Calcular Tops y Modas
+    // 4. Construcción de Estructuras para Frontend
+
+    const stateColors: Record<string, string> = {
+      [estado_sesion.Pendiente]: '#ed6c02', // Naranja
+      [estado_sesion.Completada]: '#2e7d32', // Verde
+      [estado_sesion.No_realizada]: '#d32f2f', // Rojo
+      [estado_sesion.Incompleta]: '#ff9800', // Naranja Oscuro
+      [estado_sesion.Cancelada]: '#9e9e9e', // Gris
+      En_curso: '#0288d1', // Azul
+    };
+
+    const graficoEstados = Object.entries(statusCounts).map(
+      ([label, value]) => ({
+        label: label.replace(/_/g, ' '),
+        value,
+        color: stateColors[label] || '#9e9e9e',
+      }),
+    );
+
+    const graficoOrigen = [
+      { label: 'Sistema', value: originCounts.Sistema, color: '#9c27b0' },
+      { label: 'Docente', value: originCounts.Docente, color: '#ff9800' },
+    ];
+
+    const graficoEstadosOrigen = Object.entries(stateOriginCounts).map(
+      ([estado, counts]) => ({
+        estado: estado.replace(/_/g, ' '),
+        Sistema: counts['Sistema'] || 0,
+        Docente: counts['Docente'] || 0,
+      }),
+    );
+
+    const graficoTemas = Object.entries(topicCounts).map(([label, value]) => ({
+      label,
+      value,
+    }));
+
+    const graficoDificultades = Object.entries(difficultyNameCounts).map(
+      ([label, value]) => ({
+        label,
+        value,
+      }),
+    );
+
+    // Gráfico Apilado Tema x Dificultad
+    const allDifficulties = Object.keys(difficultyNameCounts);
+    const graficoTemasDificultades = Object.entries(topicDifficultyCounts).map(
+      ([tema, counts]) => {
+        const entry: any = { tema };
+        allDifficulties.forEach((dif) => {
+          entry[dif] = counts[dif] || 0;
+        });
+        return entry;
+      },
+    );
+
+    // Grado Promedio Label
+    let promGradoLabel = 'Ninguno';
+    if (totalGradedSessions > 0) {
+      const avg = totalGradePoints / totalGradedSessions;
+      if (avg >= 2.5) promGradoLabel = 'Alto';
+      else if (avg >= 1.5) promGradoLabel = 'Medio';
+      else if (avg >= 0.5) promGradoLabel = 'Bajo';
+    }
+
+    // Helpers para Tops
     const getTop = (map: Map<string, { count: number; name: string }>) => {
       let top = { name: 'Ninguno', count: 0 };
       for (const val of map.values()) {
@@ -2449,31 +2554,38 @@ export class ReportesService {
       return top;
     };
 
-    const getModa = (map: Map<string, number>) => {
+    const getModa = (obj: Record<string, number>) => {
       let top = { label: 'Ninguno', value: 0 };
-      for (const [label, value] of map.entries()) {
+      for (const [label, value] of Object.entries(obj)) {
         if (value > top.value) top = { label, value };
       }
       return top;
     };
 
-    const totalSessions = sessions.length;
-
     return {
       kpis: {
-        total: totalSessions,
+        total: sessions.length,
         activas: activeCount,
         inactivas: inactiveCount,
-        estados: stateCounts,
+        promedioGrado: promGradoLabel,
         origen: {
           sistema: systemGeneratedCount,
           docente: teacherGeneratedCount,
         },
       },
+      graficos: {
+        estados: graficoEstados,
+        origen: graficoOrigen,
+        estadosOrigen: graficoEstadosOrigen,
+        temas: graficoTemas,
+        dificultades: graficoDificultades,
+        temasDificultades: graficoTemasDificultades,
+        allDifficulties, // Metadata para el frontend (series del gráfico apilado)
+      },
       tops: {
         alumno: getTop(studentCounts),
         docente: getTop(teacherCounts),
-        dificultad: getTop(difficultyCounts),
+        dificultad: getTop(difficultyIdCounts),
         tema: getModa(topicCounts),
       },
       efectividad: effectiveness,

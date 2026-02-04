@@ -11,6 +11,9 @@ import {
   Divider,
   LinearProgress,
   Chip,
+  FormControl,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
@@ -24,6 +27,7 @@ import WarningIcon from "@mui/icons-material/Warning";
 import TopicIcon from "@mui/icons-material/Topic";
 import FunctionsIcon from "@mui/icons-material/Functions";
 import { PieChart } from "@mui/x-charts/PieChart";
+import { BarChart } from "@mui/x-charts/BarChart";
 
 import {
   getCourseSessionsSummary,
@@ -32,6 +36,7 @@ import {
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import ReportTotalCard from "../common/ReportTotalCard";
 import ReportTextualCard from "../common/ReportTextualCard";
+import ReportStatCard from "../common/ReportStatCard";
 
 interface Props {
   courseId: string;
@@ -45,6 +50,13 @@ export default function CourseSessionsSummary({ courseId }: Props) {
     fechaDesde: "",
     fechaHasta: "",
   });
+
+  const [chartGrouping, setChartGrouping] = useState<
+    "ESTADO" | "ORIGEN" | "AMBOS"
+  >("ESTADO");
+  const [chartGrouping2, setChartGrouping2] = useState<
+    "TEMA" | "DIFICULTAD" | "AMBOS"
+  >("TEMA");
 
   useEffect(() => {
     const loadData = async () => {
@@ -165,10 +177,10 @@ export default function CourseSessionsSummary({ courseId }: Props) {
       {error && <Alert severity="error">{error}</Alert>}
 
       {data && !showLoading && (
-        <Stack spacing={4}>
+        <Stack spacing={3}>
           {/* Fila 1: KPIs Generales */}
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <ReportTotalCard
                 resourceName="Sesiones"
                 total={data.kpis.total}
@@ -177,98 +189,180 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                 icon={<FunctionsIcon fontSize="small" />}
               />
             </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-                <Typography
-                  variant="subtitle2"
-                  color="text.secondary"
-                  gutterBottom
-                >
-                  Estado de Sesiones
-                </Typography>
-                <Stack spacing={1}>
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography variant="body2">Completadas</Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight="bold"
-                      color="success.main"
-                    >
-                      {data.kpis.estados.Completada}
-                    </Typography>
-                  </Box>
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography variant="body2">En Curso</Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight="bold"
-                      color="warning.main"
-                    >
-                      {data.kpis.estados.En_curso}
-                    </Typography>
-                  </Box>
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography variant="body2">Pendientes</Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight="bold"
-                      color="info.main"
-                    >
-                      {data.kpis.estados.Pendiente}
-                    </Typography>
-                  </Box>
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography variant="body2">No Completadas</Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight="bold"
-                      color="error.main"
-                    >
-                      {data.kpis.estados.No_completada}
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Paper>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <ReportStatCard
+                icon={<WarningIcon />}
+                title="Grado Promedio"
+                subtitle="Dificultad promedio asignada"
+                count={data.kpis.promedioGrado}
+                color="warning"
+              />
             </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-                <Typography
-                  variant="subtitle2"
-                  color="text.secondary"
-                  gutterBottom
+            {/* Gráfico 1: Estado / Origen */}
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Paper
+                elevation={3}
+                sx={{
+                  p: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  height: "100%",
+                  width: "100%",
+                }}
+              >
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  width="100%"
+                  mb={2}
                 >
-                  Origen de Asignación
-                </Typography>
-                <Box height={150} width="100%">
-                  <PieChart
+                  <Typography variant="h6">Distribución de Sesiones</Typography>
+                  <FormControl size="small" variant="standard">
+                    <Select
+                      value={chartGrouping}
+                      onChange={(e) => setChartGrouping(e.target.value as any)}
+                      disableUnderline
+                      sx={{ fontSize: "0.875rem", fontWeight: "bold" }}
+                    >
+                      <MenuItem value="ESTADO">Por Estado</MenuItem>
+                      <MenuItem value="ORIGEN">Por Origen</MenuItem>
+                      <MenuItem value="AMBOS">Estado y Origen</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Stack>
+                {chartGrouping === "AMBOS" ? (
+                  <BarChart
+                    dataset={data.graficos.estadosOrigen}
+                    xAxis={[{ scaleType: "band", dataKey: "estado" }]}
                     series={[
                       {
-                        data: [
-                          {
-                            label: "Sistema",
-                            value: data.kpis.origen.sistema,
-                            color: "#9c27b0",
-                          },
-                          {
-                            label: "Docente",
-                            value: data.kpis.origen.docente,
-                            color: "#ff9800",
-                          },
-                        ],
-                        innerRadius: 30,
-                        paddingAngle: 2,
-                        cornerRadius: 4,
+                        dataKey: "Sistema",
+                        label: "Sistema",
+                        color: "#9c27b0",
+                        stack: "A",
+                      },
+                      {
+                        dataKey: "Docente",
+                        label: "Docente",
+                        color: "#ff9800",
+                        stack: "A",
                       },
                     ]}
+                    height={200}
                     slotProps={{
                       legend: {
                         direction: "horizontal",
                         position: { vertical: "bottom", horizontal: "center" },
                       },
                     }}
-                    margin={{ top: 0, bottom: 20, left: 0, right: 0 }}
                   />
-                </Box>
+                ) : (
+                  <PieChart
+                    series={[
+                      {
+                        data:
+                          chartGrouping === "ESTADO"
+                            ? data.graficos.estados
+                            : data.graficos.origen,
+                        innerRadius: 30,
+                        paddingAngle: 2,
+                        cornerRadius: 4,
+                        highlightScope: { fade: "global", highlight: "item" },
+                      },
+                    ]}
+                    height={200}
+                    slotProps={{
+                      legend: {
+                        direction: "horizontal",
+                        position: { vertical: "bottom", horizontal: "center" },
+                      },
+                    }}
+                  />
+                )}
+              </Paper>
+            </Grid>
+          </Grid>
+
+          <Grid container spacing={2}>
+            {/* Gráfico 2: Tema / Dificultad */}
+            <Grid size={{ xs: 12, md: 12 }}>
+              <Paper
+                elevation={3}
+                sx={{
+                  p: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  height: "100%",
+                  width: "100%",
+                }}
+              >
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  width="100%"
+                  mb={2}
+                >
+                  <Typography variant="h6">Contenido de Sesiones</Typography>
+                  <FormControl size="small" variant="standard">
+                    <Select
+                      value={chartGrouping2}
+                      onChange={(e) => setChartGrouping2(e.target.value as any)}
+                      disableUnderline
+                      sx={{ fontSize: "0.875rem", fontWeight: "bold" }}
+                    >
+                      <MenuItem value="TEMA">Por Tema</MenuItem>
+                      <MenuItem value="DIFICULTAD">Por Dificultad</MenuItem>
+                      <MenuItem value="AMBOS">Tema y Dificultad</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Stack>
+
+                {chartGrouping2 === "AMBOS" ? (
+                  <BarChart
+                    dataset={data.graficos.temasDificultades}
+                    xAxis={[{ scaleType: "band", dataKey: "tema" }]}
+                    series={data.graficos.allDifficulties.map(
+                      (dif: string) => ({
+                        dataKey: dif,
+                        label: dif,
+                        stack: "A",
+                      }),
+                    )}
+                    height={280}
+                    slotProps={{
+                      legend: {
+                        direction: "horizontal",
+                        position: { vertical: "bottom", horizontal: "center" },
+                      },
+                    }}
+                  />
+                ) : (
+                  <PieChart
+                    series={[
+                      {
+                        data:
+                          chartGrouping2 === "TEMA"
+                            ? data.graficos.temas
+                            : data.graficos.dificultades,
+                        innerRadius: 30,
+                        paddingAngle: 2,
+                        cornerRadius: 4,
+                        highlightScope: { fade: "global", highlight: "item" },
+                      },
+                    ]}
+                    height={280}
+                    slotProps={{
+                      legend: {
+                        direction: "horizontal",
+                        position: { vertical: "bottom", horizontal: "center" },
+                      },
+                    }}
+                  />
+                )}
               </Paper>
             </Grid>
           </Grid>
@@ -276,68 +370,74 @@ export default function CourseSessionsSummary({ courseId }: Props) {
           <Divider />
 
           {/* Fila 2: Tops y Modas */}
-          <Typography variant="h6" color="text.secondary">
-            Estadísticas Destacadas
-          </Typography>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <ReportTextualCard
-                icon={<PersonIcon />}
-                title="Alumno con más sesiones"
-                value={data.tops.alumno.name}
-                description={
-                  <>
-                    Tiene <b>{data.tops.alumno.count}</b> sesiones asignadas.
-                  </>
-                }
-                color="primary"
-              />
+          <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
+            <Typography variant="h6" gutterBottom>
+              Estadísticas Destacadas
+            </Typography>
+            <Typography variant="body2" color="text.secondary" paragraph>
+              Análisis del impacto en la reducción de dificultad según el origen
+              de la sesión.
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <ReportTextualCard
+                  icon={<PersonIcon />}
+                  title="Alumno con más sesiones"
+                  value={data.tops.alumno.name}
+                  description={
+                    <>
+                      Tiene <b>{data.tops.alumno.count}</b> sesiones asignadas.
+                    </>
+                  }
+                  color="primary"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <ReportTextualCard
+                  icon={<SchoolIcon />}
+                  title="Docente que más asigna"
+                  value={data.tops.docente.name}
+                  description={
+                    <>
+                      Ha asignado <b>{data.tops.docente.count}</b> sesiones.
+                    </>
+                  }
+                  color="secondary"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                <ReportTextualCard
+                  icon={<WarningIcon />}
+                  title="Dificultad más frecuente"
+                  value={data.tops.dificultad.name}
+                  description={
+                    <>
+                      Presente en <b>{data.tops.dificultad.count}</b> sesiones.
+                    </>
+                  }
+                  color="error"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+                <ReportTextualCard
+                  icon={<TopicIcon />}
+                  title="Tema más frecuente"
+                  value={data.tops.tema.label}
+                  description={
+                    <>
+                      Abarca <b>{data.tops.tema.value}</b> sesiones.
+                    </>
+                  }
+                  color="info"
+                />
+              </Grid>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <ReportTextualCard
-                icon={<SchoolIcon />}
-                title="Docente que más asigna"
-                value={data.tops.docente.name}
-                description={
-                  <>
-                    Ha asignado <b>{data.tops.docente.count}</b> sesiones.
-                  </>
-                }
-                color="secondary"
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <ReportTextualCard
-                icon={<WarningIcon />}
-                title="Dificultad más frecuente"
-                value={data.tops.dificultad.name}
-                description={
-                  <>
-                    Presente en <b>{data.tops.dificultad.count}</b> sesiones.
-                  </>
-                }
-                color="error"
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <ReportTextualCard
-                icon={<TopicIcon />}
-                title="Tema más frecuente"
-                value={data.tops.tema.label}
-                description={
-                  <>
-                    Abarca <b>{data.tops.tema.value}</b> sesiones.
-                  </>
-                }
-                color="info"
-              />
-            </Grid>
-          </Grid>
+          </Paper>
 
           <Divider />
 
           {/* Fila 3: Efectividad Comparativa */}
-          <Box>
+          <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
             <Typography variant="h6" gutterBottom>
               Efectividad de Sesiones Completadas
             </Typography>
@@ -351,20 +451,22 @@ export default function CourseSessionsSummary({ courseId }: Props) {
               <Grid size={{ xs: 12, md: 6 }}>
                 <Paper
                   elevation={3}
-                  sx={{ p: 3, borderTop: "4px solid #9c27b0" }}
+                  sx={{ p: 2, borderTop: "4px solid #9c27b0" }}
                 >
-                  <Stack direction="row" spacing={1} alignItems="center" mb={2}>
+                  <Stack direction="row" spacing={1} alignItems="center" mb={1}>
                     <AutoAwesomeIcon sx={{ color: "#9c27b0" }} />
                     <Typography variant="h6">Generadas por Sistema</Typography>
                   </Stack>
 
                   <Typography variant="body2" gutterBottom>
-                    Total completadas: <b>{data.efectividad.sistema.total}</b>
+                    Total de sesiones completadas:{" "}
+                    <b>{data.efectividad.sistema.total}</b>
                   </Typography>
 
                   <Stack spacing={2} mt={2}>
-                    <Box>
-                      <Box
+                    <Stack spacing={0.5}>
+                      <Stack
+                        direction="row"
                         display="flex"
                         justifyContent="space-between"
                         mb={0.5}
@@ -379,7 +481,7 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                           ).toFixed(1)}
                           %
                         </Typography>
-                      </Box>
+                      </Stack>
                       <LinearProgress
                         variant="determinate"
                         value={calcPct(
@@ -390,19 +492,20 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                         sx={{ height: 8, borderRadius: 4 }}
                       />
                       <Typography variant="caption" color="text.secondary">
-                        {data.efectividad.sistema.level3} sesiones redujeron la
-                        dificultad a "Ninguna".
+                        {data.efectividad.sistema.level3} sesiones establecieron
+                        la dificultad del alumno a grado "Ninguna".
                       </Typography>
-                    </Box>
+                    </Stack>
 
-                    <Box>
-                      <Box
+                    <Stack spacing={0.5}>
+                      <Stack
+                        direction="row"
                         display="flex"
                         justifyContent="space-between"
                         mb={0.5}
                       >
                         <Typography variant="caption">
-                          Mejora Significativa (60% - 84%)
+                          Mejora Significativa (60% - 84% aciertos)
                         </Typography>
                         <Typography variant="caption" fontWeight="bold">
                           {calcPct(
@@ -411,7 +514,7 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                           ).toFixed(1)}
                           %
                         </Typography>
-                      </Box>
+                      </Stack>
                       <LinearProgress
                         variant="determinate"
                         value={calcPct(
@@ -421,16 +524,21 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                         color="primary"
                         sx={{ height: 8, borderRadius: 4 }}
                       />
-                    </Box>
+                      <Typography variant="caption" color="text.secondary">
+                        {data.efectividad.sistema.level2} sesiones establecieron
+                        la dificultad del alumno a grado "Bajo".
+                      </Typography>
+                    </Stack>
 
-                    <Box>
-                      <Box
+                    <Stack spacing={0.5}>
+                      <Stack
+                        direction="row"
                         display="flex"
                         justifyContent="space-between"
                         mb={0.5}
                       >
                         <Typography variant="caption">
-                          Mejora Leve (40% - 59%)
+                          Mejora Leve (40% - 59% aciertos)
                         </Typography>
                         <Typography variant="caption" fontWeight="bold">
                           {calcPct(
@@ -439,7 +547,7 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                           ).toFixed(1)}
                           %
                         </Typography>
-                      </Box>
+                      </Stack>
                       <LinearProgress
                         variant="determinate"
                         value={calcPct(
@@ -449,7 +557,11 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                         color="warning"
                         sx={{ height: 8, borderRadius: 4 }}
                       />
-                    </Box>
+                      <Typography variant="caption" color="text.secondary">
+                        {data.efectividad.sistema.level1} sesiones establecieron
+                        la dificultad del alumno a grado "Medio".
+                      </Typography>
+                    </Stack>
                   </Stack>
                 </Paper>
               </Grid>
@@ -458,9 +570,9 @@ export default function CourseSessionsSummary({ courseId }: Props) {
               <Grid size={{ xs: 12, md: 6 }}>
                 <Paper
                   elevation={3}
-                  sx={{ p: 3, borderTop: "4px solid #ff9800" }}
+                  sx={{ p: 2, borderTop: "4px solid #ff9800" }}
                 >
-                  <Stack direction="row" spacing={1} alignItems="center" mb={2}>
+                  <Stack direction="row" spacing={1} alignItems="center" mb={1}>
                     <PsychologyIcon sx={{ color: "#ff9800" }} />
                     <Typography variant="h6">Asignadas por Docentes</Typography>
                   </Stack>
@@ -470,8 +582,9 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                   </Typography>
 
                   <Stack spacing={2} mt={2}>
-                    <Box>
-                      <Box
+                    <Stack spacing={0.5}>
+                      <Stack
+                        direction="row"
                         display="flex"
                         justifyContent="space-between"
                         mb={0.5}
@@ -486,7 +599,7 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                           ).toFixed(1)}
                           %
                         </Typography>
-                      </Box>
+                      </Stack>
                       <LinearProgress
                         variant="determinate"
                         value={calcPct(
@@ -497,13 +610,14 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                         sx={{ height: 8, borderRadius: 4 }}
                       />
                       <Typography variant="caption" color="text.secondary">
-                        {data.efectividad.docente.level3} sesiones redujeron la
-                        dificultad a "Ninguna".
+                        {data.efectividad.docente.level3} sesiones establecieron
+                        la dificultad del alumno a grado "Ninguna".
                       </Typography>
-                    </Box>
+                    </Stack>
 
-                    <Box>
-                      <Box
+                    <Stack spacing={0.5}>
+                      <Stack
+                        direction="row"
                         display="flex"
                         justifyContent="space-between"
                         mb={0.5}
@@ -518,7 +632,7 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                           ).toFixed(1)}
                           %
                         </Typography>
-                      </Box>
+                      </Stack>
                       <LinearProgress
                         variant="determinate"
                         value={calcPct(
@@ -528,10 +642,15 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                         color="primary"
                         sx={{ height: 8, borderRadius: 4 }}
                       />
-                    </Box>
+                      <Typography variant="caption" color="text.secondary">
+                        {data.efectividad.docente.level2} sesiones establecieron
+                        la dificultad del alumno a grado "Bajo".
+                      </Typography>
+                    </Stack>
 
-                    <Box>
-                      <Box
+                    <Stack spacing={0.5}>
+                      <Stack
+                        direction="row"
                         display="flex"
                         justifyContent="space-between"
                         mb={0.5}
@@ -546,7 +665,7 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                           ).toFixed(1)}
                           %
                         </Typography>
-                      </Box>
+                      </Stack>
                       <LinearProgress
                         variant="determinate"
                         value={calcPct(
@@ -556,12 +675,16 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                         color="warning"
                         sx={{ height: 8, borderRadius: 4 }}
                       />
-                    </Box>
+                      <Typography variant="caption" color="text.secondary">
+                        {data.efectividad.docente.level1} sesiones establecieron
+                        la dificultad del alumno a grado "Medio".
+                      </Typography>
+                    </Stack>
                   </Stack>
                 </Paper>
               </Grid>
             </Grid>
-          </Box>
+          </Paper>
         </Stack>
       )}
     </Paper>
