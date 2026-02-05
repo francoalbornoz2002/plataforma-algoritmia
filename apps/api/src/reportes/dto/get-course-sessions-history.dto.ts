@@ -33,3 +33,9 @@ export class GetCourseSessionsHistoryDto {
   @IsString()
   estado?: string;
 }
+
+export class GetCourseSessionsHistoryPdfDto extends GetCourseSessionsHistoryDto {
+  @IsOptional()
+  @IsString()
+  aPresentarA?: string;
+}

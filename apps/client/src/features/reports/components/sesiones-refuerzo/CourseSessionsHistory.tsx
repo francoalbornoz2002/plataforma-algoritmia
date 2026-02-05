@@ -22,7 +22,6 @@ import { format, parse } from "date-fns";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableOnIcon from "@mui/icons-material/TableChart";
 import InfoIcon from "@mui/icons-material/Info";
 
@@ -37,6 +36,7 @@ import {
 } from "../../../../types/traducciones";
 import SesionDetailModal from "./SesionDetailModal";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
+import PdfExportButton from "../common/PdfExportButton";
 
 interface Props {
   courseId: string;
@@ -259,14 +259,11 @@ export default function CourseSessionsHistory({ courseId }: Props) {
         <Box
           sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
         >
-          <Button
-            variant="outlined"
-            startIcon={<PictureAsPdfIcon />}
+          <PdfExportButton
+            filters={{ ...filters, courseId }}
+            endpointPath={`/reportes/cursos/${courseId}/sesiones-refuerzo/historial/pdf`}
             disabled={!data}
-            color="error"
-          >
-            Exportar PDF
-          </Button>
+          />
           <Button
             variant="outlined"
             startIcon={<TableOnIcon />}

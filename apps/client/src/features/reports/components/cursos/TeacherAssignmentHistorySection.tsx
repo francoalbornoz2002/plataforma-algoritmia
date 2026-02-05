@@ -21,7 +21,6 @@ import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
 import {
   getTeacherAssignmentHistory,
-  getTeacherAssignmentHistoryPdf,
   getCoursesSummary,
   TipoMovimientoAsignacion,
   type TeacherAssignmentHistoryFilters,
@@ -285,10 +284,8 @@ export default function TeacherAssignmentHistorySection() {
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}>
         <PdfExportButton
           filters={filters}
-          exportFunction={getTeacherAssignmentHistoryPdf}
-          fileName="historial-asignaciones.pdf"
+          endpointPath="/reportes/cursos/historial-asignaciones/pdf"
           disabled={data.length === 0}
-          onError={setError}
         />
         <Button
           variant="outlined"

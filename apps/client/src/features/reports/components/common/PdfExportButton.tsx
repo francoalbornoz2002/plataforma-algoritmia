@@ -2,56 +2,74 @@ import { useState } from "react";
 import { Button, CircularProgress } from "@mui/material";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import ReportExportDialog from "./ReportExportDialog";
-import { handlePdfExport } from "../../utils/pdf-utils";
+import apiClient from "../../../../lib/axios";
 
 interface PdfExportButtonProps {
   filters: any;
-  exportFunction: (params: any) => Promise<Blob>;
-  fileName: string;
+  endpointPath: string;
   disabled?: boolean;
-  onError: (message: string) => void;
+  onError?: (message: string) => void;
   label?: string;
 }
 
 export default function PdfExportButton({
   filters,
-  exportFunction,
-  fileName,
+  endpointPath,
   disabled = false,
-  onError,
   label = "Exportar PDF",
+  onError,
 }: PdfExportButtonProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleExport = (aPresentarA: string) => {
-    handlePdfExport(
-      filters,
-      aPresentarA,
-      exportFunction,
-      fileName,
-      setLoading,
-      () => setOpen(false),
-      onError,
+  const handleExport = async (aPresentarA: string) => {
+    setLoading(true);
+    // Limpiar filtros vacíos
+    const cleanFilters = Object.fromEntries(
+      Object.entries(filters).filter(
+        ([_, v]) => v !== "" && v !== null && v !== undefined,
+      ),
     );
+
+    // Separamos courseId (si existe) del resto de los filtros que irán como query params.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { courseId, ...queryParams } = cleanFilters;
+
+    try {
+      // Usamos apiClient para incluir el Token de autorización
+      const response = await apiClient.get(endpointPath, {
+        params: {
+          ...queryParams, // Usamos solo los filtros que son para la query
+          ...(aPresentarA ? { aPresentarA } : {}),
+        },
+        responseType: "blob", // Importante para manejar binarios
+      });
+
+      // Creamos una URL local para el Blob y la abrimos
+      const pdfBlob = new Blob([response.data], { type: "application/pdf" });
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      window.open(pdfUrl, "_blank");
+
+      setOpen(false);
+    } catch (error) {
+      console.error("Error al exportar PDF:", error);
+      if (onError)
+        onError("No se pudo generar el reporte. Verifique su sesión.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <>
       <Button
         variant="outlined"
-        startIcon={
-          loading ? (
-            <CircularProgress size={20} color="inherit" />
-          ) : (
-            <PictureAsPdfIcon />
-          )
-        }
+        startIcon={<PictureAsPdfIcon />}
         disabled={disabled || loading}
         color="error"
         onClick={() => setOpen(true)}
       >
-        {loading ? "Generando..." : label}
+        {label}
       </Button>
 
       <ReportExportDialog

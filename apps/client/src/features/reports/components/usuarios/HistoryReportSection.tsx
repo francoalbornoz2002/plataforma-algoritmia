@@ -23,7 +23,6 @@ import { roles } from "../../../../types";
 import { LineChart } from "@mui/x-charts/LineChart";
 import {
   getUsersHistory,
-  getUsersHistoryPdf,
   type UsersHistoryFilters,
   TipoMovimientoUsuario,
 } from "../../service/reports.service";
@@ -152,10 +151,8 @@ export default function HistoryReportSection() {
         >
           <PdfExportButton
             filters={filters}
-            exportFunction={getUsersHistoryPdf}
-            fileName="historial-usuarios.pdf"
+            endpointPath="/reportes/usuarios/historial/pdf"
             disabled={data.length === 0}
-            onError={setError}
           />
           <Button
             variant="outlined"

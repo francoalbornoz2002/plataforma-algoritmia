@@ -19,7 +19,6 @@ import TableOnIcon from "@mui/icons-material/TableChart";
 import { BarChart } from "@mui/x-charts/BarChart";
 import {
   getUsersSummary,
-  getUsersSummaryPdf,
   AgrupacionUsuarios,
   type UsersSummaryFilters,
 } from "../../service/reports.service";
@@ -284,10 +283,8 @@ export default function SummaryReportSection() {
         >
           <PdfExportButton
             filters={filters}
-            exportFunction={getUsersSummaryPdf}
-            fileName="resumen-usuarios.pdf"
+            endpointPath="/reportes/usuarios/resumen/pdf"
             disabled={!summaryData}
-            onError={setError}
           />
           <Button
             variant="outlined"

@@ -16,6 +16,7 @@ import { GetCourseConsultationsSummaryPdfDto } from 'src/reportes/dto/get-course
 import { GetCourseConsultationsHistoryPdfDto } from 'src/reportes/dto/get-course-consultations-history.dto';
 import { GetCourseClassesSummaryPdfDto } from 'src/reportes/dto/get-course-classes-summary.dto';
 import { GetCourseSessionsSummaryPdfDto } from 'src/reportes/dto/get-course-sessions-summary.dto';
+import { GetCourseSessionsHistoryPdfDto } from 'src/reportes/dto/get-course-sessions-history.dto';
 import { title } from 'process';
 
 @Injectable()
@@ -1660,6 +1661,108 @@ export class PdfService {
     return new StreamableFile(pdfBuffer, {
       type: 'application/pdf',
       disposition: `attachment; filename="resumen-sesiones-${idCurso}.pdf"`,
+    });
+  }
+
+  async getCourseSessionsHistoryPdf(
+    idCurso: string,
+    dto: GetCourseSessionsHistoryPdfDto,
+    userId: string,
+  ): Promise<StreamableFile> {
+    // 1. Obtener datos
+    const data = await this.reportesService.getCourseSessionsHistory(
+      idCurso,
+      dto,
+    );
+
+    // 2. Metadatos
+    const { curso, institucion, usuario, logoBase64 } =
+      await this.reportesService.getReportMetadata(userId, idCurso);
+
+    // 3. Registrar Reporte
+    const { reporteDB, filtrosTexto } =
+      await this.reportesService.registerReport(
+        userId,
+        'Historial de Sesiones de Refuerzo',
+        'Cursos',
+        { ...dto, cursoId: idCurso },
+      );
+
+    // 4. Configurar Gráfico (Línea de tiempo)
+    const chartJsContent = await this.getChartJsContent();
+
+    const chartConfig = {
+      type: 'line',
+      data: {
+        labels: data.chartData.map((d) =>
+          d.fecha.split('-').slice(1).reverse().join('/'),
+        ),
+        datasets: [
+          {
+            label: 'Sesiones',
+            data: data.chartData.map((d) => d.cantidad),
+            borderColor: '#2196f3',
+            backgroundColor: '#2196f3',
+            tension: 0.1,
+            fill: false,
+          },
+        ],
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 1, precision: 0 },
+            title: { display: true, text: 'Cantidad de sesiones' },
+          },
+        },
+        plugins: {
+          legend: { display: false },
+        },
+      },
+    };
+
+    // 5. Formatear Tabla
+    const sesionesFormatted = data.sessions.map((s) => ({
+      fecha: s.fechaGrafico.toISOString().split('T')[0],
+      alumno: `${s.alumno.nombre} ${s.alumno.apellido}`,
+      origen: s.origen,
+      tema: s.dificultad.tema,
+      dificultad: s.dificultad.nombre,
+      estado: s.estado.replace(/_/g, ' '),
+      estadoRaw: s.estado,
+      score: s.resultadoSesion
+        ? `${Number(s.resultadoSesion.pctAciertos).toFixed(0)}%`
+        : '-',
+    }));
+
+    const commonData = this.buildCommonTemplateData(
+      { institucion, usuario, logoBase64 },
+      {
+        reporteDB,
+        filtrosTexto,
+        titulo: 'Historial de Sesiones de Refuerzo',
+        subtitulo: `Curso: ${curso?.nombre || 'Desconocido'}`,
+        aPresentarA: dto.aPresentarA,
+      },
+    );
+
+    const templateData = {
+      ...commonData,
+      chartJsContent,
+      chartConfig: JSON.stringify(chartConfig),
+      sesiones: sesionesFormatted,
+      totalSesiones: sesionesFormatted.length,
+    };
+
+    const pdfBuffer = await this.generatePdf(
+      'reporte-sesiones-historial',
+      templateData,
+    );
+
+    return new StreamableFile(pdfBuffer, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="historial-sesiones-${idCurso}.pdf"`,
     });
   }
 }

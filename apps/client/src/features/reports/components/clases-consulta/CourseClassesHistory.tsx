@@ -17,19 +17,17 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format, parse } from "date-fns";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { BarChart } from "@mui/x-charts/BarChart";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableOnIcon from "@mui/icons-material/TableChart";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 
 import {
   getCourseClassesHistory,
-  getCourseClassesHistoryPdf,
   type CourseClassesHistoryFilters,
 } from "../../service/reports.service";
 import { estado_clase_consulta } from "../../../../types";
 import ClaseDetailModal from "../../../clases-consulta/components/ClaseDetailModal";
-import ReportExportDialog from "../common/ReportExportDialog";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
+import PdfExportButton from "../common/PdfExportButton";
 
 interface Props {
   courseId: string;
@@ -40,7 +38,6 @@ export default function CourseClassesHistory({ courseId }: Props) {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const [pdfLoading, setPdfLoading] = useState(false);
 
   // Filtros
   const [filters, setFilters] = useState<CourseClassesHistoryFilters>({
@@ -58,9 +55,6 @@ export default function CourseClassesHistory({ courseId }: Props) {
   // Estado para el Modal de Detalle
   const [selectedClass, setSelectedClass] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // Estado para el Modal de Exportación
-  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
   // --- Cargar Datos ---
   useEffect(() => {
@@ -109,31 +103,6 @@ export default function CourseClassesHistory({ courseId }: Props) {
     // El modal espera un objeto ClaseConsulta con 'consultasEnClase'
     setSelectedClass(row);
     setIsModalOpen(true);
-  };
-
-  const handleOpenExportDialog = () => {
-    setIsExportDialogOpen(true);
-  };
-
-  const handleExportPdf = async (aPresentarA: string) => {
-    setPdfLoading(true);
-    try {
-      const params = { ...filters, aPresentarA };
-      const blob = await getCourseClassesHistoryPdf(courseId, params as any);
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `historial-clases-${courseId}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode?.removeChild(link);
-      setIsExportDialogOpen(false);
-    } catch (err) {
-      console.error(err);
-      setError("Error al descargar el PDF.");
-    } finally {
-      setPdfLoading(false);
-    }
   };
 
   // --- Columnas DataGrid ---
@@ -239,21 +208,11 @@ export default function CourseClassesHistory({ courseId }: Props) {
         <Box
           sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
         >
-          <Button
-            variant="outlined"
-            startIcon={
-              pdfLoading ? (
-                <CircularProgress size={20} color="inherit" />
-              ) : (
-                <PictureAsPdfIcon />
-              )
-            }
-            disabled={!data || pdfLoading}
-            color="error"
-            onClick={handleOpenExportDialog}
-          >
-            {pdfLoading ? "Generando..." : "Exportar PDF"}
-          </Button>
+          <PdfExportButton
+            filters={{ ...filters, courseId }}
+            endpointPath={`/reportes/cursos/${courseId}/clases-consulta/historial/pdf`}
+            disabled={!data}
+          />
           <Button
             variant="outlined"
             startIcon={<TableOnIcon />}
@@ -443,14 +402,6 @@ export default function CourseClassesHistory({ courseId }: Props) {
           }}
         />
       )}
-
-      {/* Modal de Exportación */}
-      <ReportExportDialog
-        open={isExportDialogOpen}
-        onClose={() => setIsExportDialogOpen(false)}
-        onExport={handleExportPdf}
-        isGenerating={pdfLoading}
-      />
     </Paper>
   );
 }

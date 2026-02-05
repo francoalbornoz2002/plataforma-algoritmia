@@ -29,7 +29,6 @@ import { BarChart } from "@mui/x-charts/BarChart";
 
 import {
   getCourseSessionsSummary,
-  getCourseSessionsSummaryPdf,
   type CourseSessionsSummaryFilters,
 } from "../../service/reports.service";
 import { temas } from "../../../../types";
@@ -115,10 +114,8 @@ export default function CourseSessionsSummary({ courseId }: Props) {
               agruparPor: chartGrouping,
               agruparPorContenido: chartGrouping2,
             }}
-            exportFunction={getCourseSessionsSummaryPdf}
-            fileName="resumen-sesiones.pdf"
+            endpointPath={`/reportes/cursos/${courseId}/sesiones-refuerzo/resumen/pdf`}
             disabled={!data}
-            onError={setError}
           />
           <Button
             variant="outlined"

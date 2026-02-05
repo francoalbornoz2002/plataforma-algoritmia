@@ -19,7 +19,6 @@ import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
 import {
   getCoursesHistory,
-  getCoursesHistoryPdf,
   TipoMovimientoCurso,
   type CoursesHistoryFilters,
 } from "../../service/reports.service";
@@ -270,10 +269,8 @@ export default function CoursesHistorySection() {
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}>
         <PdfExportButton
           filters={filters}
-          exportFunction={getCoursesHistoryPdf}
-          fileName="historial-cursos.pdf"
+          endpointPath="/reportes/cursos/historial/pdf"
           disabled={data.length === 0}
-          onError={setError}
         />
         <Button
           variant="outlined"

@@ -167,38 +167,12 @@ export const getUsersSummary = async (params: UsersSummaryFilters) => {
   return response.data;
 };
 
-export const getUsersSummaryPdf = async (
-  params: UsersSummaryFilters & { aPresentarA?: string },
-) => {
-  const cleanParams = Object.fromEntries(
-    Object.entries(params).filter(([_, v]) => v !== ""),
-  );
-  const response = await apiClient.get("/reportes/usuarios/resumen/pdf", {
-    params: cleanParams,
-    responseType: "blob",
-  });
-  return response.data;
-};
-
 export const getUsersHistory = async (params: UsersHistoryFilters) => {
   const cleanParams = Object.fromEntries(
     Object.entries(params).filter(([_, v]) => v !== ""),
   );
   const response = await apiClient.get("/reportes/usuarios/historial", {
     params: cleanParams,
-  });
-  return response.data;
-};
-
-export const getUsersHistoryPdf = async (
-  params: UsersHistoryFilters & { aPresentarA?: string },
-) => {
-  const cleanParams = Object.fromEntries(
-    Object.entries(params).filter(([_, v]) => v !== ""),
-  );
-  const response = await apiClient.get("/reportes/usuarios/historial/pdf", {
-    params: cleanParams,
-    responseType: "blob",
   });
   return response.data;
 };
@@ -213,38 +187,12 @@ export const getCoursesSummary = async (params: CoursesSummaryFilters) => {
   return response.data;
 };
 
-export const getCoursesSummaryPdf = async (
-  params: CoursesSummaryFilters & { aPresentarA?: string },
-) => {
-  const cleanParams = Object.fromEntries(
-    Object.entries(params).filter(([_, v]) => v !== ""),
-  );
-  const response = await apiClient.get("/reportes/cursos/resumen/pdf", {
-    params: cleanParams,
-    responseType: "blob",
-  });
-  return response.data;
-};
-
 export const getCoursesHistory = async (params: CoursesHistoryFilters) => {
   const cleanParams = Object.fromEntries(
     Object.entries(params).filter(([_, v]) => v !== ""),
   );
   const response = await apiClient.get("/reportes/cursos/historial", {
     params: cleanParams,
-  });
-  return response.data;
-};
-
-export const getCoursesHistoryPdf = async (
-  params: CoursesHistoryFilters & { aPresentarA?: string },
-) => {
-  const cleanParams = Object.fromEntries(
-    Object.entries(params).filter(([_, v]) => v !== ""),
-  );
-  const response = await apiClient.get("/reportes/cursos/historial/pdf", {
-    params: cleanParams,
-    responseType: "blob",
   });
   return response.data;
 };
@@ -260,19 +208,6 @@ export const getStudentEnrollmentHistory = async (
     {
       params: cleanParams,
     },
-  );
-  return response.data;
-};
-
-export const getStudentEnrollmentHistoryPdf = async (
-  params: StudentEnrollmentHistoryFilters & { aPresentarA?: string },
-) => {
-  const cleanParams = Object.fromEntries(
-    Object.entries(params).filter(([_, v]) => v !== ""),
-  );
-  const response = await apiClient.get(
-    "/reportes/cursos/historial-inscripciones/pdf",
-    { params: cleanParams, responseType: "blob" },
   );
   return response.data;
 };
@@ -381,24 +316,6 @@ export const getCourseConsultationsSummary = async (
   return response.data;
 };
 
-export const getCourseConsultationsSummaryPdf = async (
-  params: CourseConsultationsSummaryFilters & {
-    courseId: string;
-    aPresentarA?: string;
-    agruparPor?: "ESTADO" | "TEMA" | "AMBOS";
-  },
-) => {
-  const { courseId, ...rest } = params;
-  const cleanParams = Object.fromEntries(
-    Object.entries(rest).filter(([_, v]) => v !== ""),
-  );
-  const response = await apiClient.get(
-    `/reportes/cursos/${courseId}/consultas/resumen/pdf`,
-    { params: cleanParams, responseType: "blob" },
-  );
-  return response.data;
-};
-
 export const getCourseConsultationsHistory = async (
   courseId: string,
   params: CourseConsultationsHistoryFilters,
@@ -409,23 +326,6 @@ export const getCourseConsultationsHistory = async (
   const response = await apiClient.get(
     `/reportes/cursos/${courseId}/consultas/historial`,
     { params: cleanParams },
-  );
-  return response.data;
-};
-
-export const getCourseConsultationsHistoryPdf = async (
-  params: CourseConsultationsHistoryFilters & {
-    courseId: string;
-    aPresentarA?: string;
-  },
-) => {
-  const { courseId, ...rest } = params;
-  const cleanParams = Object.fromEntries(
-    Object.entries(rest).filter(([_, v]) => v !== ""),
-  );
-  const response = await apiClient.get(
-    `/reportes/cursos/${courseId}/consultas/historial/pdf`,
-    { params: cleanParams, responseType: "blob" },
   );
   return response.data;
 };
@@ -444,24 +344,6 @@ export const getCourseClassesSummary = async (
   return response.data;
 };
 
-export const getCourseClassesSummaryPdf = async (
-  params: CourseClassesSummaryFilters & {
-    courseId: string;
-    aPresentarA?: string;
-    agruparPor?: "ESTADO" | "ORIGEN" | "AMBOS";
-  },
-) => {
-  const { courseId, ...rest } = params;
-  const cleanParams = Object.fromEntries(
-    Object.entries(rest).filter(([_, v]) => v !== ""),
-  );
-  const response = await apiClient.get(
-    `/reportes/cursos/${courseId}/clases-consulta/resumen/pdf`,
-    { params: cleanParams, responseType: "blob" },
-  );
-  return response.data;
-};
-
 export const getCourseClassesHistory = async (
   courseId: string,
   params: CourseClassesHistoryFilters,
@@ -476,20 +358,6 @@ export const getCourseClassesHistory = async (
   return response.data;
 };
 
-export const getCourseClassesHistoryPdf = async (
-  courseId: string,
-  params: CourseClassesHistoryFilters,
-) => {
-  const cleanParams = Object.fromEntries(
-    Object.entries(params).filter(([_, v]) => v !== ""),
-  );
-  const response = await apiClient.get(
-    `/reportes/cursos/${courseId}/clases-consulta/historial/pdf`,
-    { params: cleanParams, responseType: "blob" },
-  );
-  return response.data;
-};
-
 export const getCourseSessionsSummary = async (
   courseId: string,
   params: CourseSessionsSummaryFilters,
@@ -500,25 +368,6 @@ export const getCourseSessionsSummary = async (
   const response = await apiClient.get(
     `/reportes/cursos/${courseId}/sesiones-refuerzo/resumen`,
     { params: cleanParams },
-  );
-  return response.data;
-};
-
-export const getCourseSessionsSummaryPdf = async (
-  params: CourseSessionsSummaryFilters & {
-    courseId: string;
-    aPresentarA?: string;
-    agruparPor?: "ESTADO" | "ORIGEN" | "AMBOS";
-    agruparPorContenido?: "TEMA" | "DIFICULTAD" | "AMBOS";
-  },
-) => {
-  const { courseId, ...rest } = params;
-  const cleanParams = Object.fromEntries(
-    Object.entries(rest).filter(([_, v]) => v !== ""),
-  );
-  const response = await apiClient.get(
-    `/reportes/cursos/${courseId}/sesiones-refuerzo/resumen/pdf`,
-    { params: cleanParams, responseType: "blob" },
   );
   return response.data;
 };
@@ -548,19 +397,6 @@ export const getTeacherAssignmentHistory = async (
     {
       params: cleanParams,
     },
-  );
-  return response.data;
-};
-
-export const getTeacherAssignmentHistoryPdf = async (
-  params: TeacherAssignmentHistoryFilters & { aPresentarA?: string },
-) => {
-  const cleanParams = Object.fromEntries(
-    Object.entries(params).filter(([_, v]) => v !== ""),
-  );
-  const response = await apiClient.get(
-    "/reportes/cursos/historial-asignaciones/pdf",
-    { params: cleanParams, responseType: "blob" },
   );
   return response.data;
 };

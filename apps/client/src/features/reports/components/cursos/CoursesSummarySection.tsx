@@ -21,7 +21,6 @@ import { BarChart } from "@mui/x-charts/BarChart";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import {
   getCoursesSummary,
-  getCoursesSummaryPdf,
   type CoursesSummaryFilters,
 } from "../../service/reports.service";
 import { useDebounce } from "../../../../hooks/useDebounce";
@@ -185,10 +184,8 @@ export default function CoursesSummarySection() {
         >
           <PdfExportButton
             filters={filters}
-            exportFunction={getCoursesSummaryPdf}
-            fileName="resumen-cursos.pdf"
+            endpointPath="/reportes/cursos/resumen/pdf"
             disabled={!summaryData}
-            onError={setError}
           />
           <Button
             variant="outlined"

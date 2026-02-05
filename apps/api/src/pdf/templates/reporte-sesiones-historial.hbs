@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  {{> styles}}
+</head>
+<body>
+  {{> header}}
+
+  <!-- KPIs Resumen -->
+  <div class="kpi-container">
+    <div class="kpi-card">
+      <div class="kpi-value">{{totalSesiones}}</div>
+      <div class="kpi-label">Total Sesiones en Periodo</div>
+    </div>
+  </div>
+
+  <!-- Gráfico de Evolución -->
+  <div class="chart-container" style="height: 250px;">
+    <canvas id="historyChart"></canvas>
+  </div>
+
+  <!-- Tabla Detallada -->
+  <h3 style="color: #1976d2; margin-bottom: 10px; font-size: 14px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Detalle de Sesiones</h3>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 12%;">Fecha</th>
+        <th style="width: 18%;">Alumno</th>
+        <th style="width: 10%;">Origen</th>
+        <th style="width: 15%;">Tema</th>
+        <th style="width: 20%;">Dificultad</th>
+        <th style="width: 15%;">Estado</th>
+        <th style="width: 10%;">Aciertos</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each sesiones}}
+      <tr>
+        <td>{{fecha}}</td>
+        <td>{{alumno}}</td>
+        <td>
+          <span class="badge" style="background-color: {{#if (eq origen 'Sistema')}}#9c27b0{{else}}#ff9800{{/if}};">
+            {{origen}}
+          </span>
+        </td>
+        <td>{{tema}}</td>
+        <td>{{dificultad}}</td>
+        <td>
+          <span class="badge badge-{{estadoRaw}}" style="background-color: {{#if (eq estadoRaw 'Completada')}}#2e7d32{{else if (eq estadoRaw 'Pendiente')}}#0288d1{{else if (eq estadoRaw 'No_realizada')}}#d32f2f{{else if (eq estadoRaw 'Incompleta')}}#ed6c02{{else}}#9e9e9e{{/if}};">
+            {{estado}}
+          </span>
+        </td>
+        <td class="text-center text-bold" style="color: {{#if (eq score '-')}}#666{{else}}#2e7d32{{/if}};">
+          {{score}}
+        </td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+
+  {{> footer}}
+
+  <script>
+    {{{chartJsContent}}}
+  </script>
+  {{> chartSetup}}
+  <script>
+    const ctx = document.getElementById('historyChart').getContext('2d');
+    const config = {{{chartConfig}}};
+    applyChartPrintConfig(config);
+    new Chart(ctx, config);
+  </script>
+</body>
+</html>

@@ -27,7 +27,6 @@ import { BarChart } from "@mui/x-charts/BarChart";
 
 import {
   getCourseClassesSummary,
-  getCourseClassesSummaryPdf,
   type CourseClassesSummaryFilters,
 } from "../../service/reports.service";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
@@ -99,10 +98,8 @@ export default function CourseClassesSummary({ courseId }: Props) {
         >
           <PdfExportButton
             filters={{ ...filters, courseId, agruparPor: chartGrouping }}
-            exportFunction={getCourseClassesSummaryPdf}
-            fileName="resumen-clases.pdf"
+            endpointPath={`/reportes/cursos/${courseId}/clases-consulta/resumen/pdf`}
             disabled={!data}
-            onError={setError}
           />
           <Button
             variant="outlined"

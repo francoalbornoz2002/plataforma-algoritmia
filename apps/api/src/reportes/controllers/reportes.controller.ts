@@ -59,7 +59,10 @@ import {
   GetCourseSessionsSummaryDto,
   GetCourseSessionsSummaryPdfDto,
 } from '../dto/get-course-sessions-summary.dto';
-import { GetCourseSessionsHistoryDto } from '../dto/get-course-sessions-history.dto';
+import {
+  GetCourseSessionsHistoryDto,
+  GetCourseSessionsHistoryPdfDto,
+} from '../dto/get-course-sessions-history.dto';
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
 import { PdfService } from '../../pdf/service/pdf.service';
 
@@ -94,7 +97,6 @@ export class ReportesController {
     );
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="resumen-usuarios.pdf"`,
     });
     return file;
   }
@@ -120,7 +122,6 @@ export class ReportesController {
     );
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="historial-usuarios.pdf"`,
     });
     return file;
   }
@@ -149,7 +150,6 @@ export class ReportesController {
     );
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="resumen-cursos.pdf"`,
     });
     return file;
   }
@@ -176,7 +176,6 @@ export class ReportesController {
     );
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="historial-cursos.pdf"`,
     });
     return file;
   }
@@ -203,7 +202,6 @@ export class ReportesController {
     );
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="historial-inscripciones.pdf"`,
     });
     return file;
   }
@@ -230,7 +228,6 @@ export class ReportesController {
     );
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="historial-asignaciones.pdf"`,
     });
     return file;
   }
@@ -324,7 +321,6 @@ export class ReportesController {
     );
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="resumen-consultas.pdf"`,
     });
     return file;
   }
@@ -355,7 +351,6 @@ export class ReportesController {
     );
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="historial-consultas.pdf"`,
     });
     return file;
   }
@@ -386,7 +381,6 @@ export class ReportesController {
     );
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="resumen-clases-${id}.pdf"`,
     });
     return file;
   }
@@ -418,7 +412,6 @@ export class ReportesController {
     );
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="reporte-clases-${id}.pdf"`,
     });
     return file;
   }
@@ -449,7 +442,6 @@ export class ReportesController {
     );
     res.set({
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="resumen-sesiones-${id}.pdf"`,
     });
     return file;
   }
@@ -462,5 +454,25 @@ export class ReportesController {
     @Query() dto: GetCourseSessionsHistoryDto,
   ) {
     return this.reportesService.getCourseSessionsHistory(id, dto);
+  }
+
+  @Get('cursos/:id/sesiones-refuerzo/historial/pdf')
+  @Roles(roles.Administrador, roles.Docente)
+  async getCourseSessionsHistoryPdf(
+    @Param('id') id: string,
+    @Query() dto: GetCourseSessionsHistoryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.pdfService.getCourseSessionsHistoryPdf(
+      id,
+      dto,
+      userId,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+    });
+    return file;
   }
 }

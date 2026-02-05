@@ -7,6 +7,8 @@ import {
   TextField,
   Alert,
   Stack,
+  CircularProgress,
+  Typography,
 } from "@mui/material";
 import { useState } from "react";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
@@ -31,37 +33,55 @@ export default function ReportExportDialog({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+    <Dialog
+      open={open}
+      onClose={isGenerating ? () => {} : onClose}
+      maxWidth="xs"
+      fullWidth
+    >
       <DialogTitle>Exportar Reporte PDF</DialogTitle>
-      <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
-          <Alert severity="info">
-            El reporte se generará utilizando los filtros aplicados actualmente.
-          </Alert>
+      {isGenerating ? (
+        <DialogContent>
+          <Stack
+            alignItems="center"
+            justifyContent="center"
+            spacing={2}
+            sx={{ p: 4 }}
+          >
+            <CircularProgress />
+            <Typography>Generando reporte...</Typography>
+          </Stack>
+        </DialogContent>
+      ) : (
+        <>
+          <DialogContent>
+            <Stack spacing={2} sx={{ mt: 1 }}>
+              <Alert severity="info">
+                El reporte se generará utilizando los filtros aplicados
+                actualmente.
+              </Alert>
 
-          <TextField
-            label="A presentar a (Opcional)"
-            placeholder="Ej: Director Académico"
-            fullWidth
-            value={aPresentarA}
-            onChange={(e) => setAPresentarA(e.target.value)}
-            disabled={isGenerating}
-          />
-        </Stack>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={isGenerating}>
-          Cancelar
-        </Button>
-        <Button
-          onClick={handleExport}
-          variant="contained"
-          startIcon={<PictureAsPdfIcon />}
-          disabled={isGenerating}
-        >
-          {isGenerating ? "Generando..." : "Exportar"}
-        </Button>
-      </DialogActions>
+              <TextField
+                label="A presentar a (Opcional)"
+                placeholder="Ej: Director Académico"
+                fullWidth
+                value={aPresentarA}
+                onChange={(e) => setAPresentarA(e.target.value)}
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={onClose}>Cancelar</Button>
+            <Button
+              onClick={handleExport}
+              variant="contained"
+              startIcon={<PictureAsPdfIcon />}
+            >
+              Exportar
+            </Button>
+          </DialogActions>
+        </>
+      )}
     </Dialog>
   );
 }

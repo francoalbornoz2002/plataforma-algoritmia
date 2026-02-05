@@ -21,7 +21,6 @@ import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
 import {
   getStudentEnrollmentHistory,
-  getStudentEnrollmentHistoryPdf,
   getCoursesSummary,
   TipoMovimientoInscripcion,
   type StudentEnrollmentHistoryFilters,
@@ -286,10 +285,8 @@ export default function StudentEnrollmentHistorySection() {
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}>
         <PdfExportButton
           filters={filters}
-          exportFunction={getStudentEnrollmentHistoryPdf}
-          fileName="historial-inscripciones.pdf"
+          endpointPath="/reportes/cursos/historial-inscripciones/pdf"
           disabled={data.length === 0}
-          onError={setError}
         />
         <Button
           variant="outlined"

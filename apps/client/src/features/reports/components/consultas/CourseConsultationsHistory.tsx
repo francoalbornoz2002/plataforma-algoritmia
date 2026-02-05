@@ -32,7 +32,6 @@ import DateRangeIcon from "@mui/icons-material/DateRange";
 
 import {
   getCourseConsultationsHistory,
-  getCourseConsultationsHistoryPdf,
   type CourseConsultationsHistoryFilters,
 } from "../../service/reports.service";
 import { getStudentProgressList } from "../../../users/services/docentes.service";
@@ -246,10 +245,8 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
         >
           <PdfExportButton
             filters={{ ...filters, courseId }}
-            exportFunction={getCourseConsultationsHistoryPdf}
-            fileName="historial-consultas.pdf"
+            endpointPath={`/reportes/cursos/${courseId}/consultas/historial/pdf`}
             disabled={!data}
-            onError={setError}
           />
           <Button
             variant="outlined"
