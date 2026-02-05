@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, CircularProgress } from "@mui/material";
+import { Button } from "@mui/material";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import ReportExportDialog from "./ReportExportDialog";
 import apiClient from "../../../../lib/axios";
