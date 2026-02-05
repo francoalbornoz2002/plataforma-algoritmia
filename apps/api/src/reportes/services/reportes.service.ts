@@ -2668,11 +2668,10 @@ export class ReportesService {
           docente: { select: { id: true, nombre: true, apellido: true } },
         },
       }),
+      // Traemos TODAS las dificultades para que el filtro del frontend funcione correctamente
       this.prisma.dificultad.findMany({
-        where: {
-          dificultadesCursos: { some: { cursos: { some: { id: idCurso } } } },
-        },
         select: { id: true, nombre: true, tema: true },
+        orderBy: { nombre: 'asc' },
       }),
     ]);
 

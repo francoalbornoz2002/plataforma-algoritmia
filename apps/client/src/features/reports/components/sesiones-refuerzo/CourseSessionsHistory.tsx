@@ -24,6 +24,7 @@ import { LineChart } from "@mui/x-charts/LineChart";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableOnIcon from "@mui/icons-material/TableChart";
+import InfoIcon from "@mui/icons-material/Info";
 
 import {
   getCourseSessionsHistory,
@@ -57,6 +58,12 @@ export default function CourseSessionsHistory({ courseId }: Props) {
   // Modal
   const [selectedSession, setSelectedSession] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Lógica de filtrado de dificultades (Reutilizada de PreguntasPage)
+  const allDifficulties = data?.filters?.dificultades || [];
+  const filteredDifficulties = filters.tema
+    ? allDifficulties.filter((d: any) => d.tema === filters.tema)
+    : allDifficulties;
 
   // Carga de datos
   useEffect(() => {
@@ -103,20 +110,35 @@ export default function CourseSessionsHistory({ courseId }: Props) {
     });
   };
 
+  // Lógica para etiqueta dinámica de fecha
+  const getDateLabel = () => {
+    switch (filters.estado) {
+      case estado_sesion.Pendiente:
+        return "Fecha de Asignación";
+      case estado_sesion.Completada:
+        return "Fecha de Completado";
+      case estado_sesion.No_realizada:
+      case estado_sesion.Incompleta:
+        return "Fecha Límite";
+      default:
+        return "Fecha de Ref.";
+    }
+  };
+
   // Columnas DataGrid
   const columns: GridColDef[] = [
     { field: "nroSesion", headerName: "#", width: 60 },
     {
       field: "fechaGrafico",
-      headerName: "Fecha Ref.",
-      width: 120,
+      headerName: getDateLabel(),
+      width: 190,
       valueFormatter: (val) =>
         val ? format(new Date(val), "dd/MM/yyyy") : "-",
     },
     {
       field: "alumno",
       headerName: "Alumno",
-      width: 180,
+      width: 200,
       valueGetter: (_: any, row: any) =>
         `${row.alumno.nombre} ${row.alumno.apellido}`,
     },
@@ -138,6 +160,12 @@ export default function CourseSessionsHistory({ courseId }: Props) {
       headerName: "Tema",
       width: 150,
       valueGetter: (_: any, row: any) => row.dificultad.tema,
+    },
+    {
+      field: "dificultad",
+      headerName: "Dificultad",
+      width: 200,
+      valueGetter: (_: any, row: any) => row.dificultad.nombre,
     },
     {
       field: "estado",
@@ -231,6 +259,31 @@ export default function CourseSessionsHistory({ courseId }: Props) {
           </Button>
         </Box>
       </Stack>
+
+      {/* Alerta Informativa sobre Fechas */}
+      <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 3 }}>
+        <Typography variant="body2">
+          La <b>fecha mostrada</b> en el gráfico y la tabla varía según el
+          estado filtrado:
+        </Typography>
+        <ul
+          style={{
+            margin: "4px 0",
+            paddingLeft: "20px",
+            fontSize: "0.875rem",
+          }}
+        >
+          <li>
+            <b>Pendiente / Todos:</b> Fecha de asignación (creación).
+          </li>
+          <li>
+            <b>Completada:</b> Fecha en que el alumno completó la sesión.
+          </li>
+          <li>
+            <b>No realizada / Incompleta:</b> Fecha límite asignada.
+          </li>
+        </ul>
+      </Alert>
 
       {/* --- Filtros --- */}
       <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
@@ -367,45 +420,45 @@ export default function CourseSessionsHistory({ courseId }: Props) {
               <Select
                 value={filters.tema}
                 label="Tema"
-                onChange={(e) =>
-                  setFilters({ ...filters, tema: e.target.value })
-                }
+                onChange={(e) => {
+                  setFilters({
+                    ...filters,
+                    tema: e.target.value,
+                    dificultadId: "", // Resetear dificultad al cambiar tema
+                  });
+                }}
               >
                 <MenuItem value="">Todos</MenuItem>
                 {Object.values(temas).map((t) => (
                   <MenuItem key={t} value={t}>
-                    {t}
+                    <Typography variant="inherit" noWrap>
+                      {t}
+                    </Typography>
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
 
-            {filters.tema && (
-              <Autocomplete
-                options={
-                  data?.filters?.dificultades.filter(
-                    (d: any) => d.tema === filters.tema,
-                  ) || []
+            <FormControl size="small" sx={{ width: 250 }}>
+              <InputLabel>Dificultad</InputLabel>
+              <Select
+                value={filters.dificultadId}
+                label="Dificultad"
+                onChange={(e) =>
+                  setFilters({ ...filters, dificultadId: e.target.value })
                 }
-                getOptionLabel={(o: any) => o.nombre}
-                value={
-                  data?.filters?.dificultades.find(
-                    (d: any) => d.id === filters.dificultadId,
-                  ) || null
-                }
-                onChange={(_, val) =>
-                  setFilters({ ...filters, dificultadId: val?.id || "" })
-                }
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Dificultad"
-                    size="small"
-                    sx={{ width: 200 }}
-                  />
-                )}
-              />
-            )}
+                disabled={allDifficulties.length === 0}
+              >
+                <MenuItem value="">Todas</MenuItem>
+                {filteredDifficulties.map((d: any) => (
+                  <MenuItem key={d.id} value={d.id}>
+                    <Typography variant="inherit" noWrap title={d.nombre}>
+                      {d.nombre}
+                    </Typography>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Stack>
         </Stack>
       </Paper>
@@ -429,8 +482,10 @@ export default function CourseSessionsHistory({ courseId }: Props) {
             {data.chartData.length > 0 ? (
               <LineChart
                 dataset={data.chartData}
+                yAxis={[{ label: "Cantidad de sesiones" }]}
                 xAxis={[
                   {
+                    label: getDateLabel(),
                     scaleType: "point",
                     dataKey: "fecha",
                     valueFormatter: (val) => format(val, "dd/MM"),
@@ -441,11 +496,9 @@ export default function CourseSessionsHistory({ courseId }: Props) {
                     dataKey: "cantidad",
                     label: "Sesiones",
                     color: "#2196f3",
-                    area: true,
                   },
                 ]}
                 height={300}
-                margin={{ top: 20, bottom: 30, left: 40, right: 20 }}
               />
             ) : (
               <Typography align="center" sx={{ py: 4 }} color="text.secondary">

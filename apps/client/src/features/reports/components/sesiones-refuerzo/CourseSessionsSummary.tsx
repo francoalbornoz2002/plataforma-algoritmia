@@ -10,7 +10,6 @@ import {
   Grid,
   Divider,
   LinearProgress,
-  Chip,
   FormControl,
   Select,
   MenuItem,
@@ -180,7 +179,7 @@ export default function CourseSessionsSummary({ courseId }: Props) {
         <Stack spacing={3}>
           {/* Fila 1: KPIs Generales */}
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 12, md: 2 }}>
               <ReportTotalCard
                 resourceName="Sesiones"
                 total={data.kpis.total}
@@ -189,15 +188,43 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                 icon={<FunctionsIcon fontSize="small" />}
               />
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }}>
-              <ReportStatCard
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <ReportTextualCard
+                icon={<TopicIcon />}
+                title="Tema más frecuente"
+                value={data.tops.tema.label}
+                description={
+                  <>
+                    Abarca <b>{data.tops.tema.value}</b> sesiones.
+                  </>
+                }
+                color="info"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4.5 }}>
+              <ReportTextualCard
                 icon={<WarningIcon />}
-                title="Grado Promedio"
-                subtitle="Dificultad promedio asignada"
-                count={data.kpis.promedioGrado}
+                title="Dificultad más frecuente en sesiones"
+                value={data.tops.dificultad.name}
+                description={
+                  <>
+                    Presente en <b>{data.tops.dificultad.count}</b> sesiones.
+                  </>
+                }
+                color="error"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 2.5 }}>
+              <ReportTextualCard
+                icon={<WarningIcon />}
+                title="Grado Promedio por sesión"
+                description="Dificultad promedio asignada"
+                value={data.kpis.promedioGrado}
                 color="warning"
               />
             </Grid>
+          </Grid>
+          <Grid container spacing={2}>
             {/* Gráfico 1: Estado / Origen */}
             <Grid size={{ xs: 12, md: 6 }}>
               <Paper
@@ -250,11 +277,14 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                         stack: "A",
                       },
                     ]}
-                    height={200}
+                    height={280}
                     slotProps={{
                       legend: {
                         direction: "horizontal",
-                        position: { vertical: "bottom", horizontal: "center" },
+                        position: {
+                          vertical: "bottom",
+                          horizontal: "center",
+                        },
                       },
                     }}
                   />
@@ -272,22 +302,22 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                         highlightScope: { fade: "global", highlight: "item" },
                       },
                     ]}
-                    height={200}
+                    height={280}
                     slotProps={{
                       legend: {
                         direction: "horizontal",
-                        position: { vertical: "bottom", horizontal: "center" },
+                        position: {
+                          vertical: "bottom",
+                          horizontal: "center",
+                        },
                       },
                     }}
                   />
                 )}
               </Paper>
             </Grid>
-          </Grid>
-
-          <Grid container spacing={2}>
             {/* Gráfico 2: Tema / Dificultad */}
-            <Grid size={{ xs: 12, md: 12 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Paper
                 elevation={3}
                 sx={{
@@ -336,7 +366,10 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                     slotProps={{
                       legend: {
                         direction: "horizontal",
-                        position: { vertical: "bottom", horizontal: "center" },
+                        position: {
+                          vertical: "bottom",
+                          horizontal: "center",
+                        },
                       },
                     }}
                   />
@@ -358,7 +391,10 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                     slotProps={{
                       legend: {
                         direction: "horizontal",
-                        position: { vertical: "bottom", horizontal: "center" },
+                        position: {
+                          vertical: "bottom",
+                          horizontal: "center",
+                        },
                       },
                     }}
                   />
@@ -369,322 +405,325 @@ export default function CourseSessionsSummary({ courseId }: Props) {
 
           <Divider />
 
-          {/* Fila 2: Tops y Modas */}
-          <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-            <Typography variant="h6" gutterBottom>
-              Estadísticas Destacadas
-            </Typography>
-            <Typography variant="body2" color="text.secondary" paragraph>
-              Análisis del impacto en la reducción de dificultad según el origen
-              de la sesión.
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <ReportTextualCard
-                  icon={<PersonIcon />}
-                  title="Alumno con más sesiones"
-                  value={data.tops.alumno.name}
-                  description={
-                    <>
-                      Tiene <b>{data.tops.alumno.count}</b> sesiones asignadas.
-                    </>
-                  }
-                  color="primary"
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <ReportTextualCard
-                  icon={<SchoolIcon />}
-                  title="Docente que más asigna"
-                  value={data.tops.docente.name}
-                  description={
-                    <>
-                      Ha asignado <b>{data.tops.docente.count}</b> sesiones.
-                    </>
-                  }
-                  color="secondary"
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                <ReportTextualCard
-                  icon={<WarningIcon />}
-                  title="Dificultad más frecuente"
-                  value={data.tops.dificultad.name}
-                  description={
-                    <>
-                      Presente en <b>{data.tops.dificultad.count}</b> sesiones.
-                    </>
-                  }
-                  color="error"
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                <ReportTextualCard
-                  icon={<TopicIcon />}
-                  title="Tema más frecuente"
-                  value={data.tops.tema.label}
-                  description={
-                    <>
-                      Abarca <b>{data.tops.tema.value}</b> sesiones.
-                    </>
-                  }
-                  color="info"
-                />
-              </Grid>
-            </Grid>
-          </Paper>
-
-          <Divider />
-
-          {/* Fila 3: Efectividad Comparativa */}
-          <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-            <Typography variant="h6" gutterBottom>
-              Efectividad de Sesiones Completadas
-            </Typography>
-            <Typography variant="body2" color="text.secondary" paragraph>
-              Análisis del impacto en la reducción de dificultad según el origen
-              de la sesión.
-            </Typography>
-
-            <Grid container spacing={3}>
-              {/* Sistema */}
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Paper
-                  elevation={3}
-                  sx={{ p: 2, borderTop: "4px solid #9c27b0" }}
+          <Grid container spacing={2}>
+            {/* Alumno y docente con más sesiones asignadas */}
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
+                <Typography variant="h6" gutterBottom>
+                  Estadísticas de Alumnos y Docentes
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mb: 2 }}
                 >
-                  <Stack direction="row" spacing={1} alignItems="center" mb={1}>
-                    <AutoAwesomeIcon sx={{ color: "#9c27b0" }} />
-                    <Typography variant="h6">Generadas por Sistema</Typography>
-                  </Stack>
-
-                  <Typography variant="body2" gutterBottom>
-                    Total de sesiones completadas:{" "}
-                    <b>{data.efectividad.sistema.total}</b>
-                  </Typography>
-
-                  <Stack spacing={2} mt={2}>
-                    <Stack spacing={0.5}>
-                      <Stack
-                        direction="row"
-                        display="flex"
-                        justifyContent="space-between"
-                        mb={0.5}
-                      >
-                        <Typography variant="caption">
-                          Mejora Total (≥ 85% aciertos)
-                        </Typography>
-                        <Typography variant="caption" fontWeight="bold">
-                          {calcPct(
-                            data.efectividad.sistema.level3,
-                            data.efectividad.sistema.total,
-                          ).toFixed(1)}
-                          %
-                        </Typography>
-                      </Stack>
-                      <LinearProgress
-                        variant="determinate"
-                        value={calcPct(
-                          data.efectividad.sistema.level3,
-                          data.efectividad.sistema.total,
-                        )}
-                        color="success"
-                        sx={{ height: 8, borderRadius: 4 }}
-                      />
-                      <Typography variant="caption" color="text.secondary">
-                        {data.efectividad.sistema.level3} sesiones establecieron
-                        la dificultad del alumno a grado "Ninguna".
-                      </Typography>
-                    </Stack>
-
-                    <Stack spacing={0.5}>
-                      <Stack
-                        direction="row"
-                        display="flex"
-                        justifyContent="space-between"
-                        mb={0.5}
-                      >
-                        <Typography variant="caption">
-                          Mejora Significativa (60% - 84% aciertos)
-                        </Typography>
-                        <Typography variant="caption" fontWeight="bold">
-                          {calcPct(
-                            data.efectividad.sistema.level2,
-                            data.efectividad.sistema.total,
-                          ).toFixed(1)}
-                          %
-                        </Typography>
-                      </Stack>
-                      <LinearProgress
-                        variant="determinate"
-                        value={calcPct(
-                          data.efectividad.sistema.level2,
-                          data.efectividad.sistema.total,
-                        )}
-                        color="primary"
-                        sx={{ height: 8, borderRadius: 4 }}
-                      />
-                      <Typography variant="caption" color="text.secondary">
-                        {data.efectividad.sistema.level2} sesiones establecieron
-                        la dificultad del alumno a grado "Bajo".
-                      </Typography>
-                    </Stack>
-
-                    <Stack spacing={0.5}>
-                      <Stack
-                        direction="row"
-                        display="flex"
-                        justifyContent="space-between"
-                        mb={0.5}
-                      >
-                        <Typography variant="caption">
-                          Mejora Leve (40% - 59% aciertos)
-                        </Typography>
-                        <Typography variant="caption" fontWeight="bold">
-                          {calcPct(
-                            data.efectividad.sistema.level1,
-                            data.efectividad.sistema.total,
-                          ).toFixed(1)}
-                          %
-                        </Typography>
-                      </Stack>
-                      <LinearProgress
-                        variant="determinate"
-                        value={calcPct(
-                          data.efectividad.sistema.level1,
-                          data.efectividad.sistema.total,
-                        )}
-                        color="warning"
-                        sx={{ height: 8, borderRadius: 4 }}
-                      />
-                      <Typography variant="caption" color="text.secondary">
-                        {data.efectividad.sistema.level1} sesiones establecieron
-                        la dificultad del alumno a grado "Medio".
-                      </Typography>
-                    </Stack>
-                  </Stack>
-                </Paper>
-              </Grid>
-
-              {/* Docente */}
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Paper
-                  elevation={3}
-                  sx={{ p: 2, borderTop: "4px solid #ff9800" }}
-                >
-                  <Stack direction="row" spacing={1} alignItems="center" mb={1}>
-                    <PsychologyIcon sx={{ color: "#ff9800" }} />
-                    <Typography variant="h6">Asignadas por Docentes</Typography>
-                  </Stack>
-
-                  <Typography variant="body2" gutterBottom>
-                    Total completadas: <b>{data.efectividad.docente.total}</b>
-                  </Typography>
-
-                  <Stack spacing={2} mt={2}>
-                    <Stack spacing={0.5}>
-                      <Stack
-                        direction="row"
-                        display="flex"
-                        justifyContent="space-between"
-                        mb={0.5}
-                      >
-                        <Typography variant="caption">
-                          Mejora Total (≥ 85% aciertos)
-                        </Typography>
-                        <Typography variant="caption" fontWeight="bold">
-                          {calcPct(
-                            data.efectividad.docente.level3,
-                            data.efectividad.docente.total,
-                          ).toFixed(1)}
-                          %
-                        </Typography>
-                      </Stack>
-                      <LinearProgress
-                        variant="determinate"
-                        value={calcPct(
-                          data.efectividad.docente.level3,
-                          data.efectividad.docente.total,
-                        )}
-                        color="success"
-                        sx={{ height: 8, borderRadius: 4 }}
-                      />
-                      <Typography variant="caption" color="text.secondary">
-                        {data.efectividad.docente.level3} sesiones establecieron
-                        la dificultad del alumno a grado "Ninguna".
-                      </Typography>
-                    </Stack>
-
-                    <Stack spacing={0.5}>
-                      <Stack
-                        direction="row"
-                        display="flex"
-                        justifyContent="space-between"
-                        mb={0.5}
-                      >
-                        <Typography variant="caption">
-                          Mejora Significativa (60% - 84%)
-                        </Typography>
-                        <Typography variant="caption" fontWeight="bold">
-                          {calcPct(
-                            data.efectividad.docente.level2,
-                            data.efectividad.docente.total,
-                          ).toFixed(1)}
-                          %
-                        </Typography>
-                      </Stack>
-                      <LinearProgress
-                        variant="determinate"
-                        value={calcPct(
-                          data.efectividad.docente.level2,
-                          data.efectividad.docente.total,
-                        )}
-                        color="primary"
-                        sx={{ height: 8, borderRadius: 4 }}
-                      />
-                      <Typography variant="caption" color="text.secondary">
-                        {data.efectividad.docente.level2} sesiones establecieron
-                        la dificultad del alumno a grado "Bajo".
-                      </Typography>
-                    </Stack>
-
-                    <Stack spacing={0.5}>
-                      <Stack
-                        direction="row"
-                        display="flex"
-                        justifyContent="space-between"
-                        mb={0.5}
-                      >
-                        <Typography variant="caption">
-                          Mejora Leve (40% - 59%)
-                        </Typography>
-                        <Typography variant="caption" fontWeight="bold">
-                          {calcPct(
-                            data.efectividad.docente.level1,
-                            data.efectividad.docente.total,
-                          ).toFixed(1)}
-                          %
-                        </Typography>
-                      </Stack>
-                      <LinearProgress
-                        variant="determinate"
-                        value={calcPct(
-                          data.efectividad.docente.level1,
-                          data.efectividad.docente.total,
-                        )}
-                        color="warning"
-                        sx={{ height: 8, borderRadius: 4 }}
-                      />
-                      <Typography variant="caption" color="text.secondary">
-                        {data.efectividad.docente.level1} sesiones establecieron
-                        la dificultad del alumno a grado "Medio".
-                      </Typography>
-                    </Stack>
-                  </Stack>
-                </Paper>
-              </Grid>
+                  Actores con mayor participación en sesiones de refuerzo
+                </Typography>
+                <Stack spacing={2}>
+                  <ReportTextualCard
+                    icon={<PersonIcon />}
+                    title="Alumno con más sesiones"
+                    value={data.tops.alumno.name}
+                    description={
+                      <>
+                        Tiene <b>{data.tops.alumno.count}</b> sesiones
+                        asignadas.
+                      </>
+                    }
+                    color="primary"
+                  />
+                  <ReportTextualCard
+                    icon={<SchoolIcon />}
+                    title="Docente que más asigna"
+                    value={data.tops.docente.name}
+                    description={
+                      <>
+                        Ha asignado <b>{data.tops.docente.count}</b> sesiones.
+                      </>
+                    }
+                    color="secondary"
+                  />
+                </Stack>
+              </Paper>
             </Grid>
-          </Paper>
+
+            {/* Efectividad Comparativa */}
+            <Grid size={{ xs: 12, md: 8 }}>
+              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
+                <Typography variant="h6" gutterBottom>
+                  Efectividad de Sesiones Completadas
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mb: 2 }}
+                >
+                  Análisis del impacto en la reducción de dificultad según el
+                  origen de la sesión.
+                </Typography>
+
+                <Grid container spacing={3}>
+                  {/* Sistema */}
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Paper
+                      elevation={3}
+                      sx={{ p: 2, borderTop: "4px solid #9c27b0" }}
+                    >
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        alignItems="center"
+                        mb={1}
+                      >
+                        <AutoAwesomeIcon sx={{ color: "#9c27b0" }} />
+                        <Typography variant="h6">
+                          Generadas por Sistema
+                        </Typography>
+                      </Stack>
+
+                      <Typography variant="body2" gutterBottom>
+                        Total de sesiones completadas:{" "}
+                        <b>{data.efectividad.sistema.total}</b>
+                      </Typography>
+
+                      <Stack spacing={2} mt={2}>
+                        <Stack spacing={0.5}>
+                          <Stack
+                            direction="row"
+                            display="flex"
+                            justifyContent="space-between"
+                            mb={0.5}
+                          >
+                            <Typography variant="caption">
+                              Mejora Total (≥ 85% aciertos)
+                            </Typography>
+                            <Typography variant="caption" fontWeight="bold">
+                              {calcPct(
+                                data.efectividad.sistema.level3,
+                                data.efectividad.sistema.total,
+                              ).toFixed(1)}
+                              %
+                            </Typography>
+                          </Stack>
+                          <LinearProgress
+                            variant="determinate"
+                            value={calcPct(
+                              data.efectividad.sistema.level3,
+                              data.efectividad.sistema.total,
+                            )}
+                            color="success"
+                            sx={{ height: 8, borderRadius: 4 }}
+                          />
+                          <Typography variant="caption" color="text.secondary">
+                            {data.efectividad.sistema.level3} sesiones
+                            establecieron la dificultad del alumno a grado
+                            "Ninguna".
+                          </Typography>
+                        </Stack>
+
+                        <Stack spacing={0.5}>
+                          <Stack
+                            direction="row"
+                            display="flex"
+                            justifyContent="space-between"
+                            mb={0.5}
+                          >
+                            <Typography variant="caption">
+                              Mejora Significativa (60% - 84% aciertos)
+                            </Typography>
+                            <Typography variant="caption" fontWeight="bold">
+                              {calcPct(
+                                data.efectividad.sistema.level2,
+                                data.efectividad.sistema.total,
+                              ).toFixed(1)}
+                              %
+                            </Typography>
+                          </Stack>
+                          <LinearProgress
+                            variant="determinate"
+                            value={calcPct(
+                              data.efectividad.sistema.level2,
+                              data.efectividad.sistema.total,
+                            )}
+                            color="primary"
+                            sx={{ height: 8, borderRadius: 4 }}
+                          />
+                          <Typography variant="caption" color="text.secondary">
+                            {data.efectividad.sistema.level2} sesiones
+                            establecieron la dificultad del alumno a grado
+                            "Bajo".
+                          </Typography>
+                        </Stack>
+
+                        <Stack spacing={0.5}>
+                          <Stack
+                            direction="row"
+                            display="flex"
+                            justifyContent="space-between"
+                            mb={0.5}
+                          >
+                            <Typography variant="caption">
+                              Mejora Leve (40% - 59% aciertos)
+                            </Typography>
+                            <Typography variant="caption" fontWeight="bold">
+                              {calcPct(
+                                data.efectividad.sistema.level1,
+                                data.efectividad.sistema.total,
+                              ).toFixed(1)}
+                              %
+                            </Typography>
+                          </Stack>
+                          <LinearProgress
+                            variant="determinate"
+                            value={calcPct(
+                              data.efectividad.sistema.level1,
+                              data.efectividad.sistema.total,
+                            )}
+                            color="warning"
+                            sx={{ height: 8, borderRadius: 4 }}
+                          />
+                          <Typography variant="caption" color="text.secondary">
+                            {data.efectividad.sistema.level1} sesiones
+                            establecieron la dificultad del alumno a grado
+                            "Medio".
+                          </Typography>
+                        </Stack>
+                      </Stack>
+                    </Paper>
+                  </Grid>
+
+                  {/* Docente */}
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Paper
+                      elevation={3}
+                      sx={{ p: 2, borderTop: "4px solid #ff9800" }}
+                    >
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        alignItems="center"
+                        mb={1}
+                      >
+                        <PsychologyIcon sx={{ color: "#ff9800" }} />
+                        <Typography variant="h6">
+                          Asignadas por Docentes
+                        </Typography>
+                      </Stack>
+
+                      <Typography variant="body2" gutterBottom>
+                        Total completadas:{" "}
+                        <b>{data.efectividad.docente.total}</b>
+                      </Typography>
+
+                      <Stack spacing={2} mt={2}>
+                        <Stack spacing={0.5}>
+                          <Stack
+                            direction="row"
+                            display="flex"
+                            justifyContent="space-between"
+                            mb={0.5}
+                          >
+                            <Typography variant="caption">
+                              Mejora Total (≥ 85% aciertos)
+                            </Typography>
+                            <Typography variant="caption" fontWeight="bold">
+                              {calcPct(
+                                data.efectividad.docente.level3,
+                                data.efectividad.docente.total,
+                              ).toFixed(1)}
+                              %
+                            </Typography>
+                          </Stack>
+                          <LinearProgress
+                            variant="determinate"
+                            value={calcPct(
+                              data.efectividad.docente.level3,
+                              data.efectividad.docente.total,
+                            )}
+                            color="success"
+                            sx={{ height: 8, borderRadius: 4 }}
+                          />
+                          <Typography variant="caption" color="text.secondary">
+                            {data.efectividad.docente.level3} sesiones
+                            establecieron la dificultad del alumno a grado
+                            "Ninguna".
+                          </Typography>
+                        </Stack>
+
+                        <Stack spacing={0.5}>
+                          <Stack
+                            direction="row"
+                            display="flex"
+                            justifyContent="space-between"
+                            mb={0.5}
+                          >
+                            <Typography variant="caption">
+                              Mejora Significativa (60% - 84%)
+                            </Typography>
+                            <Typography variant="caption" fontWeight="bold">
+                              {calcPct(
+                                data.efectividad.docente.level2,
+                                data.efectividad.docente.total,
+                              ).toFixed(1)}
+                              %
+                            </Typography>
+                          </Stack>
+                          <LinearProgress
+                            variant="determinate"
+                            value={calcPct(
+                              data.efectividad.docente.level2,
+                              data.efectividad.docente.total,
+                            )}
+                            color="primary"
+                            sx={{ height: 8, borderRadius: 4 }}
+                          />
+                          <Typography variant="caption" color="text.secondary">
+                            {data.efectividad.docente.level2} sesiones
+                            establecieron la dificultad del alumno a grado
+                            "Bajo".
+                          </Typography>
+                        </Stack>
+
+                        <Stack spacing={0.5}>
+                          <Stack
+                            direction="row"
+                            display="flex"
+                            justifyContent="space-between"
+                            mb={0.5}
+                          >
+                            <Typography variant="caption">
+                              Mejora Leve (40% - 59%)
+                            </Typography>
+                            <Typography variant="caption" fontWeight="bold">
+                              {calcPct(
+                                data.efectividad.docente.level1,
+                                data.efectividad.docente.total,
+                              ).toFixed(1)}
+                              %
+                            </Typography>
+                          </Stack>
+                          <LinearProgress
+                            variant="determinate"
+                            value={calcPct(
+                              data.efectividad.docente.level1,
+                              data.efectividad.docente.total,
+                            )}
+                            color="warning"
+                            sx={{ height: 8, borderRadius: 4 }}
+                          />
+                          <Typography variant="caption" color="text.secondary">
+                            {data.efectividad.docente.level1} sesiones
+                            establecieron la dificultad del alumno a grado
+                            "Medio".
+                          </Typography>
+                        </Stack>
+                      </Stack>
+                    </Paper>
+                  </Grid>
+                </Grid>
+              </Paper>
+            </Grid>
+          </Grid>
         </Stack>
       )}
     </Paper>
