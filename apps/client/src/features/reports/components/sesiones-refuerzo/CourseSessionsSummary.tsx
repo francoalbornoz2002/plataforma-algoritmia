@@ -16,7 +16,6 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableOnIcon from "@mui/icons-material/TableChart";
 import PersonIcon from "@mui/icons-material/Person";
 import SchoolIcon from "@mui/icons-material/School";
@@ -30,6 +29,7 @@ import { BarChart } from "@mui/x-charts/BarChart";
 
 import {
   getCourseSessionsSummary,
+  getCourseSessionsSummaryPdf,
   type CourseSessionsSummaryFilters,
 } from "../../service/reports.service";
 import { temas } from "../../../../types";
@@ -37,6 +37,7 @@ import { TemasLabels } from "../../../../types/traducciones";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import ReportTotalCard from "../common/ReportTotalCard";
 import ReportTextualCard from "../common/ReportTextualCard";
+import PdfExportButton from "../common/PdfExportButton";
 
 interface Props {
   courseId: string;
@@ -107,14 +108,18 @@ export default function CourseSessionsSummary({ courseId }: Props) {
         <Box
           sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
         >
-          <Button
-            variant="outlined"
-            startIcon={<PictureAsPdfIcon />}
+          <PdfExportButton
+            filters={{
+              ...filters,
+              courseId,
+              agruparPor: chartGrouping,
+              agruparPorContenido: chartGrouping2,
+            }}
+            exportFunction={getCourseSessionsSummaryPdf}
+            fileName="resumen-sesiones.pdf"
             disabled={!data}
-            color="error"
-          >
-            Exportar PDF
-          </Button>
+            onError={setError}
+          />
           <Button
             variant="outlined"
             startIcon={<TableOnIcon />}

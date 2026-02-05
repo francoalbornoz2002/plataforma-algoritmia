@@ -55,7 +55,10 @@ import {
   GetCourseClassesSummaryPdfDto,
 } from '../dto/get-course-classes-summary.dto';
 import { GetCourseClassesHistoryDto } from '../dto/get-course-classes-history.dto';
-import { GetCourseSessionsSummaryDto } from '../dto/get-course-sessions-summary.dto';
+import {
+  GetCourseSessionsSummaryDto,
+  GetCourseSessionsSummaryPdfDto,
+} from '../dto/get-course-sessions-summary.dto';
 import { GetCourseSessionsHistoryDto } from '../dto/get-course-sessions-history.dto';
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
 import { PdfService } from '../../pdf/service/pdf.service';
@@ -428,6 +431,27 @@ export class ReportesController {
     @Query() dto: GetCourseSessionsSummaryDto,
   ) {
     return this.reportesService.getCourseSessionsSummary(id, dto);
+  }
+
+  @Get('cursos/:id/sesiones-refuerzo/resumen/pdf')
+  @Roles(roles.Administrador, roles.Docente)
+  async getCourseSessionsSummaryPdf(
+    @Param('id') id: string,
+    @Query() dto: GetCourseSessionsSummaryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.pdfService.getCourseSessionsSummaryPdf(
+      id,
+      dto,
+      userId,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="resumen-sesiones-${id}.pdf"`,
+    });
+    return file;
   }
 
   // Sesiones de Refuerzo - Sección 2: Historial

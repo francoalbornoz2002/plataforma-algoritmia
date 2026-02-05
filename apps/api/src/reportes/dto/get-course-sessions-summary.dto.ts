@@ -1,4 +1,4 @@
-import { IsOptional, IsDateString } from 'class-validator';
+import { IsOptional, IsDateString, IsString } from 'class-validator';
 
 export class GetCourseSessionsSummaryDto {
   @IsOptional()
@@ -8,4 +8,18 @@ export class GetCourseSessionsSummaryDto {
   @IsOptional()
   @IsDateString()
   fechaHasta?: string;
+}
+
+export class GetCourseSessionsSummaryPdfDto extends GetCourseSessionsSummaryDto {
+  @IsOptional()
+  @IsString()
+  aPresentarA?: string;
+
+  @IsOptional()
+  @IsString()
+  agruparPor?: 'ESTADO' | 'ORIGEN' | 'AMBOS';
+
+  @IsOptional()
+  @IsString()
+  agruparPorContenido?: 'TEMA' | 'DIFICULTAD' | 'AMBOS';
 }

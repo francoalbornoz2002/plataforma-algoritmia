@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  {{> styles}}
+  <style>
+    /* Estilos específicos para este reporte */
+    .effectiveness-box {
+      background-color: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px;
+      width: 48%;
+    }
+    .effectiveness-title {
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 8px;
+      border-bottom: 2px solid;
+      padding-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .level-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      font-size: 11px;
+    }
+  </style>
+</head>
+<body>
+  {{> header}}
+
+  <!-- KPIs -->
+  <div class="kpi-container">
+    <div class="kpi-card">
+      <div class="kpi-value">{{kpis.total}}</div>
+      <div class="kpi-label">Total Sesiones</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" style="color: #2e7d32;">{{kpis.activas}}</div>
+      <div class="kpi-label">Activas</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" style="color: #d32f2f;">{{kpis.inactivas}}</div>
+      <div class="kpi-label">Inactivas</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" style="color: #ed6c02;">{{kpis.promedioGrado}}</div>
+      <div class="kpi-label">Grado Promedio</div>
+    </div>
+  </div>
+
+  <!-- Gráficos -->
+  <div style="display: flex; justify-content: space-between; margin: 20px 0; page-break-inside: avoid;">
+    <div style="width: 48%;">
+      <div class="chart-container" style="height: 200px; margin: 0;">
+        <canvas id="chart1"></canvas>
+      </div>
+    </div>
+    <div style="width: 48%;">
+      <div class="chart-container" style="height: 200px; margin: 0;">
+        <canvas id="chart2"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tops (Participación y Frecuencia) -->
+  <div class="top-section">
+    <h3 style="color: #1976d2; margin-bottom: 10px; font-size: 14px;">Estadísticas Destacadas</h3>
+    
+    <div class="top-stats-grid" style="grid-template-columns: repeat(2, 1fr);">
+      <!-- Alumno -->
+      <div class="top-card" style="border-top: 4px solid #1976d2;">
+        <div class="stat-title">Alumno con más sesiones asignadas</div>
+        <div class="stat-value" style="color: #1976d2;">{{tops.alumno.name}}</div>
+        <div class="stat-desc">{{tops.alumno.count}} sesiones asignadas.</div>
+      </div>
+
+      <!-- Docente -->
+      <div class="top-card" style="border-top: 4px solid #ed6c02;">
+        <div class="stat-title">Docente que más asigna</div>
+        <div class="stat-value" style="color: #ed6c02;">{{tops.docente.name}}</div>
+        <div class="stat-desc">{{tops.docente.count}} sesiones asignadas.</div>
+      </div>
+
+      <!-- Tema -->
+      <div class="top-card" style="border-top: 4px solid #9c27b0;">
+        <div class="stat-title">Tema Frecuente</div>
+        <div class="stat-value" style="color: #9c27b0;">{{tops.tema.label}}</div>
+        <div class="stat-desc">Presente en {{tops.tema.value}} sesiones.</div>
+      </div>
+
+      <!-- Dificultad -->
+      <div class="top-card" style="border-top: 4px solid #d32f2f;">
+        <div class="stat-title">Dificultad Frecuente</div>
+        <div class="stat-value" style="color: #d32f2f;">{{tops.dificultad.name}}</div>
+        <div class="stat-desc">Presente en {{tops.dificultad.count}} sesiones.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Efectividad -->
+  <div style="margin-top: 20px; page-break-inside: avoid;">
+    <h3 style="color: #1976d2; margin-bottom: 10px; font-size: 14px;">
+      Efectividad (Mejora de Grado en Sesiones Completadas) Segun Origen
+    </h3>
+    
+    <div style="display: flex; justify-content: space-between; gap: 10px;">
+      <!-- Sistema -->
+      <div class="effectiveness-box">
+        <div class="effectiveness-title" style="border-color: #9c27b0; color: #9c27b0;">
+          <span>Generadas por el Sistema</span>
+          <span>{{efectividad.sistema.total}} completadas</span>
+        </div>
+        <div class="level-row">
+          <span style="flex: 1;">Reducción a grado <b>Ninguna</b> (≥85%)</span>
+          <span class="text-bold">{{efectividad.sistema.level3}}</span>
+        </div>
+        <div class="level-row">
+          <span style="flex: 1;">Reducción a grado <b>Bajo</b> (60-84%)</span>
+          <span class="text-bold">{{efectividad.sistema.level2}}</span>
+        </div>
+        <div class="level-row">
+          <span style="flex: 1;">Reducción a grado <b>Medio</b> (40-59%)</span>
+          <span class="text-bold">{{efectividad.sistema.level1}}</span>
+        </div>
+      </div>
+
+      <!-- Docente -->
+      <div class="effectiveness-box">
+        <div class="effectiveness-title" style="border-color: #ff9800; color: #ff9800;">
+          <span>Generadas por Docentes</span>
+          <span>{{efectividad.docente.total}} completadas</span>
+        </div>
+        <div class="level-row">
+          <span style="flex: 1;">Reducción a grado <b>Ninguna</b> (≥85%)</span>
+          <span class="text-bold">{{efectividad.docente.level3}}</span>
+        </div>
+        <div class="level-row">
+          <span style="flex: 1;">Reducción a grado <b>Bajo</b> (60-84%)</span>
+          <span class="text-bold">{{efectividad.docente.level2}}</span>
+        </div>
+        <div class="level-row">
+          <span style="flex: 1;">Reducción a grado <b>Medio</b> (40-59%)</span>
+          <span class="text-bold">{{efectividad.docente.level1}}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {{> footer}}
+
+  <script>
+    {{{chartJsContent}}}
+  </script>
+  {{> chartSetup}}
+  <script>
+    const ctx1 = document.getElementById('chart1').getContext('2d');
+    const config1 = {{{chartConfig1}}};
+    applyChartPrintConfig(config1);
+    new Chart(ctx1, config1);
+
+    const ctx2 = document.getElementById('chart2').getContext('2d');
+    const config2 = {{{chartConfig2}}};
+    applyChartPrintConfig(config2);
+    new Chart(ctx2, config2);
+  </script>
+</body>
+</html>

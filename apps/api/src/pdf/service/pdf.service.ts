@@ -15,6 +15,8 @@ import { estado_clase_consulta } from '@prisma/client';
 import { GetCourseConsultationsSummaryPdfDto } from 'src/reportes/dto/get-course-consultations-summary.dto';
 import { GetCourseConsultationsHistoryPdfDto } from 'src/reportes/dto/get-course-consultations-history.dto';
 import { GetCourseClassesSummaryPdfDto } from 'src/reportes/dto/get-course-classes-summary.dto';
+import { GetCourseSessionsSummaryPdfDto } from 'src/reportes/dto/get-course-sessions-summary.dto';
+import { title } from 'process';
 
 @Injectable()
 export class PdfService {
@@ -1414,6 +1416,250 @@ export class PdfService {
     return new StreamableFile(pdfBuffer, {
       type: 'application/pdf',
       disposition: `attachment; filename="resumen-clases-${idCurso}.pdf"`,
+    });
+  }
+
+  async getCourseSessionsSummaryPdf(
+    idCurso: string,
+    dto: GetCourseSessionsSummaryPdfDto,
+    userId: string,
+  ): Promise<StreamableFile> {
+    // 1. Obtener datos
+    const data = await this.reportesService.getCourseSessionsSummary(
+      idCurso,
+      dto,
+    );
+
+    // 2. Metadatos
+    const { curso, institucion, usuario, logoBase64 } =
+      await this.reportesService.getReportMetadata(userId, idCurso);
+
+    // 3. Registrar Reporte
+    const { reporteDB, filtrosTexto } =
+      await this.reportesService.registerReport(
+        userId,
+        'Resumen de Sesiones de Refuerzo',
+        'Cursos',
+        { ...dto, cursoId: idCurso },
+      );
+
+    // 4. Configurar Gráficos
+    const chartJsContent = await this.getChartJsContent();
+
+    // --- Gráfico 1: Distribución (Estado / Origen) ---
+    let chartConfig1: any;
+    if (dto.agruparPor === 'AMBOS') {
+      const labels = data.graficos.estadosOrigen.map((d) => d.estado);
+      chartConfig1 = {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Sistema',
+              data: data.graficos.estadosOrigen.map((d) => d.Sistema),
+              backgroundColor: '#9c27b0',
+              stack: 'Stack 0',
+            },
+            {
+              label: 'Docente',
+              data: data.graficos.estadosOrigen.map((d) => d.Docente),
+              backgroundColor: '#ff9800',
+              stack: 'Stack 0',
+            },
+          ],
+        },
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: 'Distribución de Sesiones de Refuerzo por ESTADO y ORIGEN',
+            },
+            legend: { position: 'bottom' },
+          },
+          scales: { x: { stacked: true }, y: { stacked: true } },
+        },
+      };
+    } else if (dto.agruparPor === 'ORIGEN') {
+      chartConfig1 = {
+        type: 'pie',
+        data: {
+          labels: data.graficos.origen.map((d) => `${d.label} (${d.value})`),
+          datasets: [
+            {
+              data: data.graficos.origen.map((d) => d.value),
+              backgroundColor: data.graficos.origen.map((d) => d.color),
+            },
+          ],
+        },
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: 'Distribución de Sesiones de Refuerzo por ORIGEN',
+            },
+            legend: { position: 'bottom' },
+          },
+          scales: {
+            x: { display: false },
+            y: { display: false },
+          },
+        },
+      };
+    } else {
+      // ESTADO (Default)
+      chartConfig1 = {
+        type: 'pie',
+        data: {
+          labels: data.graficos.estados.map((d) => `${d.label} (${d.value})`),
+          datasets: [
+            {
+              data: data.graficos.estados.map((d) => d.value),
+              backgroundColor: data.graficos.estados.map((d) => d.color),
+            },
+          ],
+        },
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: 'Distribución de Sesiones de Refuerzo por ESTADO',
+            },
+            legend: { position: 'bottom' },
+          },
+          scales: {
+            x: { display: false },
+            y: { display: false },
+          },
+        },
+      };
+    }
+
+    // --- Gráfico 2: Contenido (Tema / Dificultad) ---
+    let chartConfig2: any;
+    if (dto.agruparPorContenido === 'AMBOS') {
+      const labels = data.graficos.temasDificultades.map((d: any) => d.tema);
+      const datasets = data.graficos.allDifficulties.map(
+        (dif: string, i: number) => ({
+          label: dif,
+          data: data.graficos.temasDificultades.map((d: any) => d[dif] || 0),
+          backgroundColor: `hsl(${(i * 360) / data.graficos.allDifficulties.length}, 70%, 50%)`, // Colores dinámicos
+          stack: 'Stack 0',
+        }),
+      );
+
+      chartConfig2 = {
+        type: 'bar',
+        data: { labels, datasets },
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: 'Distribución de Sesiones de Refuerzo por TEMA y DIFICULTAD',
+            },
+            legend: { position: 'bottom' },
+          },
+          scales: { x: { stacked: true }, y: { stacked: true } },
+        },
+      };
+    } else if (dto.agruparPorContenido === 'DIFICULTAD') {
+      chartConfig2 = {
+        type: 'pie',
+        data: {
+          labels: data.graficos.dificultades.map(
+            (d) => `${d.label} (${d.value})`,
+          ),
+          datasets: [
+            {
+              data: data.graficos.dificultades.map((d) => d.value),
+              backgroundColor: [
+                '#e91e63',
+                '#9c27b0',
+                '#673ab7',
+                '#3f51b5',
+                '#2196f3',
+                '#03a9f4',
+              ],
+            },
+          ],
+        },
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: 'Distribución de Sesiones de Refuerzo por DIFICULTAD',
+            },
+            legend: { position: 'bottom' },
+          },
+          scales: {
+            x: { display: false },
+            y: { display: false },
+          },
+        },
+      };
+    } else {
+      // TEMA (Default)
+      chartConfig2 = {
+        type: 'pie',
+        data: {
+          labels: data.graficos.temas.map((d) => `${d.label} (${d.value})`),
+          datasets: [
+            {
+              data: data.graficos.temas.map((d) => d.value),
+              backgroundColor: [
+                '#f44336',
+                '#ff9800',
+                '#ffeb3b',
+                '#4caf50',
+                '#009688',
+                '#00bcd4',
+              ],
+            },
+          ],
+        },
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: 'Distribución de Sesiones de Refuerzo por TEMA',
+            },
+            legend: { position: 'bottom' },
+          },
+          scales: {
+            x: { display: false },
+            y: { display: false },
+          },
+        },
+      };
+    }
+
+    const commonData = this.buildCommonTemplateData(
+      { institucion, usuario, logoBase64 },
+      {
+        reporteDB,
+        filtrosTexto,
+        titulo: 'Resumen de Sesiones de Refuerzo',
+        subtitulo: `Curso: ${curso?.nombre || 'Desconocido'}`,
+        aPresentarA: dto.aPresentarA,
+      },
+    );
+
+    const templateData = {
+      ...commonData,
+      ...data, // kpis, tops, efectividad
+      chartJsContent,
+      chartConfig1: JSON.stringify(chartConfig1),
+      chartConfig2: JSON.stringify(chartConfig2),
+    };
+
+    const pdfBuffer = await this.generatePdf(
+      'reporte-sesiones-resumen',
+      templateData,
+    );
+
+    return new StreamableFile(pdfBuffer, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="resumen-sesiones-${idCurso}.pdf"`,
     });
   }
 }

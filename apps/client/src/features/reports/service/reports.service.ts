@@ -504,6 +504,25 @@ export const getCourseSessionsSummary = async (
   return response.data;
 };
 
+export const getCourseSessionsSummaryPdf = async (
+  params: CourseSessionsSummaryFilters & {
+    courseId: string;
+    aPresentarA?: string;
+    agruparPor?: "ESTADO" | "ORIGEN" | "AMBOS";
+    agruparPorContenido?: "TEMA" | "DIFICULTAD" | "AMBOS";
+  },
+) => {
+  const { courseId, ...rest } = params;
+  const cleanParams = Object.fromEntries(
+    Object.entries(rest).filter(([_, v]) => v !== ""),
+  );
+  const response = await apiClient.get(
+    `/reportes/cursos/${courseId}/sesiones-refuerzo/resumen/pdf`,
+    { params: cleanParams, responseType: "blob" },
+  );
+  return response.data;
+};
+
 export const getCourseSessionsHistory = async (
   courseId: string,
   params: CourseSessionsHistoryFilters,
