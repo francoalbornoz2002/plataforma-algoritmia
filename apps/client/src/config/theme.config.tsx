@@ -29,7 +29,28 @@ export const theme = createTheme({
       defaultProps: {
         style: {
           textTransform: "none",
+          borderRadius: "0.7em",
+        },
+      },
+    },
+    MuiAlert: {
+      defaultProps: {
+        style: {
+          borderRadius: "0.7em",
+        },
+      },
+    },
+    MuiInputBase: {
+      defaultProps: {
+        style: {
           borderRadius: "0.5em",
+        },
+      },
+    },
+    MuiPaper: {
+      defaultProps: {
+        style: {
+          borderRadius: "0.7em",
         },
       },
     },

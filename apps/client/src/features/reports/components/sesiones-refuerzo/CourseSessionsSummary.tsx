@@ -32,10 +32,11 @@ import {
   getCourseSessionsSummary,
   type CourseSessionsSummaryFilters,
 } from "../../service/reports.service";
+import { temas } from "../../../../types";
+import { TemasLabels } from "../../../../types/traducciones";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import ReportTotalCard from "../common/ReportTotalCard";
 import ReportTextualCard from "../common/ReportTextualCard";
-import ReportStatCard from "../common/ReportStatCard";
 
 interface Props {
   courseId: string;
@@ -192,7 +193,10 @@ export default function CourseSessionsSummary({ courseId }: Props) {
               <ReportTextualCard
                 icon={<TopicIcon />}
                 title="Tema más frecuente"
-                value={data.tops.tema.label}
+                value={
+                  TemasLabels[data.tops.tema.label as temas] ||
+                  data.tops.tema.label
+                }
                 description={
                   <>
                     Abarca <b>{data.tops.tema.value}</b> sesiones.

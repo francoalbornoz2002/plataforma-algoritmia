@@ -211,7 +211,7 @@ export default function Sidebar({
 
   return (
     <Box sx={{ display: "flex" }}>
-      <AppBar position="fixed" open={open}>
+      <AppBar position="fixed" open={open} style={{ borderRadius: 0 }}>
         <Toolbar>
           {/* Icono para abrir la Sidebar */}
           <IconButton

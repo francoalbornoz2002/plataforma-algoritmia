@@ -31,6 +31,10 @@ import {
   type CourseSessionsHistoryFilters,
 } from "../../service/reports.service";
 import { temas, estado_sesion } from "../../../../types";
+import {
+  TemasLabels,
+  EstadoSesionLabels,
+} from "../../../../types/traducciones";
 import SesionDetailModal from "./SesionDetailModal";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 
@@ -127,11 +131,17 @@ export default function CourseSessionsHistory({ courseId }: Props) {
 
   // Columnas DataGrid
   const columns: GridColDef[] = [
-    { field: "nroSesion", headerName: "#", width: 60 },
+    {
+      field: "nroSesion",
+      headerName: "#",
+      align: "center",
+      headerAlign: "center",
+      width: 10,
+    },
     {
       field: "fechaGrafico",
       headerName: getDateLabel(),
-      width: 190,
+      width: 130,
       valueFormatter: (val) =>
         val ? format(new Date(val), "dd/MM/yyyy") : "-",
     },
@@ -145,7 +155,7 @@ export default function CourseSessionsHistory({ courseId }: Props) {
     {
       field: "origen",
       headerName: "Origen",
-      width: 120,
+      width: 100,
       renderCell: (params) => (
         <Chip
           label={params.value}
@@ -158,13 +168,14 @@ export default function CourseSessionsHistory({ courseId }: Props) {
     {
       field: "tema",
       headerName: "Tema",
-      width: 150,
+      width: 190,
       valueGetter: (_: any, row: any) => row.dificultad.tema,
+      valueFormatter: (val: any) => TemasLabels[val as temas] || val,
     },
     {
       field: "dificultad",
       headerName: "Dificultad",
-      width: 200,
+      width: 360,
       valueGetter: (_: any, row: any) => row.dificultad.nombre,
     },
     {
@@ -172,16 +183,21 @@ export default function CourseSessionsHistory({ courseId }: Props) {
       headerName: "Estado",
       width: 130,
       renderCell: (params) => {
-        const colors: any = {
-          Completada: "success",
-          Pendiente: "info",
-          No_realizada: "error",
-          Incompleta: "warning",
-          Cancelada: "default",
+        const colors: Record<
+          string,
+          "default" | "primary" | "success" | "error" | "warning" | "info"
+        > = {
+          [estado_sesion.Completada]: "success",
+          [estado_sesion.Pendiente]: "info",
+          [estado_sesion.No_realizada]: "error",
+          [estado_sesion.Incompleta]: "warning",
+          [estado_sesion.Cancelada]: "default",
         };
         return (
           <Chip
-            label={params.value.replace("_", " ")}
+            label={
+              EstadoSesionLabels[params.value as estado_sesion] || params.value
+            }
             color={colors[params.value] || "default"}
             size="small"
           />
@@ -190,13 +206,13 @@ export default function CourseSessionsHistory({ courseId }: Props) {
     },
     {
       field: "score",
-      headerName: "Score",
+      headerName: "Pct. Aciertos",
       width: 100,
       align: "center",
       headerAlign: "center",
       renderCell: (params) =>
         params.row.resultadoSesion ? (
-          <Typography fontWeight="bold" color="success.main">
+          <Typography variant="h6" fontWeight="bold" color="success.main">
             {Number(params.row.resultadoSesion.pctAciertos).toFixed(0)}%
           </Typography>
         ) : (
@@ -205,8 +221,10 @@ export default function CourseSessionsHistory({ courseId }: Props) {
     },
     {
       field: "actions",
-      headerName: "Ver",
-      width: 70,
+      headerName: "Resultados",
+      headerAlign: "center",
+      align: "center",
+      width: 90,
       sortable: false,
       renderCell: (params) => (
         <Tooltip title="Ver detalle">
@@ -351,12 +369,11 @@ export default function CourseSessionsHistory({ courseId }: Props) {
                 }
               >
                 <MenuItem value="">Todos</MenuItem>
-                <MenuItem value={estado_sesion.Pendiente}>Pendiente</MenuItem>
-                <MenuItem value={estado_sesion.Completada}>Completada</MenuItem>
-                <MenuItem value={estado_sesion.No_realizada}>
-                  No Realizada
-                </MenuItem>
-                <MenuItem value={estado_sesion.Incompleta}>Incompleta</MenuItem>
+                {Object.values(estado_sesion).map((estado) => (
+                  <MenuItem key={estado} value={estado}>
+                    {EstadoSesionLabels[estado]}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
 
@@ -385,7 +402,7 @@ export default function CourseSessionsHistory({ courseId }: Props) {
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Alumno"
+                  label="Alumno Asignado"
                   size="small"
                   sx={{ width: 250 }}
                 />
@@ -432,7 +449,7 @@ export default function CourseSessionsHistory({ courseId }: Props) {
                 {Object.values(temas).map((t) => (
                   <MenuItem key={t} value={t}>
                     <Typography variant="inherit" noWrap>
-                      {t}
+                      {TemasLabels[t]}
                     </Typography>
                   </MenuItem>
                 ))}
@@ -482,7 +499,15 @@ export default function CourseSessionsHistory({ courseId }: Props) {
             {data.chartData.length > 0 ? (
               <LineChart
                 dataset={data.chartData}
-                yAxis={[{ label: "Cantidad de sesiones" }]}
+                yAxis={[
+                  {
+                    label: "Cantidad de sesiones",
+                    valueFormatter: (value: number | null) =>
+                      value !== null && Number.isInteger(value)
+                        ? value.toString()
+                        : "",
+                  },
+                ]}
                 xAxis={[
                   {
                     label: getDateLabel(),
