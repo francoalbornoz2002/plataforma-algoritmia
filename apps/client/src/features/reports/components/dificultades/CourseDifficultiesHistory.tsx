@@ -527,8 +527,8 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
             >
               <Typography variant="h6">Fuente de Mejora</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Porcentaje de registros donde el alumno disminuyó su grado de
-                dificultad (mejoró).
+                Proporción de mejoras logradas por cada fuente (reducción de
+                grado de dificultad).
               </Typography>
 
               <Stack spacing={2}>

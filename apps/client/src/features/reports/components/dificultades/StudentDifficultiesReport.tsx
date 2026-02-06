@@ -15,10 +15,11 @@ import {
   TextField,
   Chip,
   Button,
-  ButtonGroup,
   Checkbox,
   ListItemText,
   OutlinedInput,
+  Alert,
+  LinearProgress,
   type SelectChangeEvent,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -29,8 +30,8 @@ import { PieChart } from "@mui/x-charts/PieChart";
 import VideogameAssetIcon from "@mui/icons-material/VideogameAsset";
 import SchoolIcon from "@mui/icons-material/School";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import PersonIcon from "@mui/icons-material/Person";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableOnIcon from "@mui/icons-material/TableChart";
 
 import {
@@ -40,7 +41,14 @@ import {
 } from "../../service/reports.service";
 import { getStudentProgressList } from "../../../users/services/docentes.service";
 import { useDebounce } from "../../../../hooks/useDebounce";
-import { temas, fuente_cambio_dificultad } from "../../../../types";
+import {
+  temas,
+  fuente_cambio_dificultad,
+  grado_dificultad,
+} from "../../../../types";
+import QuickDateFilter from "../../../../components/QuickDateFilter";
+import StudentChartDetailModal from "./StudentChartDetailModal";
+import PdfExportButton from "../common/PdfExportButton";
 
 interface Props {
   courseId: string;
@@ -91,6 +99,19 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
   // Estado para el buscador de alumnos
   const [studentSearch, setStudentSearch] = useState("");
   const debouncedStudentSearch = useDebounce(studentSearch, 500);
+
+  // Estado para el modal de detalle de gráficos
+  const [chartModal, setChartModal] = useState<{
+    open: boolean;
+    filterType: "grado" | "tema";
+    filterValue: string;
+    title: string;
+  }>({
+    open: false,
+    filterType: "grado",
+    filterValue: "",
+    title: "",
+  });
 
   // --- Carga Inicial (Dificultades) ---
   useEffect(() => {
@@ -158,14 +179,11 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
   }, [filters, courseId]);
 
   // --- Handlers ---
-  const applyQuickFilter = (days: number) => {
-    const end = new Date();
-    const start = new Date();
-    start.setDate(end.getDate() - days);
+  const handleQuickFilter = (start: string, end: string) => {
     setFilters((prev) => ({
       ...prev,
-      fechaDesde: format(start, "yyyy-MM-dd"),
-      fechaHasta: format(end, "yyyy-MM-dd"),
+      fechaDesde: start,
+      fechaHasta: end,
     }));
   };
 
@@ -202,29 +220,32 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
     setSelectedDificultadesIds([]);
   };
 
-  // --- Columnas Tablas ---
-  const summaryColumns: GridColDef[] = [
-    { field: "nombre", headerName: "Dificultad", flex: 1 },
-    { field: "tema", headerName: "Tema", width: 120 },
-    {
-      field: "grado",
-      headerName: "Grado Actual",
-      width: 120,
-      renderCell: (params) => (
-        <Chip
-          label={params.value}
-          size="small"
-          color={
-            params.value === "Alto"
-              ? "error"
-              : params.value === "Medio"
-                ? "warning"
-                : "success"
-          }
-        />
-      ),
-    },
-  ];
+  // --- Handlers de Gráficos ---
+  const handleGradoClick = (event: any, itemIdentifier: any) => {
+    if (!data) return;
+    const item = data.summary.graficos.porGrado[itemIdentifier.dataIndex];
+    if (item) {
+      setChartModal({
+        open: true,
+        filterType: "grado",
+        filterValue: item.label,
+        title: `Dificultades con Grado: ${item.label}`,
+      });
+    }
+  };
+
+  const handleTemaClick = (event: any, itemIdentifier: any) => {
+    if (!data) return;
+    const item = data.summary.graficos.porTema[itemIdentifier.dataIndex];
+    if (item) {
+      setChartModal({
+        open: true,
+        filterType: "tema",
+        filterValue: item.label,
+        title: `Dificultades del Tema: ${item.label}`,
+      });
+    }
+  };
 
   const historyColumns: GridColDef[] = [
     {
@@ -243,44 +264,71 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
     {
       field: "tema",
       headerName: "Tema",
-      width: 120,
+      width: 200,
       valueGetter: (params, row) => row.dificultad?.tema || "-",
     },
     {
-      field: "cambio",
-      headerName: "Cambio",
-      width: 200,
+      field: "gradoAnterior",
+      headerName: "Grado Anterior",
+      width: 120,
+      renderCell: (params) => (
+        <Chip
+          label={params.value || "Ninguno"}
+          size="small"
+          variant="outlined"
+          color={
+            params.value === grado_dificultad.Alto
+              ? "error"
+              : params.value === grado_dificultad.Bajo
+                ? "success"
+                : params.value === grado_dificultad.Medio
+                  ? "warning"
+                  : "default"
+          }
+        />
+      ),
+    },
+    {
+      field: "gradoNuevo",
+      headerName: "Grado Nuevo",
+      width: 120,
+      renderCell: (params) => (
+        <Chip
+          label={params.value || "Ninguno"}
+          size="small"
+          color={
+            params.value === grado_dificultad.Alto
+              ? "error"
+              : params.value === grado_dificultad.Bajo
+                ? "success"
+                : params.value === grado_dificultad.Medio
+                  ? "warning"
+                  : "default"
+          }
+        />
+      ),
+    },
+    {
+      field: "trend",
+      headerName: "Mejora",
+      width: 70,
+      sortable: false,
+      align: "center",
       renderCell: (params) => {
-        const anterior = params.row.gradoAnterior;
-        const nuevo = params.row.gradoNuevo;
+        const anterior = params.row.gradoAnterior || "Ninguno";
+        const nuevo = params.row.gradoNuevo || "Ninguno";
         const weights: Record<string, number> = {
           Ninguno: 0,
           Bajo: 1,
           Medio: 2,
           Alto: 3,
         };
-        const esMejora = (weights[anterior] || 0) > (weights[nuevo] || 0);
+        const wOld = weights[anterior] || 0;
+        const wNew = weights[nuevo] || 0;
 
-        return (
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Typography variant="body2">{anterior}</Typography>
-            <Typography variant="body2">→</Typography>
-            <Chip
-              label={nuevo}
-              size="small"
-              color={
-                nuevo === "Alto"
-                  ? "error"
-                  : nuevo === "Bajo"
-                    ? "success"
-                    : "warning"
-              }
-            />
-            {esMejora && (
-              <TrendingUpIcon color="success" fontSize="small" sx={{ ml: 1 }} />
-            )}
-          </Stack>
-        );
+        if (wOld > wNew) return <TrendingUpIcon color="success" />; // Mejora
+        if (wOld < wNew) return <TrendingDownIcon color="error" />; // Empeora
+        return null;
       },
     },
     {
@@ -315,18 +363,15 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
         <Box
           sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
         >
-          <Button
-            variant="outlined"
-            startIcon={<PictureAsPdfIcon />}
-            disabled={!data}
-            color="error"
-          >
-            Exportar PDF
-          </Button>
+          <PdfExportButton
+            filters={filters}
+            endpointPath={`/reportes/cursos/${courseId}/dificultades/alumno/pdf`}
+            disabled={!selectedStudent || !data}
+          />
           <Button
             variant="outlined"
             startIcon={<TableOnIcon />}
-            disabled={!data}
+            disabled={!selectedStudent || !data}
             color="success"
           >
             Exportar Excel
@@ -335,131 +380,51 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
       </Stack>
 
       <Stack spacing={3}>
-        {/* --- Selector de Alumno --- */}
+        {/* --- SECCIÓN DE FILTROS UNIFICADA --- */}
         <Paper elevation={3} sx={{ p: 3 }}>
-          <Stack direction="row" spacing={2} alignItems="center">
-            <PersonIcon color="primary" fontSize="large" />
-            <Autocomplete
-              options={students}
-              getOptionLabel={(option) => option.nombre}
-              value={selectedStudent}
-              onChange={(_, newValue) => setSelectedStudent(newValue)}
-              onInputChange={(_, newInputValue) =>
-                setStudentSearch(newInputValue)
-              }
-              filterOptions={(x) => x} // Deshabilitamos filtro cliente para usar el del servidor
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Seleccionar Alumno"
-                  placeholder="Buscar por nombre..."
-                />
-              )}
-              sx={{ width: 400 }}
-            />
-          </Stack>
-        </Paper>
-
-        {!selectedStudent && (
-          <Typography variant="body1" color="text.secondary" align="center">
-            Selecciona un alumno para ver su reporte detallado.
-          </Typography>
-        )}
-
-        {selectedStudent && loading && <CircularProgress sx={{ mx: "auto" }} />}
-
-        {selectedStudent && data && !loading && (
-          <>
-            {/* --- Mini Resumen --- */}
-            <Grid container spacing={3}>
-              <Grid size={6}>
-                <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-                  <Typography variant="h6" gutterBottom>
-                    Estado Actual de Dificultades
-                  </Typography>
-                  <Box sx={{ height: 300, width: "100%" }}>
-                    <DataGrid
-                      rows={data.summary.tabla}
-                      columns={summaryColumns}
-                      density="compact"
-                      hideFooter
-                    />
-                  </Box>
-                </Paper>
-              </Grid>
-              <Grid size={6}>
-                <Paper
-                  elevation={3}
-                  sx={{
-                    p: 2,
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                  }}
-                >
-                  <Typography variant="h6" gutterBottom>
-                    Distribución Actual
-                  </Typography>
-                  <Stack direction="row" spacing={2}>
-                    <PieChart
-                      series={[
-                        {
-                          data: data.summary.graficos.porGrado,
-                          innerRadius: 30,
-                          paddingAngle: 2,
-                          cornerRadius: 4,
-                        },
-                      ]}
-                      width={250}
-                      height={200}
-                    />
-                    <PieChart
-                      series={[
-                        {
-                          data: data.summary.graficos.porTema,
-                          innerRadius: 30,
-                          paddingAngle: 2,
-                          cornerRadius: 4,
-                        },
-                      ]}
-                      width={250}
-                      height={200}
-                    />
-                  </Stack>
-                  <Stack
-                    direction="row"
-                    spacing={4}
-                    sx={{ mt: 2, width: "100%", justifyContent: "center" }}
-                  >
-                    <Typography variant="caption" align="center">
-                      Por Grado
-                    </Typography>
-                    <Typography variant="caption" align="center">
-                      Por Tema
-                    </Typography>
-                  </Stack>
-                </Paper>
-              </Grid>
-            </Grid>
+          <Stack spacing={2}>
+            {/* 1. Selector de Alumno */}
+            <Stack direction="row" spacing={2} alignItems="center">
+              <PersonIcon color="primary" fontSize="large" />
+              <Autocomplete
+                options={students}
+                size="small"
+                getOptionLabel={(option) => option.nombre}
+                value={selectedStudent}
+                onChange={(_, newValue) => {
+                  setSelectedStudent(newValue);
+                  // Si cambiamos de alumno, limpiamos la data para forzar el spinner de carga inicial
+                  if (newValue?.id !== selectedStudent?.id) {
+                    setData(null);
+                  }
+                }}
+                onInputChange={(_, newInputValue) =>
+                  setStudentSearch(newInputValue)
+                }
+                filterOptions={(x) => x}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Seleccionar Alumno"
+                    placeholder="Buscar por nombre..."
+                  />
+                )}
+                sx={{ width: 400 }}
+              />
+            </Stack>
 
             <Divider />
 
-            {/* --- Filtros Historial --- */}
-            <Paper elevation={3} sx={{ p: 2 }}>
+            {/* 2. Filtros de Historial (Deshabilitados si no hay alumno) */}
+            <Box
+              sx={{
+                opacity: selectedStudent ? 1 : 0.5,
+                pointerEvents: selectedStudent ? "auto" : "none",
+                transition: "opacity 0.3s",
+              }}
+            >
               <Stack spacing={2}>
-                <Box>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Filtros de Historial
-                  </Typography>
-                  <ButtonGroup variant="outlined" size="small">
-                    <Button onClick={() => applyQuickFilter(3)}>3 Días</Button>
-                    <Button onClick={() => applyQuickFilter(7)}>
-                      1 Semana
-                    </Button>
-                    <Button onClick={() => applyQuickFilter(30)}>1 Mes</Button>
-                  </ButtonGroup>
-                </Box>
+                <QuickDateFilter onApply={handleQuickFilter} />
                 <Stack
                   direction={{ xs: "column", md: "row" }}
                   spacing={2}
@@ -547,12 +512,118 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
                   <Button onClick={handleClearFilters}>Limpiar</Button>
                 </Stack>
               </Stack>
-            </Paper>
+            </Box>
+          </Stack>
+        </Paper>
+
+        {!selectedStudent && (
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            align="center"
+            sx={{ mt: 4 }}
+          >
+            Selecciona un alumno para ver su reporte detallado.
+          </Typography>
+        )}
+
+        {/* Loading Inicial (Solo si no hay data previa) */}
+        {selectedStudent && loading && !data && (
+          <CircularProgress sx={{ mx: "auto", my: 4 }} />
+        )}
+
+        {/* Contenido (Se mantiene visible durante recargas de filtros) */}
+        {selectedStudent && data && (
+          <Stack
+            spacing={3}
+            sx={{
+              position: "relative",
+              opacity: loading ? 0.6 : 1,
+              transition: "opacity 0.2s",
+              pointerEvents: loading ? "none" : "auto",
+            }}
+          >
+            {loading && (
+              <LinearProgress
+                sx={{ position: "absolute", top: -12, left: 0, right: 0 }}
+              />
+            )}
+            {/* --- Gráficos Interactivos --- */}
+            <Box>
+              <Alert severity="info" sx={{ mb: 2 }}>
+                Haz clic en las secciones de los gráficos para ver el detalle de
+                las dificultades correspondientes.
+              </Alert>
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Paper
+                    elevation={3}
+                    sx={{
+                      p: 2,
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Typography variant="h6" gutterBottom>
+                      Cantidad de Dificultades por GRADO
+                    </Typography>
+                    <PieChart
+                      series={[
+                        {
+                          data: data.summary.graficos.porGrado,
+                          innerRadius: 30,
+                          paddingAngle: 2,
+                          cornerRadius: 4,
+                        },
+                      ]}
+                      width={300}
+                      height={200}
+                      onItemClick={handleGradoClick}
+                    />
+                  </Paper>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Paper
+                    elevation={3}
+                    sx={{
+                      p: 2,
+                      height: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Typography variant="h6" gutterBottom>
+                      Cantidad de Dificultades por TEMA
+                    </Typography>
+                    <PieChart
+                      series={[
+                        {
+                          data: data.summary.graficos.porTema,
+                          innerRadius: 30,
+                          paddingAngle: 2,
+                          cornerRadius: 4,
+                        },
+                      ]}
+                      width={300}
+                      height={200}
+                      onItemClick={handleTemaClick}
+                    />
+                  </Paper>
+                </Grid>
+              </Grid>
+            </Box>
 
             {/* --- Stats de Mejora --- */}
             <Paper elevation={3} sx={{ p: 2, bgcolor: "primary.50" }}>
-              <Typography variant="h6" gutterBottom color="primary.main">
-                Fuente de Mejora
+              <Typography variant="h6">Fuente de Mejora</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Proporción de mejoras logradas por cada fuente (reducción de
+                grado de dificultad).
               </Typography>
               <Stack direction="row" spacing={4} alignItems="center">
                 <Box sx={{ flex: 1 }}>
@@ -672,7 +743,15 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
                         : "",
                   }))}
                   height={350}
-                  margin={{ left: 70 }}
+                  slotProps={{
+                    legend: {
+                      direction: "vertical",
+                      position: {
+                        vertical: "middle",
+                        horizontal: "start",
+                      },
+                    },
+                  }}
                 />
               ) : (
                 <Typography
@@ -697,7 +776,19 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
                 }}
               />
             </Paper>
-          </>
+          </Stack>
+        )}
+
+        {selectedStudent && (
+          <StudentChartDetailModal
+            open={chartModal.open}
+            onClose={() => setChartModal((prev) => ({ ...prev, open: false }))}
+            idCurso={courseId}
+            idAlumno={selectedStudent.id}
+            filterType={chartModal.filterType}
+            filterValue={chartModal.filterValue}
+            title={chartModal.title}
+          />
         )}
       </Stack>
     </Paper>

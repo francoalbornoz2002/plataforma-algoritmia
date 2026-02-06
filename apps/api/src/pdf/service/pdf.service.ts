@@ -22,6 +22,7 @@ import { GetCourseMissionsReportPdfDto } from 'src/reportes/dto/get-course-missi
 import { GetCourseMissionDetailReportDto } from 'src/reportes/dto/get-course-mission-detail-report.dto';
 import { GetCourseDifficultiesReportPdfDto } from 'src/reportes/dto/get-course-difficulties-report.dto';
 import { GetCourseDifficultiesHistoryPdfDto } from 'src/reportes/dto/get-course-difficulties-history.dto';
+import { GetStudentDifficultiesReportPdfDto } from 'src/reportes/dto/get-student-difficulties-report.dto';
 
 @Injectable()
 export class PdfService {
@@ -2406,6 +2407,183 @@ export class PdfService {
     return new StreamableFile(pdfBuffer, {
       type: 'application/pdf',
       disposition: `attachment; filename="historial-dificultades-${idCurso}.pdf"`,
+    });
+  }
+
+  async getStudentDifficultiesReportPdf(
+    idCurso: string,
+    dto: GetStudentDifficultiesReportPdfDto,
+    userId: string,
+  ): Promise<StreamableFile> {
+    // 1. Obtener datos
+    const data = await this.reportesService.getStudentDifficultiesReport(
+      idCurso,
+      dto,
+    );
+
+    // 2. Metadatos
+    const { curso, institucion, usuario, logoBase64 } =
+      await this.reportesService.getReportMetadata(userId, idCurso);
+
+    // 3. Registrar Reporte
+    const { reporteDB, filtrosTexto } =
+      await this.reportesService.registerReport(
+        userId,
+        'Reporte de Dificultades por Alumno',
+        'Dificultades',
+        { ...dto, cursoId: idCurso, aPresentarA: dto.aPresentarA },
+      );
+
+    // 4. Configurar Gráficos
+    const chartJsContent = await this.getChartJsContent();
+
+    // Gráfico 1: Por Grado (Pie)
+    const chartConfigGrado = {
+      type: 'pie',
+      data: {
+        labels: data.summary.graficos.porGrado.map(
+          (d) => `${d.label} (${d.value})`,
+        ),
+        datasets: [
+          {
+            data: data.summary.graficos.porGrado.map((d) => d.value),
+            backgroundColor: data.summary.graficos.porGrado.map((d) => d.color),
+          },
+        ],
+      },
+      options: {
+        layout: { padding: 20 },
+        scales: { x: { display: false }, y: { display: false } },
+        plugins: {
+          title: { display: true, text: 'Dificultades por Grado' },
+          legend: { position: 'right' },
+        },
+      },
+    };
+
+    // Gráfico 2: Por Tema (Pie)
+    const chartConfigTema = {
+      type: 'pie',
+      data: {
+        labels: data.summary.graficos.porTema.map(
+          (d) => `${d.label} (${d.value})`,
+        ),
+        datasets: [
+          {
+            data: data.summary.graficos.porTema.map((d) => d.value),
+            backgroundColor: [
+              '#f44336',
+              '#ff9800',
+              '#ffeb3b',
+              '#4caf50',
+              '#009688',
+              '#00bcd4',
+            ],
+          },
+        ],
+      },
+      options: {
+        layout: { padding: 20 },
+        scales: { x: { display: false }, y: { display: false } },
+        plugins: {
+          title: { display: true, text: 'Dificultades por Tema' },
+          legend: { position: 'right' },
+        },
+      },
+    };
+
+    // Gráfico 3: Evolución (Line)
+    const evolutionLabels = data.evolution.dataset.map((d) => {
+      const parts = d.date.toISOString().split('T')[0].split('-');
+      return `${parts[2]}/${parts[1]}/${parts[0].slice(2)}`;
+    });
+
+    const evolutionDatasets = data.evolution.series.map((s, i) => {
+      const color = `hsl(${(i * 137.5) % 360}, 70%, 50%)`;
+      return {
+        label: s.label,
+        data: data.evolution.dataset.map((d) => d[s.dataKey]),
+        borderColor: color,
+        backgroundColor: color,
+        tension: 0.1,
+        fill: false,
+        spanGaps: true,
+        pointRadius: 2,
+      };
+    });
+
+    const chartConfigEvolution = {
+      type: 'line',
+      data: { labels: evolutionLabels, datasets: evolutionDatasets },
+      options: {
+        scales: {
+          y: {
+            min: 0,
+            max: 3,
+            ticks: { stepSize: 1 },
+            title: { display: true, text: 'Grado de Dificultad' },
+          },
+        },
+        plugins: {
+          title: { display: true, text: 'Evolución de Grados por Dificultad' },
+          legend: {
+            position: 'bottom',
+            labels: { font: { size: 4 }, boxWidth: 4, boxHeight: 4 },
+          },
+        },
+      },
+    };
+
+    const commonData = this.buildCommonTemplateData(
+      { institucion, usuario, logoBase64 },
+      {
+        reporteDB,
+        filtrosTexto,
+        titulo: 'Reporte de Dificultades por Alumno',
+        subtitulo: `Curso: ${curso?.nombre || 'Desconocido'}`,
+        aPresentarA: dto.aPresentarA,
+      },
+    );
+
+    const templateData = {
+      ...commonData,
+      stats: {
+        ...data.stats,
+        porcentajeVideojuego: data.stats.porcentajeVideojuego.toFixed(1),
+        porcentajeSesion: data.stats.porcentajeSesion.toFixed(1),
+      },
+      currentDifficulties: data.summary.tabla,
+      chartJsContent,
+      chartConfigGrado: JSON.stringify(chartConfigGrado),
+      chartConfigTema: JSON.stringify(chartConfigTema),
+      chartConfigEvolution: JSON.stringify(chartConfigEvolution),
+      history: data.history.map((h) => {
+        const d = new Date(h.fechaCambio);
+        d.setUTCHours(d.getUTCHours() - 3);
+        return {
+          fecha:
+            d.toISOString().split('T')[0].split('-').reverse().join('/') +
+            ' ' +
+            d.toISOString().split('T')[1].substring(0, 5),
+          dificultad: h.dificultad.nombre,
+          tema: h.dificultad.tema,
+          gradoAnterior: h.gradoAnterior,
+          gradoNuevo: h.gradoNuevo,
+          fuente: h.fuente === 'VIDEOJUEGO' ? 'Videojuego' : 'Sesión',
+          esMejora:
+            ({ Ninguno: 0, Bajo: 1, Medio: 2, Alto: 3 }[h.gradoAnterior] || 0) >
+            ({ Ninguno: 0, Bajo: 1, Medio: 2, Alto: 3 }[h.gradoNuevo] || 0),
+        };
+      }),
+    };
+
+    const pdfBuffer = await this.generatePdf(
+      'reporte-dificultades-alumno',
+      templateData,
+    );
+    return new StreamableFile(pdfBuffer, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="dificultades-alumno-${idCurso}.pdf"`,
     });
   }
 }

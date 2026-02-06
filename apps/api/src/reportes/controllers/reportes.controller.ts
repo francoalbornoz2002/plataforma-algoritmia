@@ -57,7 +57,10 @@ import {
   GetCourseDifficultiesHistoryDto,
   GetCourseDifficultiesHistoryPdfDto,
 } from '../dto/get-course-difficulties-history.dto';
-import { GetStudentDifficultiesReportDto } from '../dto/get-student-difficulties-report.dto';
+import {
+  GetStudentDifficultiesReportDto,
+  GetStudentDifficultiesReportPdfDto,
+} from '../dto/get-student-difficulties-report.dto';
 import {
   GetCourseConsultationsSummaryDto,
   GetCourseConsultationsSummaryPdfDto,
@@ -408,6 +411,26 @@ export class ReportesController {
     @Query() dto: GetStudentDifficultiesReportDto,
   ) {
     return this.reportesService.getStudentDifficultiesReport(id, dto);
+  }
+
+  @Get('cursos/:id/dificultades/alumno/pdf')
+  @Roles(roles.Administrador, roles.Docente)
+  async getStudentDifficultiesReportPdf(
+    @Param('id') id: string,
+    @Query() dto: GetStudentDifficultiesReportPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.pdfService.getStudentDifficultiesReportPdf(
+      id,
+      dto,
+      userId,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+    });
+    return file;
   }
 
   // Consultas - Sección 1: Resumen de Consultas

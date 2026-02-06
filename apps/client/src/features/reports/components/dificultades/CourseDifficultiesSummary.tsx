@@ -226,7 +226,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                   height: "100%",
                 }}
               >
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="h6" align="center" gutterBottom>
                   Cantidad de alumnos afectados de cada Dificultad
                 </Typography>
                 <PieChart
@@ -263,7 +263,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                     justifyContent: "center",
                   }}
                 >
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="h6" align="center" gutterBottom>
                     Cantidad de alumnos con dificultades activas por tema
                   </Typography>
                   <PieChart
@@ -294,7 +294,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                     justifyContent: "center",
                   }}
                 >
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="h6" align="center" gutterBottom>
                     Cantidad de alumnos con dificultades activas por Grado
                   </Typography>
                   <PieChart

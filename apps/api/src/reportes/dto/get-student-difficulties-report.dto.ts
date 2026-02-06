@@ -32,3 +32,9 @@ export class GetStudentDifficultiesReportDto {
   @IsDateString()
   fechaHasta?: string;
 }
+
+export class GetStudentDifficultiesReportPdfDto extends GetStudentDifficultiesReportDto {
+  @IsOptional()
+  @IsString()
+  aPresentarA?: string;
+}
