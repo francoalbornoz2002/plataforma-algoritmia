@@ -17,6 +17,7 @@ import { GetCourseConsultationsHistoryPdfDto } from 'src/reportes/dto/get-course
 import { GetCourseClassesSummaryPdfDto } from 'src/reportes/dto/get-course-classes-summary.dto';
 import { GetCourseSessionsSummaryPdfDto } from 'src/reportes/dto/get-course-sessions-summary.dto';
 import { GetCourseSessionsHistoryPdfDto } from 'src/reportes/dto/get-course-sessions-history.dto';
+import { GetCourseProgressSummaryPdfDto } from 'src/reportes/dto/get-course-progress-summary.dto';
 import { title } from 'process';
 
 @Injectable()
@@ -1763,6 +1764,100 @@ export class PdfService {
     return new StreamableFile(pdfBuffer, {
       type: 'application/pdf',
       disposition: `attachment; filename="historial-sesiones-${idCurso}.pdf"`,
+    });
+  }
+
+  async getCourseProgressSummaryPdf(
+    idCurso: string,
+    dto: GetCourseProgressSummaryPdfDto,
+    userId: string,
+  ): Promise<StreamableFile> {
+    // 1. Obtener datos
+    const data = await this.reportesService.getCourseProgressSummary(
+      idCurso,
+      dto,
+    );
+
+    // 2. Metadatos
+    const { curso, institucion, usuario, logoBase64 } =
+      await this.reportesService.getReportMetadata(userId, idCurso);
+
+    // 3. Registrar Reporte
+    const { reporteDB, filtrosTexto } =
+      await this.reportesService.registerReport(
+        userId,
+        'Resumen de Progreso del Curso',
+        'Progreso',
+        { ...dto, cursoId: idCurso, aPresentarA: dto.aPresentarA },
+      );
+
+    // 4. Configurar Gráficos
+    const chartJsContent = await this.getChartJsContent();
+
+    // Gráfico 1: Evolución (Línea)
+    const evolutionLabels = data.evolucion.map((d) =>
+      d.fecha.toISOString().split('T')[0].split('-').reverse().join('/'),
+    );
+    const evolutionValues = data.evolucion.map((d) => d.progreso);
+
+    const chartConfigEvolution = {
+      type: 'line',
+      data: {
+        labels: evolutionLabels,
+        datasets: [
+          {
+            label: 'Progreso Promedio (%)',
+            data: evolutionValues,
+            borderColor: '#4caf50',
+            backgroundColor: 'rgba(76, 175, 80, 0.2)',
+            fill: true,
+            tension: 0.1,
+            pointRadius: 3,
+          },
+        ],
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            title: { display: true, text: 'Porcentaje Completado' },
+          },
+        },
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Evolución del Progreso' },
+        },
+      },
+    };
+
+    const commonData = this.buildCommonTemplateData(
+      { institucion, usuario, logoBase64 },
+      {
+        reporteDB,
+        filtrosTexto,
+        titulo: 'Resumen de Progreso del Curso',
+        subtitulo: `Curso: ${curso?.nombre || 'Desconocido'}`,
+        aPresentarA: dto.aPresentarA,
+      },
+    );
+
+    const templateData = {
+      ...commonData,
+      resumen: data.resumen,
+      tops: data.tops,
+      chartJsContent,
+      chartConfigEvolution: JSON.stringify(chartConfigEvolution),
+    };
+
+    const pdfBuffer = await this.generatePdf(
+      'reporte-progreso-resumen',
+      templateData,
+    );
+
+    return new StreamableFile(pdfBuffer, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="resumen-progreso-${idCurso}.pdf"`,
     });
   }
 }

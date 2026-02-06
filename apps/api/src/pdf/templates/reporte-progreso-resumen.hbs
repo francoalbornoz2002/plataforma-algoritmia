@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  {{> styles}}
+  <style>
+    /* Estilos específicos para las listas de tops */
+    .top-list-box {
+      flex: 1;
+      border: 1px solid #eee;
+      border-radius: 4px;
+      padding: 10px;
+      background-color: #f9f9f9;
+    }
+    .top-list-title {
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-size: 12px;
+      color: #1976d2;
+      font-weight: bold;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 5px;
+    }
+    .student-item {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid #e0e0e0;
+      padding: 6px 0;
+      font-size: 10px;
+    }
+    .student-item:last-child { border-bottom: none; }
+    .student-name { font-weight: bold; color: #333; }
+    .student-stat { color: #666; }
+    .positive { color: #2e7d32; }
+    .negative { color: #d32f2f; }
+  </style>
+</head>
+<body>
+  {{> header}}
+
+  <div class="content">
+    <h3 style="color: #1976d2; margin-bottom: 10px; font-size: 14px;">Estadísticas Generales</h3>
+    
+    <!-- Fila 1 de KPIs Generales -->
+    <div class="kpi-container">
+      <div class="kpi-card">
+        <div class="kpi-value" style="color: #2e7d32;">{{fixed resumen.progresoTotal 1}}%</div>
+        <div class="kpi-label">Progreso del Curso</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value">{{resumen.totalAlumnos}}</div>
+        <div class="kpi-label">Alumnos Activos</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" style="color: #d32f2f;">{{resumen.totalAlumnosInactivos}}</div>
+        <div class="kpi-label">Alumnos Inactivos</div>
+      </div>
+    </div>
+
+    <!-- Fila 2 de KPIs Generales -->
+    <div class="kpi-container">
+      <div class="kpi-card">
+        <div class="kpi-value">{{resumen.misionesCompletadas}}</div>
+        <div class="kpi-label">Misiones Completadas</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" style="color: #ed6c02;">{{resumen.estrellasTotales}}</div>
+        <div class="kpi-label">Estrellas Totales</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" style="color: #1976d2;">{{resumen.expTotal}}</div>
+        <div class="kpi-label">Experiencia Total</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value">{{resumen.intentosTotales}}</div>
+        <div class="kpi-label">Intentos Totales</div>
+      </div>
+    </div>
+
+    <!-- Gráfico de Evolución -->
+    <div class="chart-container" style="height: 250px; margin: 20px 0;">
+      <canvas id="chartEvolution"></canvas>
+    </div>
+
+    <h3 style="color: #1976d2; margin-bottom: 10px; margin-top: 20px; font-size: 14px;">Estadísticas de Alumnos</h3>
+
+    <!-- Promedios por Alumno -->
+    <div class="kpi-container">
+      <div class="kpi-card">
+        <div class="kpi-value">{{fixed resumen.promEstrellas 1}}</div>
+        <div class="kpi-label">Prom. Estrellas/Alumno</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value">{{fixed resumen.promIntentos 1}}</div>
+        <div class="kpi-label">Prom. Intentos/Alumno</div>
+      </div>
+    </div>
+
+    <!-- Tops -->
+    <div style="display: flex; gap: 20px; margin-top: 10px;">
+      <div class="top-list-box">
+        <h4 class="top-list-title">Top 5 Más Activos</h4>
+        {{#each tops.activos}}
+        <div class="student-item">
+          <span class="student-name">{{this.nombre}}</span>
+          <span class="student-stat">
+            {{this.misiones}} misiones completadas
+            <span class="positive">(+{{fixed this.diferenciaPorcentual 0}}% vs prom. curso)</span>
+          </span>
+        </div>
+        {{else}}
+        <div class="student-item">Sin datos</div>
+        {{/each}}
+      </div>
+      <div class="top-list-box">
+        <h4 class="top-list-title">Top 5 Menos Activos</h4>
+        {{#each tops.inactivos}}
+        <div class="student-item">
+          <span class="student-name">{{this.nombre}}</span>
+          <span class="student-stat">
+            {{this.misiones}} misiones completadas
+            <span class="negative">({{fixed this.diferenciaPorcentual 0}}% vs prom. curso)</span>
+          </span>
+        </div>
+        {{else}}
+        <div class="student-item">Sin datos</div>
+        {{/each}}
+      </div>
+    </div>
+  </div>
+
+  {{> footer}}
+
+  <script>
+    {{{chartJsContent}}}
+  </script>
+  {{> chartSetup}}
+  <script>
+    const ctxEvo = document.getElementById('chartEvolution').getContext('2d');
+    const configEvo = {{{chartConfigEvolution}}};
+    applyChartPrintConfig(configEvo);
+    new Chart(ctxEvo, configEvo);
+  </script>
+</body>
+</html>

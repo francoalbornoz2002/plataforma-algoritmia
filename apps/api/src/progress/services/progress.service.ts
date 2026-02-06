@@ -777,7 +777,7 @@ export class ProgressService {
   /**
    * Recalcula los KPIs de ProgresoCurso
    */
-  private async recalculateCourseProgress(
+  public async recalculateCourseProgress(
     tx: Prisma.TransactionClient,
     idCurso: string,
     fechaRegistro: Date = new Date(),

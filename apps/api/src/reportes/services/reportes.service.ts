@@ -624,6 +624,7 @@ export class ReportesService {
 
     let progreso: any;
     let totalAlumnos = 0;
+    let totalAlumnosInactivos = 0;
     let studentStats: { nombre: string; apellido: string; misiones: number }[] =
       [];
 
@@ -666,6 +667,15 @@ export class ReportesService {
       });
       totalAlumnos = students.length;
 
+      // 2.b Calcular alumnos inactivos a esa fecha
+      totalAlumnosInactivos = await this.prisma.alumnoCurso.count({
+        where: {
+          idCurso: idCurso,
+          fechaInscripcion: { lte: end },
+          fechaBaja: { lte: end, not: null },
+        },
+      });
+
       // 3. Obtener stats individuales históricos
       studentStats = await Promise.all(
         students.map(async (s) => {
@@ -697,6 +707,11 @@ export class ReportesService {
         },
       });
       totalAlumnos = students.length;
+
+      // Inactivos actuales
+      totalAlumnosInactivos = await this.prisma.alumnoCurso.count({
+        where: { idCurso: idCurso, estado: estado_simple.Inactivo },
+      });
 
       studentStats = students.map((s) => ({
         nombre: s.alumno.nombre,
@@ -745,6 +760,29 @@ export class ReportesService {
         diferenciaPorcentual: getPctDiff(s.misiones),
       }));
 
+    // --- EVOLUCIÓN DEL PROGRESO ---
+    const whereHistory: Prisma.HistorialProgresoCursoWhereInput = {
+      idProgresoCurso: curso.idProgreso,
+    };
+
+    if (fechaCorte) {
+      const end = new Date(fechaCorte);
+      end.setUTCHours(23, 59, 59, 999);
+      whereHistory.fechaRegistro = { lte: end };
+    }
+
+    const evolutionHistory = await this.prisma.historialProgresoCurso.findMany({
+      where: whereHistory,
+      orderBy: { fechaRegistro: 'asc' },
+      select: { fechaRegistro: true, pctMisionesCompletadas: true },
+    });
+
+    // Mapear directamente cada registro histórico para mostrar la evolución exacta
+    const evolutionChartData = evolutionHistory.map((h) => ({
+      fecha: h.fechaRegistro,
+      progreso: Number(h.pctMisionesCompletadas),
+    }));
+
     return {
       resumen: {
         progresoTotal: pctCompletadas,
@@ -755,6 +793,7 @@ export class ReportesService {
         promEstrellas,
         promIntentos,
         totalAlumnos,
+        totalAlumnosInactivos,
         promedioMisiones: avgMissions,
       },
       grafico: pieChartData,
@@ -762,6 +801,7 @@ export class ReportesService {
         activos: topActive,
         inactivos: topInactive,
       },
+      evolucion: evolutionChartData,
     };
   }
 

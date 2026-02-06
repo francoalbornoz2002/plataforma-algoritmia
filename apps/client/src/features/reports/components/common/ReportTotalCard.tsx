@@ -3,10 +3,12 @@ import type { ReactNode } from "react";
 
 interface ReportTotalCardProps {
   resourceName: string;
-  total: number;
+  total: number | string;
   active?: number;
   inactive?: number;
   icon?: ReactNode;
+  small?: boolean;
+  activeLabelPrefix?: string;
 }
 
 export default function ReportTotalCard({
@@ -15,32 +17,47 @@ export default function ReportTotalCard({
   active,
   inactive,
   icon,
+  small = false,
+  activeLabelPrefix,
 }: ReportTotalCardProps) {
   return (
     <Paper
       elevation={3}
       sx={{
-        p: 2,
+        p: small ? 1.5 : 2,
         height: "100%",
         borderLeft: "4px solid",
         borderColor: "primary.main",
       }}
     >
-      <Stack spacing={0.5} justifyContent="center">
+      <Stack spacing={small ? 0.25 : 0.5} justifyContent="center">
         <Stack direction="row" alignItems="center" spacing={1}>
           {icon && (
-            <Box sx={{ color: "primary.main", display: "flex" }}>{icon}</Box>
+            <Box
+              sx={{
+                color: "primary.main",
+                display: "flex",
+                "& svg": { fontSize: small ? "1.2rem" : "1.5rem" },
+              }}
+            >
+              {icon}
+            </Box>
           )}
           <Typography
-            variant="subtitle2"
+            variant={small ? "body2" : "subtitle2"}
             color="text.secondary"
             fontWeight="bold"
+            sx={{ lineHeight: 1.2 }}
           >
-            Total de {resourceName}
+            {resourceName}
           </Typography>
         </Stack>
 
-        <Typography variant="h4" color="primary.main" fontWeight="bold">
+        <Typography
+          variant={small ? "h5" : "h4"}
+          color="primary.main"
+          fontWeight="bold"
+        >
           {total}
         </Typography>
         {(active !== undefined || inactive !== undefined) && (
@@ -51,8 +68,10 @@ export default function ReportTotalCard({
                 display="block"
                 color="success.main"
                 fontWeight="bold"
+                sx={{ fontSize: small ? "0.7rem" : undefined }}
               >
-                Activas: {active}
+                {activeLabelPrefix ? `${activeLabelPrefix} ` : ""}Activos:{" "}
+                {active}
               </Typography>
             )}
             {inactive !== undefined && (
@@ -60,8 +79,10 @@ export default function ReportTotalCard({
                 variant="caption"
                 display="block"
                 color="text.disabled"
+                sx={{ fontSize: small ? "0.7rem" : undefined }}
               >
-                Inactivas: {inactive}
+                {activeLabelPrefix ? `${activeLabelPrefix} ` : ""}Inactivos:{" "}
+                {inactive}
               </Typography>
             )}
           </Stack>

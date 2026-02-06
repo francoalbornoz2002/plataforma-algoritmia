@@ -169,8 +169,23 @@ export class AlumnosService {
             },
           });
 
+          // Inicializamos el historial del alumno
+          await tx.historialProgresoAlumno.create({
+            data: {
+              idProgreso: nuevoProgreso.id,
+              cantMisionesCompletadas: 0,
+              totalEstrellas: 0,
+              totalExp: 0,
+              totalIntentos: 0,
+              pctMisionesCompletadas: 0,
+              promEstrellas: 0,
+              promIntentos: 0,
+              fechaRegistro: new Date(),
+            },
+          });
+
           // Creamos la Inscripción (tabla AlumnoCurso)
-          return tx.alumnoCurso.create({
+          const inscripcion = await tx.alumnoCurso.create({
             data: {
               idAlumno: idAlumno,
               idCurso: idCurso,
@@ -178,6 +193,11 @@ export class AlumnosService {
               estado: 'Activo',
             },
           });
+
+          // Actualizamos el progreso general del curso (para incluir al nuevo alumno en los promedios)
+          await this.progressService.recalculateCourseProgress(tx, idCurso);
+
+          return inscripcion;
         }
       });
     } catch (error) {

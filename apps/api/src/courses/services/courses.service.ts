@@ -96,6 +96,33 @@ export class CoursesService {
             },
           },
         });
+
+        // 3. Inicializar Historiales (Para que los gráficos arranquen en 0)
+        const fechaInicio = new Date();
+        await tx.historialProgresoCurso.create({
+          data: {
+            idProgresoCurso: progreso.id,
+            misionesCompletadas: 0,
+            totalEstrellas: 0,
+            totalExp: 0,
+            totalIntentos: 0,
+            pctMisionesCompletadas: 0,
+            promEstrellas: 0,
+            promIntentos: 0,
+            fechaRegistro: fechaInicio,
+          },
+        });
+
+        await tx.historialDificultadesCurso.create({
+          data: {
+            idDificultadesCurso: dificultades.id,
+            temaModa: 'Ninguno',
+            promDificultades: 0,
+            promGrado: 'Ninguno',
+            fechaRegistro: fechaInicio,
+          },
+        });
+
         return curso;
       });
     } catch (error) {

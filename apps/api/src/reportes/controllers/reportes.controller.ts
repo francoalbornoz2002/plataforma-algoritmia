@@ -38,7 +38,10 @@ import {
 } from '../dto/get-teacher-assignment-history.dto';
 import { GetCourseMissionsReportDto } from '../dto/get-course-missions-report.dto';
 import { GetCourseMissionDetailReportDto } from '../dto/get-course-mission-detail-report.dto';
-import { GetCourseProgressSummaryDto } from '../dto/get-course-progress-summary.dto';
+import {
+  GetCourseProgressSummaryDto,
+  GetCourseProgressSummaryPdfDto,
+} from '../dto/get-course-progress-summary.dto';
 import { GetCourseDifficultiesReportDto } from '../dto/get-course-difficulties-report.dto';
 import { GetCourseDifficultiesHistoryDto } from '../dto/get-course-difficulties-history.dto';
 import { GetStudentDifficultiesReportDto } from '../dto/get-student-difficulties-report.dto';
@@ -242,6 +245,26 @@ export class ReportesController {
     @Query() dto: GetCourseProgressSummaryDto,
   ) {
     return this.reportesService.getCourseProgressSummary(id, dto);
+  }
+
+  @Get('cursos/:id/progreso/resumen/pdf')
+  @Roles(roles.Administrador, roles.Docente)
+  async getCourseProgressSummaryPdf(
+    @Param('id') id: string,
+    @Query() dto: GetCourseProgressSummaryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.pdfService.getCourseProgressSummaryPdf(
+      id,
+      dto,
+      userId,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+    });
+    return file;
   }
 
   // Progreso - Sección 2: Reporte de Misiones Completadas
