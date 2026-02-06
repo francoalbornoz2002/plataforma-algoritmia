@@ -18,7 +18,8 @@ import { GetCourseClassesSummaryPdfDto } from 'src/reportes/dto/get-course-class
 import { GetCourseSessionsSummaryPdfDto } from 'src/reportes/dto/get-course-sessions-summary.dto';
 import { GetCourseSessionsHistoryPdfDto } from 'src/reportes/dto/get-course-sessions-history.dto';
 import { GetCourseProgressSummaryPdfDto } from 'src/reportes/dto/get-course-progress-summary.dto';
-import { title } from 'process';
+import { GetCourseMissionsReportPdfDto } from 'src/reportes/dto/get-course-missions-report.dto';
+import { GetCourseMissionDetailReportDto } from 'src/reportes/dto/get-course-mission-detail-report.dto';
 
 @Injectable()
 export class PdfService {
@@ -1858,6 +1859,229 @@ export class PdfService {
     return new StreamableFile(pdfBuffer, {
       type: 'application/pdf',
       disposition: `attachment; filename="resumen-progreso-${idCurso}.pdf"`,
+    });
+  }
+
+  async getCourseMissionsReportPdf(
+    idCurso: string,
+    dto: GetCourseMissionsReportPdfDto,
+    userId: string,
+  ): Promise<StreamableFile> {
+    // 1. Obtener datos
+    const data = await this.reportesService.getCourseMissionsReport(
+      idCurso,
+      dto,
+    );
+
+    // 2. Metadatos
+    const { curso, institucion, usuario, logoBase64 } =
+      await this.reportesService.getReportMetadata(userId, idCurso);
+
+    // 3. Registrar Reporte
+    const { reporteDB, filtrosTexto } =
+      await this.reportesService.registerReport(
+        userId,
+        'Reporte de Misiones Completadas',
+        'Progreso',
+        { ...dto, cursoId: idCurso, aPresentarA: dto.aPresentarA },
+      );
+
+    // 4. Configurar Gráfico
+    const chartJsContent = await this.getChartJsContent();
+
+    const labels = data.grafico.map((d) => {
+      const parts = d.fecha.split('T')[0].split('-');
+      return `${parts[2]}/${parts[1]}`; // dd/MM
+    });
+    const values = data.grafico.map((d) => d.cantidad);
+
+    // Ajuste de escala Y para valores pequeños
+    const maxVal = Math.max(...values, 0);
+    const yAxisConfig: any = {
+      beginAtZero: true,
+      title: { display: true, text: 'Misiones Completadas' },
+    };
+    if (maxVal < 5) {
+      yAxisConfig.max = 5;
+      yAxisConfig.ticks = { stepSize: 1, precision: 0 };
+    } else {
+      yAxisConfig.ticks = { precision: 0 };
+    }
+
+    const chartConfig = {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Cantidad',
+            data: values,
+            borderColor: '#1976d2',
+            backgroundColor: '#1976d2',
+            tension: 0.1,
+            fill: false,
+            pointRadius: 3,
+          },
+        ],
+      },
+      options: {
+        scales: { y: yAxisConfig },
+        plugins: {
+          legend: { display: false },
+          title: {
+            display: true,
+            text: 'Cantidad de Misiones Completadas por Fecha',
+          },
+        },
+      },
+    };
+
+    const commonData = this.buildCommonTemplateData(
+      { institucion, usuario, logoBase64 },
+      {
+        reporteDB,
+        filtrosTexto,
+        titulo: 'Reporte de Misiones Completadas',
+        subtitulo: `Curso: ${curso?.nombre || 'Desconocido'}`,
+        aPresentarA: dto.aPresentarA,
+      },
+    );
+
+    const templateData = {
+      ...commonData,
+      kpis: data.kpis,
+      chartJsContent,
+      chartConfig: JSON.stringify(chartConfig),
+      tabla: data.tabla.map((m) => ({
+        ...m,
+        alumnosCompletaronUnified: `${m.completadoPor} (${m.pctCompletado.toFixed(1)}%)`,
+        promEstrellas: m.promEstrellas.toFixed(1),
+        promIntentos: m.promIntentos.toFixed(1),
+      })),
+    };
+
+    const pdfBuffer = await this.generatePdf(
+      'reporte-misiones-completadas',
+      templateData,
+    );
+    return new StreamableFile(pdfBuffer, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="misiones-completadas-${idCurso}.pdf"`,
+    });
+  }
+
+  async getCourseMissionDetailReportPdf(
+    idCurso: string,
+    dto: GetCourseMissionDetailReportDto & { aPresentarA?: string },
+    userId: string,
+  ): Promise<StreamableFile> {
+    // 1. Obtener datos
+    const data = await this.reportesService.getCourseMissionDetailReport(
+      idCurso,
+      dto,
+    );
+
+    if (!data.mision) {
+      throw new Error('Debe seleccionar una misión para generar el reporte.');
+    }
+
+    // 2. Metadatos
+    const { curso, institucion, usuario, logoBase64 } =
+      await this.reportesService.getReportMetadata(userId, idCurso);
+
+    // 3. Registrar Reporte
+    const { reporteDB, filtrosTexto } =
+      await this.reportesService.registerReport(
+        userId,
+        'Detalle por Misión',
+        'Progreso',
+        { ...dto, cursoId: idCurso, aPresentarA: dto.aPresentarA },
+      );
+
+    // 4. Configurar Gráfico
+    const chartJsContent = await this.getChartJsContent();
+
+    const labels = data.grafico.map((d) => {
+      const parts = d.fecha.split('T')[0].split('-');
+      return `${parts[2]}/${parts[1]}`; // dd/MM
+    });
+    const values = data.grafico.map((d) => d.cantidad);
+
+    // Ajuste de escala Y
+    const maxVal = Math.max(...values, 0);
+    const yAxisConfig: any = {
+      beginAtZero: true,
+      title: { display: true, text: 'Cantidad' },
+    };
+    if (maxVal < 5) {
+      yAxisConfig.max = 5;
+      yAxisConfig.ticks = { stepSize: 1, precision: 0 };
+    } else {
+      yAxisConfig.ticks = { precision: 0 };
+    }
+
+    const chartConfig = {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Completados',
+            data: values,
+            borderColor: '#2e7d32',
+            backgroundColor: '#2e7d32',
+            tension: 0.1,
+            fill: false,
+            pointRadius: 3,
+          },
+        ],
+      },
+      options: {
+        scales: { y: yAxisConfig },
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Frecuencia de Completado' },
+        },
+      },
+    };
+
+    const commonData = this.buildCommonTemplateData(
+      { institucion, usuario, logoBase64 },
+      {
+        reporteDB,
+        filtrosTexto,
+        titulo: `Detalle por Misión: ${data.mision.nombre}`,
+        subtitulo: `Curso: ${curso?.nombre || 'Desconocido'}`,
+        aPresentarA: dto.aPresentarA,
+      },
+    );
+
+    const templateData = {
+      ...commonData,
+      mision: data.mision,
+      stats: {
+        ...data.stats,
+        pctAlumnos: data.stats.pctAlumnos.toFixed(1),
+        promEstrellas: data.stats.promEstrellas.toFixed(1),
+        promIntentos: data.stats.promIntentos.toFixed(1),
+      },
+      chartJsContent,
+      chartConfig: JSON.stringify(chartConfig),
+      tabla: data.tabla.map((t) => ({
+        ...t,
+        fecha: t.fecha
+          ? t.fecha.toISOString().split('T')[0].split('-').reverse().join('/')
+          : '-',
+      })),
+    };
+
+    const pdfBuffer = await this.generatePdf(
+      'reporte-detalle-mision',
+      templateData,
+    );
+    return new StreamableFile(pdfBuffer, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="detalle-mision-${idCurso}.pdf"`,
     });
   }
 }

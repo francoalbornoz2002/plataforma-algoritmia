@@ -12,8 +12,7 @@ import {
   Alert,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { format } from "date-fns";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import { format, parse } from "date-fns";
 import TableOnIcon from "@mui/icons-material/TableChart";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
@@ -24,6 +23,11 @@ import {
 import { dificultad_mision } from "../../../../types";
 import { useOptionalCourseContext } from "../../../../context/CourseContext";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
+import PdfExportButton from "../common/PdfExportButton";
+import ReportStatCard from "../common/ReportStatCard";
+import ReportTextualCard from "../common/ReportTextualCard";
+import TaskAltIcon from "@mui/icons-material/TaskAlt";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 
 interface Props {
   courseId: string;
@@ -44,6 +48,11 @@ export default function CourseMissionsReport({ courseId }: Props) {
     courseContext?.selectedCourse?.id === courseId
       ? courseContext?.selectedCourse?.createdAt
       : undefined;
+
+  const maxMisiones =
+    data?.grafico && data.grafico.length > 0
+      ? Math.max(...data.grafico.map((d: any) => d.cantidad), 0)
+      : 0;
 
   const handleGenerate = async () => {
     setLoading(true);
@@ -76,8 +85,8 @@ export default function CourseMissionsReport({ courseId }: Props) {
     { field: "dificultad", headerName: "Dificultad", width: 120 },
     {
       field: "pctCompletado",
-      headerName: "% Completado",
-      width: 130,
+      headerName: "% Alumnos que completaron",
+      width: 200,
       valueFormatter: (value: number) => `${value.toFixed(1)}%`,
     },
     {
@@ -107,14 +116,11 @@ export default function CourseMissionsReport({ courseId }: Props) {
         <Box
           sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
         >
-          <Button
-            variant="outlined"
-            startIcon={<PictureAsPdfIcon />}
+          <PdfExportButton
+            filters={filters}
+            endpointPath={`/reportes/cursos/${courseId}/progreso/misiones/pdf`}
             disabled={!data}
-            color="error"
-          >
-            Exportar PDF
-          </Button>
+          />
           <Button
             variant="outlined"
             startIcon={<TableOnIcon />}
@@ -195,21 +201,55 @@ export default function CourseMissionsReport({ courseId }: Props) {
       )}
 
       <Stack spacing={3}>
+        {/* KPIs */}
+        {data && (
+          <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+            <Box sx={{ flex: 1 }}>
+              <ReportStatCard
+                icon={<TaskAltIcon />}
+                title="Misiones Completadas"
+                subtitle="Total en el período"
+                count={data.kpis.totalCompletions}
+                color="info"
+              />
+            </Box>
+            <Box sx={{ flex: 1 }}>
+              <ReportTextualCard
+                icon={<EmojiEventsIcon />}
+                title="Misión Destacada"
+                value={data.kpis.topMission.nombre}
+                description={`Mayor % completado (${data.kpis.topMission.porcentaje.toFixed(1)}%)`}
+                color="warning"
+              />
+            </Box>
+          </Stack>
+        )}
+
         {/* Gráfico */}
         <Paper elevation={3} sx={{ p: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Evolución de Completado
+          <Typography variant="h6">Misiones completadas</Typography>
+          <Typography variant="caption" color="text.secondary" gutterBottom>
+            Cantidad de misiones completadas en el periodo seleccionado.
           </Typography>
           {data?.grafico && data.grafico.length > 0 ? (
             <LineChart
               dataset={data.grafico}
+              yAxis={[
+                {
+                  label: "Cantidad de misiones",
+                  valueFormatter: (value: number) =>
+                    Number.isInteger(value) ? value.toString() : "",
+                  min: 0,
+                  max: maxMisiones < 5 ? 5 : undefined,
+                },
+              ]}
               xAxis={[
                 {
                   scaleType: "point",
                   dataKey: "fecha",
                   label: "Fecha",
                   valueFormatter: (date: string) =>
-                    new Date(date).toLocaleDateString(),
+                    format(parse(date, "yyyy-MM-dd", new Date()), "dd/MM"),
                 },
               ]}
               series={[
@@ -220,7 +260,6 @@ export default function CourseMissionsReport({ courseId }: Props) {
                 },
               ]}
               height={300}
-              margin={{ left: 30, right: 30, top: 30, bottom: 30 }}
             />
           ) : (
             <Typography color="text.secondary" align="center" sx={{ py: 4 }}>

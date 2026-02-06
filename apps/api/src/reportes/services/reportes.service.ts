@@ -879,23 +879,51 @@ export class ReportesService {
     });
 
     // 2. Gráfico de tiempo (Total de misiones completadas por fecha)
-    const chartData: Record<string, number> = {};
+    const chartMap: Record<string, number> = {};
     completions.forEach((c) => {
       if (c.fechaCompletado) {
         const dateKey = c.fechaCompletado.toISOString().split('T')[0];
-        chartData[dateKey] = (chartData[dateKey] || 0) + 1;
+        chartMap[dateKey] = (chartMap[dateKey] || 0) + 1;
       }
     });
 
-    const grafico = Object.entries(chartData)
-      .map(([fecha, cantidad]) => ({ fecha, cantidad }))
-      .sort(
-        (a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime(),
-      );
+    const grafico: { fecha: string; cantidad: number }[] = [];
+
+    // Determinar rango de fechas (Relleno de días sin actividad)
+    let startDate: Date;
+    if (fechaDesde) {
+      startDate = new Date(fechaDesde);
+    } else if (completions.length > 0 && completions[0].fechaCompletado) {
+      startDate = new Date(completions[0].fechaCompletado);
+    } else {
+      startDate = new Date();
+    }
+    startDate.setUTCHours(0, 0, 0, 0);
+
+    const endDate = fechaHasta ? new Date(fechaHasta) : new Date();
+    endDate.setUTCHours(23, 59, 59, 999);
+
+    const current = new Date(startDate);
+    while (current <= endDate) {
+      const dateKey = current.toISOString().split('T')[0];
+      grafico.push({ fecha: dateKey, cantidad: chartMap[dateKey] || 0 });
+      current.setUTCDate(current.getUTCDate() + 1);
+    }
+
+    // 3. KPIs
+    const totalCompletions = completions.length;
+
+    let topMission = { nombre: 'Ninguna', porcentaje: 0 };
+    tableData.forEach((m) => {
+      if (m.pctCompletado > topMission.porcentaje) {
+        topMission = { nombre: m.nombre, porcentaje: m.pctCompletado };
+      }
+    });
 
     return {
       grafico,
       tabla: tableData,
+      kpis: { totalCompletions, topMission },
     };
   }
 
@@ -952,13 +980,40 @@ export class ReportesService {
     });
 
     // Gráfico
-    const chartData: Record<string, number> = {};
+    const chartMap: Record<string, number> = {};
     completions.forEach((c) => {
       if (c.fechaCompletado) {
         const dateKey = c.fechaCompletado.toISOString().split('T')[0];
-        chartData[dateKey] = (chartData[dateKey] || 0) + 1;
+        chartMap[dateKey] = (chartMap[dateKey] || 0) + 1;
       }
     });
+
+    const grafico: { fecha: string; cantidad: number }[] = [];
+    let startDate: Date;
+    if (fechaDesde) {
+      startDate = new Date(fechaDesde);
+    } else if (
+      completions.length > 0 &&
+      completions[completions.length - 1].fechaCompletado
+    ) {
+      // completions está ordenado DESC, así que el último es el más antiguo
+      startDate = new Date(
+        completions[completions.length - 1].fechaCompletado!,
+      );
+    } else {
+      startDate = new Date();
+    }
+    startDate.setUTCHours(0, 0, 0, 0);
+
+    const endDate = fechaHasta ? new Date(fechaHasta) : new Date();
+    endDate.setUTCHours(23, 59, 59, 999);
+
+    const current = new Date(startDate);
+    while (current <= endDate) {
+      const dateKey = current.toISOString().split('T')[0];
+      grafico.push({ fecha: dateKey, cantidad: chartMap[dateKey] || 0 });
+      current.setUTCDate(current.getUTCDate() + 1);
+    }
 
     // Stats
     const totalCompletions = completions.length;
@@ -985,10 +1040,7 @@ export class ReportesService {
 
     return {
       mision: mision,
-      grafico: Object.entries(chartData).map(([fecha, cantidad]) => ({
-        fecha,
-        cantidad,
-      })),
+      grafico,
       stats: {
         vecesCompletada: totalCompletions,
         alumnosCompletaron: uniqueStudents,
@@ -2281,15 +2333,19 @@ export class ReportesService {
     if (dto) {
       for (const [key, value] of Object.entries(dto)) {
         if (value && key !== 'aPresentarA') {
-          // Formato simple: "Fecha Desde: 2023-01-01"
-          const label = key
+          // Formato simple: "Fecha Desde: 2023-01-01". Quitamos "Id" del final.
+          let label = key.replace(/Id$/, '');
+          label = label
             .replace(/([A-Z])/g, ' $1')
-            .replace(/^./, (str) => str.toUpperCase());
+            .replace(/^./, (str) => str.toUpperCase())
+            .trim();
 
           let displayValue = value;
           if (key === 'agruparPor' && value === 'AMBOS') {
             displayValue = 'ROL y ESTADO';
           }
+
+          // --- Resoluciones de IDs a Nombres ---
 
           if (key === 'cursoId' && typeof value === 'string') {
             const curso = await this.prisma.curso.findUnique({
@@ -2301,7 +2357,63 @@ export class ReportesService {
             }
           }
 
-          // Traducir IDs de alumnos a Nombres
+          if (key === 'misionId' && typeof value === 'string') {
+            const mision = await this.prisma.mision.findUnique({
+              where: { id: value },
+              select: { nombre: true },
+            });
+            if (mision) {
+              displayValue = mision.nombre;
+            }
+          }
+
+          if (key === 'dificultadId' && typeof value === 'string') {
+            const dificultad = await this.prisma.dificultad.findUnique({
+              where: { id: value },
+              select: { nombre: true },
+            });
+            if (dificultad) {
+              displayValue = dificultad.nombre;
+            }
+          }
+
+          if (key === 'dificultades' && typeof value === 'string') {
+            const ids = value.split(',').filter(Boolean);
+            if (ids.length > 0) {
+              const diffs = await this.prisma.dificultad.findMany({
+                where: { id: { in: ids } },
+                select: { nombre: true },
+              });
+              if (diffs.length > 0) {
+                displayValue = diffs.map((d) => d.nombre).join(', ');
+              }
+            }
+          }
+
+          if (key === 'docenteId' && typeof value === 'string') {
+            const docente = await this.prisma.usuario.findUnique({
+              where: { id: value },
+              select: { nombre: true, apellido: true },
+            });
+            if (docente) {
+              displayValue = `${docente.nombre} ${docente.apellido}`;
+            }
+          }
+
+          if (
+            (key === 'alumnoId' || key === 'studentId') &&
+            typeof value === 'string'
+          ) {
+            const alumno = await this.prisma.usuario.findUnique({
+              where: { id: value },
+              select: { nombre: true, apellido: true },
+            });
+            if (alumno) {
+              displayValue = `${alumno.nombre} ${alumno.apellido}`;
+            }
+          }
+
+          // Traducir IDs de alumnos a Nombres (Lista)
           if (key === 'alumnos' && typeof value === 'string') {
             const ids = value.split(',').filter(Boolean);
             if (ids.length > 0) {

@@ -43,7 +43,7 @@ export const theme = createTheme({
     MuiInputBase: {
       defaultProps: {
         style: {
-          borderRadius: "0.5em",
+          borderRadius: "0.7em",
         },
       },
     },

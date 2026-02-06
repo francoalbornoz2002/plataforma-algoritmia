@@ -10,11 +10,10 @@ import {
   Select,
   MenuItem,
   Alert,
-  Divider,
+  Grid,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { format } from "date-fns";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import { format, parse } from "date-fns";
 import TableOnIcon from "@mui/icons-material/TableChart";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
@@ -25,6 +24,12 @@ import {
 import { dificultad_mision } from "../../../../types";
 import { useOptionalCourseContext } from "../../../../context/CourseContext";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
+import PdfExportButton from "../common/PdfExportButton";
+import ReportStatCard from "../common/ReportStatCard";
+import TaskAltIcon from "@mui/icons-material/TaskAlt";
+import PersonIcon from "@mui/icons-material/Person";
+import StarIcon from "@mui/icons-material/Star";
+import ReplayIcon from "@mui/icons-material/Replay";
 
 interface Props {
   courseId: string;
@@ -48,12 +53,20 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
       ? courseContext?.selectedCourse?.createdAt
       : undefined;
 
+  const maxCantidad =
+    data?.grafico && data.grafico.length > 0
+      ? Math.max(...data.grafico.map((d: any) => d.cantidad), 0)
+      : 0;
+
   // Cargar lista de misiones o datos específicos
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       try {
-        const result = await getCourseMissionDetailReport(courseId, filters);
+        const result: any = await getCourseMissionDetailReport(
+          courseId,
+          filters,
+        );
 
         if (!filters.misionId) {
           // Si no hay misión seleccionada, el backend devuelve la lista
@@ -83,12 +96,12 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
 
   const columns: GridColDef[] = [
     { field: "alumno", headerName: "Alumno", flex: 1 },
-    { field: "estrellas", headerName: "Estrellas", width: 100 },
-    { field: "exp", headerName: "Exp", width: 100 },
-    { field: "intentos", headerName: "Intentos", width: 100 },
+    { field: "estrellas", headerName: "Estrellas", width: 80 },
+    { field: "exp", headerName: "Exp", width: 80 },
+    { field: "intentos", headerName: "Intentos", width: 80 },
     {
       field: "fecha",
-      headerName: "Fecha",
+      headerName: "Fecha Completado",
       width: 150,
       valueFormatter: (value: string) =>
         value ? new Date(value).toLocaleDateString() : "-",
@@ -103,19 +116,18 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
           gutterBottom
           sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}
         >
-          Detalle por Misión
+          {data
+            ? `Detalle por Misión: ${data.mision.nombre}`
+            : "Detalle por Misión"}
         </Typography>
         <Box
           sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
         >
-          <Button
-            variant="outlined"
-            startIcon={<PictureAsPdfIcon />}
+          <PdfExportButton
+            filters={filters}
+            endpointPath={`/reportes/cursos/${courseId}/progreso/detalle-mision/pdf`}
             disabled={!data}
-            color="error"
-          >
-            Exportar PDF
-          </Button>
+          />
           <Button
             variant="outlined"
             startIcon={<TableOnIcon />}
@@ -224,56 +236,82 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
       )}
 
       {data && (
-        <Stack spacing={3}>
-          {/* Stats Rápidos */}
+        <Stack spacing={2}>
           <Paper elevation={3} sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>
-              {data.mision.nombre}
+              Estadísticas generales
             </Typography>
-            <Stack
-              direction="row"
-              spacing={4}
-              divider={<Divider orientation="vertical" flexItem />}
-            >
-              <Box>
-                <Typography variant="caption">Veces Completada</Typography>
-                <Typography variant="h5">
-                  {data.stats.vecesCompletada}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption">Alumnos Únicos</Typography>
-                <Typography variant="h5">
-                  {data.stats.alumnosCompletaron} (
-                  {data.stats.pctAlumnos.toFixed(1)}%)
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption">Prom. Estrellas</Typography>
-                <Typography variant="h5" color="warning.main">
-                  {data.stats.promEstrellas.toFixed(1)}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption">Prom. Intentos</Typography>
-                <Typography variant="h5" color="info.main">
-                  {data.stats.promIntentos.toFixed(1)}
-                </Typography>
-              </Box>
-            </Stack>
+
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <ReportStatCard
+                  icon={<TaskAltIcon fontSize="small" />}
+                  title="Veces Completada"
+                  subtitle="Total de ejecuciones"
+                  count={data.stats.vecesCompletada}
+                  color="success"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <ReportStatCard
+                  icon={<PersonIcon fontSize="small" />}
+                  title="Alumnos que completaron"
+                  subtitle="Total de alumnos distintos"
+                  count={data.stats.alumnosCompletaron}
+                  percentage={data.stats.pctAlumnos}
+                  color="primary"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <ReportStatCard
+                  icon={<StarIcon fontSize="small" />}
+                  title="Prom. Estrellas"
+                  subtitle="Calificación promedio"
+                  count={data.stats.promEstrellas.toFixed(1)}
+                  color="warning"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <ReportStatCard
+                  icon={<ReplayIcon fontSize="small" />}
+                  title="Prom. Intentos"
+                  subtitle="Intentos promedio"
+                  count={data.stats.promIntentos.toFixed(1)}
+                  color="info"
+                />
+              </Grid>
+            </Grid>
           </Paper>
 
-          <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
+          <Grid container spacing={2}>
             {/* Gráfico */}
-            <Box sx={{ flex: 1 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-                <Typography variant="subtitle1" gutterBottom>
+                <Typography variant="h6" gutterBottom>
                   Frecuencia de Completado
                 </Typography>
                 {data.grafico.length > 0 ? (
                   <LineChart
+                    yAxis={[
+                      {
+                        label: "Cantidad de misiones",
+                        valueFormatter: (value: number) =>
+                          Number.isInteger(value) ? value.toString() : "",
+                        min: 0,
+                        max: maxCantidad < 5 ? 5 : undefined,
+                      },
+                    ]}
                     xAxis={[
-                      { scaleType: "point", dataKey: "fecha", label: "Fecha" },
+                      {
+                        scaleType: "point",
+                        dataKey: "fecha",
+                        label: "Fecha",
+                        valueFormatter: (date: string) =>
+                          format(
+                            parse(date, "yyyy-MM-dd", new Date()),
+                            "dd/MM",
+                          ),
+                      },
                     ]}
                     series={[
                       {
@@ -295,21 +333,33 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
                   </Typography>
                 )}
               </Paper>
-            </Box>
-
+            </Grid>
             {/* Tabla */}
-            <Box sx={{ flex: 1 }}>
-              <Paper elevation={3} sx={{ height: 400, width: "100%" }}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Paper
+                elevation={3}
+                sx={{
+                  p: 2,
+                  height: 400,
+                  width: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <Typography variant="h6" gutterBottom>
+                  Alumnos que la completaron
+                </Typography>
                 <DataGrid
                   rows={data.tabla}
                   columns={columns}
                   loading={loading}
                   density="compact"
                   disableRowSelectionOnClick
+                  sx={{ flex: 1 }}
                 />
               </Paper>
-            </Box>
-          </Stack>
+            </Grid>
+          </Grid>
         </Stack>
       )}
     </Paper>

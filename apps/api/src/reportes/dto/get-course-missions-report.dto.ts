@@ -1,4 +1,4 @@
-import { IsDateString, IsEnum, IsOptional } from 'class-validator';
+import { IsDateString, IsEnum, IsOptional, IsString } from 'class-validator';
 import { dificultad_mision } from '@prisma/client';
 
 export class GetCourseMissionsReportDto {
@@ -13,4 +13,10 @@ export class GetCourseMissionsReportDto {
   @IsOptional()
   @IsDateString()
   fechaHasta?: string;
+}
+
+export class GetCourseMissionsReportPdfDto extends GetCourseMissionsReportDto {
+  @IsOptional()
+  @IsString()
+  aPresentarA?: string;
 }

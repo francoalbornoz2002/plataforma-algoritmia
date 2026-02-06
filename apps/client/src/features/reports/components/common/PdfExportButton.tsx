@@ -21,6 +21,17 @@ export default function PdfExportButton({
 }: PdfExportButtonProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [fileName, setFileName] = useState("reporte.pdf");
+
+  const handleClose = () => {
+    setOpen(false);
+    // Limpiamos la URL y el estado al cerrar el diálogo
+    if (pdfUrl) {
+      setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
+      setPdfUrl(null);
+    }
+  };
 
   const handleExport = async (aPresentarA: string) => {
     setLoading(true);
@@ -45,12 +56,22 @@ export default function PdfExportButton({
         responseType: "blob", // Importante para manejar binarios
       });
 
-      // Creamos una URL local para el Blob y la abrimos
-      const pdfBlob = new Blob([response.data], { type: "application/pdf" });
-      const pdfUrl = URL.createObjectURL(pdfBlob);
-      window.open(pdfUrl, "_blank");
+      // Extraer nombre del archivo si viene en headers
+      const contentDisposition = response.headers["content-disposition"];
+      let name = "reporte.pdf";
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (filenameMatch && filenameMatch.length === 2)
+          name = filenameMatch[1];
+      }
+      setFileName(name);
 
-      setOpen(false);
+      // Creamos una URL local para el Blob
+      const pdfBlob = new Blob([response.data], { type: "application/pdf" });
+      const url = URL.createObjectURL(pdfBlob);
+      setPdfUrl(url);
+
+      // NO cerramos el diálogo, dejamos que se muestren las opciones
     } catch (error) {
       console.error("Error al exportar PDF:", error);
       if (onError)
@@ -74,9 +95,11 @@ export default function PdfExportButton({
 
       <ReportExportDialog
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={handleClose}
         onExport={handleExport}
         isGenerating={loading}
+        pdfUrl={pdfUrl}
+        fileName={fileName}
       />
     </>
   );

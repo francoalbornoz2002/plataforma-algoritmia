@@ -7,6 +7,7 @@ import {
   Res,
   Req,
 } from '@nestjs/common';
+import { IsOptional, IsString } from 'class-validator';
 import type { Response } from 'express';
 import { ReportesService } from '../services/reportes.service';
 import {
@@ -36,8 +37,14 @@ import {
   GetTeacherAssignmentHistoryDto,
   GetTeacherAssignmentHistoryPdfDto,
 } from '../dto/get-teacher-assignment-history.dto';
-import { GetCourseMissionsReportDto } from '../dto/get-course-missions-report.dto';
-import { GetCourseMissionDetailReportDto } from '../dto/get-course-mission-detail-report.dto';
+import {
+  GetCourseMissionsReportDto,
+  GetCourseMissionsReportPdfDto,
+} from '../dto/get-course-missions-report.dto';
+import {
+  GetCourseMissionDetailReportDto,
+  GetCourseMissionDetailReportPdfDto,
+} from '../dto/get-course-mission-detail-report.dto';
 import {
   GetCourseProgressSummaryDto,
   GetCourseProgressSummaryPdfDto,
@@ -277,6 +284,26 @@ export class ReportesController {
     return this.reportesService.getCourseMissionsReport(id, dto);
   }
 
+  @Get('cursos/:id/progreso/misiones/pdf')
+  @Roles(roles.Administrador, roles.Docente)
+  async getCourseMissionsReportPdf(
+    @Param('id') id: string,
+    @Query() dto: GetCourseMissionsReportPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.pdfService.getCourseMissionsReportPdf(
+      id,
+      dto,
+      userId,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+    });
+    return file;
+  }
+
   // Progreso - Sección 3: Detalles por Misión
   @Get('cursos/:id/progreso/detalle-mision')
   @Roles(roles.Administrador, roles.Docente)
@@ -285,6 +312,26 @@ export class ReportesController {
     @Query() dto: GetCourseMissionDetailReportDto,
   ) {
     return this.reportesService.getCourseMissionDetailReport(id, dto);
+  }
+
+  @Get('cursos/:id/progreso/detalle-mision/pdf')
+  @Roles(roles.Administrador, roles.Docente)
+  async getCourseMissionDetailReportPdf(
+    @Param('id') id: string,
+    @Query() dto: GetCourseMissionDetailReportPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.pdfService.getCourseMissionDetailReportPdf(
+      id,
+      dto,
+      userId,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+    });
+    return file;
   }
 
   // Dificultades - Sección 1: Resumen de Dificultades

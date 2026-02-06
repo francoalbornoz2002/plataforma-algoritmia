@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  {{> styles}}
+</head>
+<body>
+  {{> header}}
+
+  <div class="content">
+    <h3 style="color: #1976d2; margin-bottom: 10px; font-size: 14px;">Estadísticas Generales</h3>
+    
+    <div class="kpi-container">
+      <div class="kpi-card">
+        <div class="kpi-value" style="color: #2e7d32;">{{stats.vecesCompletada}}</div>
+        <div class="kpi-label">Veces Completada</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" style="color: #1976d2;">{{stats.alumnosCompletaron}} ({{stats.pctAlumnos}}%)</div>
+        <div class="kpi-label">Alumnos que completaron</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" style="color: #ed6c02;">{{stats.promEstrellas}}</div>
+        <div class="kpi-label">Prom. Estrellas</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" style="color: #0288d1;">{{stats.promIntentos}}</div>
+        <div class="kpi-label">Prom. Intentos</div>
+      </div>
+    </div>
+
+    <div class="chart-container" style="height: 300px; margin: 20px 0;">
+      <canvas id="chartCompletions"></canvas>
+    </div>
+
+    <h3 style="color: #1976d2; margin-bottom: 10px; margin-top: 20px; font-size: 14px;">Alumnos que la completaron</h3>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>Alumno</th>
+          <th class="text-center">Estrellas</th>
+          <th class="text-center">Exp</th>
+          <th class="text-center">Intentos</th>
+          <th class="text-center">Fecha Completado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each tabla}}
+        <tr>
+          <td>{{this.alumno}}</td>
+          <td class="text-center">{{this.estrellas}}</td>
+          <td class="text-center">{{this.exp}}</td>
+          <td class="text-center">{{this.intentos}}</td>
+          <td class="text-center">{{this.fecha}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+
+  {{> footer}}
+
+  <script>
+    {{{chartJsContent}}}
+  </script>
+  {{> chartSetup}}
+  <script>
+    const ctx = document.getElementById('chartCompletions').getContext('2d');
+    const config = {{{chartConfig}}};
+    applyChartPrintConfig(config);
+    new Chart(ctx, config);
+  </script>
+</body>
+</html>

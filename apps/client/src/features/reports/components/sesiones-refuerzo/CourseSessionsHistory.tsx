@@ -499,10 +499,8 @@ export default function CourseSessionsHistory({ courseId }: Props) {
                 yAxis={[
                   {
                     label: "Cantidad de sesiones",
-                    valueFormatter: (value: number | null) =>
-                      value !== null && Number.isInteger(value)
-                        ? value.toString()
-                        : "",
+                    valueFormatter: (value: number) =>
+                      Number.isInteger(value) ? value.toString() : "",
                   },
                 ]}
                 xAxis={[

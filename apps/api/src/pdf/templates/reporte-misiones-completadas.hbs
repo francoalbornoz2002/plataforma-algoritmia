@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  {{> styles}}
+</head>
+<body>
+  {{> header}}
+
+  <div class="content">
+    <h3 style="color: #1976d2; margin-bottom: 10px; font-size: 14px;">Resumen de Actividad</h3>
+    
+    <div class="kpi-container">
+      <div class="kpi-card">
+        <div class="kpi-value">{{kpis.totalCompletions}}</div>
+        <div class="kpi-label">Misiones Completadas (Total)</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" style="font-size: 14px;">{{kpis.topMission.nombre}}</div>
+        <div class="kpi-label">Mayor % Completado ({{fixed kpis.topMission.porcentaje 1}}%)</div>
+      </div>
+    </div>
+
+    <div class="chart-container" style="height: 300px; margin: 20px 0;">
+      <canvas id="chartMissions"></canvas>
+    </div>
+
+    <h3 style="color: #1976d2; margin-bottom: 10px; margin-top: 20px; font-size: 14px;">Detalle por Misión</h3>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>Misión</th>
+          <th>Dificultad</th>
+          <th>Alumnos que completaron</th>
+          <th>Prom. Estrellas</th>
+          <th>Prom. Intentos</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each tabla}}
+        <tr>
+          <td>{{this.nombre}}</td>
+          <td>{{this.dificultad}}</td>
+          <td class="text-center">{{this.alumnosCompletaronUnified}}</td>
+          <td class="text-center">{{this.promEstrellas}}</td>
+          <td class="text-center">{{this.promIntentos}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+
+  {{> footer}}
+
+  <script>
+    {{{chartJsContent}}}
+  </script>
+  {{> chartSetup}}
+  <script>
+    const ctx = document.getElementById('chartMissions').getContext('2d');
+    const config = {{{chartConfig}}};
+    applyChartPrintConfig(config);
+    new Chart(ctx, config);
+  </script>
+</body>
+</html>
