@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  {{> styles}}
+</head>
+<body>
+  {{> header}}
+
+  <div class="content">
+    <h3 style="color: #1976d2; margin-bottom: 10px; font-size: 14px;">Estadísticas Generales</h3>
+    
+    <div class="kpi-container" style="margin-bottom: 10px">
+      <div class="kpi-card">
+        <div class="kpi-value" style="color: #1976d2;">{{kpis.promDificultades}}</div>
+        <div class="kpi-label">Prom. Dificultades/Alumno</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" style="color: #0288d1;">{{kpis.temaFrecuente.nombre}}</div>
+        <div class="kpi-label">Tema Más Frecuente ({{kpis.temaFrecuentePct}}%)</div>
+      </div>
+    </div>
+    <div class="kpi-container">
+      <div class="kpi-card">
+        <div class="kpi-value" style="color: #ed6c02; font-size: 14px;">{{kpis.dificultadFrecuente.nombre}}</div>
+        <div class="kpi-label">Dificultad Más Frecuente ({{kpis.dificultadFrecuentePct}}%)</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" style="color: #d32f2f;">{{kpis.gradoAltoPct}}%</div>
+        <div class="kpi-label">Alumnos con Grado Alto</div>
+      </div>
+    </div>
+
+    <!-- Fila 1: Dificultad (Ancho completo para leyendas largas) -->
+    <div class="chart-container" style="height: 300px; margin: 20px auto; width: 85%;">
+      <canvas id="chartDificultad"></canvas>
+    </div>
+
+    <!-- Fila 2: Tema y Grado (Mitad y mitad) -->
+    <div style="display: flex; justify-content: space-between; margin: 20px 0; break-inside: avoid;">
+      <div style="width: 48%;">
+        <div class="chart-container" style="height: 250px; margin: 0;">
+          <canvas id="chartTema"></canvas>
+        </div>
+      </div>
+      <div style="width: 48%;">
+        <div class="chart-container" style="height: 250px; margin: 0;">
+          <canvas id="chartGrado"></canvas>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Fila 3: Detalle por dificultad -->
+    <div class="chart-container" style="height: 350px; margin: 20px 0; break-inside: avoid;">
+    <h3 style="color: #1976d2; margin-bottom: 10px; margin-top: 20px; font-size: 14px;">Detalle por Dificultad</h3>
+      <canvas id="chartDetalle"></canvas>
+    </div>
+  </div>
+
+  {{> footer}}
+
+  <script>
+    {{{chartJsContent}}}
+  </script>
+  {{> chartSetup}}
+  <script>
+    const ctxDif = document.getElementById('chartDificultad').getContext('2d');
+    const configDif = {{{chartConfigDificultad}}};
+    applyChartPrintConfig(configDif);
+    new Chart(ctxDif, configDif);
+
+    const ctxTema = document.getElementById('chartTema').getContext('2d');
+    const configTema = {{{chartConfigTema}}};
+    applyChartPrintConfig(configTema);
+    new Chart(ctxTema, configTema);
+
+    const ctxGrado = document.getElementById('chartGrado').getContext('2d');
+    const configGrado = {{{chartConfigGrado}}};
+    applyChartPrintConfig(configGrado);
+    new Chart(ctxGrado, configGrado);
+
+    const ctxDet = document.getElementById('chartDetalle').getContext('2d');
+    const configDet = {{{chartConfigDetalle}}};
+    applyChartPrintConfig(configDet);
+    new Chart(ctxDet, configDet);
+  </script>
+</body>
+</html>

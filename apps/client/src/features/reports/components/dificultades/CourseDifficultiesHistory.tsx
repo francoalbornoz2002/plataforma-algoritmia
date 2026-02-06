@@ -8,7 +8,6 @@ import {
   Chip,
   Stack,
   Divider,
-  ButtonGroup,
   FormControl,
   InputLabel,
   Select,
@@ -22,11 +21,11 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableOnIcon from "@mui/icons-material/TableChart";
 import VideogameAssetIcon from "@mui/icons-material/VideogameAsset";
 import SchoolIcon from "@mui/icons-material/School";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
 import {
@@ -39,8 +38,8 @@ import {
   fuente_cambio_dificultad,
   grado_dificultad,
 } from "../../../../types";
-import { School, VideogameAsset } from "@mui/icons-material";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
+import PdfExportButton from "../common/PdfExportButton";
 
 interface Props {
   courseId: string;
@@ -91,8 +90,8 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
       try {
         // Usamos el reporte resumen para obtener las dificultades existentes en el curso
         const summary = await getCourseDifficultiesReport(courseId, {});
-        if (summary && summary.tabla) {
-          const diffs = summary.tabla.map((d: any) => ({
+        if (summary && summary.distribucionGrados) {
+          const diffs = summary.distribucionGrados.map((d: any) => ({
             id: d.id,
             nombre: d.nombre,
             tema: d.tema,
@@ -105,6 +104,14 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
     };
     loadDifficulties();
   }, [courseId]);
+
+  // Filtrar dificultades según temas seleccionados
+  const filteredDifficulties =
+    selectedTemas.length > 0
+      ? availableDifficulties.filter((d) =>
+          selectedTemas.includes(d.tema as temas),
+        )
+      : availableDifficulties;
 
   // 2. Sincronizar filtros de UI con el filtro de la API
   useEffect(() => {
@@ -204,45 +211,74 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
       valueGetter: (params, row) => row.dificultad?.tema || "-",
     },
     {
-      field: "cambio",
-      headerName: "Cambio de Grado",
-      width: 200,
+      field: "gradoAnterior",
+      headerName: "Grado Anterior",
+      width: 100,
+      renderCell: (params) => (
+        <Chip
+          label={params.value || "Ninguno"}
+          size="small"
+          variant="filled"
+          color={
+            params.value === grado_dificultad.Alto
+              ? "error"
+              : params.value === grado_dificultad.Bajo
+                ? "success"
+                : params.value === grado_dificultad.Medio
+                  ? "warning"
+                  : "default"
+          }
+        />
+      ),
+    },
+    {
+      field: "gradoNuevo",
+      headerName: "Grado Nuevo",
+      width: 100,
+      renderCell: (params) => (
+        <Chip
+          label={params.value || "Ninguno"}
+          size="small"
+          color={
+            params.value === grado_dificultad.Alto
+              ? "error"
+              : params.value === grado_dificultad.Bajo
+                ? "success"
+                : params.value === grado_dificultad.Medio
+                  ? "warning"
+                  : "default"
+          }
+        />
+      ),
+    },
+    {
+      field: "trend",
+      headerName: "Mejora",
+      width: 70,
+      sortable: false,
+      align: "center",
+      headerAlign: "center",
       renderCell: (params) => {
         const anterior = params.row.gradoAnterior || "Ninguno";
         const nuevo = params.row.gradoNuevo || "Ninguno";
-        const esMejora = isImprovement(anterior, nuevo);
+        const weights: Record<string, number> = {
+          Ninguno: 0,
+          Bajo: 1,
+          Medio: 2,
+          Alto: 3,
+        };
+        const wOld = weights[anterior] || 0;
+        const wNew = weights[nuevo] || 0;
 
-        return (
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Chip
-              label={anterior}
-              size="small"
-              variant="outlined"
-              color="default"
-            />
-            <Typography variant="body2">→</Typography>
-            <Chip
-              label={nuevo}
-              size="small"
-              color={
-                nuevo === grado_dificultad.Alto
-                  ? "error"
-                  : nuevo === grado_dificultad.Bajo
-                    ? "success"
-                    : "warning"
-              }
-            />
-            {esMejora && (
-              <TrendingUpIcon color="success" fontSize="small" sx={{ ml: 1 }} />
-            )}
-          </Stack>
-        );
+        if (wOld > wNew) return <TrendingUpIcon color="success" />; // Mejora
+        if (wOld < wNew) return <TrendingDownIcon color="error" />; // Empeora
+        return null;
       },
     },
     {
       field: "fuente",
       headerName: "Fuente",
-      width: 150,
+      width: 120,
       renderCell: (params) => {
         const isGame = params.value === fuente_cambio_dificultad.VIDEOJUEGO;
         return (
@@ -258,17 +294,6 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
     },
   ];
 
-  // Helper para detectar mejora visualmente en la tabla
-  const isImprovement = (oldG: string, newG: string) => {
-    const weights: Record<string, number> = {
-      Ninguno: 0,
-      Bajo: 1,
-      Medio: 2,
-      Alto: 3,
-    };
-    return (weights[oldG] || 0) > (weights[newG] || 0);
-  };
-
   return (
     <Paper elevation={5} component="section" sx={{ p: 2 }}>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
@@ -282,14 +307,11 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
         <Box
           sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
         >
-          <Button
-            variant="outlined"
-            startIcon={<PictureAsPdfIcon />}
+          <PdfExportButton
+            filters={filters}
+            endpointPath={`/reportes/cursos/${courseId}/dificultades/historial/pdf`}
             disabled={!data || data.tabla.length === 0}
-            color="error"
-          >
-            Exportar PDF
-          </Button>
+          />
           <Button
             variant="outlined"
             startIcon={<TableOnIcon />}
@@ -404,14 +426,14 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
                 renderValue={(selected) => {
                   const names = selected.map(
                     (id) =>
-                      availableDifficulties.find((d) => d.id === id)?.nombre ||
+                      filteredDifficulties.find((d) => d.id === id)?.nombre ||
                       id,
                   );
                   return names.join(", ");
                 }}
                 MenuProps={MenuProps}
               >
-                {availableDifficulties.map((d) => (
+                {filteredDifficulties.map((d) => (
                   <MenuItem key={d.id} value={d.id}>
                     <Checkbox
                       checked={selectedDificultadesIds.indexOf(d.id) > -1}
@@ -435,13 +457,67 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
       )}
 
       {data && (
-        <Grid container spacing={3}>
-          {/* --- Sección Superior: Fuente de Mejora (Barras y Tabla) --- */}
-          <Grid size={6}>
+        <Grid container spacing={2}>
+          {/* --- Gráfico de Línea --- */}
+          <Grid size={12}>
+            <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
+              <Typography variant="h6" gutterBottom>
+                Evolución de Registros de Dificultad
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Cantidad de registros o actualización de grado dificultad segun
+                origen y agrupado por fecha.
+              </Typography>
+              {data.timeline.length > 0 ? (
+                <LineChart
+                  xAxis={[
+                    {
+                      scaleType: "point",
+                      data: data.timeline.map((t: any) => t.fecha),
+                      label: "Fecha",
+                      valueFormatter: (date) => {
+                        const [y, m, d] = date.split("-");
+                        return `${d}/${m}/${y}`;
+                      },
+                    },
+                  ]}
+                  series={[
+                    {
+                      data: data.timeline.map((t: any) => t.videojuego),
+                      label: "Videojuego",
+                      color: "#1976d2",
+                      curve: "linear",
+                    },
+                    {
+                      data: data.timeline.map((t: any) => t.sesion_refuerzo),
+                      label: "Sesiones",
+                      color: "#9c27b0",
+                      curve: "linear",
+                    },
+                  ]}
+                  height={350}
+                  margin={{ left: 30, right: 30, top: 30, bottom: 30 }}
+                />
+              ) : (
+                <Box
+                  display="flex"
+                  justifyContent="center"
+                  alignItems="center"
+                  height={250}
+                >
+                  <Typography color="text.secondary">
+                    No hay datos para el periodo seleccionado.
+                  </Typography>
+                </Box>
+              )}
+            </Paper>
+          </Grid>
+          {/* --- Fuente de Mejora (Barras y Tabla) --- */}
+          <Grid size={12}>
             <Paper
               elevation={3}
               sx={{
-                p: 3,
+                p: 2,
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "center",
@@ -449,10 +525,8 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
                 height: "100%",
               }}
             >
-              <Typography variant="h6" gutterBottom color="primary.main">
-                Fuente de Mejora
-              </Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
+              <Typography variant="h6">Fuente de Mejora</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 Porcentaje de registros donde el alumno disminuyó su grado de
                 dificultad (mejoró).
               </Typography>
@@ -539,12 +613,12 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
                     density="compact"
                     disableRowSelectionOnClick
                     initialState={{
-                      pagination: { paginationModel: { pageSize: 5 } },
+                      pagination: { paginationModel: { pageSize: 10 } },
                       sorting: {
                         sortModel: [{ field: "fechaCambio", sort: "desc" }],
                       },
                     }}
-                    pageSizeOptions={[5, 10, 25]}
+                    pageSizeOptions={[10, 25]}
                     sx={{
                       "& .MuiDataGrid-cell": {
                         fontSize: "0.75rem",
@@ -556,57 +630,6 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
                   />
                 </Box>
               </Stack>
-            </Paper>
-          </Grid>
-
-          {/* --- Gráfico de Línea --- */}
-          <Grid size={6}>
-            <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-              <Typography variant="h6" gutterBottom>
-                Evolución de Registros
-              </Typography>
-              {data.timeline.length > 0 ? (
-                <LineChart
-                  xAxis={[
-                    {
-                      scaleType: "point",
-                      data: data.timeline.map((t: any) => t.fecha),
-                      label: "Fecha",
-                      valueFormatter: (date) => {
-                        const [y, m, d] = date.split("-");
-                        return `${d}/${m}/${y}`;
-                      },
-                    },
-                  ]}
-                  series={[
-                    {
-                      data: data.timeline.map((t: any) => t.videojuego),
-                      label: "Videojuego",
-                      color: "#1976d2",
-                      curve: "linear",
-                    },
-                    {
-                      data: data.timeline.map((t: any) => t.sesion_refuerzo),
-                      label: "Sesiones",
-                      color: "#9c27b0",
-                      curve: "linear",
-                    },
-                  ]}
-                  height={350}
-                  margin={{ left: 30, right: 30, top: 30, bottom: 30 }}
-                />
-              ) : (
-                <Box
-                  display="flex"
-                  justifyContent="center"
-                  alignItems="center"
-                  height={250}
-                >
-                  <Typography color="text.secondary">
-                    No hay datos para el periodo seleccionado.
-                  </Typography>
-                </Box>
-              )}
             </Paper>
           </Grid>
         </Grid>

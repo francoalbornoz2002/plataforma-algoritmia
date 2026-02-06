@@ -22,3 +22,9 @@ export class GetCourseDifficultiesHistoryDto {
   @IsDateString()
   fechaHasta?: string;
 }
+
+export class GetCourseDifficultiesHistoryPdfDto extends GetCourseDifficultiesHistoryDto {
+  @IsOptional()
+  @IsString()
+  aPresentarA?: string;
+}

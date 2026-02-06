@@ -22,6 +22,7 @@ export const theme = createTheme({
     },
     warning: {
       main: "#fb8c00",
+      contrastText: "#ffffff",
     },
   },
   components: {

@@ -12,12 +12,11 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
-import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import TableOnIcon from "@mui/icons-material/TableChart";
 import { PieChart } from "@mui/x-charts/PieChart";
 import { BarChart } from "@mui/x-charts/BarChart";
 import FunctionsIcon from "@mui/icons-material/Functions";
-import CategoryIcon from "@mui/icons-material/Category";
+import TopicIcon from "@mui/icons-material/Topic";
 import WarningIcon from "@mui/icons-material/Warning";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import {
@@ -26,6 +25,7 @@ import {
 } from "../../service/reports.service";
 import { useOptionalCourseContext } from "../../../../context/CourseContext";
 import ReportTextualCard from "../common/ReportTextualCard";
+import PdfExportButton from "../common/PdfExportButton";
 
 interface Props {
   courseId: string;
@@ -102,14 +102,11 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
         <Box
           sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
         >
-          <Button
-            variant="outlined"
-            startIcon={<PictureAsPdfIcon />}
+          <PdfExportButton
+            filters={filters}
+            endpointPath={`/reportes/cursos/${courseId}/dificultades/resumen/pdf`}
             disabled={!data}
-            color="error"
-          >
-            Exportar PDF
-          </Button>
+          />
           <Button
             variant="outlined"
             startIcon={<TableOnIcon />}
@@ -158,30 +155,30 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
         <Stack spacing={3}>
           {/* KPIs */}
           <Grid container spacing={2}>
-            <Grid sx={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 12, md: 1.9 }}>
               <ReportTextualCard
                 icon={<FunctionsIcon />}
-                title="Promedio Dificultades"
+                title="Prom. Dificultades"
                 value={data.kpis.promDificultades.toFixed(1)}
-                description={`Promedio por alumno. Total alumnos: ${data.kpis.totalAlumnos}`}
+                description={`Por alumno. Total alumnos: ${data.kpis.totalAlumnos}`}
                 color="primary"
               />
             </Grid>
-            <Grid sx={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 12, md: 3.1 }}>
               <ReportTextualCard
-                icon={<CategoryIcon />}
+                icon={<TopicIcon />}
                 title="Tema Más Frecuente"
                 value={data.kpis.temaFrecuente.nombre}
                 description={
                   <>
                     El <b>{data.kpis.temaFrecuente.pctAlumnos.toFixed(1)}%</b>{" "}
-                    de alumnos poseen alguna dificultad de este tema.
+                    de alumnos poseen dificultades de este tema.
                   </>
                 }
                 color="info"
               />
             </Grid>
-            <Grid sx={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 12, md: 4.5 }}>
               <ReportTextualCard
                 icon={<WarningIcon />}
                 title="Dificultad Más Frecuente"
@@ -198,15 +195,14 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                 color="warning"
               />
             </Grid>
-            <Grid sx={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 12, md: 2.5 }}>
               <ReportTextualCard
                 icon={<TrendingUpIcon />}
-                title="Dificultades Grado Alto"
+                title="Dificultades en Grado Alto"
                 value={`${data.kpis.gradoAlto.pctAlumnos.toFixed(1)}%`}
                 description={
                   <>
-                    Dificultad de grado Alto más frecuente:{" "}
-                    <b>{data.kpis.gradoAlto.modaNombre}</b>
+                    Más frecuente: <b>{data.kpis.gradoAlto.modaNombre}</b>
                   </>
                 }
                 color="error"
@@ -230,12 +226,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                   height: "100%",
                 }}
               >
-                <Typography
-                  variant="subtitle2"
-                  color="text.secondary"
-                  gutterBottom
-                  align="center"
-                >
+                <Typography variant="h6" gutterBottom>
                   Cantidad de alumnos afectados de cada Dificultad
                 </Typography>
                 <PieChart
@@ -272,12 +263,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                     justifyContent: "center",
                   }}
                 >
-                  <Typography
-                    variant="subtitle2"
-                    color="text.secondary"
-                    gutterBottom
-                    align="center"
-                  >
+                  <Typography variant="h6" gutterBottom>
                     Cantidad de alumnos con dificultades activas por tema
                   </Typography>
                   <PieChart
@@ -308,12 +294,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                     justifyContent: "center",
                   }}
                 >
-                  <Typography
-                    variant="subtitle2"
-                    color="text.secondary"
-                    gutterBottom
-                    align="center"
-                  >
+                  <Typography variant="h6" gutterBottom>
                     Cantidad de alumnos con dificultades activas por Grado
                   </Typography>
                   <PieChart
@@ -321,7 +302,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                       {
                         data: data.graficos.porGrado,
                         innerRadius: 30,
-                        paddingAngle: 2,
+                        paddingAngle: 1,
                         cornerRadius: 4,
                       },
                     ]}
@@ -332,7 +313,6 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                         position: { vertical: "bottom", horizontal: "center" },
                       },
                     }}
-                    margin={{ bottom: 20 }}
                   />
                 </Paper>
               </Stack>
@@ -341,8 +321,12 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
 
           {/* Gráfico Detallado (Barras Apiladas) */}
           <Paper elevation={3} sx={{ p: 2, width: "100%" }}>
-            <Typography variant="h6" gutterBottom>
-              Distribución de Grados por Dificultad
+            <Typography variant="h6">
+              Detalle de Alumnos afectados por Dificultad
+            </Typography>
+            <Typography variant="caption" color="text.secondary" gutterBottom>
+              Cantidad de alumnos que presentan cada dificultad, desglosado por
+              grado.
             </Typography>
             {barChartData.length > 0 ? (
               <BarChart
@@ -362,7 +346,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                 ]}
                 xAxis={[
                   {
-                    label: "Cantidad de alumnos afectados",
+                    label: "Cantidad de alumnos",
                     dataKey: "total",
                     tickMinStep: 1,
                     max: xMax,

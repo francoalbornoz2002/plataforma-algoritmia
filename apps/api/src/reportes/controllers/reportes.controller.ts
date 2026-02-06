@@ -49,8 +49,14 @@ import {
   GetCourseProgressSummaryDto,
   GetCourseProgressSummaryPdfDto,
 } from '../dto/get-course-progress-summary.dto';
-import { GetCourseDifficultiesReportDto } from '../dto/get-course-difficulties-report.dto';
-import { GetCourseDifficultiesHistoryDto } from '../dto/get-course-difficulties-history.dto';
+import {
+  GetCourseDifficultiesReportDto,
+  GetCourseDifficultiesReportPdfDto,
+} from '../dto/get-course-difficulties-report.dto';
+import {
+  GetCourseDifficultiesHistoryDto,
+  GetCourseDifficultiesHistoryPdfDto,
+} from '../dto/get-course-difficulties-history.dto';
 import { GetStudentDifficultiesReportDto } from '../dto/get-student-difficulties-report.dto';
 import {
   GetCourseConsultationsSummaryDto,
@@ -344,6 +350,26 @@ export class ReportesController {
     return this.reportesService.getCourseDifficultiesReport(id, dto);
   }
 
+  @Get('cursos/:id/dificultades/resumen/pdf')
+  @Roles(roles.Administrador, roles.Docente)
+  async getCourseDifficultiesReportPdf(
+    @Param('id') id: string,
+    @Query() dto: GetCourseDifficultiesReportPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.pdfService.getCourseDifficultiesReportPdf(
+      id,
+      dto,
+      userId,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+    });
+    return file;
+  }
+
   // Dificultades - Sección 2: Historial de Dificultades
   @Get('cursos/:id/dificultades/historial')
   @Roles(roles.Administrador, roles.Docente)
@@ -352,6 +378,26 @@ export class ReportesController {
     @Query() dto: GetCourseDifficultiesHistoryDto,
   ) {
     return this.reportesService.getCourseDifficultiesHistory(id, dto);
+  }
+
+  @Get('cursos/:id/dificultades/historial/pdf')
+  @Roles(roles.Administrador, roles.Docente)
+  async getCourseDifficultiesHistoryPdf(
+    @Param('id') id: string,
+    @Query() dto: GetCourseDifficultiesHistoryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.pdfService.getCourseDifficultiesHistoryPdf(
+      id,
+      dto,
+      userId,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+    });
+    return file;
   }
 
   // Dificultades - Sección 3: Reporte por Alumno

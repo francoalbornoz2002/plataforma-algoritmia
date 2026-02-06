@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  {{> styles}}
+  <style>
+    table {
+      font-size: 9px;
+    }
+    th, td {
+      padding: 5px;
+    }
+  </style>
+</head>
+<body>
+  {{> header}}
+
+  <div class="content">
+    <h3 style="color: #1976d2; margin-bottom: 10px; font-size: 14px;">Resumen de Mejoras</h3>
+    
+    <div class="kpi-container">
+      <div class="kpi-card">
+        <div class="kpi-value" style="color: #2e7d32;">{{stats.totalMejoras}}</div>
+        <div class="kpi-label">Total de Mejoras</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" style="color: #1976d2;">{{stats.porcentajeVideojuego}}%</div>
+        <div class="kpi-label">Vía Videojuego</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" style="color: #9c27b0;">{{stats.porcentajeSesion}}%</div>
+        <div class="kpi-label">Vía Sesiones</div>
+      </div>
+    </div>
+
+    <div class="chart-container" style="height: 300px; margin: 20px 0;">
+      <canvas id="chartHistory"></canvas>
+    </div>
+
+    <h3 style="color: #1976d2; margin-bottom: 10px; margin-top: 20px; font-size: 14px;">Detalle de Cambios</h3>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Alumno</th>
+          <th>Dificultad</th>
+          <th>Tema</th>
+          <th>Cambio</th>
+          <th>Fuente</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each tabla}}
+        <tr>
+          <td>{{this.fecha}}</td>
+          <td>{{this.alumno}}</td>
+          <td>{{this.dificultad}}</td>
+          <td>{{this.tema}}</td>
+          <td>
+            {{this.gradoAnterior}} &rarr; {{this.gradoNuevo}}
+            {{#if this.esMejora}}
+              <span style="color: #2e7d32; font-weight: bold;">(Mejora)</span>
+            {{/if}}
+          </td>
+          <td>{{this.fuente}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+
+  {{> footer}}
+
+  <script>
+    {{{chartJsContent}}}
+  </script>
+  {{> chartSetup}}
+  <script>
+    const ctx = document.getElementById('chartHistory').getContext('2d');
+    const config = {{{chartConfig}}};
+    applyChartPrintConfig(config);
+    new Chart(ctx, config);
+  </script>
+</body>
+</html>

@@ -20,6 +20,8 @@ import { GetCourseSessionsHistoryPdfDto } from 'src/reportes/dto/get-course-sess
 import { GetCourseProgressSummaryPdfDto } from 'src/reportes/dto/get-course-progress-summary.dto';
 import { GetCourseMissionsReportPdfDto } from 'src/reportes/dto/get-course-missions-report.dto';
 import { GetCourseMissionDetailReportDto } from 'src/reportes/dto/get-course-mission-detail-report.dto';
+import { GetCourseDifficultiesReportPdfDto } from 'src/reportes/dto/get-course-difficulties-report.dto';
+import { GetCourseDifficultiesHistoryPdfDto } from 'src/reportes/dto/get-course-difficulties-history.dto';
 
 @Injectable()
 export class PdfService {
@@ -2082,6 +2084,328 @@ export class PdfService {
     return new StreamableFile(pdfBuffer, {
       type: 'application/pdf',
       disposition: `attachment; filename="detalle-mision-${idCurso}.pdf"`,
+    });
+  }
+
+  async getCourseDifficultiesReportPdf(
+    idCurso: string,
+    dto: GetCourseDifficultiesReportPdfDto,
+    userId: string,
+  ): Promise<StreamableFile> {
+    // 1. Obtener datos
+    const data = await this.reportesService.getCourseDifficultiesReport(
+      idCurso,
+      dto,
+    );
+
+    // 2. Metadatos
+    const { curso, institucion, usuario, logoBase64 } =
+      await this.reportesService.getReportMetadata(userId, idCurso);
+
+    // 3. Registrar Reporte
+    const { reporteDB, filtrosTexto } =
+      await this.reportesService.registerReport(
+        userId,
+        'Resumen de Dificultades',
+        'Dificultades',
+        { ...dto, cursoId: idCurso, aPresentarA: dto.aPresentarA },
+      );
+
+    // 4. Configurar Gráficos
+    const chartJsContent = await this.getChartJsContent();
+
+    // Gráfico 1: Distribución por Dificultad (Pie)
+    const chartConfigDificultad = {
+      type: 'pie',
+      data: {
+        labels: data.graficos.porDificultad.map(
+          (d) => `${d.label} (${d.value})`,
+        ),
+        datasets: [
+          {
+            data: data.graficos.porDificultad.map((d) => d.value),
+            backgroundColor: [
+              '#3f51b5',
+              '#e91e63',
+              '#009688',
+              '#ffc107',
+              '#607d8b',
+              '#ff5722',
+              '#795548',
+              '#9e9e9e',
+            ],
+          },
+        ],
+      },
+      options: {
+        layout: { padding: 20 },
+        scales: { x: { display: false }, y: { display: false } },
+        plugins: {
+          title: { display: true, text: 'Alumnos afectados por Dificultad' },
+          legend: { position: 'right' },
+        },
+      },
+    };
+
+    // Gráfico 2: Distribución por Tema (Pie)
+    const chartConfigTema = {
+      type: 'pie',
+      data: {
+        labels: data.graficos.porTema.map((d) => `${d.label} (${d.value})`),
+        datasets: [
+          {
+            data: data.graficos.porTema.map((d) => d.value),
+            backgroundColor: [
+              '#f44336',
+              '#ff9800',
+              '#ffeb3b',
+              '#4caf50',
+              '#009688',
+              '#00bcd4',
+            ],
+          },
+        ],
+      },
+      options: {
+        layout: { padding: 20 },
+        scales: { x: { display: false }, y: { display: false } },
+        plugins: {
+          title: { display: true, text: 'Alumnos afectados por Tema' },
+          legend: { position: 'right' },
+        },
+      },
+    };
+
+    // Gráfico 3: Distribución por Grado (Pie)
+    const chartConfigGrado = {
+      type: 'pie',
+      data: {
+        labels: data.graficos.porGrado.map((d) => `${d.label} (${d.value})`),
+        datasets: [
+          {
+            data: data.graficos.porGrado.map((d) => d.value),
+            backgroundColor: data.graficos.porGrado.map((d) => d.color),
+          },
+        ],
+      },
+      options: {
+        layout: { padding: 20 },
+        scales: { x: { display: false }, y: { display: false } },
+        plugins: {
+          title: { display: true, text: 'Alumnos afectados por Grado' },
+          legend: { position: 'right' },
+        },
+      },
+    };
+
+    // Gráfico 4: Detalle por Grado (Barra Apilada Horizontal)
+    const labels = data.distribucionGrados.map((d) => d.nombre);
+    const datasetBajo = data.distribucionGrados.map((d) => d.grados.Bajo);
+    const datasetMedio = data.distribucionGrados.map((d) => d.grados.Medio);
+    const datasetAlto = data.distribucionGrados.map((d) => d.grados.Alto);
+
+    const chartConfigDetalle = {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Bajo',
+            data: datasetBajo,
+            backgroundColor: '#4caf50',
+            stack: 'Stack 0',
+          },
+          {
+            label: 'Medio',
+            data: datasetMedio,
+            backgroundColor: '#ff9800',
+            stack: 'Stack 0',
+          },
+          {
+            label: 'Alto',
+            data: datasetAlto,
+            backgroundColor: '#f44336',
+            stack: 'Stack 0',
+          },
+        ],
+      },
+      options: {
+        indexAxis: 'y',
+        layout: { padding: 20 },
+        scales: {
+          x: {
+            stacked: true,
+            title: { display: true, text: 'Cantidad de Alumnos' },
+            beginAtZero: true,
+            ticks: { stepSize: 1, precision: 0 },
+          },
+          y: { stacked: true },
+        },
+        plugins: {
+          title: { display: true, text: 'Detalle de Grados por Dificultad' },
+          legend: { position: 'bottom' },
+        },
+      },
+    };
+
+    const commonData = this.buildCommonTemplateData(
+      { institucion, usuario, logoBase64 },
+      {
+        reporteDB,
+        filtrosTexto,
+        titulo: 'Resumen de Dificultades',
+        subtitulo: `Curso: ${curso?.nombre || 'Desconocido'}`,
+        aPresentarA: dto.aPresentarA,
+      },
+    );
+
+    const templateData = {
+      ...commonData,
+      kpis: {
+        ...data.kpis,
+        promDificultades: data.kpis.promDificultades.toFixed(1),
+        temaFrecuentePct: data.kpis.temaFrecuente.pctAlumnos.toFixed(1),
+        dificultadFrecuentePct:
+          data.kpis.dificultadFrecuente.pctAlumnos.toFixed(1),
+        gradoAltoPct: data.kpis.gradoAlto.pctAlumnos.toFixed(1),
+      },
+      chartJsContent,
+      chartConfigDificultad: JSON.stringify(chartConfigDificultad),
+      chartConfigTema: JSON.stringify(chartConfigTema),
+      chartConfigGrado: JSON.stringify(chartConfigGrado),
+      chartConfigDetalle: JSON.stringify(chartConfigDetalle),
+    };
+
+    const pdfBuffer = await this.generatePdf(
+      'reporte-dificultades-resumen',
+      templateData,
+    );
+    return new StreamableFile(pdfBuffer, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="resumen-dificultades-${idCurso}.pdf"`,
+    });
+  }
+
+  async getCourseDifficultiesHistoryPdf(
+    idCurso: string,
+    dto: GetCourseDifficultiesHistoryPdfDto,
+    userId: string,
+  ): Promise<StreamableFile> {
+    // 1. Obtener datos
+    const data = await this.reportesService.getCourseDifficultiesHistory(
+      idCurso,
+      dto,
+    );
+
+    // 2. Metadatos
+    const { curso, institucion, usuario, logoBase64 } =
+      await this.reportesService.getReportMetadata(userId, idCurso);
+
+    // 3. Registrar Reporte
+    const { reporteDB, filtrosTexto } =
+      await this.reportesService.registerReport(
+        userId,
+        'Historial de Dificultades',
+        'Dificultades',
+        { ...dto, cursoId: idCurso, aPresentarA: dto.aPresentarA },
+      );
+
+    // 4. Configurar Gráfico
+    const chartJsContent = await this.getChartJsContent();
+
+    const labels = data.timeline.map((d) =>
+      d.fecha.split('T')[0].split('-').reverse().join('/'),
+    );
+    const videojuegoData = data.timeline.map((d) => d.videojuego);
+    const sesionData = data.timeline.map((d) => d.sesion_refuerzo);
+
+    const chartConfig = {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Videojuego',
+            data: videojuegoData,
+            borderColor: '#1976d2',
+            backgroundColor: '#1976d2',
+            tension: 0.1,
+            fill: false,
+          },
+          {
+            label: 'Sesión de Refuerzo',
+            data: sesionData,
+            borderColor: '#9c27b0',
+            backgroundColor: '#9c27b0',
+            tension: 0.1,
+            fill: false,
+          },
+        ],
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 1, precision: 0 },
+            title: { display: true, text: 'Cantidad de Cambios' },
+          },
+        },
+        plugins: {
+          title: { display: true, text: 'Evolución de Cambios por Fuente' },
+          legend: { position: 'top' },
+        },
+      },
+    };
+
+    const commonData = this.buildCommonTemplateData(
+      { institucion, usuario, logoBase64 },
+      {
+        reporteDB,
+        filtrosTexto,
+        titulo: 'Historial de Dificultades',
+        subtitulo: `Curso: ${curso?.nombre || 'Desconocido'}`,
+        aPresentarA: dto.aPresentarA,
+      },
+    );
+
+    const templateData = {
+      ...commonData,
+      stats: {
+        ...data.stats,
+        porcentajeVideojuego: data.stats.porcentajeVideojuego.toFixed(1),
+        porcentajeSesion: data.stats.porcentajeSesion.toFixed(1),
+      },
+      chartJsContent,
+      chartConfig: JSON.stringify(chartConfig),
+      tabla: data.tabla.map((h) => {
+        const d = new Date(h.fechaCambio);
+        d.setUTCHours(d.getUTCHours() - 3); // Ajuste a hora local (UTC-3)
+
+        return {
+          fecha:
+            d.toISOString().split('T')[0].split('-').reverse().join('/') +
+            ' ' +
+            d.toISOString().split('T')[1].substring(0, 5),
+          alumno: `${h.alumno.nombre} ${h.alumno.apellido}`,
+          dificultad: h.dificultad.nombre,
+          tema: h.dificultad.tema,
+          gradoAnterior: h.gradoAnterior,
+          gradoNuevo: h.gradoNuevo,
+          fuente: h.fuente === 'VIDEOJUEGO' ? 'Videojuego' : 'Sesión',
+          esMejora:
+            ({ Ninguno: 0, Bajo: 1, Medio: 2, Alto: 3 }[h.gradoAnterior] || 0) >
+            ({ Ninguno: 0, Bajo: 1, Medio: 2, Alto: 3 }[h.gradoNuevo] || 0),
+        };
+      }),
+    };
+
+    const pdfBuffer = await this.generatePdf(
+      'reporte-dificultades-historial',
+      templateData,
+    );
+    return new StreamableFile(pdfBuffer, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="historial-dificultades-${idCurso}.pdf"`,
     });
   }
 }
