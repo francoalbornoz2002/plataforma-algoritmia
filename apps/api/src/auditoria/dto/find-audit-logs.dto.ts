@@ -24,3 +24,9 @@ export class FindAuditoriaLogsDto extends PaginationDto {
   @IsString()
   search?: string;
 }
+
+export class FindAuditoriaLogsPdfDto extends FindAuditoriaLogsDto {
+  @IsOptional()
+  @IsString()
+  aPresentarA?: string;
+}

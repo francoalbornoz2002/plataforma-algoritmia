@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  {{> styles}}
+  <style>
+    /* Estilos específicos para este reporte */
+    .badge-INSERT {
+      background-color: #2e7d32; /* Verde */
+      color: white;
+    }
+    .badge-UPDATE {
+      background-color: #0288d1; /* Azul */
+      color: white;
+    }
+    .badge-DELETE {
+      background-color: #d32f2f; /* Rojo */
+      color: white;
+    }
+    .col-id {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 10px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  {{> header}}
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 15%;">Fecha</th>
+        <th style="width: 20%;">Usuario</th>
+        <th style="width: 10%; text-align: center;">Operación</th>
+        <th style="width: 20%;">Tabla Afectada</th>
+        <th style="width: 35%;">ID Fila Afectada</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each logs}}
+      <tr>
+        <td>{{fecha}}</td>
+        <td>{{usuario}}</td>
+        <td style="text-align: center;">
+          <span class="badge badge-{{operacion}}">{{operacion}}</span>
+        </td>
+        <td>{{tabla}}</td>
+        <td class="col-id">{{idFila}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+
+  {{#if (eq logs.length 0)}}
+    <div class="text-center mt-2" style="color: #666; padding: 20px;">
+      No se encontraron registros de auditoría para los filtros seleccionados.
+    </div>
+  {{/if}}
+
+  {{> footer}}
+</body>
+</html>

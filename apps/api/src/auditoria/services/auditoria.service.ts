@@ -38,6 +38,20 @@ export class AuditoriaService {
       where.OR = [
         { tablaAfectada: { contains: search, mode: 'insensitive' } },
         { idFilaAfectada: { contains: search, mode: 'insensitive' } },
+        {
+          usuarioModifico: {
+            nombre: { contains: search, mode: 'insensitive' },
+          },
+        },
+        {
+          usuarioModifico: {
+            apellido: { contains: search, mode: 'insensitive' },
+          },
+        },
+        {
+          usuarioModifico: { email: { contains: search, mode: 'insensitive' } },
+        },
+        { usuarioModifico: { dni: { contains: search, mode: 'insensitive' } } },
       ];
     }
 
@@ -75,9 +89,19 @@ export class AuditoriaService {
     }
 
     // 2. Construir el ORDER BY
+    // Validamos que el campo de ordenamiento exista en la tabla para evitar errores de Prisma
+    const validSortFields = [
+      'fechaHora',
+      'tablaAfectada',
+      'operacion',
+      'idFilaAfectada',
+      'idUsuarioModifico',
+    ];
+    const sortBy = validSortFields.includes(sort) ? sort : 'fechaHora';
+
     const orderBy: Prisma.LogAuditoriaOrderByWithRelationInput = {
       // Por defecto ordenamos por fecha (más nuevos primero) si no se especifica
-      [sort || 'fechaHora']: order || 'desc',
+      [sortBy]: order || 'desc',
     };
 
     // 3. Ejecutar consultas

@@ -22,6 +22,9 @@ import {
   TableCell,
   TableBody,
   Stack,
+  Chip,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import {
   DataGrid,
@@ -29,16 +32,56 @@ import {
   type GridSortModel,
   type GridRenderCellParams,
 } from "@mui/x-data-grid";
-import { format, isValid } from "date-fns";
+import { format, isValid, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import type { FindLogsParams, LogAuditoria } from "../../../types";
 import { useDebounce } from "../../../hooks/useDebounce";
 import { findLogs } from "../services/audit.service";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import InfoIcon from "@mui/icons-material/Info";
+import UserDetailModal from "../components/UserDetailModal";
+import PdfExportButton from "../../reports/components/common/PdfExportButton";
+import TableOnIcon from "@mui/icons-material/TableChart";
 
 // 1. Hooks y Servicios
 
 // 2. Tipos
+
+const DB_TABLES = [
+  "alumno_curso",
+  "clases_consulta",
+  "consultas",
+  "consultas_clase",
+  "cursos",
+  "dias_clase",
+  "dificultad_alumno",
+  "dificultades",
+  "dificultades_curso",
+  "docente_curso",
+  "historial_dificultades_alumno",
+  "historial_dificultades_curso",
+  "historial_progreso_alumno",
+  "historial_progreso_curso",
+  "institucion",
+  "localidades",
+  "mision_especial_completada",
+  "misiones",
+  "misiones_completadas",
+  "motivos_clase_no_realizada",
+  "opciones_respuesta",
+  "preguntas",
+  "preguntas_sesion",
+  "progreso_alumno",
+  "progreso_curso",
+  "provincias",
+  "reportes_generados",
+  "respuestas_alumno",
+  "respuestas_consulta",
+  "resultados_sesion",
+  "sesiones_refuerzo",
+  "usuarios",
+  "valoraciones",
+];
 
 // --- Componente Helper para el Modal de JSON ---
 interface AuditDetailModalProps {
@@ -148,6 +191,9 @@ export default function AuditPage() {
   // --- Estado para el Modal ---
   const [logToView, setLogToView] = useState<LogAuditoria | null>(null);
 
+  // --- Estado para el Modal de Usuario ---
+  const [viewUserId, setViewUserId] = useState<string | null>(null);
+
   // --- Estado de Filtros ---
   const [paginationModel, setPaginationModel] = useState({
     page: 0, // MUI usa 0-indexed
@@ -168,6 +214,16 @@ export default function AuditPage() {
     tablaAfectada: "",
     operacion: "",
   });
+
+  // --- Filtros combinados para el PDF (Incluye Ordenamiento y Búsqueda) ---
+  const pdfFilters = useMemo(() => {
+    const currentSort = sortModel[0];
+    return {
+      ...filters,
+      sort: currentSort?.field,
+      order: currentSort?.sort,
+    };
+  }, [filters, sortModel]);
 
   // --- Data Fetching (DataGrid) ---
   useEffect(() => {
@@ -203,7 +259,7 @@ export default function AuditPage() {
   // --- Handlers ---
   // Handler para los Select de texto
   const handleFilterChange = (
-    e: SelectChangeEvent<string> | React.ChangeEvent<HTMLInputElement>
+    e: SelectChangeEvent<string> | React.ChangeEvent<HTMLInputElement>,
   ) => {
     setFilters((prev) => ({
       ...prev,
@@ -216,7 +272,7 @@ export default function AuditPage() {
   // Handler para las Fechas
   const handleDateChange = (
     fieldName: "fechaDesde" | "fechaHasta",
-    newDate: Date | null
+    newDate: Date | null,
   ) => {
     let dateString = "";
     if (newDate && isValid(newDate)) {
@@ -248,8 +304,55 @@ export default function AuditPage() {
         headerName: "Usuario",
         flex: 1.5,
         minWidth: 180,
-        valueGetter: (value: any, row: LogAuditoria) =>
-          row.usuarioModifico?.email || "Sistema (NULL)",
+        renderCell: (params: GridRenderCellParams<LogAuditoria>) => {
+          const email = params.row.usuarioModifico?.email;
+          const id = params.row.idUsuarioModifico;
+
+          if (!id)
+            return (
+              <Stack
+                direction="row"
+                spacing={1}
+                justifyContent="space-between"
+                alignItems="center"
+                sx={{ width: "100%", height: "100%" }}
+              >
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ flex: 1 }}
+                >
+                  Sistema
+                </Typography>
+                <Tooltip title="Operación automática del sistema (tareas programadas, triggers, etc.)">
+                  <InfoIcon
+                    fontSize="small"
+                    color="action"
+                    sx={{ cursor: "help" }}
+                  />
+                </Tooltip>
+              </Stack>
+            );
+
+          return (
+            <Stack
+              direction="row"
+              spacing={1}
+              justifyContent="space-between"
+              alignItems="center"
+              sx={{ width: "100%", height: "100%" }}
+            >
+              <Typography variant="body2" noWrap sx={{ flex: 1 }}>
+                {email}
+              </Typography>
+              <Tooltip title="Ver detalle del usuario">
+                <IconButton size="small" onClick={() => setViewUserId(id)}>
+                  <InfoIcon fontSize="small" color="primary" />
+                </IconButton>
+              </Tooltip>
+            </Stack>
+          );
+        },
       },
       {
         field: "tablaAfectada",
@@ -260,8 +363,41 @@ export default function AuditPage() {
       {
         field: "operacion",
         headerName: "Operación",
+        headerAlign: "center",
+        align: "center",
         flex: 1,
-        minWidth: 100,
+        minWidth: 120,
+        renderCell: (params: GridRenderCellParams<LogAuditoria>) => {
+          let op = params.row.operacion;
+          let color: "default" | "success" | "info" | "error" = "default";
+
+          // Detectar Soft Delete (UPDATE de deleted_at: null -> fecha)
+          const isSoftDelete =
+            op === "UPDATE" &&
+            params.row.valoresAnteriores &&
+            (params.row.valoresAnteriores as any).deleted_at === null &&
+            params.row.valoresNuevos &&
+            (params.row.valoresNuevos as any).deleted_at;
+
+          if (op === "INSERT") {
+            color = "success";
+          } else if (op === "DELETE" || isSoftDelete) {
+            color = "error";
+            if (isSoftDelete) op = "DELETE";
+          } else if (op === "UPDATE") {
+            color = "info";
+          }
+
+          return (
+            <Chip
+              label={op}
+              color={color}
+              variant="outlined"
+              size="small"
+              sx={{ minWidth: 70 }}
+            />
+          );
+        },
       },
       {
         field: "idFilaAfectada",
@@ -290,7 +426,7 @@ export default function AuditPage() {
         ),
       },
     ],
-    []
+    [],
   );
 
   return (
@@ -301,6 +437,32 @@ export default function AuditPage() {
         flexDirection: "column",
       }}
     >
+      {/* --- A. Cabecera con Título y Botones --- */}
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{ mb: 3 }}
+      >
+        <Typography variant="h5" fontWeight="bold" color="primary.main">
+          Reporte de Auditoría
+        </Typography>
+        <Box sx={{ display: "flex", gap: 2 }}>
+          <PdfExportButton
+            filters={pdfFilters}
+            endpointPath="/auditoria/pdf"
+            label="Exportar PDF"
+          />
+          <Button
+            variant="outlined"
+            startIcon={<TableOnIcon />}
+            color="success"
+          >
+            Exportar CSV
+          </Button>
+        </Box>
+      </Stack>
+
       {/* --- B. Filtros --- */}
       <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
         <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
@@ -308,16 +470,44 @@ export default function AuditPage() {
         </Typography>
         <Stack
           direction="row"
-          spacing={1.5}
+          spacing={1}
           alignItems="center"
           sx={{
-            mb: 2,
             flexWrap: "wrap", // Permite que los filtros bajen si no hay espacio
             gap: 1, // Espacio vertical si 'wrap' ocurre
           }}
         >
+          <DatePicker
+            label="Fecha Desde"
+            value={filters.fechaDesde ? parseISO(filters.fechaDesde) : null}
+            onChange={(newDate) => handleDateChange("fechaDesde", newDate)}
+            slotProps={{
+              textField: {
+                size: "small",
+                InputProps: {
+                  sx: { borderRadius: "0.7em", width: 170 },
+                },
+                sx: { width: 170 },
+              },
+            }}
+          />
+          <DatePicker
+            label="Fecha Hasta"
+            value={filters.fechaHasta ? parseISO(filters.fechaHasta) : null}
+            onChange={(newDate) => handleDateChange("fechaHasta", newDate)}
+            slotProps={{
+              textField: {
+                size: "small",
+                InputProps: {
+                  sx: { borderRadius: "0.7em", width: 170 },
+                },
+                sx: { width: 170 },
+              },
+            }}
+            disableFuture={true}
+          />
           <TextField
-            label="Buscar (Tabla o ID Fila)..."
+            label="Buscar (Tabla, ID, Usuario)..."
             variant="outlined"
             size="small"
             value={searchTerm}
@@ -331,17 +521,14 @@ export default function AuditPage() {
               value={filters.tablaAfectada}
               label="Tabla Afectada"
               onChange={handleFilterChange}
+              MenuProps={{ PaperProps: { sx: { maxHeight: 300 } } }}
             >
               <MenuItem value="">Todas</MenuItem>
-              <MenuItem value="usuarios">usuarios</MenuItem>
-              <MenuItem value="cursos">cursos</MenuItem>
-              <MenuItem value="institucion">institucion</MenuItem>
-              <MenuItem value="alumno_curso">alumno_curso</MenuItem>
-              <MenuItem value="docente_curso">docente_curso</MenuItem>
-              <MenuItem value="misiones_completadas">
-                misiones_completadas
-              </MenuItem>
-              <MenuItem value="dificultad_alumno">dificultad_alumno</MenuItem>
+              {DB_TABLES.map((table) => (
+                <MenuItem key={table} value={table}>
+                  {table}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
           <FormControl size="small" sx={{ minWidth: 150 }}>
@@ -358,29 +545,6 @@ export default function AuditPage() {
               <MenuItem value="DELETE">DELETE (Lógico)</MenuItem>
             </Select>
           </FormControl>
-          <DatePicker
-            label="Fecha Desde"
-            value={filters.fechaDesde ? new Date(filters.fechaDesde) : null}
-            onChange={(newDate) => handleDateChange("fechaDesde", newDate)}
-            slotProps={{
-              textField: {
-                size: "small",
-                sx: { width: 170 }, // Ancho fijo para la fecha
-              },
-            }}
-          />
-          <DatePicker
-            label="Fecha Hasta"
-            value={filters.fechaHasta ? new Date(filters.fechaHasta) : null}
-            onChange={(newDate) => handleDateChange("fechaHasta", newDate)}
-            slotProps={{
-              textField: {
-                size: "small",
-                sx: { width: 170 }, // Ancho fijo para la fecha
-              },
-            }}
-            disableFuture={true}
-          />
         </Stack>
       </Paper>
 
@@ -418,6 +582,13 @@ export default function AuditPage() {
         open={!!logToView}
         onClose={() => setLogToView(null)}
         log={logToView}
+      />
+
+      {/* --- E. Modal de Detalle de Usuario --- */}
+      <UserDetailModal
+        open={!!viewUserId}
+        onClose={() => setViewUserId(null)}
+        userId={viewUserId}
       />
     </Box>
   );

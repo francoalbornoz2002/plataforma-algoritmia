@@ -2330,9 +2330,11 @@ export class ReportesService {
 
     // 2. Generar texto genérico de filtros
     const filtrosTexto: string[] = [];
+    const keysToExclude = ['aPresentarA', 'page', 'limit', 'search'];
+
     if (dto) {
       for (const [key, value] of Object.entries(dto)) {
-        if (value && key !== 'aPresentarA') {
+        if (value && !keysToExclude.includes(key)) {
           // Formato simple: "Fecha Desde: 2023-01-01". Quitamos "Id" del final.
           let label = key.replace(/Id$/, '');
           label = label
@@ -2343,6 +2345,15 @@ export class ReportesService {
           let displayValue = value;
           if (key === 'agruparPor' && value === 'AMBOS') {
             displayValue = 'ROL y ESTADO';
+          }
+
+          // --- Formato amigable para parámetros técnicos ---
+          if (key === 'sort') {
+            label = 'Ordenado por';
+          }
+          if (key === 'order') {
+            label = 'Dirección';
+            displayValue = value === 'asc' ? 'Ascendente' : 'Descendente';
           }
 
           // --- Resoluciones de IDs a Nombres ---

@@ -23,12 +23,16 @@ import { GetCourseMissionDetailReportDto } from 'src/reportes/dto/get-course-mis
 import { GetCourseDifficultiesReportPdfDto } from 'src/reportes/dto/get-course-difficulties-report.dto';
 import { GetCourseDifficultiesHistoryPdfDto } from 'src/reportes/dto/get-course-difficulties-history.dto';
 import { GetStudentDifficultiesReportPdfDto } from 'src/reportes/dto/get-student-difficulties-report.dto';
+import { AuditoriaService } from '../../auditoria/services/auditoria.service';
+import { FindAuditoriaLogsPdfDto } from '../../auditoria/dto/find-audit-logs.dto';
 
 @Injectable()
 export class PdfService {
   constructor(
     @Inject(forwardRef(() => ReportesService))
     private readonly reportesService: ReportesService,
+    @Inject(forwardRef(() => AuditoriaService))
+    private readonly auditoriaService: AuditoriaService,
   ) {}
 
   private async registerPartials() {
@@ -2584,6 +2588,66 @@ export class PdfService {
     return new StreamableFile(pdfBuffer, {
       type: 'application/pdf',
       disposition: `attachment; filename="dificultades-alumno-${idCurso}.pdf"`,
+    });
+  }
+
+  async getAuditoriaLogsPdf(
+    dto: FindAuditoriaLogsPdfDto,
+    userId: string,
+  ): Promise<StreamableFile> {
+    // 1. Obtener datos (Sin paginación real, traemos un límite alto)
+    const { data: logs } = await this.auditoriaService.findAll({
+      ...dto,
+      limit: 10000, // Límite alto para reporte
+      page: 1,
+    });
+
+    // 2. Metadatos
+    const { institucion, usuario, logoBase64 } =
+      await this.reportesService.getReportMetadata(userId);
+
+    // 3. Registrar Reporte
+    const { reporteDB, filtrosTexto } =
+      await this.reportesService.registerReport(
+        userId,
+        'Reporte de Auditoría',
+        'Auditoría',
+        { ...dto },
+      );
+
+    // 4. Formatear datos para la vista
+    const logsFormatted = logs.map((log) => ({
+      fecha:
+        log.fechaHora.toISOString().split('T')[0] +
+        ' ' +
+        log.fechaHora.toISOString().split('T')[1].substring(0, 8),
+      usuario: log.usuarioModifico
+        ? `${log.usuarioModifico.nombre} ${log.usuarioModifico.apellido}`
+        : 'Sistema',
+      tabla: log.tablaAfectada,
+      operacion: log.operacion,
+      idFila: log.idFilaAfectada,
+    }));
+
+    const commonData = this.buildCommonTemplateData(
+      { institucion, usuario, logoBase64 },
+      {
+        reporteDB,
+        filtrosTexto,
+        titulo: 'Reporte de Auditoría',
+        aPresentarA: dto.aPresentarA,
+      },
+    );
+
+    const templateData = {
+      ...commonData,
+      logs: logsFormatted,
+    };
+
+    const pdfBuffer = await this.generatePdf('reporte-auditoria', templateData);
+    return new StreamableFile(pdfBuffer, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="reporte-auditoria.pdf"`,
     });
   }
 }
