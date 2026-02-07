@@ -16,7 +16,6 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
-import TableOnIcon from "@mui/icons-material/TableChart";
 import PersonIcon from "@mui/icons-material/Person";
 import SchoolIcon from "@mui/icons-material/School";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
@@ -37,6 +36,7 @@ import QuickDateFilter from "../../../../components/QuickDateFilter";
 import ReportTotalCard from "../common/ReportTotalCard";
 import ReportTextualCard from "../common/ReportTextualCard";
 import PdfExportButton from "../common/PdfExportButton";
+import ExcelExportButton from "../common/ExcelExportButton";
 
 interface Props {
   courseId: string;
@@ -117,14 +117,16 @@ export default function CourseSessionsSummary({ courseId }: Props) {
             endpointPath={`/reportes/cursos/${courseId}/sesiones-refuerzo/resumen/pdf`}
             disabled={!data}
           />
-          <Button
-            variant="outlined"
-            startIcon={<TableOnIcon />}
+          <ExcelExportButton
+            filters={{
+              ...filters,
+              agruparPor: chartGrouping,
+              agruparPorContenido: chartGrouping2,
+            }}
+            endpointPath={`/reportes/cursos/${courseId}/sesiones-refuerzo/resumen/excel`}
             disabled={!data}
-            color="success"
-          >
-            Exportar Excel
-          </Button>
+            filename="resumen_sesiones.xlsx"
+          />
         </Box>
       </Stack>
 

@@ -870,6 +870,24 @@ export class ReportesController {
     return file;
   }
 
+  @Get('cursos/:id/sesiones-refuerzo/resumen/excel')
+  @Roles(roles.Administrador, roles.Docente)
+  async getCourseSessionsSummaryExcel(
+    @Param('id') id: string,
+    @Query() dto: GetCourseSessionsSummaryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.excelService.getCourseSessionsSummaryExcel(
+      id,
+      dto,
+      userId,
+      dto.aPresentarA,
+    );
+    return file;
+  }
+
   // Sesiones de Refuerzo - Sección 2: Historial
   @Get('cursos/:id/sesiones-refuerzo/historial')
   @Roles(roles.Administrador, roles.Docente)
@@ -897,6 +915,24 @@ export class ReportesController {
     res.set({
       'Content-Type': 'application/pdf',
     });
+    return file;
+  }
+
+  @Get('cursos/:id/sesiones-refuerzo/historial/excel')
+  @Roles(roles.Administrador, roles.Docente)
+  async getCourseSessionsHistoryExcel(
+    @Param('id') id: string,
+    @Query() dto: GetCourseSessionsHistoryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.excelService.getCourseSessionsHistoryExcel(
+      id,
+      dto,
+      userId,
+      dto.aPresentarA,
+    );
     return file;
   }
 }

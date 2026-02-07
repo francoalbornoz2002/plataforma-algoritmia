@@ -17,6 +17,11 @@ import { GetCourseConsultationsSummaryDto } from '../../reportes/dto/get-course-
 import { GetCourseConsultationsHistoryDto } from '../../reportes/dto/get-course-consultations-history.dto';
 import { GetCourseClassesSummaryDto } from '../../reportes/dto/get-course-classes-summary.dto';
 import { GetCourseClassesHistoryDto } from '../../reportes/dto/get-course-classes-history.dto';
+import {
+  GetCourseSessionsSummaryDto,
+  GetCourseSessionsSummaryPdfDto,
+} from '../../reportes/dto/get-course-sessions-summary.dto';
+import { GetCourseSessionsHistoryPdfDto } from '../../reportes/dto/get-course-sessions-history.dto';
 
 @Injectable()
 export class ExcelService {
@@ -3170,6 +3175,555 @@ export class ExcelService {
     return new StreamableFile(Buffer.from(buffer), {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       disposition: 'attachment; filename="historial-clases.xlsx"',
+    });
+  }
+
+  /**
+   * Genera el reporte Excel de Resumen de Sesiones de Refuerzo.
+   */
+  async getCourseSessionsSummaryExcel(
+    idCurso: string,
+    dto: GetCourseSessionsSummaryPdfDto,
+    userId: string,
+    aPresentarA?: string,
+  ): Promise<StreamableFile> {
+    // 1. Obtener datos
+    const data = await this.reportesService.getCourseSessionsSummary(
+      idCurso,
+      dto,
+    );
+
+    // 2. Metadatos
+    const { curso, institucion, usuario, logoBase64 } =
+      await this.reportesService.getReportMetadata(userId, idCurso);
+
+    // 3. Registrar Reporte
+    const { reporteDB, filtrosTexto } =
+      await this.reportesService.registerReport(
+        userId,
+        'Resumen de Sesiones de Refuerzo',
+        'Cursos',
+        { ...dto, cursoId: idCurso, aPresentarA },
+      );
+
+    // 4. Crear Excel
+    const workbook = this.createWorkbook();
+    const worksheet = workbook.addWorksheet('Resumen Sesiones');
+
+    // 5. Encabezado
+    let currentRow = this.addHeader(
+      workbook,
+      worksheet,
+      { institucion, usuario, logoBase64 },
+      {
+        reporteDB,
+        filtrosTexto,
+        titulo: 'Resumen de Sesiones de Refuerzo',
+        subtitulo: `Curso: ${curso?.nombre || 'Desconocido'}`,
+        aPresentarA,
+      },
+    );
+
+    // 6. KPIs Generales
+    currentRow++;
+    worksheet.mergeCells(`A${currentRow}:H${currentRow}`);
+    const kpiTitle = worksheet.getCell(`A${currentRow}`);
+    kpiTitle.value = 'INDICADORES PRINCIPALES';
+    kpiTitle.font = { bold: true, size: 12 };
+    kpiTitle.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFEEEEEE' },
+    };
+    currentRow++;
+    currentRow++;
+
+    this.addStatCard(
+      worksheet,
+      currentRow,
+      1,
+      2,
+      'TOTAL SESIONES',
+      data.kpis.total,
+      'FF1976D2',
+    );
+    this.addStatCard(
+      worksheet,
+      currentRow,
+      3,
+      2,
+      'ACTIVAS',
+      data.kpis.activas,
+      'FF2E7D32',
+    );
+    this.addStatCard(
+      worksheet,
+      currentRow,
+      5,
+      2,
+      'INACTIVAS',
+      data.kpis.inactivas,
+      'FFD32F2F',
+    );
+    this.addStatCard(
+      worksheet,
+      currentRow,
+      7,
+      2,
+      'GRADO PROM.',
+      data.kpis.promedioGrado,
+      'FFED6C02',
+    );
+
+    currentRow += 3;
+
+    // 7. Tops
+    worksheet.mergeCells(`A${currentRow}:H${currentRow}`);
+    const topsTitle = worksheet.getCell(`A${currentRow}`);
+    topsTitle.value = 'DESTACADOS';
+    topsTitle.font = { bold: true, size: 12 };
+    topsTitle.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFEEEEEE' },
+    };
+    currentRow++;
+    currentRow++;
+
+    this.addStatCard(
+      worksheet,
+      currentRow,
+      1,
+      4,
+      'TEMA MÁS FRECUENTE',
+      `${data.tops.tema.label} (${data.tops.tema.value})`,
+      'FF0288D1',
+    );
+    this.addStatCard(
+      worksheet,
+      currentRow,
+      5,
+      4,
+      'DIFICULTAD MÁS FRECUENTE',
+      `${data.tops.dificultad.name} (${data.tops.dificultad.count})`,
+      'FFD32F2F',
+    );
+
+    currentRow += 3;
+
+    this.addStatCard(
+      worksheet,
+      currentRow,
+      1,
+      4,
+      'ALUMNO CON MÁS SESIONES',
+      `${data.tops.alumno.name} (${data.tops.alumno.count})`,
+      'FF1976D2',
+    );
+    this.addStatCard(
+      worksheet,
+      currentRow,
+      5,
+      4,
+      'DOCENTE QUE MÁS ASIGNA',
+      `${data.tops.docente.name} (${data.tops.docente.count})`,
+      'FF9C27B0',
+    );
+
+    currentRow += 3;
+
+    // 8. Efectividad
+    worksheet.mergeCells(`A${currentRow}:H${currentRow}`);
+    const effTitle = worksheet.getCell(`A${currentRow}`);
+    effTitle.value = 'EFECTIVIDAD (SESIONES COMPLETADAS)';
+    effTitle.font = { bold: true, size: 12 };
+    effTitle.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFEEEEEE' },
+    };
+    currentRow++;
+
+    const effHeaders = [
+      'Origen',
+      'Total Completadas',
+      'Mejora Leve (40-60%)',
+      'Mejora Sig. (60-85%)',
+      'Mejora Total (>85%)',
+    ];
+    worksheet.getCell(`A${currentRow}`).value = effHeaders[0];
+    worksheet.mergeCells(`B${currentRow}:C${currentRow}`);
+    worksheet.getCell(`B${currentRow}`).value = effHeaders[1];
+    worksheet.getCell(`D${currentRow}`).value = effHeaders[2];
+    worksheet.mergeCells(`E${currentRow}:F${currentRow}`);
+    worksheet.getCell(`E${currentRow}`).value = effHeaders[3];
+    worksheet.mergeCells(`G${currentRow}:H${currentRow}`);
+    worksheet.getCell(`G${currentRow}`).value = effHeaders[4];
+    this.styleTableHeaders(worksheet.getRow(currentRow));
+    currentRow++;
+
+    // Sistema
+    worksheet.getCell(`A${currentRow}`).value = 'Sistema';
+    worksheet.mergeCells(`B${currentRow}:C${currentRow}`);
+    worksheet.getCell(`B${currentRow}`).value = data.efectividad.sistema.total;
+    worksheet.getCell(`D${currentRow}`).value = data.efectividad.sistema.level1;
+    worksheet.mergeCells(`E${currentRow}:F${currentRow}`);
+    worksheet.getCell(`E${currentRow}`).value = data.efectividad.sistema.level2;
+    worksheet.mergeCells(`G${currentRow}:H${currentRow}`);
+    worksheet.getCell(`G${currentRow}`).value = data.efectividad.sistema.level3;
+    currentRow++;
+
+    // Docente
+    worksheet.getCell(`A${currentRow}`).value = 'Docente';
+    worksheet.mergeCells(`B${currentRow}:C${currentRow}`);
+    worksheet.getCell(`B${currentRow}`).value = data.efectividad.docente.total;
+    worksheet.getCell(`D${currentRow}`).value = data.efectividad.docente.level1;
+    worksheet.mergeCells(`E${currentRow}:F${currentRow}`);
+    worksheet.getCell(`E${currentRow}`).value = data.efectividad.docente.level2;
+    worksheet.mergeCells(`G${currentRow}:H${currentRow}`);
+    worksheet.getCell(`G${currentRow}`).value = data.efectividad.docente.level3;
+    currentRow++;
+
+    currentRow += 3;
+
+    // 9. Distribución (Condicional según filtro)
+    worksheet.mergeCells(`A${currentRow}:H${currentRow}`);
+    const distTitle = worksheet.getCell(`A${currentRow}`);
+    distTitle.font = { bold: true, size: 12 };
+    distTitle.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFEEEEEE' },
+    };
+    currentRow++;
+
+    if (dto.agruparPor === 'AMBOS') {
+      distTitle.value = 'DISTRIBUCIÓN POR ESTADO Y ORIGEN';
+
+      const distHeaders = [
+        'Estado',
+        'Origen: Sistema',
+        'Origen: Docente',
+        'Total',
+      ];
+      worksheet.mergeCells(`A${currentRow}:C${currentRow}`);
+      worksheet.getCell(`A${currentRow}`).value = distHeaders[0];
+      worksheet.mergeCells(`D${currentRow}:E${currentRow}`);
+      worksheet.getCell(`D${currentRow}`).value = distHeaders[1];
+      worksheet.mergeCells(`F${currentRow}:G${currentRow}`);
+      worksheet.getCell(`F${currentRow}`).value = distHeaders[2];
+      worksheet.getCell(`H${currentRow}`).value = distHeaders[3];
+      this.styleTableHeaders(worksheet.getRow(currentRow));
+      currentRow++;
+
+      data.graficos.estadosOrigen.forEach((d: any) => {
+        worksheet.mergeCells(`A${currentRow}:C${currentRow}`);
+        worksheet.getCell(`A${currentRow}`).value = d.estado;
+        worksheet.mergeCells(`D${currentRow}:E${currentRow}`);
+        worksheet.getCell(`D${currentRow}`).value = d.Sistema || 0;
+        worksheet.mergeCells(`F${currentRow}:G${currentRow}`);
+        worksheet.getCell(`F${currentRow}`).value = d.Docente || 0;
+        worksheet.getCell(`H${currentRow}`).value =
+          (d.Sistema || 0) + (d.Docente || 0);
+        currentRow++;
+      });
+    } else if (dto.agruparPor === 'ORIGEN') {
+      distTitle.value = 'DISTRIBUCIÓN POR ORIGEN';
+
+      worksheet.mergeCells(`A${currentRow}:D${currentRow}`);
+      worksheet.getCell(`A${currentRow}`).value = 'Origen';
+      worksheet.mergeCells(`E${currentRow}:H${currentRow}`);
+      worksheet.getCell(`E${currentRow}`).value = 'Cantidad';
+      this.styleTableHeaders(worksheet.getRow(currentRow));
+      currentRow++;
+
+      data.graficos.origen.forEach((d: any) => {
+        worksheet.mergeCells(`A${currentRow}:D${currentRow}`);
+        worksheet.getCell(`A${currentRow}`).value = d.label;
+        worksheet.mergeCells(`E${currentRow}:H${currentRow}`);
+        worksheet.getCell(`E${currentRow}`).value = d.value;
+        currentRow++;
+      });
+    } else {
+      // ESTADO (Default)
+      distTitle.value = 'DISTRIBUCIÓN POR ESTADO';
+
+      worksheet.mergeCells(`A${currentRow}:D${currentRow}`);
+      worksheet.getCell(`A${currentRow}`).value = 'Estado';
+      worksheet.mergeCells(`E${currentRow}:H${currentRow}`);
+      worksheet.getCell(`E${currentRow}`).value = 'Cantidad';
+      this.styleTableHeaders(worksheet.getRow(currentRow));
+      currentRow++;
+
+      data.graficos.estados.forEach((d: any) => {
+        worksheet.mergeCells(`A${currentRow}:D${currentRow}`);
+        worksheet.getCell(`A${currentRow}`).value = d.label;
+        worksheet.mergeCells(`E${currentRow}:H${currentRow}`);
+        worksheet.getCell(`E${currentRow}`).value = d.value;
+        currentRow++;
+      });
+    }
+
+    currentRow += 3;
+
+    // 10. Contenido (Condicional según filtro)
+    worksheet.mergeCells(`A${currentRow}:H${currentRow}`);
+    const contentTitle = worksheet.getCell(`A${currentRow}`);
+    contentTitle.font = { bold: true, size: 12 };
+    contentTitle.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFEEEEEE' },
+    };
+    currentRow++;
+
+    if (dto.agruparPorContenido === 'AMBOS') {
+      contentTitle.value = 'DISTRIBUCIÓN POR TEMA Y DIFICULTAD';
+
+      const difficulties = data.graficos.allDifficulties || [];
+
+      // Encabezados dinámicos
+      worksheet.getCell(`A${currentRow}`).value = 'Tema';
+      let colIndex = 2; // B
+      difficulties.forEach((dif: string) => {
+        // Fusionamos 2 celdas para dar más espacio
+        worksheet.mergeCells(currentRow, colIndex, currentRow, colIndex + 1);
+        const cell = worksheet.getCell(currentRow, colIndex);
+        cell.value = dif;
+        colIndex += 2;
+      });
+      const totalCell = worksheet.getCell(currentRow, colIndex);
+      totalCell.value = 'Total';
+
+      this.styleTableHeaders(worksheet.getRow(currentRow));
+
+      // Ajustamos tamaño de letra para las dificultades
+      colIndex = 2;
+      difficulties.forEach(() => {
+        const cell = worksheet.getCell(currentRow, colIndex);
+        cell.font = {
+          name: 'Calibri',
+          bold: true,
+          color: { argb: 'FFFFFFFF' },
+          size: 8, // Letra más pequeña
+        };
+        cell.alignment = {
+          vertical: 'middle',
+          horizontal: 'center',
+          wrapText: true,
+        };
+        colIndex += 2;
+      });
+
+      currentRow++;
+
+      // Datos de la matriz
+      data.graficos.temasDificultades.forEach((row: any) => {
+        worksheet.getCell(`A${currentRow}`).value = row.tema;
+        let rowTotal = 0;
+        colIndex = 2;
+
+        difficulties.forEach((dif: string) => {
+          const val = row[dif] || 0;
+
+          // Fusionamos celdas de datos también
+          worksheet.mergeCells(currentRow, colIndex, currentRow, colIndex + 1);
+          const cell = worksheet.getCell(currentRow, colIndex);
+
+          cell.value = val;
+          cell.alignment = { horizontal: 'center' };
+          rowTotal += val;
+          colIndex += 2;
+        });
+
+        const cellTotal = worksheet.getCell(currentRow, colIndex);
+        cellTotal.value = rowTotal;
+        cellTotal.alignment = { horizontal: 'center' };
+        currentRow++;
+      });
+    } else if (dto.agruparPorContenido === 'DIFICULTAD') {
+      contentTitle.value = 'DISTRIBUCIÓN POR DIFICULTAD';
+
+      worksheet.mergeCells(`A${currentRow}:D${currentRow}`);
+      worksheet.getCell(`A${currentRow}`).value = 'Dificultad';
+      worksheet.mergeCells(`E${currentRow}:H${currentRow}`);
+      worksheet.getCell(`E${currentRow}`).value = 'Cantidad';
+      this.styleTableHeaders(worksheet.getRow(currentRow));
+      currentRow++;
+
+      data.graficos.dificultades.forEach((d: any) => {
+        worksheet.mergeCells(`A${currentRow}:D${currentRow}`);
+        worksheet.getCell(`A${currentRow}`).value = d.label;
+        worksheet.mergeCells(`E${currentRow}:H${currentRow}`);
+        worksheet.getCell(`E${currentRow}`).value = d.value;
+        currentRow++;
+      });
+    } else {
+      // TEMA (Default)
+      contentTitle.value = 'DISTRIBUCIÓN POR TEMA';
+
+      worksheet.mergeCells(`A${currentRow}:D${currentRow}`);
+      worksheet.getCell(`A${currentRow}`).value = 'Tema';
+      worksheet.mergeCells(`E${currentRow}:H${currentRow}`);
+      worksheet.getCell(`E${currentRow}`).value = 'Cantidad';
+      this.styleTableHeaders(worksheet.getRow(currentRow));
+      currentRow++;
+
+      data.graficos.temas.forEach((d: any) => {
+        worksheet.mergeCells(`A${currentRow}:D${currentRow}`);
+        worksheet.getCell(`A${currentRow}`).value = d.label;
+        worksheet.mergeCells(`E${currentRow}:H${currentRow}`);
+        worksheet.getCell(`E${currentRow}`).value = d.value;
+        currentRow++;
+      });
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return new StreamableFile(Buffer.from(buffer), {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      disposition: 'attachment; filename="resumen-sesiones.xlsx"',
+    });
+  }
+
+  /**
+   * Genera el reporte Excel de Historial de Sesiones de Refuerzo.
+   */
+  async getCourseSessionsHistoryExcel(
+    idCurso: string,
+    dto: GetCourseSessionsHistoryPdfDto,
+    userId: string,
+    aPresentarA?: string,
+  ): Promise<StreamableFile> {
+    // 1. Obtener datos
+    const data = await this.reportesService.getCourseSessionsHistory(
+      idCurso,
+      dto,
+    );
+
+    // 2. Metadatos
+    const { curso, institucion, usuario, logoBase64 } =
+      await this.reportesService.getReportMetadata(userId, idCurso);
+
+    // 3. Registrar Reporte
+    const { reporteDB, filtrosTexto } =
+      await this.reportesService.registerReport(
+        userId,
+        'Historial de Sesiones de Refuerzo',
+        'Cursos',
+        { ...dto, cursoId: idCurso, aPresentarA },
+      );
+
+    // 4. Crear Excel
+    const workbook = this.createWorkbook();
+    const worksheet = workbook.addWorksheet('Historial Sesiones');
+
+    // 5. Encabezado
+    let currentRow = this.addHeader(
+      workbook,
+      worksheet,
+      { institucion, usuario, logoBase64 },
+      {
+        reporteDB,
+        filtrosTexto,
+        titulo: 'Historial de Sesiones de Refuerzo',
+        subtitulo: `Curso: ${curso?.nombre || 'Desconocido'}`,
+        aPresentarA,
+      },
+    );
+
+    // 6. Evolución (Chart Data)
+    currentRow++;
+    worksheet.mergeCells(`A${currentRow}:H${currentRow}`);
+    const chartTitle = worksheet.getCell(`A${currentRow}`);
+    chartTitle.value = 'EVOLUCIÓN TEMPORAL';
+    chartTitle.font = { bold: true, size: 12 };
+    chartTitle.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFEEEEEE' },
+    };
+    currentRow++;
+
+    worksheet.getCell(`A${currentRow}`).value = 'Fecha';
+    worksheet.getCell(`B${currentRow}`).value = 'Cantidad Sesiones';
+    this.styleTableHeaders(worksheet.getRow(currentRow));
+    currentRow++;
+
+    data.chartData.forEach((d: any) => {
+      worksheet.getCell(`A${currentRow}`).value = new Date(
+        d.fecha,
+      ).toLocaleDateString();
+      worksheet.getCell(`B${currentRow}`).value = d.cantidad;
+      currentRow++;
+    });
+
+    currentRow += 2;
+
+    // 7. Detalle de Sesiones
+    worksheet.mergeCells(`A${currentRow}:H${currentRow}`);
+    const listTitle = worksheet.getCell(`A${currentRow}`);
+    listTitle.value = 'DETALLE DE SESIONES';
+    listTitle.font = { bold: true, size: 12 };
+    listTitle.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFEEEEEE' },
+    };
+    currentRow++;
+
+    const headers = [
+      'Fecha',
+      'Alumno',
+      'Origen',
+      'Tema',
+      'Dificultad',
+      'Estado',
+      'Pct. Aciertos',
+    ];
+    worksheet.getCell(`A${currentRow}`).value = headers[0];
+    worksheet.mergeCells(`B${currentRow}:C${currentRow}`);
+    worksheet.getCell(`B${currentRow}`).value = headers[1];
+    worksheet.getCell(`D${currentRow}`).value = headers[2];
+    worksheet.getCell(`E${currentRow}`).value = headers[3];
+    worksheet.getCell(`F${currentRow}`).value = headers[4];
+    worksheet.getCell(`G${currentRow}`).value = headers[5];
+    worksheet.getCell(`H${currentRow}`).value = headers[6];
+
+    this.styleTableHeaders(worksheet.getRow(currentRow));
+    currentRow++;
+
+    data.sessions.forEach((s: any) => {
+      worksheet.getCell(`A${currentRow}`).value = new Date(
+        s.fechaGrafico,
+      ).toLocaleDateString();
+
+      worksheet.mergeCells(`B${currentRow}:C${currentRow}`);
+      const cellAlumno = worksheet.getCell(`B${currentRow}`);
+      cellAlumno.value = `${s.alumno.nombre} ${s.alumno.apellido}`;
+      cellAlumno.alignment = { vertical: 'middle', wrapText: true };
+
+      worksheet.getCell(`D${currentRow}`).value = s.origen;
+      worksheet.getCell(`E${currentRow}`).value = s.dificultad.tema;
+
+      const cellDificultad = worksheet.getCell(`F${currentRow}`);
+      cellDificultad.value = s.dificultad.nombre;
+      cellDificultad.alignment = { vertical: 'middle', wrapText: true };
+
+      worksheet.getCell(`G${currentRow}`).value = s.estado.replace(/_/g, ' ');
+
+      const score = s.resultadoSesion
+        ? `${Number(s.resultadoSesion.pctAciertos).toFixed(0)}%`
+        : '-';
+      worksheet.getCell(`H${currentRow}`).value = score;
+      worksheet.getCell(`H${currentRow}`).alignment = { horizontal: 'center' };
+
+      currentRow++;
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return new StreamableFile(Buffer.from(buffer), {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      disposition: 'attachment; filename="historial-sesiones.xlsx"',
     });
   }
 }

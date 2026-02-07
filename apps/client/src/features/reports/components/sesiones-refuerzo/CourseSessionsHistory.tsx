@@ -21,9 +21,8 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format, parse } from "date-fns";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import TableOnIcon from "@mui/icons-material/TableChart";
 import InfoIcon from "@mui/icons-material/Info";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
 import {
   getCourseSessionsHistory,
@@ -37,6 +36,7 @@ import {
 import SesionDetailModal from "./SesionDetailModal";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import PdfExportButton from "../common/PdfExportButton";
+import ExcelExportButton from "../common/ExcelExportButton";
 
 interface Props {
   courseId: string;
@@ -264,14 +264,12 @@ export default function CourseSessionsHistory({ courseId }: Props) {
             endpointPath={`/reportes/cursos/${courseId}/sesiones-refuerzo/historial/pdf`}
             disabled={!data}
           />
-          <Button
-            variant="outlined"
-            startIcon={<TableOnIcon />}
+          <ExcelExportButton
+            filters={filters}
+            endpointPath={`/reportes/cursos/${courseId}/sesiones-refuerzo/historial/excel`}
             disabled={!data}
-            color="success"
-          >
-            Exportar Excel
-          </Button>
+            filename="historial_sesiones.xlsx"
+          />
         </Box>
       </Stack>
 
