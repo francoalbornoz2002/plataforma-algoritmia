@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Algoritmia</title>
+  {{> styles }}
+</head>
+<body>
+  <div class="wrapper">
+    <div class="container">
+      <div class="header">
+        {{#if institucion.logoUrl}}
+          <img src="{{institucion.logoUrl}}" alt="Logo" style="max-height: 80px; margin-bottom: 10px; display: inline-block;">
+        {{/if}}
+        <h1>
+          {{#if institucion.nombre}}{{institucion.nombre}}{{else}}Algoritmia{{/if}}
+        </h1>
+        <div class="header-subtitle">Plataforma Educativa</div>
+      </div>
+      <div class="content">

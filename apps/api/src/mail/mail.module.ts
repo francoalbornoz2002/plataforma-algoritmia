@@ -2,7 +2,8 @@ import { Global, Module } from '@nestjs/common';
 import { MailService } from './services/mail.service';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { config } from 'rxjs';
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+import { join } from 'path';
 
 @Global()
 @Module({
@@ -21,6 +22,19 @@ import { config } from 'rxjs';
         },
         defaults: {
           from: `"${configService.get<string>('MAIL_FROM')}" <${configService.get<string>('MAIL_USER')}>`,
+        },
+        template: {
+          dir: join(__dirname, 'templates'),
+          adapter: new HandlebarsAdapter(),
+          options: {
+            strict: true,
+            partials: {
+              dir: join(__dirname, 'templates', 'partials'),
+              options: {
+                strict: true,
+              },
+            },
+          },
         },
       }),
       inject: [ConfigService],

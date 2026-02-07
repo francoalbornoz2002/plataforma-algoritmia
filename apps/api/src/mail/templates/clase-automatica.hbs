@@ -1,0 +1,21 @@
+{{> header }}
+  <h2>Hola, {{nombreDocente}} 👋</h2>
+  <p>Se ha generado una nueva <strong>Clase de Consulta Automática</strong> debido a la demanda de los alumnos.</p>
+  
+  <div class="info-box">
+    <p><strong>Curso:</strong> {{nombreCurso}}</p>
+    <p><strong>Consultas pendientes:</strong> {{cantidadConsultas}}</p>
+    <p><strong>Fecha sugerida:</strong> {{fechaClase}}</p>
+  </div>
+
+  <p>Por favor, confirma tu disponibilidad o reprograma la clase:</p>
+
+  <div style="text-align: center; margin: 20px 0;">
+    <a href="{{linkAceptar}}" class="btn">Aceptar Fecha</a>
+  </div>
+  
+  <p style="text-align: center; font-size: 14px;">
+    <a href="{{linkReprogramar}}" style="color: #1976d2;">Reprogramar para {{fechaSiguienteClase}}</a> | 
+    <a href="{{linkManual}}" style="color: #666;">Gestionar Manualmente</a>
+  </p>
+{{> footer }}

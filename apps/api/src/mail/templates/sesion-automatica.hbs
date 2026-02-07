@@ -1,0 +1,16 @@
+{{> header }}
+  <h2>¡Nueva Sesión de Refuerzo! 📚</h2>
+  <p>Hola <strong>{{nombreAlumno}}</strong>,</p>
+  <p>Hemos detectado que podrías beneficiarte de un repaso en el tema <span class="highlight">{{nombreDificultad}}</span> del curso <strong>{{nombreCurso}}</strong>.</p>
+  
+  <div class="info-box">
+    <p>Se ha generado una sesión de ejercicios personalizada para ti.</p>
+    <p><strong>Fecha límite:</strong> {{fechaLimite}}</p>
+  </div>
+
+  <p>Completar esta sesión te ayudará a mejorar tu nivel y ganar experiencia extra.</p>
+
+  <div style="text-align: center; margin-top: 30px;">
+    <a href="{{linkSesion}}" class="btn">Ir a mis Sesiones</a>
+  </div>
+{{> footer }}

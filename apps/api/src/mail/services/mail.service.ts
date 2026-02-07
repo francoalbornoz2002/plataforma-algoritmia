@@ -1,10 +1,7 @@
 import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
-import { render } from '@react-email/render';
-import { EmailBienvenida } from '../emails/EmailBienvenida';
-import NuevaClaseAutomaticaEmail from '../emails/NuevaClaseAutomaticaEmail';
 import { DiaClase, dias_semana } from '@prisma/client';
-import NuevaSesionAutomaticaEmail from '../emails/NuevaSesionAutomaticaEmail';
+import { PrismaService } from '../../prisma/prisma.service';
 
 // Mapa para convertir Enum Prisma a índice JS (0=Domingo, 1=Lunes...)
 const MAPA_DIAS: Record<dias_semana, number> = {
@@ -18,22 +15,58 @@ const MAPA_DIAS: Record<dias_semana, number> = {
 
 @Injectable()
 export class MailService {
-  constructor(private readonly mailerService: MailerService) {}
+  constructor(
+    private readonly mailerService: MailerService,
+    private readonly prisma: PrismaService,
+  ) {}
+
+  /**
+   * Obtiene el contexto común para todos los correos (Institución, Año, etc.)
+   */
+  private async getBaseContext() {
+    const institucion = await this.prisma.institucion.findFirst({
+      include: {
+        localidad: {
+          include: {
+            provincia: true,
+          },
+        },
+      },
+    });
+
+    const apiUrl = process.env.API_URL || 'http://localhost:3000';
+
+    return {
+      year: new Date().getFullYear(),
+      institucion: institucion
+        ? {
+            nombre: institucion.nombre,
+            direccion: `${institucion.direccion}, ${institucion.localidad.localidad}, ${institucion.localidad.provincia.provincia}`,
+            telefono: institucion.telefono,
+            email: institucion.email,
+            logoUrl: institucion.logoUrl
+              ? `${apiUrl}${institucion.logoUrl}`
+              : null,
+          }
+        : null,
+    };
+  }
 
   async enviarBienvenida(email: string, nombre: string, contrasena: string) {
-    // 1. Renderizamos el HTML
-    const html = await render(
-      EmailBienvenida({
-        nombre: nombre,
-        contrasena: contrasena,
-      }),
-    );
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const baseContext = await this.getBaseContext();
 
-    // 2. Enviamos
     await this.mailerService.sendMail({
       to: email,
       subject: '¡Bienvenido a Algoritmia! 🎮',
-      html: html,
+      template: 'bienvenida', // Nombre del archivo .hbs sin extensión
+      context: {
+        ...baseContext,
+        nombre,
+        email, // Para mostrar el usuario
+        contrasena,
+        loginUrl: `${baseUrl}/login`,
+      },
     });
   }
 
@@ -49,6 +82,7 @@ export class MailService {
     },
   ) {
     const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const baseContext = await this.getBaseContext();
 
     // 1. Calcular la "Siguiente Fecha" (Opción de Reprogramar)
     // Simulamos estar 1 hora después de la clase original para encontrar la próxima
@@ -75,27 +109,21 @@ export class MailService {
       // Construimos links con Query Params para el Frontend
       const baseLink = `${baseUrl}/course/consult-classes?id=${datos.idClase}`;
 
-      const html = await render(
-        NuevaClaseAutomaticaEmail({
-          nombreDocente: docente.nombre,
-          nombreCurso: datos.nombreCurso,
-          cantidadConsultas: datos.cantidadConsultas,
-
-          // Textos para mostrar
-          fechaClase: fmt(datos.fechaOriginal),
-          fechaSiguienteClase: fmt(fechaSiguiente),
-
-          // Links de Acción
-          linkAceptar: `${baseLink}&action=accept`,
-          linkReprogramar: `${baseLink}&action=reschedule&date=${fechaSiguiente.toISOString()}`,
-          linkManual: `${baseLink}&action=edit_manual`,
-        }),
-      );
-
       await this.mailerService.sendMail({
         to: docente.email,
         subject: `🔔 Acción Requerida: Clase Automática en ${datos.nombreCurso}`,
-        html: html,
+        template: 'clase-automatica',
+        context: {
+          ...baseContext,
+          nombreDocente: docente.nombre,
+          nombreCurso: datos.nombreCurso,
+          cantidadConsultas: datos.cantidadConsultas,
+          fechaClase: fmt(datos.fechaOriginal),
+          fechaSiguienteClase: fmt(fechaSiguiente),
+          linkAceptar: `${baseLink}&action=accept`,
+          linkReprogramar: `${baseLink}&action=reschedule&date=${fechaSiguiente.toISOString()}`,
+          linkManual: `${baseLink}&action=edit_manual`,
+        },
       });
     }
   }
@@ -109,6 +137,7 @@ export class MailService {
     fechaLimite: Date;
   }) {
     const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const baseContext = await this.getBaseContext();
     const linkSesion = `${baseUrl}/my/sessions`;
 
     const fechaLegible = datos.fechaLimite.toLocaleString('es-AR', {
@@ -119,20 +148,18 @@ export class MailService {
       minute: '2-digit',
     });
 
-    const html = await render(
-      NuevaSesionAutomaticaEmail({
+    await this.mailerService.sendMail({
+      to: datos.email,
+      subject: `📚 Nueva Sesión de Refuerzo: ${datos.nombreDificultad}`,
+      template: 'sesion-automatica',
+      context: {
+        ...baseContext,
         nombreAlumno: datos.nombreAlumno,
         nombreCurso: datos.nombreCurso,
         nombreDificultad: datos.nombreDificultad,
         fechaLimite: fechaLegible,
         linkSesion: linkSesion,
-      }),
-    );
-
-    await this.mailerService.sendMail({
-      to: datos.email,
-      subject: `📚 Nueva Sesión de Refuerzo: ${datos.nombreDificultad}`,
-      html: html,
+      },
     });
   }
 
