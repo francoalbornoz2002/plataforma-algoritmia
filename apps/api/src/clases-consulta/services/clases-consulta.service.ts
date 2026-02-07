@@ -755,11 +755,6 @@ export class ClasesConsultaService {
         data: { estado: estado_consulta.Pendiente },
       });
 
-      // d. Eliminamos los registros de la tabla
-      await tx.consultaClase.deleteMany({
-        where: { idClaseConsulta: id },
-      });
-
       return claseCancelada;
     });
   }

@@ -21,7 +21,6 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
-import TableOnIcon from "@mui/icons-material/TableChart";
 import VideogameAssetIcon from "@mui/icons-material/VideogameAsset";
 import SchoolIcon from "@mui/icons-material/School";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
@@ -40,6 +39,7 @@ import {
 } from "../../../../types";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import PdfExportButton from "../common/PdfExportButton";
+import ExcelExportButton from "../common/ExcelExportButton";
 
 interface Props {
   courseId: string;
@@ -312,14 +312,12 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
             endpointPath={`/reportes/cursos/${courseId}/dificultades/historial/pdf`}
             disabled={!data || data.tabla.length === 0}
           />
-          <Button
-            variant="outlined"
-            startIcon={<TableOnIcon />}
+          <ExcelExportButton
+            filters={filters}
+            endpointPath={`/reportes/cursos/${courseId}/dificultades/historial/excel`}
             disabled={!data || data.tabla.length === 0}
-            color="success"
-          >
-            Exportar Excel
-          </Button>
+            filename="historial_dificultades.xlsx"
+          />
         </Box>
       </Stack>
 

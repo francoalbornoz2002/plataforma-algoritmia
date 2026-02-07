@@ -75,7 +75,10 @@ import {
   GetCourseClassesSummaryDto,
   GetCourseClassesSummaryPdfDto,
 } from '../dto/get-course-classes-summary.dto';
-import { GetCourseClassesHistoryDto } from '../dto/get-course-classes-history.dto';
+import {
+  GetCourseClassesHistoryDto,
+  GetCourseClassesHistoryPdfDto,
+} from '../dto/get-course-classes-history.dto';
 import {
   GetCourseSessionsSummaryDto,
   GetCourseSessionsSummaryPdfDto,
@@ -253,6 +256,22 @@ export class ReportesController {
     return file;
   }
 
+  @Get('cursos/historial/excel')
+  @Roles(roles.Administrador)
+  async getCoursesHistoryExcel(
+    @Query() dto: GetCoursesHistoryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.excelService.getCoursesHistoryExcel(
+      dto,
+      userId,
+      dto.aPresentarA,
+    );
+    return file;
+  }
+
   // Sección 3: Historial de inscripciones y bajas de alumnos
   @Get('cursos/historial-inscripciones')
   @Roles(roles.Administrador)
@@ -279,6 +298,22 @@ export class ReportesController {
     return file;
   }
 
+  @Get('cursos/historial-inscripciones/excel')
+  @Roles(roles.Administrador)
+  async getStudentEnrollmentHistoryExcel(
+    @Query() dto: GetStudentEnrollmentHistoryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.excelService.getStudentEnrollmentHistoryExcel(
+      dto,
+      userId,
+      dto.aPresentarA,
+    );
+    return file;
+  }
+
   // Sección 4: Historial de asignaciones y bajas de docentes
   @Get('cursos/historial-asignaciones')
   @Roles(roles.Administrador)
@@ -302,6 +337,22 @@ export class ReportesController {
     res.set({
       'Content-Type': 'application/pdf',
     });
+    return file;
+  }
+
+  @Get('cursos/historial-asignaciones/excel')
+  @Roles(roles.Administrador)
+  async getTeacherAssignmentHistoryExcel(
+    @Query() dto: GetTeacherAssignmentHistoryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.excelService.getTeacherAssignmentHistoryExcel(
+      dto,
+      userId,
+      dto.aPresentarA,
+    );
     return file;
   }
 
@@ -337,6 +388,24 @@ export class ReportesController {
     return file;
   }
 
+  @Get('cursos/:id/progreso/resumen/excel')
+  @Roles(roles.Administrador, roles.Docente)
+  async getCourseProgressSummaryExcel(
+    @Param('id') id: string,
+    @Query() dto: GetCourseProgressSummaryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.excelService.getCourseProgressSummaryExcel(
+      id,
+      dto,
+      userId,
+      dto.aPresentarA,
+    );
+    return file;
+  }
+
   // Progreso - Sección 2: Reporte de Misiones Completadas
   @Get('cursos/:id/progreso/misiones')
   @Roles(roles.Administrador, roles.Docente)
@@ -364,6 +433,24 @@ export class ReportesController {
     res.set({
       'Content-Type': 'application/pdf',
     });
+    return file;
+  }
+
+  @Get('cursos/:id/progreso/misiones/excel')
+  @Roles(roles.Administrador, roles.Docente)
+  async getCourseMissionsReportExcel(
+    @Param('id') id: string,
+    @Query() dto: GetCourseMissionsReportPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.excelService.getCourseMissionsReportExcel(
+      id,
+      dto,
+      userId,
+      dto.aPresentarA,
+    );
     return file;
   }
 
@@ -397,6 +484,24 @@ export class ReportesController {
     return file;
   }
 
+  @Get('cursos/:id/progreso/detalle-mision/excel')
+  @Roles(roles.Administrador, roles.Docente)
+  async getCourseMissionDetailReportExcel(
+    @Param('id') id: string,
+    @Query() dto: GetCourseMissionDetailReportPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.excelService.getCourseMissionDetailReportExcel(
+      id,
+      dto,
+      userId,
+      dto.aPresentarA,
+    );
+    return file;
+  }
+
   // Dificultades - Sección 1: Resumen de Dificultades
   @Get('cursos/:id/dificultades/resumen')
   @Roles(roles.Administrador, roles.Docente)
@@ -424,6 +529,24 @@ export class ReportesController {
     res.set({
       'Content-Type': 'application/pdf',
     });
+    return file;
+  }
+
+  @Get('cursos/:id/dificultades/resumen/excel')
+  @Roles(roles.Administrador, roles.Docente)
+  async getCourseDifficultiesReportExcel(
+    @Param('id') id: string,
+    @Query() dto: GetCourseDifficultiesReportPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.excelService.getCourseDifficultiesReportExcel(
+      id,
+      dto,
+      userId,
+      dto.aPresentarA,
+    );
     return file;
   }
 
@@ -457,6 +580,24 @@ export class ReportesController {
     return file;
   }
 
+  @Get('cursos/:id/dificultades/historial/excel')
+  @Roles(roles.Administrador, roles.Docente)
+  async getCourseDifficultiesHistoryExcel(
+    @Param('id') id: string,
+    @Query() dto: GetCourseDifficultiesHistoryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.excelService.getCourseDifficultiesHistoryExcel(
+      id,
+      dto,
+      userId,
+      dto.aPresentarA,
+    );
+    return file;
+  }
+
   // Dificultades - Sección 3: Reporte por Alumno
   @Get('cursos/:id/dificultades/alumno')
   @Roles(roles.Administrador, roles.Docente)
@@ -484,6 +625,24 @@ export class ReportesController {
     res.set({
       'Content-Type': 'application/pdf',
     });
+    return file;
+  }
+
+  @Get('cursos/:id/dificultades/alumno/excel')
+  @Roles(roles.Administrador, roles.Docente)
+  async getStudentDifficultiesReportExcel(
+    @Param('id') id: string,
+    @Query() dto: GetStudentDifficultiesReportPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.excelService.getStudentDifficultiesReportExcel(
+      id,
+      dto,
+      userId,
+      dto.aPresentarA,
+    );
     return file;
   }
 
@@ -518,6 +677,24 @@ export class ReportesController {
     return file;
   }
 
+  @Get('cursos/:id/consultas/resumen/excel')
+  @Roles(roles.Administrador, roles.Docente)
+  async getCourseConsultationsSummaryExcel(
+    @Param('id') id: string,
+    @Query() dto: GetCourseConsultationsSummaryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.excelService.getCourseConsultationsSummaryExcel(
+      id,
+      dto,
+      userId,
+      dto.aPresentarA,
+    );
+    return file;
+  }
+
   // Consultas - Sección 2: Historial de Consultas
   @Get('cursos/:id/consultas/historial')
   @Roles(roles.Administrador, roles.Docente)
@@ -545,6 +722,24 @@ export class ReportesController {
     res.set({
       'Content-Type': 'application/pdf',
     });
+    return file;
+  }
+
+  @Get('cursos/:id/consultas/historial/excel')
+  @Roles(roles.Administrador, roles.Docente)
+  async getCourseConsultationsHistoryExcel(
+    @Param('id') id: string,
+    @Query() dto: GetCourseConsultationsHistoryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.excelService.getCourseConsultationsHistoryExcel(
+      id,
+      dto,
+      userId,
+      dto.aPresentarA,
+    );
     return file;
   }
 
@@ -578,6 +773,24 @@ export class ReportesController {
     return file;
   }
 
+  @Get('cursos/:id/clases-consulta/resumen/excel')
+  @Roles(roles.Administrador, roles.Docente)
+  async getCourseClassesSummaryExcel(
+    @Param('id') id: string,
+    @Query() dto: GetCourseClassesSummaryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.excelService.getCourseClassesSummaryExcel(
+      id,
+      dto,
+      userId,
+      dto.aPresentarA,
+    );
+    return file;
+  }
+
   // Clases de Consulta - Sección 2: Historial
   @Get('cursos/:id/clases-consulta/historial')
   @Roles(roles.Administrador, roles.Docente)
@@ -593,7 +806,7 @@ export class ReportesController {
   @Roles(roles.Administrador, roles.Docente)
   async getCourseClassesHistoryPdf(
     @Param('id') id: string,
-    @Query() dto: GetCourseClassesHistoryDto,
+    @Query() dto: GetCourseClassesHistoryPdfDto,
     @Res({ passthrough: true }) res: Response,
     @Req() req: AuthenticatedUserRequest,
   ) {
@@ -606,6 +819,24 @@ export class ReportesController {
     res.set({
       'Content-Type': 'application/pdf',
     });
+    return file;
+  }
+
+  @Get('cursos/:id/clases-consulta/historial/excel')
+  @Roles(roles.Administrador, roles.Docente)
+  async getCourseClassesHistoryExcel(
+    @Param('id') id: string,
+    @Query() dto: GetCourseClassesHistoryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.excelService.getCourseClassesHistoryExcel(
+      id,
+      dto,
+      userId,
+      dto.aPresentarA,
+    );
     return file;
   }
 

@@ -32,7 +32,6 @@ import SchoolIcon from "@mui/icons-material/School";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import PersonIcon from "@mui/icons-material/Person";
-import TableOnIcon from "@mui/icons-material/TableChart";
 
 import {
   getStudentDifficultiesReport,
@@ -49,6 +48,7 @@ import {
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import StudentChartDetailModal from "./StudentChartDetailModal";
 import PdfExportButton from "../common/PdfExportButton";
+import ExcelExportButton from "../common/ExcelExportButton";
 
 interface Props {
   courseId: string;
@@ -368,14 +368,12 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
             endpointPath={`/reportes/cursos/${courseId}/dificultades/alumno/pdf`}
             disabled={!selectedStudent || !data}
           />
-          <Button
-            variant="outlined"
-            startIcon={<TableOnIcon />}
+          <ExcelExportButton
+            filters={filters}
+            endpointPath={`/reportes/cursos/${courseId}/dificultades/alumno/excel`}
             disabled={!selectedStudent || !data}
-            color="success"
-          >
-            Exportar Excel
-          </Button>
+            filename="dificultades_alumno.xlsx"
+          />
         </Box>
       </Stack>
 

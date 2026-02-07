@@ -14,7 +14,6 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
-import TableOnIcon from "@mui/icons-material/TableChart";
 import PersonIcon from "@mui/icons-material/Person";
 import SchoolIcon from "@mui/icons-material/School";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -31,6 +30,7 @@ import {
 } from "../../service/reports.service";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import PdfExportButton from "../common/PdfExportButton";
+import ExcelExportButton from "../common/ExcelExportButton";
 import ReportTotalCard from "../common/ReportTotalCard";
 import ReportStatCard from "../common/ReportStatCard";
 import ReportTextualCard from "../common/ReportTextualCard";
@@ -102,14 +102,12 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
             endpointPath={`/reportes/cursos/${courseId}/consultas/resumen/pdf`}
             disabled={!data}
           />
-          <Button
-            variant="outlined"
-            startIcon={<TableOnIcon />}
+          <ExcelExportButton
+            filters={filters}
+            endpointPath={`/reportes/cursos/${courseId}/consultas/resumen/excel`}
             disabled={!data}
-            color="success"
-          >
-            Exportar Excel
-          </Button>
+            filename="resumen_consultas.xlsx"
+          />
         </Box>
       </Stack>
 

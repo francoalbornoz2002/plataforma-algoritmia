@@ -4,7 +4,7 @@ import hbs from 'hbs';
 import { readFile } from 'fs/promises';
 import * as path from 'path';
 import { ReportesService } from '../../reportes/services/reportes.service';
-import { GetCourseClassesHistoryDto } from '../../reportes/dto/get-course-classes-history.dto';
+import { GetCourseClassesHistoryPdfDto } from '../../reportes/dto/get-course-classes-history.dto';
 import { GetUsersSummaryDto } from '../../reportes/dto/get-users-summary.dto';
 import { GetUsersHistoryDto } from '../../reportes/dto/get-users-history.dto';
 import { GetCoursesHistoryDto } from '../../reportes/dto/get-courses-history.dto';
@@ -176,7 +176,7 @@ export class PdfService {
 
   async getCourseClassesHistoryPdf(
     idCurso: string,
-    dto: GetCourseClassesHistoryDto,
+    dto: GetCourseClassesHistoryPdfDto,
     userId: string,
   ): Promise<StreamableFile> {
     // 1. Obtener datos del reporte desde ReportesService
@@ -238,9 +238,11 @@ export class PdfService {
     const chartConfig = {
       type: 'bar',
       data: {
-        labels: data.chartData.map((d) =>
-          d.fecha.split('-').slice(1).reverse().join('/'),
-        ),
+        labels: data.chartData.map((d) => {
+          const datePart = d.fecha.split('-').slice(1).reverse().join('/');
+          const statusPart = d.estado.replace(/_/g, ' ');
+          return `${datePart} (${statusPart})`;
+        }),
         datasets: [
           {
             label: 'Revisadas',
@@ -255,21 +257,15 @@ export class PdfService {
             stack: 'Stack 0',
           },
           {
-            label: 'No Realizada (Pendientes)',
+            label: 'Pendientes',
             data: data.chartData.map((d) => d.pendientes),
             backgroundColor: '#9e9e9e', // Gris
             stack: 'Stack 0',
           },
           {
-            label: 'Programadas',
-            data: data.chartData.map((d) => d.programadas),
+            label: 'A Revisar',
+            data: data.chartData.map((d) => d.aRevisar),
             backgroundColor: '#1976d2', // Azul
-            stack: 'Stack 0',
-          },
-          {
-            label: 'Cancelada',
-            data: data.chartData.map((d) => d.cancelada),
-            backgroundColor: '#d32f2f', // Rojo
             stack: 'Stack 0',
           },
         ],

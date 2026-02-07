@@ -25,7 +25,6 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format, parse } from "date-fns";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
-import TableOnIcon from "@mui/icons-material/TableChart";
 import FunctionsIcon from "@mui/icons-material/Functions";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import DateRangeIcon from "@mui/icons-material/DateRange";
@@ -40,6 +39,7 @@ import { temas, estado_consulta } from "../../../../types";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import ReportStatCard from "../common/ReportStatCard";
 import PdfExportButton from "../common/PdfExportButton";
+import ExcelExportButton from "../common/ExcelExportButton";
 
 interface Props {
   courseId: string;
@@ -244,18 +244,16 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
           sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
         >
           <PdfExportButton
-            filters={{ ...filters, courseId }}
+            filters={filters}
             endpointPath={`/reportes/cursos/${courseId}/consultas/historial/pdf`}
             disabled={!data}
           />
-          <Button
-            variant="outlined"
-            startIcon={<TableOnIcon />}
+          <ExcelExportButton
+            filters={filters}
+            endpointPath={`/reportes/cursos/${courseId}/consultas/historial/excel`}
             disabled={!data}
-            color="success"
-          >
-            Exportar Excel
-          </Button>
+            filename="historial_consultas.xlsx"
+          />
         </Box>
       </Stack>
 

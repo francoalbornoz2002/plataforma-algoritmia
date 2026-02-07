@@ -12,7 +12,6 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
-import TableOnIcon from "@mui/icons-material/TableChart";
 import { PieChart } from "@mui/x-charts/PieChart";
 import { BarChart } from "@mui/x-charts/BarChart";
 import FunctionsIcon from "@mui/icons-material/Functions";
@@ -26,6 +25,7 @@ import {
 import { useOptionalCourseContext } from "../../../../context/CourseContext";
 import ReportTextualCard from "../common/ReportTextualCard";
 import PdfExportButton from "../common/PdfExportButton";
+import ExcelExportButton from "../common/ExcelExportButton";
 
 interface Props {
   courseId: string;
@@ -107,14 +107,12 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
             endpointPath={`/reportes/cursos/${courseId}/dificultades/resumen/pdf`}
             disabled={!data}
           />
-          <Button
-            variant="outlined"
-            startIcon={<TableOnIcon />}
+          <ExcelExportButton
+            filters={filters}
+            endpointPath={`/reportes/cursos/${courseId}/dificultades/resumen/excel`}
             disabled={!data}
-            color="success"
-          >
-            Exportar Excel
-          </Button>
+            filename="resumen_dificultades.xlsx"
+          />
         </Box>
       </Stack>
 

@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import {
   Box,
-  Button,
   Typography,
   Paper,
   Stack,
@@ -13,7 +12,6 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format, parse } from "date-fns";
-import TableOnIcon from "@mui/icons-material/TableChart";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
 import {
@@ -24,6 +22,7 @@ import { dificultad_mision } from "../../../../types";
 import { useOptionalCourseContext } from "../../../../context/CourseContext";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import PdfExportButton from "../common/PdfExportButton";
+import ExcelExportButton from "../common/ExcelExportButton";
 import ReportStatCard from "../common/ReportStatCard";
 import ReportTextualCard from "../common/ReportTextualCard";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
@@ -121,14 +120,12 @@ export default function CourseMissionsReport({ courseId }: Props) {
             endpointPath={`/reportes/cursos/${courseId}/progreso/misiones/pdf`}
             disabled={!data}
           />
-          <Button
-            variant="outlined"
-            startIcon={<TableOnIcon />}
+          <ExcelExportButton
+            filters={filters}
+            endpointPath={`/reportes/cursos/${courseId}/progreso/misiones/excel`}
             disabled={!data}
-            color="success"
-          >
-            Exportar Excel
-          </Button>
+            filename="misiones_completadas.xlsx"
+          />
         </Box>
       </Stack>
 

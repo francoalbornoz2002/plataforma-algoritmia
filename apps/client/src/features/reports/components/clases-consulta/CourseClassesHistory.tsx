@@ -17,7 +17,6 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format, parse } from "date-fns";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { BarChart } from "@mui/x-charts/BarChart";
-import TableOnIcon from "@mui/icons-material/TableChart";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 
 import {
@@ -28,6 +27,7 @@ import { estado_clase_consulta } from "../../../../types";
 import ClaseDetailModal from "../../../clases-consulta/components/ClaseDetailModal";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import PdfExportButton from "../common/PdfExportButton";
+import ExcelExportButton from "../common/ExcelExportButton";
 
 interface Props {
   courseId: string;
@@ -203,24 +203,22 @@ export default function CourseClassesHistory({ courseId }: Props) {
           color="primary.main"
           sx={{ mb: 2, fontWeight: "bold" }}
         >
-          Historial de Clases de Consulta Realizadas
+          Historial de Clases de Consulta
         </Typography>
         <Box
           sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
         >
           <PdfExportButton
-            filters={{ ...filters, courseId }}
+            filters={filters}
             endpointPath={`/reportes/cursos/${courseId}/clases-consulta/historial/pdf`}
             disabled={!data}
           />
-          <Button
-            variant="outlined"
-            startIcon={<TableOnIcon />}
+          <ExcelExportButton
+            filters={filters}
+            endpointPath={`/reportes/cursos/${courseId}/clases-consulta/historial/excel`}
             disabled={!data}
-            color="success"
-          >
-            Exportar Excel
-          </Button>
+            filename="historial_clases.xlsx"
+          />
         </Box>
       </Stack>
 
@@ -301,9 +299,12 @@ export default function CourseClassesHistory({ courseId }: Props) {
         <Stack spacing={4}>
           {/* --- Gráfico Apilado --- */}
           <Paper elevation={3} sx={{ p: 2 }}>
-            <Typography variant="h6">Evolución y Estado de Clases</Typography>
+            <Typography variant="h6">
+              Evolución de Consultas por Clase
+            </Typography>
             <Typography variant="caption" color="text.secondary" gutterBottom>
-              Cantidad de consultas agendadas por clase según su estado.
+              Estado de las consultas (Revisadas, Pendientes, A Revisar) según
+              el resultado de cada clase.
             </Typography>
 
             {data.chartData.length > 0 ? (
@@ -318,9 +319,16 @@ export default function CourseClassesHistory({ courseId }: Props) {
                 xAxis={[
                   {
                     scaleType: "band",
-                    dataKey: "fecha",
-                    label: "Fecha de Clase",
-                    valueFormatter: (val) => format(val, "dd/MM"),
+                    dataKey: "id", // Usamos ID para separar clases del mismo día
+                    label: "Fecha - Estado",
+                    valueFormatter: (id) => {
+                      // Buscamos la fecha correspondiente al ID de la clase
+                      const item = data.chartData.find((d: any) => d.id === id);
+                      if (!item) return "";
+                      const dateStr = format(item.fecha, "dd/MM");
+                      const statusStr = item.estado.replace(/_/g, " ");
+                      return `${dateStr} - ${statusStr}`;
+                    },
                   },
                 ]}
                 series={[
@@ -338,21 +346,15 @@ export default function CourseClassesHistory({ courseId }: Props) {
                   },
                   {
                     dataKey: "pendientes",
-                    label: "No Realizada (Pendientes)",
+                    label: "Pendientes (No Realizada)",
                     stack: "total",
                     color: "#9e9e9e", // Gris
                   },
                   {
-                    dataKey: "programadas",
-                    label: "Programadas",
+                    dataKey: "aRevisar",
+                    label: "A Revisar (Programada)",
                     stack: "total",
                     color: "#1976d2", // Azul
-                  },
-                  {
-                    dataKey: "cancelada",
-                    label: "Cancelada",
-                    stack: "total",
-                    color: "#d32f2f", // Rojo
                   },
                 ]}
                 height={500}

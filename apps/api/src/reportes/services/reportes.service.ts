@@ -1462,7 +1462,10 @@ export class ReportesService {
 
     const history = await this.prisma.historialDificultadAlumno.findMany({
       where: whereHistory,
-      include: { dificultad: { select: { nombre: true, tema: true } } },
+      include: {
+        dificultad: { select: { nombre: true, tema: true } },
+        alumno: { select: { nombre: true, apellido: true } },
+      },
       orderBy: { fechaCambio: 'asc' }, // Orden ascendente para construir la evolución
     });
 
@@ -2250,14 +2253,14 @@ export class ReportesService {
 
       // Lógica de Gráfico: Mapear estado a series de datos
       const chartEntry = {
+        id: c.id, // <-- ID único para separar barras en el frontend
         fecha: c.fechaClase.toISOString().split('T')[0],
         nombre: c.nombre,
         estado: c.estadoClase,
         revisadas: 0,
         noRevisadas: 0,
-        pendientes: 0, // Para No Realizada
-        programadas: 0, // Para Programada/En Curso
-        cancelada: 0, // Valor visual para Cancelada
+        pendientes: 0, // Gris (No realizada / Cancelada) -> Consultas vuelven a pendiente
+        aRevisar: 0, // Azul (Programada / En curso) -> Consultas están "A revisar"
         total: totalConsultas,
       };
 
@@ -2267,14 +2270,12 @@ export class ReportesService {
           chartEntry.noRevisadas = noRevisadas;
           break;
         case estado_clase_consulta.No_realizada:
-          chartEntry.pendientes = totalConsultas;
-          break;
         case estado_clase_consulta.Cancelada:
-          chartEntry.cancelada = 0.3; // Valor pequeño para mostrar una "marca" en el gráfico
+          chartEntry.pendientes = totalConsultas;
           break;
         default:
           // Programada, En_curso, Pendiente_Asignacion, Finalizada (sin realizar)
-          chartEntry.programadas = totalConsultas;
+          chartEntry.aRevisar = totalConsultas;
           break;
       }
 

@@ -14,7 +14,6 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format, parse } from "date-fns";
-import TableOnIcon from "@mui/icons-material/TableChart";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
 import {
@@ -25,6 +24,7 @@ import { dificultad_mision } from "../../../../types";
 import { useOptionalCourseContext } from "../../../../context/CourseContext";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import PdfExportButton from "../common/PdfExportButton";
+import ExcelExportButton from "../common/ExcelExportButton";
 import ReportStatCard from "../common/ReportStatCard";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import PersonIcon from "@mui/icons-material/Person";
@@ -128,14 +128,12 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
             endpointPath={`/reportes/cursos/${courseId}/progreso/detalle-mision/pdf`}
             disabled={!data}
           />
-          <Button
-            variant="outlined"
-            startIcon={<TableOnIcon />}
+          <ExcelExportButton
+            filters={filters}
+            endpointPath={`/reportes/cursos/${courseId}/progreso/detalle-mision/excel`}
             disabled={!data}
-            color="success"
-          >
-            Exportar Excel
-          </Button>
+            filename="detalle_mision.xlsx"
+          />
         </Box>
       </Stack>
 

@@ -16,7 +16,6 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
-import TableOnIcon from "@mui/icons-material/TableChart";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
 import {
@@ -27,6 +26,7 @@ import {
 } from "../../service/reports.service";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import PdfExportButton from "../common/PdfExportButton";
+import ExcelExportButton from "../common/ExcelExportButton";
 
 export default function TeacherAssignmentHistorySection() {
   const [type, setType] = useState<TipoMovimientoAsignacion>(
@@ -287,14 +287,12 @@ export default function TeacherAssignmentHistorySection() {
           endpointPath="/reportes/cursos/historial-asignaciones/pdf"
           disabled={data.length === 0}
         />
-        <Button
-          variant="outlined"
-          startIcon={<TableOnIcon />}
+        <ExcelExportButton
+          filters={filters}
+          endpointPath="/reportes/cursos/historial-asignaciones/excel"
           disabled={data.length === 0}
-          color="success"
-        >
-          Exportar Excel
-        </Button>
+          filename="historial_asignaciones.xlsx"
+        />
       </Box>
 
       {error && <Alert severity="error">{error}</Alert>}

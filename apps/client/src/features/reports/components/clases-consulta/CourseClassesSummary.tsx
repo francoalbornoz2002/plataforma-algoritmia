@@ -15,7 +15,6 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
-import TableOnIcon from "@mui/icons-material/TableChart";
 import SchoolIcon from "@mui/icons-material/School";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import FactCheckIcon from "@mui/icons-material/FactCheck";
@@ -34,6 +33,7 @@ import ReportTotalCard from "../common/ReportTotalCard";
 import ReportTextualCard from "../common/ReportTextualCard";
 import ReportStatCard from "../common/ReportStatCard";
 import PdfExportButton from "../common/PdfExportButton";
+import ExcelExportButton from "../common/ExcelExportButton";
 
 interface Props {
   courseId: string;
@@ -101,14 +101,12 @@ export default function CourseClassesSummary({ courseId }: Props) {
             endpointPath={`/reportes/cursos/${courseId}/clases-consulta/resumen/pdf`}
             disabled={!data}
           />
-          <Button
-            variant="outlined"
-            startIcon={<TableOnIcon />}
+          <ExcelExportButton
+            filters={{ ...filters, agruparPor: chartGrouping }}
+            endpointPath={`/reportes/cursos/${courseId}/clases-consulta/resumen/excel`}
             disabled={!data}
-            color="success"
-          >
-            Exportar Excel
-          </Button>
+            filename="resumen_clases.xlsx"
+          />
         </Box>
       </Stack>
 

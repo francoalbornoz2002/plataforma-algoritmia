@@ -12,7 +12,9 @@ export class GetCourseClassesHistoryDto {
   @IsOptional()
   @IsString()
   docenteId?: string;
+}
 
+export class GetCourseClassesHistoryPdfDto extends GetCourseClassesHistoryDto {
   @IsOptional()
   @IsString()
   aPresentarA?: string;
