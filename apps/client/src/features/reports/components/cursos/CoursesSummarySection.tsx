@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo } from "react";
 import {
   Box,
-  Button,
   Typography,
   Alert,
   Paper,
@@ -15,7 +14,6 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
-import TableOnIcon from "@mui/icons-material/TableChart";
 import SearchIcon from "@mui/icons-material/Search";
 import { BarChart } from "@mui/x-charts/BarChart";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
@@ -25,6 +23,7 @@ import {
 } from "../../service/reports.service";
 import { useDebounce } from "../../../../hooks/useDebounce";
 import PdfExportButton from "../common/PdfExportButton";
+import ExcelExportButton from "../common/ExcelExportButton";
 
 export default function CoursesSummarySection() {
   const [filters, setFilters] = useState<CoursesSummaryFilters>({
@@ -187,14 +186,12 @@ export default function CoursesSummarySection() {
             endpointPath="/reportes/cursos/resumen/pdf"
             disabled={!summaryData}
           />
-          <Button
-            variant="outlined"
-            startIcon={<TableOnIcon />}
+          <ExcelExportButton
+            filters={filters}
+            endpointPath="/reportes/cursos/resumen/excel"
             disabled={!summaryData}
-            color="success"
-          >
-            Exportar Excel
-          </Button>
+            filename="resumen_cursos.xlsx"
+          />
         </Box>
       </Stack>
 

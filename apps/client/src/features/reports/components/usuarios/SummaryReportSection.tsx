@@ -15,7 +15,6 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
-import TableOnIcon from "@mui/icons-material/TableChart";
 import { BarChart } from "@mui/x-charts/BarChart";
 import {
   getUsersSummary,
@@ -24,6 +23,7 @@ import {
 } from "../../service/reports.service";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import PdfExportButton from "../common/PdfExportButton";
+import ExcelExportButton from "../common/ExcelExportButton";
 
 // Definimos colores constantes para mantener consistencia
 const ROLE_COLORS: Record<string, string> = {
@@ -286,14 +286,12 @@ export default function SummaryReportSection() {
             endpointPath="/reportes/usuarios/resumen/pdf"
             disabled={!summaryData}
           />
-          <Button
-            variant="outlined"
-            startIcon={<TableOnIcon />}
+          <ExcelExportButton
+            filters={filters}
+            endpointPath="/reportes/usuarios/resumen/excel"
             disabled={!summaryData}
-            color="success"
-          >
-            Exportar Excel
-          </Button>
+            filename="resumen_usuarios.xlsx"
+          />
         </Box>
       </Stack>
       {/* Filtros */}

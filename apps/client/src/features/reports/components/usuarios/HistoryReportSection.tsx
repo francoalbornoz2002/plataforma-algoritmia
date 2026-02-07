@@ -17,7 +17,6 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
-import TableOnIcon from "@mui/icons-material/TableChart";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { roles } from "../../../../types";
 import { LineChart } from "@mui/x-charts/LineChart";
@@ -28,6 +27,7 @@ import {
 } from "../../service/reports.service";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import PdfExportButton from "../common/PdfExportButton";
+import ExcelExportButton from "../common/ExcelExportButton";
 
 export default function HistoryReportSection() {
   const [type, setType] = useState<TipoMovimientoUsuario>(
@@ -154,14 +154,12 @@ export default function HistoryReportSection() {
             endpointPath="/reportes/usuarios/historial/pdf"
             disabled={data.length === 0}
           />
-          <Button
-            variant="outlined"
-            startIcon={<TableOnIcon />}
+          <ExcelExportButton
+            filters={filters}
+            endpointPath="/reportes/usuarios/historial/excel"
             disabled={data.length === 0}
-            color="success"
-          >
-            Exportar Excel
-          </Button>
+            filename="historial_usuarios.xlsx"
+          />
         </Box>
       </Stack>
       <Paper elevation={3} sx={{ p: 2, mb: 3 }}>

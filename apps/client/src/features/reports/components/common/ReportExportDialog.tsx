@@ -22,6 +22,7 @@ interface ReportExportDialogProps {
   isGenerating?: boolean;
   pdfUrl?: string | null;
   fileName?: string;
+  title?: string;
 }
 
 export default function ReportExportDialog({
@@ -31,6 +32,7 @@ export default function ReportExportDialog({
   isGenerating = false,
   pdfUrl,
   fileName = "reporte.pdf",
+  title,
 }: ReportExportDialogProps) {
   const [aPresentarA, setAPresentarA] = useState("");
 
@@ -45,7 +47,7 @@ export default function ReportExportDialog({
       maxWidth="xs"
       fullWidth
     >
-      <DialogTitle>Exportar Reporte PDF</DialogTitle>
+      <DialogTitle>{title || "Exportar Reporte PDF"}</DialogTitle>
       {isGenerating ? (
         <DialogContent>
           <Stack

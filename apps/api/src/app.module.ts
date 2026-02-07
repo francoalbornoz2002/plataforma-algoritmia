@@ -21,6 +21,7 @@ import { SesionesRefuerzoModule } from './sesiones-refuerzo/sesiones-refuerzo.mo
 import { ScheduleModule } from '@nestjs/schedule';
 import { ReportesModule } from './reportes/reportes.module';
 import { PdfModule } from './pdf/pdf.module';
+import { ExcelModule } from './excel/excel.module';
 
 const UPLOADS_PATH = join(process.cwd(), 'uploads');
 
@@ -55,6 +56,7 @@ const UPLOADS_PATH = join(process.cwd(), 'uploads');
     SesionesRefuerzoModule,
     ReportesModule,
     PdfModule,
+    ExcelModule,
   ],
   controllers: [],
   providers: [MailService],

@@ -6,6 +6,8 @@ import {
   UseGuards,
   Res,
   Req,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { IsOptional, IsString } from 'class-validator';
 import type { Response } from 'express';
@@ -84,13 +86,17 @@ import {
 } from '../dto/get-course-sessions-history.dto';
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
 import { PdfService } from '../../pdf/service/pdf.service';
+import { ExcelService } from '../../excel/services/excel.service';
 
 @Controller('reportes')
 @UseGuards(RolesGuard)
 export class ReportesController {
   constructor(
     private readonly reportesService: ReportesService,
+    @Inject(forwardRef(() => PdfService))
     private readonly pdfService: PdfService,
+    @Inject(forwardRef(() => ExcelService))
+    private readonly excelService: ExcelService,
   ) {}
 
   // --- REPORTES DE USUARIOS (ADMIN ONLY) ---
@@ -120,6 +126,22 @@ export class ReportesController {
     return file;
   }
 
+  @Get('usuarios/resumen/excel')
+  @Roles(roles.Administrador)
+  async getUsersSummaryExcel(
+    @Query() dto: GetUsersSummaryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.excelService.getUsersSummaryExcel(
+      dto,
+      userId,
+      dto.aPresentarA,
+    );
+    return file;
+  }
+
   @Get('usuarios/historial')
   @Roles(roles.Administrador)
   getUsersHistory(@Query() dto: GetUsersHistoryDto) {
@@ -142,6 +164,22 @@ export class ReportesController {
     res.set({
       'Content-Type': 'application/pdf',
     });
+    return file;
+  }
+
+  @Get('usuarios/historial/excel')
+  @Roles(roles.Administrador)
+  async getUsersHistoryExcel(
+    @Query() dto: GetUsersHistoryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.excelService.getUsersHistoryExcel(
+      dto,
+      userId,
+      dto.aPresentarA,
+    );
     return file;
   }
 
@@ -170,6 +208,22 @@ export class ReportesController {
     res.set({
       'Content-Type': 'application/pdf',
     });
+    return file;
+  }
+
+  @Get('cursos/resumen/excel')
+  @Roles(roles.Administrador)
+  async getCoursesSummaryExcel(
+    @Query() dto: GetCoursesSummaryPdfDto,
+    @Res({ passthrough: true }) res: Response,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const userId = req.user.userId;
+    const file = await this.excelService.getCoursesSummaryExcel(
+      dto,
+      userId,
+      dto.aPresentarA,
+    );
     return file;
   }
 
