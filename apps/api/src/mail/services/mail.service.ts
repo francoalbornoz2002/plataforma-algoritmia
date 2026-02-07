@@ -1,7 +1,10 @@
 import { MailerService } from '@nestjs-modules/mailer';
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { DiaClase, dias_semana } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import * as Handlebars from 'handlebars';
 
 // Mapa para convertir Enum Prisma a índice JS (0=Domingo, 1=Lunes...)
 const MAPA_DIAS: Record<dias_semana, number> = {
@@ -14,11 +17,51 @@ const MAPA_DIAS: Record<dias_semana, number> = {
 };
 
 @Injectable()
-export class MailService {
+export class MailService implements OnModuleInit {
   constructor(
     private readonly mailerService: MailerService,
     private readonly prisma: PrismaService,
   ) {}
+
+  async onModuleInit() {
+    await this.registerPartials();
+  }
+
+  /**
+   * Registra manualmente los partials de Handlebars leyendo los archivos del disco.
+   * Esto soluciona los problemas de resolución de rutas del adaptador.
+   */
+  private async registerPartials() {
+    const partialsDir = path.join(
+      process.cwd(),
+      'dist',
+      'src',
+      'mail',
+      'templates',
+      'partials',
+    );
+
+    try {
+      const styles = await fs.readFile(
+        path.join(partialsDir, 'styles.hbs'),
+        'utf-8',
+      );
+      const header = await fs.readFile(
+        path.join(partialsDir, 'header.hbs'),
+        'utf-8',
+      );
+      const footer = await fs.readFile(
+        path.join(partialsDir, 'footer.hbs'),
+        'utf-8',
+      );
+
+      Handlebars.registerPartial('styles', styles);
+      Handlebars.registerPartial('header', header);
+      Handlebars.registerPartial('footer', footer);
+    } catch (error) {
+      console.error('Error registrando partials manualmente:', error);
+    }
+  }
 
   /**
    * Obtiene el contexto común para todos los correos (Institución, Año, etc.)

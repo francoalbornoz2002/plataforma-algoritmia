@@ -4,10 +4,12 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { join } from 'path';
+import { PrismaModule } from '../prisma/prisma.module';
 
 @Global()
 @Module({
   imports: [
+    PrismaModule,
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -28,12 +30,6 @@ import { join } from 'path';
           adapter: new HandlebarsAdapter(),
           options: {
             strict: true,
-            partials: {
-              dir: join(__dirname, 'templates', 'partials'),
-              options: {
-                strict: true,
-              },
-            },
           },
         },
       }),
