@@ -1,7 +1,12 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  StreamableFile,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { FindAuditoriaLogsDto } from '../dto/find-audit-logs.dto';
+import { stringify } from 'csv-stringify';
 
 @Injectable()
 export class AuditoriaService {
@@ -11,20 +16,119 @@ export class AuditoriaService {
    * Obtiene los logs de auditoría con filtros, paginación y ordenamiento.
    */
   async findAll(dto: FindAuditoriaLogsDto) {
-    const {
-      page,
-      limit,
-      sort,
-      order,
-      fechaDesde,
-      fechaHasta,
-      tablaAfectada,
-      operacion,
-      search,
-    } = dto;
+    const { page = 1, limit = 10, sort, order } = dto;
 
     const skip = (page - 1) * limit;
     const take = limit;
+
+    const where = this.buildWhereClause(dto);
+    const orderBy = this.buildOrderByClause(sort, order);
+
+    // 3. Ejecutar consultas
+    try {
+      const [logs, total] = await this.prisma.$transaction([
+        this.prisma.logAuditoria.findMany({
+          where,
+          orderBy,
+          skip,
+          take,
+          include: {
+            usuarioModifico: {
+              select: { nombre: true, apellido: true, email: true },
+            },
+          },
+        }),
+        this.prisma.logAuditoria.count({ where }),
+      ]);
+
+      const safeLogs = logs.map((log) => ({
+        ...log,
+        id: log.id.toString(),
+      }));
+
+      const totalPages = Math.ceil(total / limit);
+      return { data: safeLogs, total, page, totalPages };
+    } catch (error) {
+      console.error('Error en AuditoriaService.findAll:', error);
+      throw new InternalServerErrorException(
+        'Error al obtener los logs de auditoría.',
+      );
+    }
+  }
+
+  /**
+   * Genera un stream CSV con todos los logs que coincidan con los filtros.
+   */
+  async getAuditoriaLogsCsv(
+    dto: FindAuditoriaLogsDto,
+  ): Promise<StreamableFile> {
+    const where = this.buildWhereClause(dto);
+    const orderBy = this.buildOrderByClause(dto.sort, dto.order);
+
+    // Obtenemos TODOS los registros (sin paginación)
+    // NOTA: Para datasets masivos (>100k), idealmente usaríamos un cursor o paginación interna
+    // para alimentar el stream, pero para este caso de uso, findMany es suficiente y seguro
+    // ya que el stringify maneja el flujo de salida.
+    const logs = await this.prisma.logAuditoria.findMany({
+      where,
+      orderBy,
+      include: {
+        usuarioModifico: {
+          select: { nombre: true, apellido: true, email: true },
+        },
+      },
+    });
+
+    const stringifier = stringify({
+      header: true,
+      columns: [
+        'ID',
+        'Fecha',
+        'Hora',
+        'Usuario',
+        'Email',
+        'Operación',
+        'Tabla',
+        'ID Fila',
+        'Valores Anteriores',
+        'Valores Nuevos',
+      ],
+      delimiter: ';', // Punto y coma es mejor para Excel en español
+      bom: true, // Byte Order Mark para que Excel reconozca UTF-8
+    });
+
+    // Alimentamos el stream
+    for (const log of logs) {
+      stringifier.write([
+        log.id.toString(),
+        log.fechaHora.toISOString().split('T')[0],
+        log.fechaHora.toISOString().split('T')[1].substring(0, 8),
+        log.usuarioModifico
+          ? `${log.usuarioModifico.nombre} ${log.usuarioModifico.apellido}`
+          : 'Sistema',
+        log.usuarioModifico?.email || '-',
+        log.operacion,
+        log.tablaAfectada,
+        log.idFilaAfectada,
+        log.valoresAnteriores ? JSON.stringify(log.valoresAnteriores) : '',
+        log.valoresNuevos ? JSON.stringify(log.valoresNuevos) : '',
+      ]);
+    }
+
+    stringifier.end();
+
+    return new StreamableFile(stringifier, {
+      type: 'text/csv',
+      disposition: 'attachment; filename="auditoria.csv"',
+    });
+  }
+
+  // --- Helpers Privados ---
+
+  private buildWhereClause(
+    dto: FindAuditoriaLogsDto,
+  ): Prisma.LogAuditoriaWhereInput {
+    const { fechaDesde, fechaHasta, tablaAfectada, operacion, search } = dto;
 
     // 1. Construir el WHERE dinámicamente
     const where: Prisma.LogAuditoriaWhereInput = {};
@@ -88,8 +192,13 @@ export class AuditoriaService {
       where.operacion = { equals: operacion, mode: 'insensitive' };
     }
 
-    // 2. Construir el ORDER BY
-    // Validamos que el campo de ordenamiento exista en la tabla para evitar errores de Prisma
+    return where;
+  }
+
+  private buildOrderByClause(
+    sort?: string,
+    order?: 'asc' | 'desc',
+  ): Prisma.LogAuditoriaOrderByWithRelationInput {
     const validSortFields = [
       'fechaHora',
       'tablaAfectada',
@@ -97,47 +206,10 @@ export class AuditoriaService {
       'idFilaAfectada',
       'idUsuarioModifico',
     ];
-    const sortBy = validSortFields.includes(sort) ? sort : 'fechaHora';
+    const sortBy = sort && validSortFields.includes(sort) ? sort : 'fechaHora';
 
-    const orderBy: Prisma.LogAuditoriaOrderByWithRelationInput = {
-      // Por defecto ordenamos por fecha (más nuevos primero) si no se especifica
+    return {
       [sortBy]: order || 'desc',
-    };
-
-    // 3. Ejecutar consultas
-    try {
-      const [logs, total] = await this.prisma.$transaction([
-        this.prisma.logAuditoria.findMany({
-          where,
-          orderBy,
-          skip,
-          take,
-          include: {
-            // Incluimos el usuario que hizo el cambio
-            usuarioModifico: {
-              select: {
-                nombre: true,
-                apellido: true,
-                email: true,
-              },
-            },
-          },
-        }),
-        this.prisma.logAuditoria.count({ where }),
-      ]);
-
-      const safeLogs = logs.map((log) => ({
-        ...log,
-        id: log.id.toString(), // <-- Conversión
-      }));
-
-      const totalPages = Math.ceil(total / limit);
-      return { data: safeLogs, total, page, totalPages };
-    } catch (error) {
-      console.error('Error en AuditoriaService.findAll:', error);
-      throw new InternalServerErrorException(
-        'Error al obtener los logs de auditoría.',
-      );
-    }
+    } as Prisma.LogAuditoriaOrderByWithRelationInput;
   }
 }

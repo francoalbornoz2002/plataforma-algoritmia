@@ -42,4 +42,10 @@ export class AuditoriaController {
     });
     return file;
   }
+
+  @Get('csv')
+  async getAuditoriaLogsCsv(@Query() dto: FindAuditoriaLogsDto) {
+    // El servicio ya devuelve un StreamableFile configurado con headers
+    return this.auditoriaService.getAuditoriaLogsCsv(dto);
+  }
 }

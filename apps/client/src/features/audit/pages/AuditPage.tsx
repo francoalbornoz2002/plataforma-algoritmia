@@ -41,7 +41,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import InfoIcon from "@mui/icons-material/Info";
 import UserDetailModal from "../components/UserDetailModal";
 import PdfExportButton from "../../reports/components/common/PdfExportButton";
-import TableOnIcon from "@mui/icons-material/TableChart";
+import CsvExportButton from "../../reports/components/common/CsvExportButton";
 
 // 1. Hooks y Servicios
 
@@ -453,13 +453,12 @@ export default function AuditPage() {
             endpointPath="/auditoria/pdf"
             label="Exportar PDF"
           />
-          <Button
-            variant="outlined"
-            startIcon={<TableOnIcon />}
-            color="success"
-          >
-            Exportar CSV
-          </Button>
+          <CsvExportButton
+            filters={pdfFilters}
+            endpointPath="/auditoria/csv"
+            label="Exportar CSV"
+            filename="auditoria.csv"
+          />
         </Box>
       </Stack>
 
