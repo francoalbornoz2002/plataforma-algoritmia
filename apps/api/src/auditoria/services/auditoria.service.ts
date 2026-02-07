@@ -80,22 +80,72 @@ export class AuditoriaService {
     });
 
     const stringifier = stringify({
-      header: true,
-      columns: [
-        'ID',
-        'Fecha',
-        'Hora',
-        'Usuario',
-        'Email',
-        'Operación',
-        'Tabla',
-        'ID Fila',
-        'Valores Anteriores',
-        'Valores Nuevos',
-      ],
+      header: false, // Desactivamos header automático para personalizar
       delimiter: ';', // Punto y coma es mejor para Excel en español
       bom: true, // Byte Order Mark para que Excel reconozca UTF-8
     });
+
+    // --- A. Título y Metadatos ---
+    // Rellenamos con celdas vacías para mantener la estructura de columnas (10 columnas)
+    // Esto ayuda a Excel a detectar correctamente el delimitador.
+    stringifier.write([
+      'REPORTE DE AUDITORÍA',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+    ]);
+    stringifier.write([
+      'Fecha de generación:',
+      new Date().toLocaleString(),
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+      '',
+    ]);
+    stringifier.write(['', '', '', '', '', '', '', '', '', '']); // Fila vacía
+
+    // --- B. Filtros ---
+    const filtros: string[] = [];
+    if (dto.fechaDesde) filtros.push(`Desde: ${dto.fechaDesde}`);
+    if (dto.fechaHasta) filtros.push(`Hasta: ${dto.fechaHasta}`);
+    if (dto.tablaAfectada) filtros.push(`Tabla: ${dto.tablaAfectada}`);
+    if (dto.operacion) filtros.push(`Operación: ${dto.operacion}`);
+    if (dto.search) filtros.push(`Búsqueda: ${dto.search}`);
+
+    // Distribuimos los filtros en columnas separadas para evitar que la columna de Fecha se ensanche demasiado
+    const filtrosRow = [
+      'Filtros Aplicados:',
+      ...(filtros.length > 0 ? filtros : ['Ninguno']),
+    ];
+    while (filtrosRow.length < 10) {
+      filtrosRow.push('');
+    }
+    stringifier.write(filtrosRow);
+    stringifier.write(['', '', '', '', '', '', '', '', '', '']); // Fila vacía
+
+    // --- C. Cabeceras de Columnas ---
+    stringifier.write([
+      'ID',
+      'Fecha',
+      'Hora',
+      'Usuario',
+      'Email',
+      'Operación',
+      'Tabla',
+      'ID Fila',
+      'Valores Anteriores',
+      'Valores Nuevos',
+    ]);
 
     // Alimentamos el stream
     for (const log of logs) {

@@ -292,7 +292,6 @@ export default function AuditPage() {
       {
         field: "fechaHora",
         headerName: "Fecha y Hora",
-        flex: 1.5,
         minWidth: 160,
         valueFormatter: (value: string | null) => {
           if (!value) return "";
@@ -302,8 +301,7 @@ export default function AuditPage() {
       {
         field: "usuarioModifico",
         headerName: "Usuario",
-        flex: 1.5,
-        minWidth: 180,
+        minWidth: 300,
         renderCell: (params: GridRenderCellParams<LogAuditoria>) => {
           const email = params.row.usuarioModifico?.email;
           const id = params.row.idUsuarioModifico;
@@ -357,16 +355,14 @@ export default function AuditPage() {
       {
         field: "tablaAfectada",
         headerName: "Tabla",
-        flex: 1,
-        minWidth: 120,
+        minWidth: 200,
       },
       {
         field: "operacion",
         headerName: "Operación",
         headerAlign: "center",
         align: "center",
-        flex: 1,
-        minWidth: 120,
+        minWidth: 100,
         renderCell: (params: GridRenderCellParams<LogAuditoria>) => {
           let op = params.row.operacion;
           let color: "default" | "success" | "info" | "error" = "default";
