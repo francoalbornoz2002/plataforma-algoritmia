@@ -622,9 +622,10 @@ enum estado_clase_consulta {
 
 enum estado_consulta {
   Pendiente
-  A_revisar @map("A revisar")
+  A_revisar   @map("A revisar")
   Revisada
   Resuelta
+  No_resuelta @map("No resuelta")
 }
 
 enum estado_sesion {
@@ -638,6 +639,7 @@ enum estado_sesion {
 enum estado_simple {
   Activo
   Inactivo
+  Finalizado
 }
 
 enum generos {
