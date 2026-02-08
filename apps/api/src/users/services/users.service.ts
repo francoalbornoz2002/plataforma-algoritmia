@@ -9,13 +9,21 @@ import {
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Prisma, roles, Usuario } from '@prisma/client';
+import {
+  Prisma,
+  roles,
+  Usuario,
+  estado_clase_consulta,
+  estado_consulta,
+} from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { FindAllUsersDto } from '../dto/find-all-users.dto';
 import { LoginDto } from 'src/auth/dto/login.dto';
 import { MailService } from 'src/mail/services/mail.service';
 import { unlink } from 'fs';
 import { basename, join } from 'path';
+import { ProgressService } from 'src/progress/services/progress.service';
+import { DifficultiesService } from 'src/difficulties/services/difficulties.service';
 
 // Defino el tipo de usuario sin password a devolver
 type SafeUser = Omit<Usuario, 'password'>;
@@ -33,6 +41,8 @@ export class UsersService {
   constructor(
     private prisma: PrismaService,
     private readonly mailService: MailService,
+    private readonly progressService: ProgressService,
+    private readonly difficultiesService: DifficultiesService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<Usuario> {
@@ -325,6 +335,13 @@ export class UsersService {
     updateUserDto: UpdateUserDto,
     fotoPerfil?: Express.Multer.File,
   ) {
+    // 0. Obtener el usuario actual para verificar cambios de rol
+    const usuarioActual = await this.prisma.usuario.findUnique({
+      where: { id },
+      select: { rol: true, fotoPerfilUrl: true },
+    });
+    if (!usuarioActual) throw new NotFoundException('Usuario no encontrado');
+
     // 1. Verificar si el usuario existe para obtener su foto actual (si vamos a cambiarla)
     let oldFotoUrl: string | null = null;
     if (fotoPerfil) {
@@ -349,9 +366,18 @@ export class UsersService {
       dataToUpdate.fotoPerfilUrl = `/uploads/${fotoPerfil.filename}`;
     }
 
-    const usuarioActualizado = await this.prisma.usuario.update({
-      where: { id },
-      data: dataToUpdate,
+    // Ejecutamos la actualización dentro de una transacción para manejar el cambio de rol
+    const usuarioActualizado = await this.prisma.$transaction(async (tx) => {
+      // Si el rol cambia, limpiamos las dependencias del rol anterior
+      if (updateUserDto.rol && updateUserDto.rol !== usuarioActual.rol) {
+        await this.cleanupUserDependencies(tx, id, usuarioActual.rol);
+      }
+
+      // Actualizamos el usuario
+      return tx.usuario.update({
+        where: { id },
+        data: dataToUpdate,
+      });
     });
 
     // Si se subió una nueva foto y existía una anterior, borramos la vieja del disco
@@ -381,12 +407,119 @@ export class UsersService {
       );
     }
 
-    // Si existe, actualizamos el campo 'deletedAt' con la fecha y hora actual.
-    return this.prisma.usuario.update({
-      where: { id },
-      data: {
-        deletedAt: new Date(),
-      },
+    // Ejecutamos la baja en una transacción para asegurar integridad
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Limpiar dependencias según el rol actual
+      await this.cleanupUserDependencies(tx, id, usuario.rol);
+
+      // --- BAJA DEL USUARIO ---
+      return tx.usuario.update({
+        where: { id },
+        data: {
+          deletedAt: new Date(),
+        },
+      });
     });
+  }
+
+  /**
+   * Helper privado para limpiar dependencias de un usuario según su rol.
+   * Se usa tanto al eliminar un usuario como al cambiar su rol.
+   */
+  private async cleanupUserDependencies(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    role: roles,
+  ) {
+    // --- LÓGICA PARA ALUMNOS ---
+    if (role === roles.Alumno) {
+      // 1. Buscar SOLO la inscripción activa (Regla de Negocio 1)
+      const inscripcionActiva = await tx.alumnoCurso.findFirst({
+        where: {
+          idAlumno: userId,
+          estado: 'Activo',
+        },
+      });
+
+      if (inscripcionActiva) {
+        // 2. Dar de baja la inscripción
+        await tx.alumnoCurso.update({
+          where: {
+            idAlumno_idCurso: {
+              idAlumno: userId,
+              idCurso: inscripcionActiva.idCurso,
+            },
+          },
+          data: { estado: 'Inactivo', fechaBaja: new Date() },
+        });
+
+        // 3. Dar de baja el progreso
+        await tx.progresoAlumno.update({
+          where: { id: inscripcionActiva.idProgreso },
+          data: { estado: 'Inactivo' },
+        });
+
+        // 4. Recalcular estadísticas SOLO de ese curso
+        await this.progressService.recalculateCourseProgress(
+          tx,
+          inscripcionActiva.idCurso,
+        );
+        await this.difficultiesService.recalculateCourseDifficulties(
+          tx,
+          inscripcionActiva.idCurso,
+        );
+      }
+    }
+
+    // --- LÓGICA PARA DOCENTES ---
+    if (role === roles.Docente) {
+      // 1. Dar de baja asignaciones a cursos
+      await tx.docenteCurso.updateMany({
+        where: { idDocente: userId, estado: 'Activo' },
+        data: { estado: 'Inactivo', fechaBaja: new Date() },
+      });
+
+      // 2. Gestionar Clases de Consulta
+      const clasesACargo = await tx.claseConsulta.findMany({
+        where: { idDocente: userId, deletedAt: null },
+        include: { consultasEnClase: true },
+      });
+
+      for (const clase of clasesACargo) {
+        let nuevoEstado: estado_clase_consulta | null = null;
+
+        if (clase.estadoClase === estado_clase_consulta.Programada) {
+          nuevoEstado = estado_clase_consulta.Pendiente_Asignacion;
+        } else if (
+          clase.estadoClase === estado_clase_consulta.En_curso ||
+          clase.estadoClase === estado_clase_consulta.Finalizada
+        ) {
+          nuevoEstado = estado_clase_consulta.Cancelada;
+        }
+
+        if (nuevoEstado) {
+          // Actualizar clase (y desvincular docente si pasa a Pendiente)
+          await tx.claseConsulta.update({
+            where: { id: clase.id },
+            data: {
+              estadoClase: nuevoEstado,
+              idDocente:
+                nuevoEstado === estado_clase_consulta.Pendiente_Asignacion
+                  ? null
+                  : clase.idDocente,
+            },
+          });
+
+          // Devolver consultas a estado Pendiente (Regla de Negocio 2)
+          const idsConsultas = clase.consultasEnClase.map((c) => c.idConsulta);
+          if (idsConsultas.length > 0) {
+            await tx.consulta.updateMany({
+              where: { id: { in: idsConsultas } },
+              data: { estado: estado_consulta.Pendiente },
+            });
+          }
+        }
+      }
+    }
   }
 }

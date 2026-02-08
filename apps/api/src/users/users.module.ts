@@ -6,6 +6,8 @@ import { MulterModule } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
+import { ProgressModule } from 'src/progress/progress.module';
+import { DifficultiesModule } from 'src/difficulties/difficulties.module';
 
 const UPLOADS_PATH = join(process.cwd(), 'uploads');
 
@@ -31,6 +33,8 @@ const UPLOADS_PATH = join(process.cwd(), 'uploads');
         },
       }),
     }),
+    ProgressModule,
+    DifficultiesModule,
   ],
   controllers: [UsersController],
   providers: [UsersService],
