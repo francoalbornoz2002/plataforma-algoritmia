@@ -1,5 +1,4 @@
 import {
-  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -13,6 +12,7 @@ import { dateToTime } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { FindStudentProgressDto } from 'src/progress/dto/find-student-progress.dto';
 import { ProgressService } from 'src/progress/services/progress.service';
+import { checkDocenteAccess } from 'src/helpers/access.helper';
 
 @Injectable()
 export class DocentesService {
@@ -22,29 +22,6 @@ export class DocentesService {
     private difficultiesService: DifficultiesService,
     private consultasService: ConsultasService,
   ) {}
-
-  private async checkDocenteAccess(idDocente: string, idCurso: string) {
-    try {
-      const asignacion = await this.prisma.docenteCurso.findFirst({
-        where: {
-          idDocente: idDocente,
-          idCurso: idCurso,
-          estado: 'Activo', // Solo docentes actualmente activos en el curso
-        },
-      });
-
-      if (!asignacion) {
-        throw new ForbiddenException(
-          'No tienes permiso para acceder a este curso.',
-        );
-      }
-    } catch (error) {
-      if (error instanceof ForbiddenException) throw error;
-      // Manejar otros errores si la consulta falla
-      console.error('Error en checkDocenteAccess:', error);
-      throw new InternalServerErrorException('Error al verificar permisos.');
-    }
-  }
 
   /**
    * Busca TODOS los cursos (activos e inactivos) asignados a un docente.
@@ -117,7 +94,7 @@ export class DocentesService {
    * Pide el Resumen (KPIs) del curso al ProgressService
    */
   async getCourseOverview(idCurso: string, idDocente: string) {
-    await this.checkDocenteAccess(idDocente, idCurso);
+    await checkDocenteAccess(this.prisma, idDocente, idCurso);
     return this.progressService.getCourseOverview(idCurso);
   }
 
@@ -129,12 +106,12 @@ export class DocentesService {
     dto: FindStudentProgressDto,
     idDocente: string,
   ) {
-    await this.checkDocenteAccess(idDocente, idCurso);
+    await checkDocenteAccess(this.prisma, idDocente, idCurso);
     return this.progressService.getStudentProgressList(idCurso, dto);
   }
 
   async getCourseDifficultiesOverview(idCurso: string, idDocente: string) {
-    await this.checkDocenteAccess(idDocente, idCurso);
+    await checkDocenteAccess(this.prisma, idDocente, idCurso);
     return this.difficultiesService.getCourseDifficultiesOverview(idCurso);
   }
 
@@ -143,7 +120,7 @@ export class DocentesService {
     dto: FindStudentDifficultiesDto,
     idDocente: string,
   ) {
-    await this.checkDocenteAccess(idDocente, idCurso);
+    await checkDocenteAccess(this.prisma, idDocente, idCurso);
     return this.difficultiesService.getStudentDifficultyList(idCurso, dto);
   }
 
@@ -152,7 +129,7 @@ export class DocentesService {
     idCurso: string,
     idDocente: string,
   ) {
-    await this.checkDocenteAccess(idDocente, idCurso);
+    await checkDocenteAccess(this.prisma, idDocente, idCurso);
     return this.difficultiesService.getStudentDifficultiesDetail(
       idAlumno,
       idCurso,
@@ -165,7 +142,7 @@ export class DocentesService {
     idDocente: string,
   ) {
     // 1. Validamos que el docente tenga acceso a este curso
-    await this.checkDocenteAccess(idDocente, idCurso);
+    await checkDocenteAccess(this.prisma, idDocente, idCurso);
     // (Aquí podríamos validar también que el alumno pertenezca al curso si quisiéramos)
 
     // 2. Llamamos al servicio "cerebro"
@@ -177,7 +154,7 @@ export class DocentesService {
     idDocente: string,
     dto: FindConsultasDto,
   ) {
-    await this.checkDocenteAccess(idDocente, idCurso); // 3. Validar
+    await checkDocenteAccess(this.prisma, idDocente, idCurso); // 3. Validar
     return this.consultasService.findConsultasForDocente(idCurso, dto);
   }
 
@@ -197,7 +174,7 @@ export class DocentesService {
     }
 
     // 4.2. Validamos que el docente pertenezca a ESE curso
-    await this.checkDocenteAccess(idDocente, consulta.idCurso);
+    await checkDocenteAccess(this.prisma, idDocente, consulta.idCurso);
 
     // 4.3. Si todo está bien, llamamos al servicio
     return this.consultasService.createRespuesta(idConsulta, idDocente, dto);
@@ -211,7 +188,7 @@ export class DocentesService {
     idDocenteSolicitante: string,
   ) {
     // 1. Validamos que el docente que pide tenga acceso
-    await this.checkDocenteAccess(idDocenteSolicitante, idCurso);
+    await checkDocenteAccess(this.prisma, idDocenteSolicitante, idCurso);
 
     // 2. Buscamos los docentes activos
     const asignaciones = await this.prisma.docenteCurso.findMany({

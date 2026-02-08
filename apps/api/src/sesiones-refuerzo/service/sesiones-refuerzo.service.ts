@@ -27,6 +27,10 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { PreguntasService } from '../../preguntas/services/preguntas.service';
 import { MailService } from '../../mail/services/mail.service';
 import { DifficultiesService } from '../../difficulties/services/difficulties.service';
+import {
+  checkAlumnoAccess,
+  checkDocenteAccess,
+} from 'src/helpers/access.helper';
 
 @Injectable()
 export class SesionesRefuerzoService {
@@ -90,8 +94,8 @@ export class SesionesRefuerzoService {
     // --- Transacción para el resto de validaciones y la creación ---
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // 3. Validar accesos de docente y alumno al curso.
-      await this.checkDocenteAccess(tx, idDocente, idCurso);
-      await this.checkAlumnoAccess(tx, idAlumno, idCurso);
+      await checkDocenteAccess(tx, idDocente, idCurso);
+      await checkAlumnoAccess(tx, idAlumno, idCurso);
 
       // 4. Validar que las preguntas existan y cumplan las reglas de negocio.
       const preguntasDb = await tx.pregunta.findMany({
@@ -313,9 +317,9 @@ export class SesionesRefuerzoService {
 
     // 1. Validar acceso al curso
     if (user.rol === roles.Docente) {
-      await this.checkDocenteAccess(this.prisma, user.userId, idCurso);
+      await checkDocenteAccess(this.prisma, user.userId, idCurso);
     } else {
-      await this.checkAlumnoAccess(this.prisma, user.userId, idCurso);
+      await checkAlumnoAccess(this.prisma, user.userId, idCurso);
     }
 
     // 2. Construir la cláusula WHERE
@@ -368,9 +372,9 @@ export class SesionesRefuerzoService {
   async findOne(idCurso: string, idSesion: string, user: UserPayload) {
     // 1. Validar acceso al curso
     if (user.rol === roles.Docente) {
-      await this.checkDocenteAccess(this.prisma, user.userId, idCurso);
+      await checkDocenteAccess(this.prisma, user.userId, idCurso);
     } else {
-      await this.checkAlumnoAccess(this.prisma, user.userId, idCurso);
+      await checkAlumnoAccess(this.prisma, user.userId, idCurso);
     }
 
     // 2. Buscar la sesión con sus relaciones
@@ -908,36 +912,6 @@ export class SesionesRefuerzoService {
   }
 
   // --------------- HELPERS PRIVADOS --------------- //
-
-  private async checkDocenteAccess(
-    tx: Prisma.TransactionClient | PrismaService,
-    idDocente: string,
-    idCurso: string,
-  ) {
-    const asignacion = await (tx as PrismaService).docenteCurso.findFirst({
-      where: { idDocente, idCurso, estado: 'Activo' },
-    });
-    if (!asignacion) {
-      throw new ForbiddenException(
-        'No tienes permisos para crear una sesión en este curso.',
-      );
-    }
-  }
-
-  private async checkAlumnoAccess(
-    tx: Prisma.TransactionClient | PrismaService,
-    idAlumno: string,
-    idCurso: string,
-  ) {
-    const inscripcion = await tx.alumnoCurso.findFirst({
-      where: { idAlumno, idCurso, estado: 'Activo' },
-    });
-    if (!inscripcion) {
-      throw new ForbiddenException(
-        'El alumno no está inscrito o activo en este curso.',
-      );
-    }
-  }
 
   /**
    * Calcula la fecha límite para una sesión automática.

@@ -65,6 +65,13 @@ export class CoursesController {
 
   @UseGuards(RolesGuard)
   @Roles(roles.Administrador)
+  @Patch('finalize/:id')
+  finalize(@Param('id') id: string) {
+    return this.coursesService.finalize(id);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(roles.Administrador)
   @Delete('delete/:id')
   delete(@Param('id') id: string) {
     return this.coursesService.remove(id);

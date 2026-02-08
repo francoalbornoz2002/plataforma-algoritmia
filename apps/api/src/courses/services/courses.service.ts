@@ -15,6 +15,7 @@ import {
   roles,
   estado_sesion,
   estado_clase_consulta,
+  estado_consulta,
 } from '@prisma/client'; // Importamos 'roles'
 // import * as bcrypt from 'bcrypt';
 import { FindAllCoursesDto } from '../dto/find-all-courses.dto';
@@ -207,6 +208,9 @@ export class CoursesService {
                 },
               },
             },
+            progresoCurso: {
+              select: { estado: true },
+            },
           },
         }),
         this.prisma.curso.count({ where }),
@@ -226,7 +230,7 @@ export class CoursesService {
   async findOne(id: string) {
     try {
       const curso = await this.prisma.curso.findUnique({
-        where: { id, deletedAt: null }, // Solo buscar cursos activos
+        where: { id }, // Permitimos buscar cursos finalizados (deletedAt != null)
         include: {
           docentes: {
             where: {
@@ -580,6 +584,102 @@ export class CoursesService {
       }
       throw new InternalServerErrorException('Error al eliminar el curso.');
     }
+  }
+
+  /**
+   * Finaliza un curso (Cierre de ciclo).
+   * Marca el curso como eliminado (Solo Lectura) y cierra/cancela actividades pendientes,
+   * pero MANTIENE los registros hijos para el historial.
+   */
+  async finalize(id: string) {
+    // 1. Verificar si existe y no está ya finalizado/eliminado
+    const curso = await this.prisma.curso.findUnique({
+      where: { id, deletedAt: null },
+      include: { alumnos: { select: { idProgreso: true } } },
+    });
+
+    if (!curso) {
+      throw new NotFoundException(
+        `Curso con ID '${id}' no encontrado o ya ha sido finalizado.`,
+      );
+    }
+
+    const idsProgresosAlumnos = curso.alumnos.map((a) => a.idProgreso);
+
+    // 2. Ejecutar cierre en transacción
+    return this.prisma.$transaction([
+      // a. Soft delete del curso (Marca el fin del ciclo y activa modo Solo Lectura)
+      this.prisma.curso.update({
+        where: { id },
+        data: { deletedAt: new Date() },
+      }),
+
+      // b. Inactivar relaciones (Alumnos/Docentes/Progreso/Dificultades)
+      this.prisma.alumnoCurso.updateMany({
+        where: { idCurso: id, estado: estado_simple.Activo },
+        data: { estado: estado_simple.Finalizado, fechaBaja: new Date() },
+      }),
+      this.prisma.docenteCurso.updateMany({
+        where: { idCurso: id, estado: estado_simple.Activo },
+        data: { estado: estado_simple.Finalizado, fechaBaja: new Date() },
+      }),
+      this.prisma.progresoCurso.update({
+        where: { id: curso.idProgreso },
+        data: { estado: estado_simple.Finalizado },
+      }),
+      this.prisma.dificultadesCurso.update({
+        where: { id: curso.idDificultadesCurso },
+        data: { estado: estado_simple.Finalizado },
+      }),
+      // Inactivar progresos individuales
+      ...(idsProgresosAlumnos.length > 0
+        ? [
+            this.prisma.progresoAlumno.updateMany({
+              where: { id: { in: idsProgresosAlumnos } },
+              data: { estado: estado_simple.Finalizado },
+            }),
+          ]
+        : []),
+
+      // c. Cerrar Consultas (Pendientes -> No resuelta)
+      this.prisma.consulta.updateMany({
+        where: {
+          idCurso: id,
+          estado: {
+            in: [
+              estado_consulta.Pendiente,
+              estado_consulta.A_revisar,
+              estado_consulta.Revisada,
+            ],
+          },
+        },
+        data: { estado: estado_consulta.No_resuelta },
+      }),
+
+      // d. Cancelar Clases Futuras/Pendientes
+      this.prisma.claseConsulta.updateMany({
+        where: {
+          idCurso: id,
+          estadoClase: {
+            in: [
+              estado_clase_consulta.Programada,
+              estado_clase_consulta.En_curso,
+              estado_clase_consulta.Pendiente_Asignacion,
+            ],
+          },
+        },
+        data: { estadoClase: estado_clase_consulta.Cancelada },
+      }),
+
+      // e. Cerrar Sesiones Pendientes
+      this.prisma.sesionRefuerzo.updateMany({
+        where: {
+          idCurso: id,
+          estado: estado_sesion.Pendiente,
+        },
+        data: { estado: estado_sesion.No_realizada },
+      }),
+    ]);
   }
 
   // --- MÉTODO HELPER PARA SINCRONIZAR DÍAS ---

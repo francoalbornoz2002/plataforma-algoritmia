@@ -17,6 +17,7 @@ import { CreateConsultaDto } from 'src/consultas/dto/create-consulta.dto';
 import { ValorarConsultaDto } from 'src/consultas/dto/valorar-consulta.dto';
 import { UpdateConsultaDto } from 'src/consultas/dto/update-consulta.dto';
 import { roles } from '@prisma/client';
+import { checkDocenteAccess } from 'src/helpers/access.helper';
 
 @Injectable()
 export class AlumnosService {
@@ -270,7 +271,7 @@ export class AlumnosService {
 
   async findActiveAlumnosByCurso(idCurso: string, idDocente: string) {
     // 1. Validamos que el docente que pide tenga acceso
-    await this.checkDocenteAccess(idDocente, idCurso);
+    await checkDocenteAccess(this.prisma, idDocente, idCurso);
 
     // 2. Buscamos los alumnos activos
     const inscripciones = await this.prisma.alumnoCurso.findMany({
@@ -295,7 +296,7 @@ export class AlumnosService {
 
   async findEligibleForRefuerzo(idCurso: string, idDocente: string) {
     // 1. Validamos que el docente que pide tenga acceso
-    await this.checkDocenteAccess(idDocente, idCurso);
+    await checkDocenteAccess(this.prisma, idDocente, idCurso);
 
     // 2. Buscamos los alumnos que están activos en el curso y tienen al menos una dificultad registrada para ese curso.
     const alumnosElegibles = await this.prisma.usuario.findMany({
@@ -324,28 +325,5 @@ export class AlumnosService {
     });
 
     return alumnosElegibles;
-  }
-
-  private async checkDocenteAccess(idDocente: string, idCurso: string) {
-    try {
-      const asignacion = await this.prisma.docenteCurso.findFirst({
-        where: {
-          idDocente: idDocente,
-          idCurso: idCurso,
-          estado: 'Activo', // Solo docentes actualmente activos en el curso
-        },
-      });
-
-      if (!asignacion) {
-        throw new ForbiddenException(
-          'No tienes permiso para acceder a este curso.',
-        );
-      }
-    } catch (error) {
-      if (error instanceof ForbiddenException) throw error;
-      // Manejar otros errores si la consulta falla
-      console.error('Error en checkDocenteAccess:', error);
-      throw new InternalServerErrorException('Error al verificar permisos.');
-    }
   }
 }

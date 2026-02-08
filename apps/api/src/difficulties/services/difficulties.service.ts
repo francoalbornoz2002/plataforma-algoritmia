@@ -124,6 +124,13 @@ export class DifficultiesService {
     const skip = (page - 1) * limit;
     const take = limit;
 
+    // 0. Verificar estado del curso
+    const curso = await this.prisma.curso.findUnique({
+      where: { id: idCurso },
+      select: { deletedAt: true },
+    });
+    const includeInactive = !!curso?.deletedAt;
+
     try {
       // 1. Construir el WHERE (Ahora para el modelo 'Usuario')
       const where: Prisma.UsuarioWhereInput = {
@@ -132,7 +139,8 @@ export class DifficultiesService {
           // Que estén en este curso Y activos
           some: {
             idCurso: idCurso,
-            estado: 'Activo',
+            // Si el curso está finalizado, no filtramos por estado 'Activo'
+            ...(includeInactive ? {} : { estado: 'Activo' }),
           },
         },
       };

@@ -74,6 +74,13 @@ export class ProgressService {
     const skip = (page - 1) * limit;
     const take = limit;
 
+    // 0. Verificar estado del curso para saber si incluimos inactivos
+    const curso = await this.prisma.curso.findUnique({
+      where: { id: idCurso },
+      select: { deletedAt: true },
+    });
+    const includeInactive = !!curso?.deletedAt;
+
     try {
       // 1. Construir el WHERE dinámicamente
       const where = this.buildWhereClause(
@@ -83,6 +90,7 @@ export class ProgressService {
         starsRange,
         attemptsRange,
         activityRange,
+        includeInactive,
       );
 
       // 2. Construir el ORDER BY dinámicamente
@@ -641,12 +649,17 @@ export class ProgressService {
     starsRange?: StarsRange,
     attemptsRange?: AttemptsRange,
     activityRange?: ActivityRange,
+    includeInactive: boolean = false,
   ): Prisma.AlumnoCursoWhereInput {
     // Base: Siempre filtramos por curso y estado activo
     const where: Prisma.AlumnoCursoWhereInput = {
       idCurso: idCurso,
-      estado: 'Activo',
     };
+
+    // Si el curso NO está finalizado, filtramos solo activos.
+    if (!includeInactive) {
+      where.estado = 'Activo';
+    }
 
     // Filtro de Búsqueda (nombre/apellido)
     if (search) {

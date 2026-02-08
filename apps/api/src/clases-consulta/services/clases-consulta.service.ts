@@ -20,6 +20,10 @@ import {
 } from '@prisma/client';
 import { getDiaSemanaEnum, timeToDate } from 'src/helpers';
 import { FinalizarClaseDto } from '../dto/finalizar-clase.dto';
+import {
+  checkAlumnoAccess,
+  checkDocenteAccess,
+} from 'src/helpers/access.helper';
 
 @Injectable()
 export class ClasesConsultaService {
@@ -120,10 +124,10 @@ export class ClasesConsultaService {
         // --- 1. Validación de Seguridad ---
 
         // a. Validar que el docente creador pertenece al curso
-        await this.checkDocenteAccess(tx, idDocenteCreador, idCurso);
+        await checkDocenteAccess(tx, idDocenteCreador, idCurso);
 
         // b. Validar que el docente ELEGIDO (idDocente) pertenece al curso
-        await this.checkDocenteAccess(tx, idDocente, idCurso);
+        await checkDocenteAccess(tx, idDocente, idCurso);
 
         // c. Validar que TODAS las consultas estén 'Pendiente'
         const consultas = await tx.consulta.findMany({
@@ -197,9 +201,9 @@ export class ClasesConsultaService {
   async findAll(idCurso: string, user: UserPayload) {
     const idUsuario = user.userId;
     if (user.rol === roles.Docente) {
-      await this.checkDocenteAccess(this.prisma, idUsuario, idCurso);
+      await checkDocenteAccess(this.prisma, idUsuario, idCurso);
     } else {
-      await this.checkAlumnoAccess(this.prisma, idUsuario, idCurso);
+      await checkAlumnoAccess(this.prisma, idUsuario, idCurso);
     }
 
     const clases = await this.prisma.claseConsulta.findMany({
@@ -355,7 +359,7 @@ export class ClasesConsultaService {
 
     try {
       // Validaciones de acceso y estado
-      await this.checkDocenteAccess(this.prisma, user.userId, actual.idCurso);
+      await checkDocenteAccess(this.prisma, user.userId, actual.idCurso);
       if (actual.estadoClase !== estado_clase_consulta.Programada) {
         throw new ForbiddenException(
           'Solo puedes editar clases "Programadas".',
@@ -365,11 +369,7 @@ export class ClasesConsultaService {
       this.validarBloqueoPorTiempo(actual);
 
       if (dto.idDocente) {
-        await this.checkDocenteAccess(
-          this.prisma,
-          dto.idDocente,
-          actual.idCurso,
-        );
+        await checkDocenteAccess(this.prisma, dto.idDocente, actual.idCurso);
       }
 
       const dataToUpdate: Prisma.ClaseConsultaUpdateInput = {
@@ -720,7 +720,7 @@ export class ClasesConsultaService {
     });
     if (!clase) throw new NotFoundException('Clase no encontrada.');
 
-    await this.checkDocenteAccess(this.prisma, user.userId, clase.idCurso);
+    await checkDocenteAccess(this.prisma, user.userId, clase.idCurso);
 
     // Validamos que la clase a cancelar esté programada.
     if (clase.estadoClase !== estado_clase_consulta.Programada) {
@@ -760,46 +760,6 @@ export class ClasesConsultaService {
   }
 
   // --------------- HELPERS PRIVADOS --------------- //
-
-  /**
-   * Helper para verificar el acceso del docente
-   */
-  private async checkDocenteAccess(
-    tx: PrismaService,
-    idDocente: string,
-    idCurso: string,
-  ) {
-    const asignacion = await tx.docenteCurso.findFirst({
-      where: {
-        idDocente,
-        idCurso,
-        estado: 'Activo',
-      },
-    });
-    if (!asignacion) {
-      throw new ForbiddenException('El docente no está activo en este curso.');
-    }
-  }
-
-  /**
-   * Helper para verificar el acceso del alumno
-   */
-  private async checkAlumnoAccess(
-    tx: Prisma.TransactionClient | PrismaService,
-    idAlumno: string,
-    idCurso: string,
-  ) {
-    const inscripcion = await tx.alumnoCurso.findFirst({
-      where: {
-        idAlumno,
-        idCurso,
-        estado: 'Activo',
-      },
-    });
-    if (!inscripcion) {
-      throw new ForbiddenException('El alumno no está activo en este curso.');
-    }
-  }
 
   /**
    * Helper para validar superposición considerando UTC-3 (Argentina)
