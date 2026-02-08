@@ -12,9 +12,6 @@ import { jwtDecode } from "jwt-decode";
 import type { Rol } from "../../../types/roles";
 import apiClient from "../../../lib/axios";
 import { roles, type UserData } from "../../../types";
-import { ThemeProvider } from "@mui/material";
-import { theme } from "../../../config/theme.config";
-import ChangePasswordModal from "../components/ChangePasswordModal";
 
 // Defino la interfaz UserToken
 export interface UserToken {
@@ -32,6 +29,7 @@ interface AuthContextType {
   logout: () => void;
   refreshProfile: () => Promise<void>; // <-- Función para recargar datos
   mustChangePassword: boolean;
+  setMustChangePassword: (value: boolean) => void; // <-- Exponemos el setter
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -87,24 +85,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Estado para controlar el modal de cambio de contraseña obligatorio
   const [mustChangePassword, setMustChangePassword] = useState(false);
 
-  // Función auxiliar para verificar si es el primer login
-  const checkFirstLogin = async (userId: string) => {
-    try {
-      const { data } = await apiClient.get<any>(`/users/${userId}`);
-      if (data.ultimoAcceso === null) {
-        setMustChangePassword(true);
-      }
-    } catch (error) {
-      console.error("Error verificando estado del usuario:", error);
-    }
-  };
-
   // Función para obtener/refrescar los datos completos del perfil
   const refreshProfile = useCallback(async () => {
     if (!user?.userId) return;
     try {
       const { data } = await apiClient.get<UserData>(`/users/${user.userId}`);
       setProfile(data);
+
+      // Verificamos si es el primer login (ultimoAcceso null) aquí mismo
+      // para evitar una segunda llamada a la API.
+      // Nota: TypeScript puede quejarse si UserData no tiene ultimoAcceso explícito,
+      // pero viene del backend.
+      if ((data as any).ultimoAcceso === null) {
+        setMustChangePassword(true);
+      }
     } catch (error) {
       console.error("Error obteniendo perfil:", error);
     }
@@ -112,25 +106,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Efecto para verificar token inicial y configurar interceptor
   useEffect(() => {
-    // Si el usuario accede manualmente a /login, limpiamos la sesión para evitar
-    // que se restaure el usuario y aparezcan modales (como el de cambio de contraseña).
-    if (window.location.pathname === "/login") {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("selectedCourseId");
-      setToken(null);
-      setUser(null);
-      setIsLoading(false);
-      return;
-    }
-
     const initialToken = localStorage.getItem("accessToken");
     const validUser = getUserFromToken(initialToken);
     if (validUser) {
       setToken(initialToken);
       setUser(validUser);
-      // Verificamos también al recargar la página
-      checkFirstLogin(validUser.userId);
-      refreshProfile(); // <-- Cargar perfil al inicio
+      // El refreshProfile se ejecutará automáticamente porque 'user' cambió
+      // y está en las dependencias del hook de abajo (o del propio refreshProfile)
       // El interceptor en apiClient se encargará de añadir el header
     } else {
       localStorage.removeItem("accessToken");
@@ -138,7 +120,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
     }
     setIsLoading(false);
-  }, [refreshProfile]); // Añadimos refreshProfile a dependencias
+  }, []); // Ejecutar solo al montar
+
+  // Efecto para cargar el perfil cuando cambia el usuario
+  useEffect(() => {
+    if (user) {
+      refreshProfile();
+    } else {
+      setProfile(null);
+    }
+  }, [user, refreshProfile]);
 
   const login = useCallback(
     async (email: string, password: string) => {
@@ -155,9 +146,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setToken(new_token);
           setUser(newUser);
 
-          // Verificamos si debe cambiar contraseña
-          await checkFirstLogin(newUser.userId);
-          // El useEffect disparará refreshProfile al cambiar 'user'
+          // No llamamos a checkFirstLogin ni refreshProfile aquí manualmente.
+          // Al hacer setUser(newUser), el useEffect de arriba detectará el cambio
+          // y llamará a refreshProfile automáticamente.
 
           // 1. Determinar la ruta "home" basada en el rol
           let homeRoute = "/"; // Fallback
@@ -213,17 +204,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout,
         refreshProfile,
         mustChangePassword,
+        setMustChangePassword,
       }}
     >
       {children}
-      {/* Modal Global de Cambio de Contraseña */}
-      <ThemeProvider theme={theme}>
-        <ChangePasswordModal
-          open={mustChangePassword}
-          userId={user?.userId}
-          onSuccess={() => setMustChangePassword(false)}
-        />
-      </ThemeProvider>
     </AuthContext.Provider>
   );
 };

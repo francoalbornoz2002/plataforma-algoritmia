@@ -216,7 +216,7 @@ export class UsersService {
     });
   }
 
-  async findOne(id: string): Promise<Usuario> {
+  async findOne(id: string): Promise<SafeUser> {
     // Busca un usuario por ID que no haya sido borrado
     const usuario = await this.prisma.usuario.findUnique({
       where: { id, deletedAt: null },
@@ -226,7 +226,9 @@ export class UsersService {
       throw new NotFoundException(`Usuario con ID '${id}' no encontrado.`);
     }
 
-    return usuario;
+    // Excluimos la contraseña antes de devolverlo
+    const { password, ...rest } = usuario;
+    return rest;
   }
 
   async findAlumnoForGame(dto: LoginDto) {
@@ -362,6 +364,12 @@ export class UsersService {
 
     // Preparamos los datos a actualizar
     const dataToUpdate: any = { ...updateUserDto };
+
+    // Si se cambió la contraseña, actualizamos el último acceso
+    // Esto sirve para "marcar" que el usuario ya cumplió con el cambio de contraseña obligatorio
+    if (updateUserDto.password) {
+      dataToUpdate.ultimoAcceso = new Date();
+    }
 
     if (fotoPerfil && fotoPerfil.filename) {
       dataToUpdate.fotoPerfilUrl = `/uploads/${fotoPerfil.filename}`;

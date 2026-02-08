@@ -32,6 +32,15 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales inválidas.');
     }
 
+    // Actualizamos el último acceso SOLO si ya tiene valor (no es el primer login).
+    // Si es null, lo dejamos así para que el frontend detecte que debe cambiar contraseña.
+    if (foundUser.ultimoAcceso) {
+      await this.prisma.usuario.update({
+        where: { id: foundUser.id },
+        data: { ultimoAcceso: new Date() },
+      });
+    }
+
     // Generamos el payload
     const payload = {
       id: foundUser.id,
