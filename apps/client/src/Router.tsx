@@ -27,12 +27,14 @@ import MisSesionesPage from "./features/sesiones-refuerzo/pages/MisSesionesPage"
 import SesionResolverPage from "./features/sesiones-refuerzo/pages/SesionResolverPage";
 import CourseReportsPage from "./features/reports/pages/CourseReportsPage";
 import ReportsPage from "./features/reports/pages/ReportsPage";
+import ResetPasswordPage from "./features/authentication/pages/ResetPasswordPage";
 
 export const AppRouter: React.FC<{}> = () => {
   return (
     <Routes>
       {/* 1. Rutas Públicas */}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/" element={<Navigate to="/login" replace />} />
       {/* 2. Grupo de Rutas Protegidas (Autenticación) */}
       <Route element={<ProtectedRoute />}>

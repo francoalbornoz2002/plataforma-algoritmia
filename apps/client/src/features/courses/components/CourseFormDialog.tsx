@@ -95,6 +95,7 @@ export default function CourseFormDialog({
   courseToEditId,
 }: CourseFormDialogProps) {
   const isEditMode = !!courseToEditId;
+  const baseUrl = import.meta.env.VITE_API_URL_WITHOUT_PREFIX;
 
   // (Estados para datos que no son del formulario)
   const [allDocentes, setAllDocentes] = useState<DocenteParaFiltro[]>([]);
@@ -171,7 +172,7 @@ export default function CourseFormDialog({
           reset(formValues);
 
           if (course.imagenUrl) {
-            setPreviewImage(course.imagenUrl);
+            setPreviewImage(`${baseUrl}${course.imagenUrl}`);
           }
           setSelectedFile(null);
         } catch (err: any) {
@@ -203,6 +204,26 @@ export default function CourseFormDialog({
   // RHF llama a esta función SÓLO SI la validación (Zod) pasa
   const onSubmit: SubmitHandler<CourseFormValues> = async (data) => {
     setError(null); // Limpiar errores de API previos
+
+    // Validar imagen si se seleccionó una nueva
+    if (selectedFile) {
+      const allowedTypes = ["image/jpeg", "image/png"];
+      if (!allowedTypes.includes(selectedFile.type)) {
+        enqueueSnackbar("Solo se permiten archivos JPG, JPEG o PNG.", {
+          variant: "error",
+          anchorOrigin: { vertical: "top", horizontal: "center" },
+        });
+        return;
+      }
+
+      if (selectedFile.size > 2 * 1024 * 1024) {
+        enqueueSnackbar("La imagen no debe superar los 2 MB.", {
+          variant: "error",
+          anchorOrigin: { vertical: "top", horizontal: "center" },
+        });
+        return;
+      }
+    }
 
     // 1. Preparar datos (RHF ya nos da el objeto 'data' validado)
     const docenteIds = data.docentes.map((d) => d.id);
@@ -246,7 +267,7 @@ export default function CourseFormDialog({
       setError(
         error?.response?.data?.message ||
           error.message ||
-          "Error al guardar el curso."
+          "Error al guardar el curso.",
       );
     }
   };
@@ -426,10 +447,17 @@ export default function CourseFormDialog({
                       {...register("imagen")}
                       onChange={handleFileChange}
                       inputProps={{
-                        accept: "image/*",
+                        accept: ".jpg,.jpeg,.png",
                       }}
                     />
                   </Button>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mt: 0.5, textAlign: "center", display: "block" }}
+                  >
+                    Tamaño máximo: 2 MB. Formatos: JPG, PNG.
+                  </Typography>
                   <FormHelperText error={!!errors.imagen}>
                     {errors.imagen?.message as string}
                   </FormHelperText>

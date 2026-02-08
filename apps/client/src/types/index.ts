@@ -105,6 +105,7 @@ export interface UserData {
   genero: Genero;
   email: string;
   rol: roles;
+  fotoPerfilUrl?: string | null;
   createdAt: string | Date;
   updatedAt: string | Date;
   deletedAt?: string | Date | null;

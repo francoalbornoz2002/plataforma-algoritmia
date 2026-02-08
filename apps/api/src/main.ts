@@ -63,6 +63,12 @@ async function bootstrap() {
 
   // Configuración de vistas (Handlebars) para reportes PDF
   app.useStaticAssets(join(__dirname, '..', 'public'));
+
+  // Configuración para servir archivos subidos (imágenes de perfil, cursos, etc.)
+  app.useStaticAssets(join(process.cwd(), 'uploads'), {
+    prefix: '/uploads/',
+  });
+
   app.setBaseViewsDir(join(__dirname, '..', 'src', 'pdf', 'templates'));
   app.setViewEngine('hbs');
 

@@ -10,10 +10,12 @@ import CourseSelectionModal from "../features/courses/components/CourseSelection
 function ContextLayout({
   menuItems,
   user,
+  userPhotoUrl,
   children,
 }: {
   menuItems: MenuItemType[];
   user: UserData;
+  userPhotoUrl?: string | null;
   children: ReactNode;
 }) {
   // 1. Nos conectamos al contexto
@@ -61,6 +63,7 @@ function ContextLayout({
         <Sidebar
           menuItems={menuItems}
           userInitial={(user?.nombre || "U")[0]} // Pasamos la inicial
+          userPhotoUrl={userPhotoUrl} // Pasamos la foto
           onOpenCourseSwitcher={openCourseSwitcher} // Pasamos la función
         >
           {children} {/* El <Outlet /> de DashboardLayout irá aquí */}
@@ -75,6 +78,7 @@ function ContextLayout({
 export default function CourseContextLayout(props: {
   menuItems: MenuItemType[];
   user: UserData;
+  userPhotoUrl?: string | null;
   children: ReactNode;
 }) {
   return (

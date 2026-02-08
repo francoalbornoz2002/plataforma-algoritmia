@@ -20,7 +20,7 @@ export interface FindUsersParams extends BaseFilterParams {
 export interface PaginatedUsersResponse extends PaginatedResponse<UserData> {}
 
 export const findUsers = async (
-  params: FindUsersParams
+  params: FindUsersParams,
 ): Promise<PaginatedUsersResponse> => {
   try {
     const response = await apiClient.get("/users/all", {
@@ -41,7 +41,7 @@ export const findUsers = async (
 
 // --- Función para crear un nuevo usuario ---
 export const createUser = async (
-  userData: CreateUserData
+  userData: CreateUserData,
 ): Promise<UserData> => {
   try {
     // Llama al endpoint POST /users/create
@@ -56,17 +56,38 @@ export const createUser = async (
 // --- Función para actualizar un usuario existente ---
 export const updateUser = async (
   userId: string,
-  userData: UpdateUserData
+  userData: UpdateUserData,
 ): Promise<UserData> => {
   try {
     // Llama al endpoint PATCH /users/edit:id
     const response = await apiClient.patch<UserData>(
       `/users/edit/${userId}`,
-      userData
+      userData,
     );
     return response.data;
   } catch (error) {
     console.error(`Error al actualizar usuario ${userId}:`, error);
+    throw error;
+  }
+};
+
+// --- Función para actualizar el PERFIL (con foto) ---
+export const updateUserProfile = async (
+  userId: string,
+  formData: FormData,
+): Promise<UserData> => {
+  try {
+    // Llama al endpoint PATCH /users/profile/:id con multipart/form-data
+    const response = await apiClient.patch<UserData>(
+      `/users/profile/${userId}`,
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    console.error(`Error al actualizar perfil ${userId}:`, error);
     throw error;
   }
 };

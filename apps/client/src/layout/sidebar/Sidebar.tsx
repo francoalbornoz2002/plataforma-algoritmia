@@ -25,13 +25,13 @@ import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import LogoutIcon from "@mui/icons-material/Logout";
 import MenuIcon from "@mui/icons-material/Menu";
-
-import { Link, useLocation } from "react-router";
 import SideBarList from "./SidebarList";
 import { AccountCircle, School } from "@mui/icons-material";
 import { useCourseContext } from "../../context/CourseContext";
 import type { MenuItemType } from "../../types";
 import { useAuth } from "../../features/authentication/context/AuthProvider";
+import ProfileModal from "../../features/users/components/ProfileModal";
+import { useLocation } from "react-router";
 
 const drawerWidth = 240;
 const closedDrawerWidth = (theme: Theme) => `calc(${theme.spacing(7)} + 1px)`;
@@ -127,6 +127,7 @@ const Drawer = styled(MuiDrawer, {
 export interface SidebarLayoutProps {
   menuItems: MenuItemType[]; // Array de elementos del menú
   userInitial?: string; // Inicial del usuario (opcional)
+  userPhotoUrl?: string | null; // <-- Nueva prop para la foto
   children: React.ReactNode; // Para renderizar el contenido de la página
   onOpenCourseSwitcher?: () => void; // Función para el botón del avatar
 }
@@ -135,11 +136,13 @@ export interface SidebarLayoutProps {
 export default function Sidebar({
   menuItems,
   userInitial = "U",
+  userPhotoUrl,
   children,
   onOpenCourseSwitcher,
 }: SidebarLayoutProps) {
   const [open, setOpen] = useState(false);
   const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
+  const [openProfileModal, setOpenProfileModal] = useState(false); // Estado del modal
   const theme = useTheme();
   const location = useLocation();
   const { logout } = useAuth();
@@ -209,6 +212,11 @@ export default function Sidebar({
     handleCloseUserMenu();
   };
 
+  const handleOpenProfile = () => {
+    setOpenProfileModal(true);
+    handleCloseUserMenu();
+  };
+
   return (
     <Box sx={{ display: "flex" }}>
       <AppBar position="fixed" open={open} style={{ borderRadius: 0 }}>
@@ -236,7 +244,12 @@ export default function Sidebar({
           <Box sx={{ flexShrink: 0 }}>
             <Tooltip title="Opciones de Usuario">
               <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar sx={{ width: 32, height: 32 }}>{userInitial}</Avatar>
+                <Avatar
+                  src={userPhotoUrl || undefined}
+                  sx={{ width: 32, height: 32 }}
+                >
+                  {userInitial}
+                </Avatar>
               </IconButton>
             </Tooltip>
             {/* Menú desplegable del usuario */}
@@ -250,11 +263,8 @@ export default function Sidebar({
               open={Boolean(anchorElUser)}
               onClose={handleCloseUserMenu}
             >
-              <MenuItem
-                onClick={handleCloseUserMenu}
-                component={Link}
-                to="/dashboard/account"
-              >
+              {/* Cambiamos Link por onClick para abrir el modal */}
+              <MenuItem onClick={handleOpenProfile}>
                 <ListItemIcon>
                   <AccountCircle fontSize="small" />
                 </ListItemIcon>
@@ -311,6 +321,12 @@ export default function Sidebar({
         <DrawerHeader />
         {children}
       </Container>
+
+      {/* Modal de Perfil */}
+      <ProfileModal
+        open={openProfileModal}
+        onClose={() => setOpenProfileModal(false)}
+      />
     </Box>
   );
 }

@@ -114,6 +114,28 @@ export class MailService implements OnModuleInit {
     });
   }
 
+  async enviarRestablecerContrasena(
+    email: string,
+    nombre: string,
+    token: string,
+  ) {
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const baseContext = await this.getBaseContext();
+    const resetUrl = `${baseUrl}/reset-password?token=${token}`;
+
+    await this.mailerService.sendMail({
+      to: email,
+      subject: 'Restablecer Contraseña - Algoritmia 🔐',
+      template: 'restablecer-contrasena',
+      context: {
+        ...baseContext,
+        emailTitle: 'Restablecer Contraseña',
+        nombre,
+        resetUrl,
+      },
+    });
+  }
+
   // --- 2. AVISO DE CLASE AUTOMÁTICA (Docentes) ---
   async enviarAvisoClaseAutomatica(
     destinatarios: { email: string; nombre: string }[],

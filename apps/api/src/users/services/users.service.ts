@@ -14,6 +14,8 @@ import * as bcrypt from 'bcrypt';
 import { FindAllUsersDto } from '../dto/find-all-users.dto';
 import { LoginDto } from 'src/auth/dto/login.dto';
 import { MailService } from 'src/mail/services/mail.service';
+import { unlink } from 'fs';
+import { basename, join } from 'path';
 
 // Defino el tipo de usuario sin password a devolver
 type SafeUser = Omit<Usuario, 'password'>;
@@ -318,15 +320,52 @@ export class UsersService {
     };
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
+  async update(
+    id: string,
+    updateUserDto: UpdateUserDto,
+    fotoPerfil?: Express.Multer.File,
+  ) {
+    // 1. Verificar si el usuario existe para obtener su foto actual (si vamos a cambiarla)
+    let oldFotoUrl: string | null = null;
+    if (fotoPerfil) {
+      const usuarioActual = await this.prisma.usuario.findUnique({
+        where: { id },
+        select: { fotoPerfilUrl: true },
+      });
+      if (usuarioActual) {
+        oldFotoUrl = usuarioActual.fotoPerfilUrl;
+      }
+    }
+
     // Si se está actualizando la contraseña, también la hasheamos
     if (updateUserDto.password) {
       updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
     }
-    return this.prisma.usuario.update({
+
+    // Preparamos los datos a actualizar
+    const dataToUpdate: any = { ...updateUserDto };
+
+    if (fotoPerfil && fotoPerfil.filename) {
+      dataToUpdate.fotoPerfilUrl = `/uploads/${fotoPerfil.filename}`;
+    }
+
+    const usuarioActualizado = await this.prisma.usuario.update({
       where: { id },
-      data: updateUserDto,
+      data: dataToUpdate,
     });
+
+    // Si se subió una nueva foto y existía una anterior, borramos la vieja del disco
+    if (fotoPerfil && oldFotoUrl) {
+      const oldFileName = basename(oldFotoUrl);
+      const UPLOADS_PATH = join(process.cwd(), 'uploads');
+      const oldImagePath = join(UPLOADS_PATH, oldFileName);
+
+      unlink(oldImagePath, (err) => {
+        if (err) console.error(`Error eliminando foto antigua: ${err.message}`);
+      });
+    }
+
+    return usuarioActualizado;
   }
 
   async delete(id: string) {

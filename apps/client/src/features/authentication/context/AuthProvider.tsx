@@ -11,7 +11,7 @@ import { useNavigate } from "react-router";
 import { jwtDecode } from "jwt-decode";
 import type { Rol } from "../../../types/roles";
 import apiClient from "../../../lib/axios";
-import { roles } from "../../../types";
+import { roles, type UserData } from "../../../types";
 import { ThemeProvider } from "@mui/material";
 import { theme } from "../../../config/theme.config";
 import ChangePasswordModal from "../components/ChangePasswordModal";
@@ -25,10 +25,12 @@ export interface UserToken {
 interface AuthContextType {
   isAuthenticated: boolean;
   user: UserToken | null;
+  profile: UserData | null; // <-- Nuevo estado con datos completos
   token: string | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  refreshProfile: () => Promise<void>; // <-- Función para recargar datos
   mustChangePassword: boolean;
 }
 
@@ -73,11 +75,12 @@ const getUserFromToken = (token: string | null): UserToken | null => {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(() =>
-    localStorage.getItem("accessToken")
+    localStorage.getItem("accessToken"),
   ); // Lee token inicial
   const [user, setUser] = useState<UserToken | null>(() =>
-    getUserFromToken(token)
+    getUserFromToken(token),
   ); // Calcula user inicial
+  const [profile, setProfile] = useState<UserData | null>(null); // <-- Estado del perfil
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -95,6 +98,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error("Error verificando estado del usuario:", error);
     }
   };
+
+  // Función para obtener/refrescar los datos completos del perfil
+  const refreshProfile = useCallback(async () => {
+    if (!user?.userId) return;
+    try {
+      const { data } = await apiClient.get<UserData>(`/users/${user.userId}`);
+      setProfile(data);
+    } catch (error) {
+      console.error("Error obteniendo perfil:", error);
+    }
+  }, [user?.userId]);
 
   // Efecto para verificar token inicial y configurar interceptor
   useEffect(() => {
@@ -116,6 +130,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(validUser);
       // Verificamos también al recargar la página
       checkFirstLogin(validUser.userId);
+      refreshProfile(); // <-- Cargar perfil al inicio
       // El interceptor en apiClient se encargará de añadir el header
     } else {
       localStorage.removeItem("accessToken");
@@ -123,14 +138,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
     }
     setIsLoading(false);
-  }, []);
+  }, [refreshProfile]); // Añadimos refreshProfile a dependencias
 
   const login = useCallback(
     async (email: string, password: string) => {
       try {
         const response = await apiClient.post<{ accessToken: string }>(
           "/auth/login",
-          { email, password }
+          { email, password },
         );
         const new_token = response.data.accessToken;
         const newUser = getUserFromToken(new_token);
@@ -142,6 +157,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
           // Verificamos si debe cambiar contraseña
           await checkFirstLogin(newUser.userId);
+          // El useEffect disparará refreshProfile al cambiar 'user'
 
           // 1. Determinar la ruta "home" basada en el rol
           let homeRoute = "/"; // Fallback
@@ -167,13 +183,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw error;
       }
     },
-    [navigate] // <-- Añadir 'navigate' a las dependencias
+    [navigate], // <-- Añadir 'navigate' a las dependencias
   );
 
   const logout = useCallback(() => {
     localStorage.removeItem("accessToken"); // Limpia el token
     setToken(null); // Limpia el estado del token
     setUser(null); // Limpia el estado del usuario
+    setProfile(null); // Limpia el perfil
     setMustChangePassword(false); // Resetea el modal
     localStorage.removeItem("selectedCourseId"); // Limpia el curso seleccionado
     // El interceptor de Axios dejará de añadir el token
@@ -189,10 +206,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       value={{
         isAuthenticated: !!user,
         user,
+        profile,
         token,
         isLoading,
         login,
         logout,
+        refreshProfile,
         mustChangePassword,
       }}
     >

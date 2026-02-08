@@ -35,4 +35,16 @@ export class AuthController {
   async gameLogin(@Body() gameLoginDto: LoginDto) {
     return this.usersService.findAlumnoForGame(gameLoginDto);
   }
+
+  @Post('forgot-password')
+  @Public()
+  async forgotPassword(@Body('email') email: string) {
+    return this.authService.forgotPassword(email);
+  }
+
+  @Post('reset-password')
+  @Public()
+  async resetPassword(@Body() body: { token: string; newPassword: string }) {
+    return this.authService.resetPassword(body.token, body.newPassword);
+  }
 }

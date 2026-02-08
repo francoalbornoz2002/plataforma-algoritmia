@@ -23,7 +23,8 @@ import { Box, CircularProgress } from "@mui/material"; // Para el 'loading'
 import { useAuth } from "../features/authentication/context/AuthProvider";
 
 export default function SidebarLayout() {
-  const { user } = useAuth() as { user: UserData | null };
+  const { user, profile } = useAuth(); // Usamos 'profile' que tiene los datos completos
+  const baseUrl = import.meta.env.VITE_API_URL_WITHOUT_PREFIX;
 
   // --- 1. LISTA DE ADMIN (prefijo /dashboard) ---
   const itemsAdmin: MenuItemType[] = [
@@ -142,7 +143,10 @@ export default function SidebarLayout() {
     return (
       <Sidebar
         menuItems={sidebarItems}
-        userInitial={(user?.nombre || "U")[0]}
+        userInitial={(profile?.nombre || "U")[0]}
+        userPhotoUrl={
+          profile?.fotoPerfilUrl ? `${baseUrl}${profile.fotoPerfilUrl}` : null
+        }
         // No pasamos 'onOpenCourseSwitcher', así que el botón no aparecerá
       >
         <Outlet />
@@ -153,7 +157,13 @@ export default function SidebarLayout() {
   // 2. Si es Docente o Alumno, renderiza el layout "Guardián"
   // (Este componente ya incluye el <Sidebar> y el <Outlet> dentro)
   return (
-    <CourseContextLayout menuItems={sidebarItems} user={user}>
+    <CourseContextLayout
+      menuItems={sidebarItems}
+      user={profile || (user as any)} // Pasamos profile preferentemente
+      userPhotoUrl={
+        profile?.fotoPerfilUrl ? `${baseUrl}${profile.fotoPerfilUrl}` : null
+      }
+    >
       <Outlet />
     </CourseContextLayout>
   );

@@ -9,6 +9,8 @@ import {
   UseGuards,
   Query,
   Req,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
 import { UsersService } from '../services/users.service';
 import { CreateUserDto } from '../dto/create-user.dto';
@@ -20,6 +22,7 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { roles } from '@prisma/client';
 import { FindAllUsersDto } from '../dto/find-all-users.dto';
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('users')
 @ApiTags('users')
@@ -37,8 +40,11 @@ export class UsersController {
   @Roles(roles.Administrador)
   @Get('all')
   @ApiCreatedResponse({ type: UserEntity, isArray: true })
-  findAll(@Query() findAllUsersDto: FindAllUsersDto, @Req() req: AuthenticatedUserRequest) {
-    const adminId = req.user.userId
+  findAll(
+    @Query() findAllUsersDto: FindAllUsersDto,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const adminId = req.user.userId;
     return this.usersService.findAll(findAllUsersDto, adminId);
   }
 
@@ -58,6 +64,16 @@ export class UsersController {
   @Patch('edit/:id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
+  }
+
+  @Patch('profile/:id')
+  @UseInterceptors(FileInterceptor('fotoPerfil'))
+  updateProfile(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+    @UploadedFile() fotoPerfil: Express.Multer.File,
+  ) {
+    return this.usersService.update(id, updateUserDto, fotoPerfil);
   }
 
   @UseGuards(RolesGuard)

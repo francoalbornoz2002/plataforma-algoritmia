@@ -561,6 +561,7 @@ model Usuario {
   genero                generos
   email                 String                      @unique @db.VarChar(255)
   password              String                      @db.VarChar(255)
+  fotoPerfilUrl         String?                     @map("foto_perfil_url")
   rol                   roles
   ultimoAcceso          DateTime?                   @map("ultimo_acceso") @db.Timestamptz(6)
   createdAt             DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)

@@ -22,6 +22,7 @@ import {
 import { useForm, type SubmitHandler, Controller } from "react-hook-form";
 import { useSnackbar } from "notistack";
 import { useAuth } from "../context/AuthProvider";
+import apiClient from "../../../lib/axios";
 
 // --- Importamos el Schema y el Resolver ---
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,6 +31,10 @@ import { Lock, Mail, Visibility, VisibilityOff } from "@mui/icons-material";
 
 export default function LoginPage() {
   const [openDialog, setOpenDialog] = useState(false);
+  const [openForgotDialog, setOpenForgotDialog] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [isSendingForgot, setIsSendingForgot] = useState(false);
+
   const { enqueueSnackbar } = useSnackbar();
   const { login } = useAuth();
 
@@ -55,6 +60,26 @@ export default function LoginPage() {
 
   const handleOpenDialog = () => setOpenDialog(true);
   const handleCloseDialog = () => setOpenDialog(false);
+
+  const handleOpenForgotDialog = () => setOpenForgotDialog(true);
+  const handleCloseForgotDialog = () => setOpenForgotDialog(false);
+
+  const handleSendForgotPassword = async () => {
+    if (!forgotEmail) return;
+    setIsSendingForgot(true);
+    try {
+      await apiClient.post("/auth/forgot-password", { email: forgotEmail });
+      enqueueSnackbar(
+        "Si el correo existe, recibirás un enlace para restablecer tu contraseña.",
+        { variant: "success" },
+      );
+      handleCloseForgotDialog();
+    } catch (error) {
+      enqueueSnackbar("Error al procesar la solicitud.", { variant: "error" });
+    } finally {
+      setIsSendingForgot(false);
+    }
+  };
 
   // --- Función 'onSubmit' (actualizada) ---
   const onSubmit: SubmitHandler<LoginFormInputs> = async (data) => {
@@ -211,7 +236,12 @@ export default function LoginPage() {
                 />
               )}
             />
-            <Link href="#" variant="body2">
+            <Link
+              component="button"
+              type="button"
+              variant="body2"
+              onClick={handleOpenForgotDialog}
+            >
               Olvidé mi contraseña
             </Link>
           </Stack>
@@ -255,6 +285,34 @@ export default function LoginPage() {
         <DialogActions>
           <Button onClick={handleCloseDialog} autoFocus>
             Entendido
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modal de "Olvidé mi contraseña" */}
+      <Dialog open={openForgotDialog} onClose={handleCloseForgotDialog}>
+        <DialogTitle>Recuperar Contraseña</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            Ingresa tu correo electrónico y te enviaremos un enlace para
+            restablecer tu contraseña.
+          </DialogContentText>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="forgot-email"
+            label="Correo electrónico"
+            type="email"
+            fullWidth
+            variant="outlined"
+            value={forgotEmail}
+            onChange={(e) => setForgotEmail(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseForgotDialog}>Cancelar</Button>
+          <Button onClick={handleSendForgotPassword} disabled={isSendingForgot}>
+            {isSendingForgot ? "Enviando..." : "Enviar"}
           </Button>
         </DialogActions>
       </Dialog>
