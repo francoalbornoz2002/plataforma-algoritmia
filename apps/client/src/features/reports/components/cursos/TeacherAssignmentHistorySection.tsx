@@ -3,20 +3,19 @@
 import { useState, useEffect } from "react";
 import {
   Box,
-  Button,
   Typography,
   Alert,
   Paper,
   Chip,
   Stack,
   Divider,
-  ButtonGroup,
   Autocomplete,
   TextField,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
+import CategoryIcon from "@mui/icons-material/Category";
 import { LineChart } from "@mui/x-charts/LineChart";
 import {
   getTeacherAssignmentHistory,
@@ -159,55 +158,43 @@ export default function TeacherAssignmentHistorySection() {
 
       <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
         <Stack spacing={2}>
-          {/* Fila Superior */}
-          <Stack
-            direction={{ xs: "column", md: "row" }}
-            alignItems={{ xs: "flex-start", md: "center" }}
-            spacing={2}
-          >
-            <Box>
-              <Typography variant="subtitle2" gutterBottom>
-                Tipo de Movimiento
-              </Typography>
-              <ButtonGroup size="small">
-                <Button
-                  variant={
-                    type === TipoMovimientoAsignacion.TODOS
-                      ? "contained"
-                      : "outlined"
-                  }
-                  onClick={() => setType(TipoMovimientoAsignacion.TODOS)}
-                  color="info"
-                >
-                  Todos
-                </Button>
-                <Button
-                  variant={
-                    type === TipoMovimientoAsignacion.ASIGNACION
-                      ? "contained"
-                      : "outlined"
-                  }
-                  onClick={() => setType(TipoMovimientoAsignacion.ASIGNACION)}
-                  color="success"
-                >
-                  Asignaciones
-                </Button>
-                <Button
-                  variant={
-                    type === TipoMovimientoAsignacion.BAJA
-                      ? "contained"
-                      : "outlined"
-                  }
-                  onClick={() => setType(TipoMovimientoAsignacion.BAJA)}
-                  color="error"
-                >
-                  Bajas
-                </Button>
-              </ButtonGroup>
-            </Box>
+          {/* Fila 1: Tipo de Movimiento */}
+          <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+            <CategoryIcon color="action" />
+            <Typography variant="subtitle2">Tipo de Movimiento:</Typography>
+            <Chip
+              label="Todos"
+              onClick={() => setType(TipoMovimientoAsignacion.TODOS)}
+              color="info"
+              variant={
+                type === TipoMovimientoAsignacion.TODOS ? "filled" : "outlined"
+              }
+              clickable
+            />
+            <Chip
+              label="Asignaciones"
+              onClick={() => setType(TipoMovimientoAsignacion.ASIGNACION)}
+              color="success"
+              variant={
+                type === TipoMovimientoAsignacion.ASIGNACION
+                  ? "filled"
+                  : "outlined"
+              }
+              clickable
+            />
+            <Chip
+              label="Bajas"
+              onClick={() => setType(TipoMovimientoAsignacion.BAJA)}
+              color="error"
+              variant={
+                type === TipoMovimientoAsignacion.BAJA ? "filled" : "outlined"
+              }
+              clickable
+            />
+          </Box>
 
-            <QuickDateFilter onApply={handleQuickFilter} />
-          </Stack>
+          {/* Fila 2: Filtros Rápidos */}
+          <QuickDateFilter onApply={handleQuickFilter} />
 
           <Divider />
 

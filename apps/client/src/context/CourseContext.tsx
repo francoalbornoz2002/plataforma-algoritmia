@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   type ReactNode,
+  useCallback,
   useMemo,
 } from "react";
 import type { CursoParaEditar } from "../types"; // Importamos el tipo que ya definimos
@@ -15,6 +16,7 @@ interface CourseContextType {
   setSelectedCourse: (course: CursoParaEditar | null) => void;
   isLoading: boolean; // Para saber si estamos cargando el curso desde localStorage
   isReadOnly: boolean; // <-- NUEVO: Indica si el curso es de solo lectura
+  refreshCourse: () => Promise<void>; // <-- NUEVO: Para recargar datos del curso
 }
 
 // 2. Creamos el Contexto
@@ -69,6 +71,19 @@ export function CourseProvider({ children }: { children: ReactNode }) {
     return !!selectedCourse?.deletedAt;
   }, [selectedCourse]);
 
+  // Función para recargar los datos del curso actual desde la API
+  const refreshCourse = useCallback(async () => {
+    if (!selectedCourse) return;
+    try {
+      const updatedCourse = await findCourseById(selectedCourse.id);
+      setSelectedCourseState(updatedCourse);
+      // Actualizamos también el localStorage por consistencia
+      localStorage.setItem("selectedCourseId", updatedCourse.id);
+    } catch (error) {
+      console.error("Error al refrescar el curso:", error);
+    }
+  }, [selectedCourse]);
+
   // Usamos 'useMemo' para evitar re-renders innecesarios
   const value = useMemo(
     () => ({
@@ -76,8 +91,9 @@ export function CourseProvider({ children }: { children: ReactNode }) {
       setSelectedCourse,
       isLoading,
       isReadOnly,
+      refreshCourse,
     }),
-    [selectedCourse, isLoading, isReadOnly],
+    [selectedCourse, isLoading, isReadOnly, refreshCourse],
   );
 
   return (

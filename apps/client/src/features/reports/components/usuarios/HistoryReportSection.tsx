@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import {
   Box,
-  Button,
   Typography,
   Alert,
   Paper,
@@ -12,12 +11,12 @@ import {
   Select,
   type SelectChangeEvent,
   Divider,
-  ButtonGroup,
   MenuItem,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
+import CategoryIcon from "@mui/icons-material/Category";
 import { roles } from "../../../../types";
 import { LineChart } from "@mui/x-charts/LineChart";
 import {
@@ -164,57 +163,42 @@ export default function HistoryReportSection() {
       </Stack>
       <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
         <Stack spacing={2}>
-          {/* Fila Superior: Tipo de Reporte y Filtros Rápidos */}
+          {/* Fila 1: Tipo de Movimiento */}
+          <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+            <CategoryIcon color="action" />
+            <Typography variant="subtitle2">Tipo de Movimiento:</Typography>
+            <Chip
+              label="Todos"
+              onClick={() => setType(TipoMovimientoUsuario.TODOS)}
+              color="info"
+              variant={
+                type === TipoMovimientoUsuario.TODOS ? "filled" : "outlined"
+              }
+              clickable
+            />
+            <Chip
+              label="Altas"
+              onClick={() => setType(TipoMovimientoUsuario.ALTA)}
+              color="primary"
+              variant={
+                type === TipoMovimientoUsuario.ALTA ? "filled" : "outlined"
+              }
+              clickable
+            />
+            <Chip
+              label="Bajas"
+              onClick={() => setType(TipoMovimientoUsuario.BAJA)}
+              color="error"
+              variant={
+                type === TipoMovimientoUsuario.BAJA ? "filled" : "outlined"
+              }
+              clickable
+            />
+          </Box>
 
-          {/* Filtros */}
-          <Stack
-            direction={{ xs: "column", md: "row" }}
-            alignItems={{ xs: "flex-start", md: "center" }}
-            spacing={2}
-          >
-            <Box>
-              <Typography variant="subtitle2" gutterBottom>
-                Tipo de Movimiento
-              </Typography>
-              <ButtonGroup size="small">
-                <Button
-                  variant={
-                    type === TipoMovimientoUsuario.TODOS
-                      ? "contained"
-                      : "outlined"
-                  }
-                  onClick={() => setType(TipoMovimientoUsuario.TODOS)}
-                  color="info"
-                >
-                  Todos
-                </Button>
-                <Button
-                  variant={
-                    type === TipoMovimientoUsuario.ALTA
-                      ? "contained"
-                      : "outlined"
-                  }
-                  onClick={() => setType(TipoMovimientoUsuario.ALTA)}
-                  color="primary"
-                >
-                  Altas
-                </Button>
-                <Button
-                  variant={
-                    type === TipoMovimientoUsuario.BAJA
-                      ? "contained"
-                      : "outlined"
-                  }
-                  onClick={() => setType(TipoMovimientoUsuario.BAJA)}
-                  color="error"
-                >
-                  Bajas
-                </Button>
-              </ButtonGroup>
-            </Box>
+          {/* Fila 2: Filtros Rápidos */}
+          <QuickDateFilter onApply={handleQuickFilter} />
 
-            <QuickDateFilter onApply={handleQuickFilter} />
-          </Stack>
           <Divider />
           <Stack
             direction="row"

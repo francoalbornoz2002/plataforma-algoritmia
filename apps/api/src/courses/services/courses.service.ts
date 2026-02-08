@@ -681,6 +681,138 @@ export class CoursesService {
     ]);
   }
 
+  /**
+   * Obtiene estadísticas para el dashboard del docente (Hoy y Semana).
+   */
+  async getDashboardStats(idCurso: string) {
+    const now = new Date();
+
+    // Rango: HOY
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(now);
+    todayEnd.setHours(23, 59, 59, 999);
+
+    // Rango: SEMANA ACTUAL (Lunes a Domingo)
+    const day = now.getDay(); // 0 (Dom) - 6 (Sab)
+    const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Ajuste al Lunes
+    const weekStart = new Date(now);
+    weekStart.setDate(diff);
+    weekStart.setHours(0, 0, 0, 0);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
+
+    // Función auxiliar para calcular stats en un rango
+    const getStats = async (start: Date, end: Date) => {
+      // 1. Misiones Completadas
+      const misionesCompletadas = await this.prisma.misionCompletada.count({
+        where: {
+          fechaCompletado: { gte: start, lte: end },
+          progresoAlumno: { alumnoCurso: { idCurso } },
+        },
+      });
+
+      // 2. Consultas Realizadas (Creadas en ese rango)
+      const consultasRealizadas = await this.prisma.consulta.count({
+        where: {
+          idCurso,
+          fechaConsulta: { gte: start, lte: end },
+        },
+      });
+
+      // 3. Misión más difícil (Mayor promedio de intentos en el rango)
+      const topMissionGroup = await this.prisma.misionCompletada.groupBy({
+        by: ['idMision'],
+        where: {
+          fechaCompletado: { gte: start, lte: end },
+          progresoAlumno: { alumnoCurso: { idCurso } },
+        },
+        _avg: { intentos: true },
+        orderBy: { _avg: { intentos: 'desc' } },
+        take: 1,
+      });
+      let misionMasDificil: string | null = null;
+      if (topMissionGroup.length > 0) {
+        const m = await this.prisma.mision.findUnique({
+          where: { id: topMissionGroup[0].idMision },
+          select: { nombre: true },
+        });
+        misionMasDificil = m?.nombre || null;
+      }
+
+      // 4. Alumno más activo (Más misiones completadas en el rango)
+      const topStudentGroup = await this.prisma.misionCompletada.groupBy({
+        by: ['idProgreso'],
+        where: {
+          fechaCompletado: { gte: start, lte: end },
+          progresoAlumno: { alumnoCurso: { idCurso } },
+        },
+        _count: { idMision: true },
+        orderBy: { _count: { idMision: 'desc' } },
+        take: 1,
+      });
+      let alumnoMasActivo: string | null = null;
+      if (topStudentGroup.length > 0) {
+        const p = await this.prisma.progresoAlumno.findUnique({
+          where: { id: topStudentGroup[0].idProgreso },
+          include: { alumnoCurso: { include: { alumno: true } } },
+        });
+        if (p?.alumnoCurso?.alumno) {
+          alumnoMasActivo = `${p.alumnoCurso.alumno.nombre} ${p.alumnoCurso.alumno.apellido}`;
+        }
+      }
+
+      // 5. Dificultad más detectada (Más registros en historial en el rango)
+      const topDiffGroup = await this.prisma.historialDificultadAlumno.groupBy({
+        by: ['idDificultad'],
+        where: {
+          idCurso,
+          fechaCambio: { gte: start, lte: end },
+          gradoNuevo: { not: 'Ninguno' }, // Solo consideramos detecciones reales
+        },
+        _count: { idDificultad: true },
+        orderBy: { _count: { idDificultad: 'desc' } },
+        take: 1,
+      });
+      let dificultadMasDetectada: string | null = null;
+      if (topDiffGroup.length > 0) {
+        const d = await this.prisma.dificultad.findUnique({
+          where: { id: topDiffGroup[0].idDificultad },
+          select: { nombre: true },
+        });
+        dificultadMasDetectada = d?.nombre || null;
+      }
+
+      return {
+        misionesCompletadas,
+        consultasRealizadas,
+        misionMasDificil,
+        alumnoMasActivo,
+        dificultadMasDetectada,
+      };
+    };
+
+    const [todayStats, weekStats, nextClass] = await Promise.all([
+      getStats(todayStart, todayEnd),
+      getStats(weekStart, weekEnd),
+      this.prisma.claseConsulta.findFirst({
+        where: {
+          idCurso,
+          fechaClase: { gte: now },
+          estadoClase: { not: 'Cancelada' },
+        },
+        orderBy: { fechaClase: 'asc' },
+      }),
+    ]);
+
+    return {
+      today: todayStats,
+      week: weekStats,
+      nextClass,
+    };
+  }
+
   // --- MÉTODO HELPER PARA SINCRONIZAR DÍAS ---
   // Esta función es privada y se ejecuta dentro de un transaction.
   private async sincronizarDiasClase(

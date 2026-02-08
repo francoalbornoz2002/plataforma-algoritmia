@@ -450,7 +450,8 @@ export class ReportesService {
     if (
       !tipoMovimiento ||
       tipoMovimiento === TipoMovimientoCurso.TODOS ||
-      tipoMovimiento === TipoMovimientoCurso.BAJA
+      tipoMovimiento === TipoMovimientoCurso.BAJA ||
+      tipoMovimiento === TipoMovimientoCurso.FINALIZACION
     ) {
       const bajas = await this.prisma.curso.findMany({
         where: { deletedAt: { gte: start, lte: end } },
@@ -462,8 +463,20 @@ export class ReportesService {
         },
       });
       bajas.forEach((c) => {
+        const tipo =
+          c.estado === estado_simple.Finalizado ? 'Finalización' : 'Baja';
+
+        // Filtramos según lo solicitado
+        if (tipoMovimiento === TipoMovimientoCurso.BAJA && tipo !== 'Baja')
+          return;
+        if (
+          tipoMovimiento === TipoMovimientoCurso.FINALIZACION &&
+          tipo !== 'Finalización'
+        )
+          return;
+
         events.push({
-          tipo: c.estado === estado_simple.Finalizado ? 'Finalización' : 'Baja',
+          tipo: tipo,
           fecha: c.deletedAt!,
           curso: c.nombre,
           detalle: '-',
@@ -475,7 +488,10 @@ export class ReportesService {
     events.sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
 
     // Generar datos para el gráfico (agrupado por fecha)
-    const timelineMap = new Map<string, { altas: number; bajas: number }>();
+    const timelineMap = new Map<
+      string,
+      { altas: number; bajas: number; finalizaciones: number }
+    >();
 
     // Ordenamos ascendente para el gráfico
     const eventsAsc = [...events].sort(
@@ -485,11 +501,12 @@ export class ReportesService {
     eventsAsc.forEach((e) => {
       const dateKey = e.fecha.toISOString().split('T')[0];
       if (!timelineMap.has(dateKey)) {
-        timelineMap.set(dateKey, { altas: 0, bajas: 0 });
+        timelineMap.set(dateKey, { altas: 0, bajas: 0, finalizaciones: 0 });
       }
       const entry = timelineMap.get(dateKey)!;
       if (e.tipo === 'Alta') entry.altas++;
-      else if (e.tipo === 'Baja' || e.tipo === 'Finalización') entry.bajas++; // Agrupamos bajas y finalizaciones en el gráfico como "salidas"
+      else if (e.tipo === 'Baja') entry.bajas++;
+      else if (e.tipo === 'Finalización') entry.finalizaciones++;
     });
 
     const chartData = Array.from(timelineMap.entries()).map(
@@ -497,6 +514,7 @@ export class ReportesService {
         fecha,
         altas: counts.altas,
         bajas: counts.bajas,
+        finalizaciones: counts.finalizaciones,
       }),
     );
 

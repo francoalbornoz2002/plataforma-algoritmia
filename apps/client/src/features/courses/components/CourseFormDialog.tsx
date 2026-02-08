@@ -75,6 +75,7 @@ interface CourseFormDialogProps {
   onClose: () => void;
   onSave: () => void; // Para notificar a la página principal que debe recargar
   courseToEditId: string | null;
+  isTeacherMode?: boolean; // <-- NUEVA PROP
 }
 
 // --- Valores por defecto para RHF ---
@@ -93,6 +94,7 @@ export default function CourseFormDialog({
   onClose,
   onSave,
   courseToEditId,
+  isTeacherMode = false, // Por defecto false (Admin)
 }: CourseFormDialogProps) {
   const isEditMode = !!courseToEditId;
   const baseUrl = import.meta.env.VITE_API_URL_WITHOUT_PREFIX;
@@ -306,7 +308,7 @@ export default function CourseFormDialog({
                     label="Nombre del Curso"
                     fullWidth
                     required
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isTeacherMode} // <-- Bloqueado para docentes
                     error={!!errors.nombre} // Muestra error de Zod
                     helperText={errors.nombre?.message} // Muestra mensaje de Zod
                   />
@@ -340,6 +342,7 @@ export default function CourseFormDialog({
                         multiple
                         options={allDocentes}
                         loading={docentesLoading}
+                        disabled={isTeacherMode} // <-- Bloqueado para docentes
                         value={value || []} // RHF maneja el valor
                         onChange={(e, newValue) => onChange(newValue)} // RHF maneja el cambio
                         disableCloseOnSelect

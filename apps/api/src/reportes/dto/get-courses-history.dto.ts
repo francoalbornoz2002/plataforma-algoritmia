@@ -1,9 +1,10 @@
 import { IsDateString, IsEnum, IsOptional, IsString } from 'class-validator';
 
 export enum TipoMovimientoCurso {
-  TODOS = 'Todos',
-  ALTA = 'Alta',
-  BAJA = 'Baja',
+  TODOS = 'TODOS',
+  ALTA = 'ALTA',
+  BAJA = 'BAJA',
+  FINALIZACION = 'FINALIZACION',
 }
 
 export class GetCoursesHistoryDto {

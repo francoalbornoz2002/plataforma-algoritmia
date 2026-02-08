@@ -18,6 +18,7 @@ import type {
   PaginatedStudentDifficultiesResponse,
   PaginatedStudentProgressResponse,
   ProgresoCurso,
+  CourseDashboardData,
 } from "../../../types";
 import type { CreateRespuestaFormValues } from "../../consultas/validations/createRespuesta.schema";
 
@@ -64,6 +65,21 @@ export const getCourseOverview = async (
     throw (
       err.response?.data || new Error("Error al obtener el resumen del curso.")
     );
+  }
+};
+
+/**
+ * Obtiene las estadísticas del dashboard para un curso (Docente)
+ */
+export const getCourseDashboardStats = async (
+  idCurso: string,
+): Promise<CourseDashboardData> => {
+  try {
+    const response = await apiClient.get(`/courses/${idCurso}/dashboard-stats`);
+    return response.data;
+  } catch (err: any) {
+    console.error("Error fetching dashboard stats:", err);
+    throw err.response?.data || new Error("Error al obtener estadísticas.");
   }
 };
 

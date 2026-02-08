@@ -188,51 +188,6 @@ export default function InstitutionForm({
         </Typography>
         <Divider sx={{ mb: 3 }} />
         <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
-          {/* --- Sección de Logo --- */}
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              mb: 3,
-            }}
-          >
-            <Box
-              sx={{
-                width: 120,
-                height: 120,
-                border: "1px dashed grey",
-                borderRadius: 2,
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                overflow: "hidden",
-                mb: 1,
-                bgcolor: "#f5f5f5",
-              }}
-            >
-              {previewImage ? (
-                <img
-                  src={previewImage}
-                  alt="Logo Preview"
-                  style={{ maxWidth: "100%", maxHeight: "100%" }}
-                />
-              ) : (
-                <Typography variant="caption" color="text.secondary">
-                  Sin Logo
-                </Typography>
-              )}
-            </Box>
-            <Button component="label" startIcon={<CloudUploadIcon />}>
-              Subir Logo
-              <VisuallyHiddenInput
-                type="file"
-                onChange={handleFileChange}
-                accept="image/*"
-              />
-            </Button>
-          </Box>
-
           <Stack spacing={1.5} sx={{ mb: 2 }}>
             <Stack spacing={1.5} direction="row">
               {/* --- 1. Provincia --- */}
@@ -398,6 +353,61 @@ export default function InstitutionForm({
               />
             </Stack>
           </Stack>
+
+          {/* --- Sección de Logo --- */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              mb: 3,
+              width: "100%",
+            }}
+          >
+            <Box
+              sx={{
+                width: "100%",
+                height: 150,
+                border: "1px dashed grey",
+                borderRadius: 2,
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                overflow: "hidden",
+                mb: 1,
+                bgcolor: "#f5f5f5",
+              }}
+            >
+              {previewImage ? (
+                <img
+                  src={previewImage}
+                  alt="Logo Preview"
+                  style={{
+                    maxWidth: "100%",
+                    maxHeight: "100%",
+                    objectFit: "contain",
+                  }}
+                />
+              ) : (
+                <Typography variant="caption" color="text.secondary">
+                  Vista previa del Logo
+                </Typography>
+              )}
+            </Box>
+            <Button
+              component="label"
+              fullWidth
+              variant="outlined"
+              startIcon={<CloudUploadIcon />}
+            >
+              Seleccionar Logo
+              <VisuallyHiddenInput
+                type="file"
+                onChange={handleFileChange}
+                accept="image/*"
+              />
+            </Button>
+          </Box>
 
           {/* --- Botón y Error --- */}
           <Box>

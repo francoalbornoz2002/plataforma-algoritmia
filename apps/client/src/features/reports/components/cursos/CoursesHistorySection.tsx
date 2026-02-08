@@ -10,15 +10,14 @@ import {
   Chip,
   Stack,
   Divider,
-  ButtonGroup,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
+import CategoryIcon from "@mui/icons-material/Category";
 import {
   getCoursesHistory,
-  TipoMovimientoCurso,
   type CoursesHistoryFilters,
 } from "../../service/reports.service";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
@@ -26,13 +25,11 @@ import PdfExportButton from "../common/PdfExportButton";
 import ExcelExportButton from "../common/ExcelExportButton";
 
 export default function CoursesHistorySection() {
-  const [type, setType] = useState<TipoMovimientoCurso>(
-    TipoMovimientoCurso.TODOS,
-  );
+  const [type, setType] = useState<string>("TODOS");
   const [filters, setFilters] = useState<CoursesHistoryFilters>({
     fechaDesde: "",
     fechaHasta: "",
-    tipoMovimiento: TipoMovimientoCurso.TODOS,
+    tipoMovimiento: "TODOS" as any,
   });
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any[]>([]);
@@ -40,12 +37,13 @@ export default function CoursesHistorySection() {
     dates: string[];
     altas: number[];
     bajas: number[];
+    finalizaciones: number[];
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Sincronizar el tipo seleccionado con los filtros
   useEffect(() => {
-    setFilters((prev) => ({ ...prev, tipoMovimiento: type }));
+    setFilters((prev) => ({ ...prev, tipoMovimiento: type as any }));
   }, [type]);
 
   const handleGenerate = async () => {
@@ -66,11 +64,15 @@ export default function CoursesHistorySection() {
       const dates = backendChartData.map((d: any) => d.fecha);
       const chartAltas = backendChartData.map((d: any) => d.altas);
       const chartBajas = backendChartData.map((d: any) => d.bajas);
+      const chartFinalizaciones = backendChartData.map(
+        (d: any) => d.finalizaciones,
+      );
 
       setChartData({
         dates,
         altas: chartAltas,
         bajas: chartBajas,
+        finalizaciones: chartFinalizaciones,
       });
     } catch (err) {
       console.error(err);
@@ -101,10 +103,11 @@ export default function CoursesHistorySection() {
       headerName: "Movimiento",
       width: 140,
       renderCell: (params) => {
-        let color: "primary" | "error" | "info" | "default" = "default";
+        let color: "primary" | "error" | "info" | "warning" | "default" =
+          "default";
         if (params.value === "Alta") color = "primary";
         else if (params.value === "Baja") color = "error";
-        else if (params.value === "Finalización") color = "info";
+        else if (params.value === "Finalización") color = "warning";
 
         return (
           <Chip
@@ -123,40 +126,6 @@ export default function CoursesHistorySection() {
       valueFormatter: (value: any) =>
         value ? new Date(value).toLocaleDateString() : "-",
     },
-    {
-      field: "detalle",
-      headerName: "Detalle",
-      flex: 1.5,
-      minWidth: 200,
-      renderCell: (params) => {
-        if (!params.value || params.value === "-") return "-";
-        // Si es un objeto (Detalle de Alta con docentes y días)
-        if (typeof params.value === "object") {
-          return (
-            <Stack spacing={0.5} sx={{ py: 1 }}>
-              {params.value.docentes ? (
-                <Typography variant="caption" display="block">
-                  <strong>Docentes al momento de la creación:</strong>{" "}
-                  {params.value.docentes}
-                </Typography>
-              ) : (
-                <Typography
-                  variant="caption"
-                  display="block"
-                  color="text.secondary"
-                >
-                  <em>Sin docentes asignados al crear</em>
-                </Typography>
-              )}
-              <Typography variant="caption" display="block">
-                <strong>Días de clase:</strong> {params.value.dias || "-"}
-              </Typography>
-            </Stack>
-          );
-        }
-        return params.value;
-      },
-    },
   ];
 
   return (
@@ -171,51 +140,42 @@ export default function CoursesHistorySection() {
 
       <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
         <Stack spacing={2}>
-          {/* Fila Superior: Tipo de Movimiento y Filtros Rápidos */}
-          <Stack
-            direction={{ xs: "column", md: "row" }}
-            alignItems={{ xs: "flex-start", md: "center" }}
-            spacing={2}
-          >
-            <Box>
-              <Typography variant="subtitle2" gutterBottom>
-                Tipo de Movimiento
-              </Typography>
-              <ButtonGroup size="small">
-                <Button
-                  variant={
-                    type === TipoMovimientoCurso.TODOS
-                      ? "contained"
-                      : "outlined"
-                  }
-                  onClick={() => setType(TipoMovimientoCurso.TODOS)}
-                  color="info"
-                >
-                  Todos
-                </Button>
-                <Button
-                  variant={
-                    type === TipoMovimientoCurso.ALTA ? "contained" : "outlined"
-                  }
-                  onClick={() => setType(TipoMovimientoCurso.ALTA)}
-                  color="primary"
-                >
-                  Altas
-                </Button>
-                <Button
-                  variant={
-                    type === TipoMovimientoCurso.BAJA ? "contained" : "outlined"
-                  }
-                  onClick={() => setType(TipoMovimientoCurso.BAJA)}
-                  color="error"
-                >
-                  Bajas
-                </Button>
-              </ButtonGroup>
-            </Box>
+          {/* Fila 1: Tipo de Movimiento */}
+          <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
+            <CategoryIcon color="action" />
+            <Typography variant="subtitle2">Tipo de Movimiento:</Typography>
+            <Chip
+              label="Todos"
+              onClick={() => setType("TODOS")}
+              color="info"
+              variant={type === "TODOS" ? "filled" : "outlined"}
+              clickable
+            />
+            <Chip
+              label="Altas"
+              onClick={() => setType("ALTA")}
+              color="primary"
+              variant={type === "ALTA" ? "filled" : "outlined"}
+              clickable
+            />
+            <Chip
+              label="Bajas"
+              onClick={() => setType("BAJA")}
+              color="error"
+              variant={type === "BAJA" ? "filled" : "outlined"}
+              clickable
+            />
+            <Chip
+              label="Finalizaciones"
+              onClick={() => setType("FINALIZACION")}
+              color="warning"
+              variant={type === "FINALIZACION" ? "filled" : "outlined"}
+              clickable
+            />
+          </Box>
 
-            <QuickDateFilter onApply={handleQuickFilter} />
-          </Stack>
+          {/* Fila 2: Filtros Rápidos */}
+          <QuickDateFilter onApply={handleQuickFilter} />
 
           <Divider />
 
@@ -329,8 +289,7 @@ export default function CoursesHistorySection() {
                   },
                 ]}
                 series={[
-                  ...(type === TipoMovimientoCurso.ALTA ||
-                  type === TipoMovimientoCurso.TODOS
+                  ...(type === "ALTA" || type === "TODOS"
                     ? [
                         {
                           data: chartData.altas,
@@ -339,8 +298,7 @@ export default function CoursesHistorySection() {
                         },
                       ]
                     : []),
-                  ...(type === TipoMovimientoCurso.BAJA ||
-                  type === TipoMovimientoCurso.TODOS
+                  ...(type === "BAJA" || type === "TODOS"
                     ? [
                         {
                           data: chartData.bajas,
@@ -349,9 +307,17 @@ export default function CoursesHistorySection() {
                         },
                       ]
                     : []),
+                  ...(type === "FINALIZACION" || type === "TODOS"
+                    ? [
+                        {
+                          data: chartData.finalizaciones,
+                          label: "Finalizaciones",
+                          color: "#ed6c02",
+                        },
+                      ]
+                    : []),
                 ]}
                 height={350}
-                margin={{ left: 30, right: 30, top: 30, bottom: 30 }}
               />
             </Paper>
           ) : (

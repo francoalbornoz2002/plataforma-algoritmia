@@ -42,21 +42,6 @@ export default function InstitutionInfo({
           </Typography>
         ) : (
           <Stack spacing={2.5}>
-            {/* --- Logo --- */}
-            {institucion.logoUrl && (
-              <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
-                <img
-                  src={`${baseUrl}${institucion.logoUrl}`}
-                  alt="Logo Institución"
-                  style={{
-                    maxHeight: 100,
-                    maxWidth: "100%",
-                    objectFit: "contain",
-                  }}
-                />
-              </Box>
-            )}
-
             <Stack direction="row" spacing={2} alignItems="center">
               <ListItemIcon sx={{ minWidth: "auto" }}>
                 <BusinessIcon color="primary" />
@@ -64,13 +49,9 @@ export default function InstitutionInfo({
               <ListItemText
                 primary="Nombre de la Institución"
                 secondary={institucion.nombre}
-                primaryTypographyProps={{
-                  variant: "body2",
-                  color: "text.secondary",
-                }}
-                secondaryTypographyProps={{
-                  variant: "h6",
-                  color: "text.primary",
+                slotProps={{
+                  primary: { variant: "body2", color: "textSecondary" },
+                  secondary: { variant: "body1", color: "textPrimary" },
                 }}
               />
             </Stack>
@@ -82,13 +63,9 @@ export default function InstitutionInfo({
               <ListItemText
                 primary="Ubicación"
                 secondary={`${institucion.direccion}, ${institucion.localidad.localidad}, ${institucion.localidad.provincia.provincia}`}
-                primaryTypographyProps={{
-                  variant: "body2",
-                  color: "text.secondary",
-                }}
-                secondaryTypographyProps={{
-                  variant: "body1",
-                  color: "text.primary",
+                slotProps={{
+                  primary: { variant: "body2", color: "textSecondary" },
+                  secondary: { variant: "body1", color: "textPrimary" },
                 }}
               />
             </Stack>
@@ -100,13 +77,9 @@ export default function InstitutionInfo({
               <ListItemText
                 primary="Email de Contacto"
                 secondary={institucion.email}
-                primaryTypographyProps={{
-                  variant: "body2",
-                  color: "text.secondary",
-                }}
-                secondaryTypographyProps={{
-                  variant: "body1",
-                  color: "text.primary",
+                slotProps={{
+                  primary: { variant: "body2", color: "textSecondary" },
+                  secondary: { variant: "body1", color: "textPrimary" },
                 }}
               />
             </Stack>
@@ -118,16 +91,46 @@ export default function InstitutionInfo({
               <ListItemText
                 primary="Teléfono de Contacto"
                 secondary={institucion.telefono}
-                primaryTypographyProps={{
-                  variant: "body2",
-                  color: "text.secondary",
-                }}
-                secondaryTypographyProps={{
-                  variant: "body1",
-                  color: "text.primary",
+                slotProps={{
+                  primary: { variant: "body2", color: "textSecondary" },
+                  secondary: { variant: "body1", color: "textPrimary" },
                 }}
               />
             </Stack>
+
+            <Stack direction="row" spacing={2} alignItems="center">
+              <ListItemIcon sx={{ minWidth: "auto" }}>
+                <PhoneIcon color="primary" />
+              </ListItemIcon>
+              <ListItemText
+                primary="Logo o imagen de la institución"
+                slotProps={{
+                  primary: { variant: "body2", color: "textSecondary" },
+                }}
+              />
+            </Stack>
+
+            {/* --- Logo --- */}
+            {institucion.logoUrl && (
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "stretch",
+                  mt: 2,
+                }}
+              >
+                <img
+                  src={`${baseUrl}${institucion.logoUrl}`}
+                  alt="Logo Institución"
+                  style={{
+                    maxHeight: 100,
+                    maxWidth: "100%",
+                    objectFit: "contain",
+                  }}
+                />
+              </Box>
+            )}
           </Stack>
         )}
       </CardContent>

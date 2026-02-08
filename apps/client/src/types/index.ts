@@ -724,3 +724,19 @@ export interface ConsultaSimple {
     apellido: string;
   };
 }
+
+// ---------- DASHBOARD DOCENTE ---------- //
+
+export interface DashboardStats {
+  misionesCompletadas: number;
+  consultasRealizadas: number;
+  misionMasDificil: string | null; // Nombre de la misión
+  alumnoMasActivo: string | null; // Nombre del alumno
+  dificultadMasDetectada: string | null; // Nombre de la dificultad
+}
+
+export interface CourseDashboardData {
+  today: DashboardStats;
+  week: DashboardStats;
+  nextClass: ClaseConsulta | null;
+}
