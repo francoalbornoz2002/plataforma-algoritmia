@@ -189,7 +189,15 @@ export class CoursesService {
                 docente: { select: { nombre: true, apellido: true } },
               },
             },
-            _count: { select: { alumnos: true } },
+            _count: {
+              select: {
+                alumnos: {
+                  where: {
+                    estado: estado_simple.Activo,
+                  },
+                },
+              },
+            },
           },
         }),
         this.prisma.curso.count({ where }),

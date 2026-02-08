@@ -15,6 +15,7 @@ import {
   Usuario,
   estado_clase_consulta,
   estado_consulta,
+  estado_sesion,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { FindAllUsersDto } from '../dto/find-all-users.dto';
@@ -469,6 +470,19 @@ export class UsersService {
           inscripcionActiva.idCurso,
         );
       }
+
+      // 5. Cancelar todas las sesiones de refuerzo pendientes del alumno
+      await tx.sesionRefuerzo.updateMany({
+        where: {
+          idAlumno: userId,
+          estado: estado_sesion.Pendiente,
+          deletedAt: null,
+        },
+        data: {
+          estado: estado_sesion.Cancelada,
+          deletedAt: new Date(),
+        },
+      });
     }
 
     // --- LÓGICA PARA DOCENTES ---
