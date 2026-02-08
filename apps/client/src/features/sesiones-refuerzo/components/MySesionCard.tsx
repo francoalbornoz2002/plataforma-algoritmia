@@ -27,7 +27,7 @@ import { EstadoSesionLabels } from "../../../types/traducciones";
 
 interface MySesionCardProps {
   sesion: SesionRefuerzoResumen;
-  onResolver: (idSesion: string) => void;
+  onResolver?: (idSesion: string) => void;
   onViewDetails: (sesion: SesionRefuerzoResumen) => void;
 }
 
@@ -186,7 +186,7 @@ export default function MySesionCard({
 
       <Divider sx={{ mt: "auto" }} />
       <CardActions sx={{ justifyContent: "space-between", p: 1, px: 2 }}>
-        {canResolver && (
+        {canResolver && onResolver && (
           <Button
             variant="contained"
             size="small"

@@ -32,7 +32,7 @@ import { EstadoConsultaLabels, TemasLabels } from "../../../types/traducciones";
 const PAGE_SIZE = 10;
 
 export default function ConsultasPage() {
-  const { selectedCourse } = useCourseContext();
+  const { selectedCourse, isReadOnly } = useCourseContext();
 
   // Estados de la lista
   const [consultas, setConsultas] = useState<ConsultaDocente[]>([]);
@@ -96,7 +96,7 @@ export default function ConsultasPage() {
 
   const handlePageChange = (
     event: React.ChangeEvent<unknown>,
-    value: number
+    value: number,
   ) => {
     setPage(value);
   };
@@ -185,7 +185,9 @@ export default function ConsultasPage() {
                 <ConsultaAccordion
                   key={c.id}
                   consulta={c}
-                  onResponseSuccess={handleResponseSuccess}
+                  onResponseSuccess={
+                    !isReadOnly ? handleResponseSuccess : undefined
+                  }
                 />
               ))}
             </Stack>

@@ -14,6 +14,7 @@ interface CourseContextType {
   selectedCourse: CursoParaEditar | null;
   setSelectedCourse: (course: CursoParaEditar | null) => void;
   isLoading: boolean; // Para saber si estamos cargando el curso desde localStorage
+  isReadOnly: boolean; // <-- NUEVO: Indica si el curso es de solo lectura
 }
 
 // 2. Creamos el Contexto
@@ -63,14 +64,20 @@ export function CourseProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Calculamos si es readOnly basado en si el curso tiene fecha de baja
+  const isReadOnly = useMemo(() => {
+    return !!selectedCourse?.deletedAt;
+  }, [selectedCourse]);
+
   // Usamos 'useMemo' para evitar re-renders innecesarios
   const value = useMemo(
     () => ({
       selectedCourse,
       setSelectedCourse,
       isLoading,
+      isReadOnly,
     }),
-    [selectedCourse, isLoading],
+    [selectedCourse, isLoading, isReadOnly],
   );
 
   return (

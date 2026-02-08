@@ -16,6 +16,7 @@ export enum roles {
 export enum estado_simple {
   Activo = "Activo",
   Inactivo = "Inactivo",
+  Finalizado = "Finalizado",
 }
 
 export enum modalidad {
@@ -59,6 +60,7 @@ export enum estado_consulta {
   A_revisar = "A_revisar",
   Revisada = "Revisada",
   Resuelta = "Resuelta",
+  No_resuelta = "No_resuelta",
 }
 
 export enum estado_clase_consulta {
@@ -181,6 +183,7 @@ export interface CursoConDetalles extends Curso {
   _count: {
     alumnos: number;
   };
+  progresoCurso?: { estado: estado_simple };
 }
 
 export interface DocenteParaFiltro {

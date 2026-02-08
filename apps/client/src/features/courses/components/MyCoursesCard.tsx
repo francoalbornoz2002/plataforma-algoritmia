@@ -32,9 +32,14 @@ export default function MyCoursesCard({
 }: MyCoursesCardProps) {
   // Sacamos el 'estado' del nivel superior y 'curso' del objeto anidado
   const { curso, estado } = inscripcion;
-  const { nombre, imagenUrl, docentes, _count } = curso;
+  const { nombre, imagenUrl, docentes, _count, deletedAt } = curso;
 
-  const isDisabled = estado === "Inactivo";
+  // Lógica de acceso:
+  // - Si el curso tiene 'deletedAt', está FINALIZADO -> Es accesible (Solo Lectura).
+  // - Si NO está finalizado pero el estado es 'Inactivo' -> El alumno abandonó -> NO accesible.
+  const isFinalized = !!deletedAt || estado === "Finalizado";
+  const isDroppedOut = estado === "Inactivo" && !isFinalized;
+  const isDisabled = isDroppedOut;
 
   const cantidadAlumnosInscriptos = _count?.alumnos ?? 0;
 
@@ -59,6 +64,16 @@ export default function MyCoursesCard({
   const fullImageUrl = imagenUrl
     ? `${API_URL_WITHOUT_PREFIX}${imagenUrl}`
     : FOTO_DEFAULT;
+
+  // Configuración del Chip de estado
+  const chipLabel = estado;
+  let chipColor: "success" | "default" | "info" | "error" = "default";
+
+  if (estado === "Finalizado") {
+    chipColor = "info"; // Azul para informativo/histórico
+  } else if (estado === "Activo") {
+    chipColor = "success";
+  }
 
   return (
     <Card
@@ -107,9 +122,9 @@ export default function MyCoursesCard({
               {nombre}
             </Typography>
             <Chip
-              label={estado}
+              label={chipLabel}
               size="small"
-              color={estado === "Activo" ? "success" : "default"}
+              color={chipColor}
               variant="filled"
               sx={{ ml: 1, flexShrink: 0 }}
             />

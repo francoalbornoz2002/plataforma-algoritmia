@@ -36,7 +36,7 @@ import { EstadoConsultaLabels, TemasLabels } from "../../../types/traducciones";
 const PAGE_SIZE = 5;
 
 export default function MyConsultsPage() {
-  const { selectedCourse } = useCourseContext();
+  const { selectedCourse, isReadOnly } = useCourseContext();
 
   // Estados de la lista
   const [consultas, setConsultas] = useState<Consulta[]>([]);
@@ -49,10 +49,10 @@ export default function MyConsultsPage() {
 
   // Guarda la consulta que se va a valorar
   const [consultaToValorar, setConsultaToValorar] = useState<Consulta | null>(
-    null
+    null,
   );
   const [consultaToDelete, setConsultaToDelete] = useState<Consulta | null>(
-    null
+    null,
   );
 
   // Estados para filtros y paginación
@@ -112,7 +112,7 @@ export default function MyConsultsPage() {
 
   const handlePageChange = (
     event: React.ChangeEvent<unknown>,
-    value: number
+    value: number,
   ) => {
     setPage(value);
   };
@@ -180,16 +180,18 @@ export default function MyConsultsPage() {
             </Select>
           </FormControl>
           <Box sx={{ flexGrow: 1 }} />
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => {
-              setEditingConsulta(null);
-              setIsFormModalOpen(true);
-            }}
-          >
-            Nueva Consulta
-          </Button>
+          {!isReadOnly && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => {
+                setEditingConsulta(null);
+                setIsFormModalOpen(true);
+              }}
+            >
+              Nueva Consulta
+            </Button>
+          )}
         </Stack>
       </Paper>
 
@@ -215,12 +217,20 @@ export default function MyConsultsPage() {
                 <ConsultaAccordionAlumno // <-- Usamos el nuevo acordeón
                   key={c.id}
                   consulta={c}
-                  onValorar={() => setConsultaToValorar(c)}
-                  onEdit={() => {
-                    setEditingConsulta(c);
-                    setIsFormModalOpen(true);
-                  }}
-                  onDelete={() => setConsultaToDelete(c)}
+                  onValorar={
+                    !isReadOnly ? () => setConsultaToValorar(c) : undefined
+                  }
+                  onEdit={
+                    !isReadOnly
+                      ? () => {
+                          setEditingConsulta(c);
+                          setIsFormModalOpen(true);
+                        }
+                      : undefined
+                  }
+                  onDelete={
+                    !isReadOnly ? () => setConsultaToDelete(c) : undefined
+                  }
                 />
               ))}
             </Stack>

@@ -53,7 +53,7 @@ type OrdenFiltro =
   | "consultas-asc";
 
 export default function ClasesConsultaPage() {
-  const { selectedCourse } = useCourseContext();
+  const { selectedCourse, isReadOnly } = useCourseContext();
 
   // --- Estados de Datos (Precarga) ---
   const [allClases, setAllClases] = useState<ClaseConsulta[]>([]);
@@ -75,7 +75,7 @@ export default function ClasesConsultaPage() {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [claseToEdit, setClaseToEdit] = useState<ClaseConsulta | null>(null);
   const [claseToDelete, setClaseToDelete] = useState<ClaseConsulta | null>(
-    null
+    null,
   );
   const [claseToView, setClaseToView] = useState<ClaseConsulta | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -101,7 +101,7 @@ export default function ClasesConsultaPage() {
 
   const [finalizeModalOpen, setFinalizeModalOpen] = useState(false);
   const [claseToFinalize, setClaseToFinalize] = useState<ClaseConsulta | null>(
-    null
+    null,
   );
   const [isFinalizing, setIsFinalizing] = useState(false);
 
@@ -149,7 +149,7 @@ export default function ClasesConsultaPage() {
   const handleDeepLinkAction = async (
     action: string,
     clase: ClaseConsulta,
-    nextDateIso: string | null
+    nextDateIso: string | null,
   ) => {
     // Limpiamos URL
     setSearchParams({});
@@ -263,24 +263,24 @@ export default function ClasesConsultaPage() {
       case "fecha-asc":
         clases.sort(
           (a, b) =>
-            new Date(a.fechaClase).getTime() - new Date(b.fechaClase).getTime()
+            new Date(a.fechaClase).getTime() - new Date(b.fechaClase).getTime(),
         );
         break;
       case "consultas-desc":
         clases.sort(
-          (a, b) => b.consultasEnClase.length - a.consultasEnClase.length
+          (a, b) => b.consultasEnClase.length - a.consultasEnClase.length,
         );
         break;
       case "consultas-asc":
         clases.sort(
-          (a, b) => a.consultasEnClase.length - b.consultasEnClase.length
+          (a, b) => a.consultasEnClase.length - b.consultasEnClase.length,
         );
         break;
       case "fecha-desc":
       default:
         clases.sort(
           (a, b) =>
-            new Date(b.fechaClase).getTime() - new Date(a.fechaClase).getTime()
+            new Date(b.fechaClase).getTime() - new Date(a.fechaClase).getTime(),
         );
     }
 
@@ -312,7 +312,7 @@ export default function ClasesConsultaPage() {
         `¡Has aceptado la clase "${clase.nombre}" exitosamente!`,
         {
           variant: "success",
-        }
+        },
       );
 
       // Recargamos la lista para que se actualice la UI (cambie de botón verde a botones normales)
@@ -422,13 +422,15 @@ export default function ClasesConsultaPage() {
             </Select>
           </FormControl>
           <Box sx={{ flexGrow: 1 }} />
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleOpenCreate}
-          >
-            Crear Clase
-          </Button>
+          {!isReadOnly && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleOpenCreate}
+            >
+              Crear Clase
+            </Button>
+          )}
         </Stack>
       </Paper>
       {/* --- 2. Lista de Clases (Cards) --- */}
@@ -448,11 +450,11 @@ export default function ClasesConsultaPage() {
                 <Grid size={{ xs: 12, sm: 6, md: 4 }} key={clase.id}>
                   <ClaseConsultaCard
                     clase={clase}
-                    onEdit={handleOpenEdit}
-                    onDelete={setClaseToDelete}
+                    onEdit={!isReadOnly ? handleOpenEdit : () => {}}
+                    onDelete={!isReadOnly ? setClaseToDelete : () => {}}
                     onViewDetails={setClaseToView}
-                    onAccept={handleAcceptClass}
-                    onFinalize={handleOpenFinalize}
+                    onAccept={!isReadOnly ? handleAcceptClass : undefined}
+                    onFinalize={!isReadOnly ? handleOpenFinalize : undefined}
                   />
                 </Grid>
               ))}

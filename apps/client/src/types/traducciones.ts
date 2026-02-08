@@ -20,6 +20,7 @@ export const EstadoConsultaLabels: Record<estado_consulta, string> = {
   [estado_consulta.A_revisar]: "A Revisar",
   [estado_consulta.Revisada]: "Revisada",
   [estado_consulta.Resuelta]: "Resuelta",
+  [estado_consulta.No_resuelta]: "No Resuelta",
 };
 
 export const EstadoSesionLabels: Record<estado_sesion, string> = {

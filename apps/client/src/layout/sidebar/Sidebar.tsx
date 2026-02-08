@@ -15,7 +15,7 @@ import Avatar from "@mui/material/Avatar";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Tooltip from "@mui/material/Tooltip";
-import { Container, Toolbar, Typography } from "@mui/material";
+import { Container, Toolbar, Typography, Alert } from "@mui/material";
 import MuiAppBar, {
   type AppBarProps as MuiAppBarProps,
 } from "@mui/material/AppBar";
@@ -153,16 +153,19 @@ export default function Sidebar({
   // --- OBTENER EL CONTEXTO DEL CURSO --- //
   // (La envolvemos en un try/catch porque el Admin NO tiene este contexto)
   let selectedCourseName: string | null = null;
+  let isReadOnlyMode = false;
   try {
     // Si somos Alumno o Docente
-    const { selectedCourse, isLoading } = useCourseContext();
+    const { selectedCourse, isLoading, isReadOnly } = useCourseContext();
     if (selectedCourse && !isLoading) {
       // Obtenemos el nombre del curso para mostrarlo en el título de la página
       selectedCourseName = selectedCourse.nombre;
+      isReadOnlyMode = isReadOnly;
     }
   } catch (e) {
     // Si falla (somos Admin), selectedCourseName se queda 'null',
     selectedCourseName = null;
+    isReadOnlyMode = false;
   }
 
   // --- OBTENER EL TÍTULO ACTUAL DE LA PÁGINA --- //
@@ -319,6 +322,12 @@ export default function Sidebar({
         }}
       >
         <DrawerHeader />
+        {isReadOnlyMode && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Este curso ha finalizado. Estás viendo una versión histórica de solo
+            lectura.
+          </Alert>
+        )}
         {children}
       </Container>
 

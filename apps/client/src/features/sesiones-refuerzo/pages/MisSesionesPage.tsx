@@ -39,7 +39,7 @@ import {
 import ResultadoSesionModal from "../components/ResultadoSesionModal";
 
 export default function MisSesionesPage() {
-  const { selectedCourse } = useCourseContext();
+  const { selectedCourse, isReadOnly } = useCourseContext();
   const navigate = useNavigate();
 
   // --- Data States ---
@@ -49,7 +49,7 @@ export default function MisSesionesPage() {
   // --- Filter States ---
   const [docentesList, setDocentesList] = useState<DocenteBasico[]>([]);
   const [dificultadesList, setDificultadesList] = useState<DificultadSimple[]>(
-    []
+    [],
   );
   const [filters, setFilters] = useState<
     Omit<FindSesionesParams, "page" | "limit" | "sort" | "order">
@@ -96,7 +96,7 @@ export default function MisSesionesPage() {
     } catch (err: any) {
       setError(
         err.response?.data?.message ||
-          "Error al cargar mis sesiones de refuerzo."
+          "Error al cargar mis sesiones de refuerzo.",
       );
     } finally {
       setLoading(false);
@@ -125,7 +125,7 @@ export default function MisSesionesPage() {
 
   const handlePageChange = (
     event: React.ChangeEvent<unknown>,
-    value: number
+    value: number,
   ) => {
     setPagination((prev) => ({ ...prev, page: value }));
   };
@@ -245,7 +245,7 @@ export default function MisSesionesPage() {
                   <Grid size={{ xs: 12, sm: 6, md: 4 }} key={sesion.id}>
                     <MySesionCard
                       sesion={sesion}
-                      onResolver={handleResolver}
+                      onResolver={!isReadOnly ? handleResolver : undefined}
                       onViewDetails={setSesionToView}
                     />
                   </Grid>

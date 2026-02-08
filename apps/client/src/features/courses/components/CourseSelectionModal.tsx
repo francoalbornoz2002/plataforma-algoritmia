@@ -70,7 +70,7 @@ export default function CourseSelectionModal({
 
   // --- Estado para el modal de "Unirse" ---
   const [joiningCourse, setJoiningCourse] = useState<CursoConDetalles | null>(
-    null
+    null,
   );
 
   const isStudent = role === roles.Alumno;
@@ -129,7 +129,7 @@ export default function CourseSelectionModal({
           estado: estado_simple.Activo,
         })
           .then((response: PaginatedCoursesResponse) =>
-            setAllCourses(response.data)
+            setAllCourses(response.data),
           )
           .catch((err) => setAllCoursesError(err.message))
           .finally(() => setAllCoursesLoading(false));
@@ -151,7 +151,12 @@ export default function CourseSelectionModal({
 
   // --- Handlers ---
   const handleSelectCourse = (inscripcion: MyCourseEntry) => {
-    if (inscripcion.estado === "Inactivo") return;
+    // Permitimos entrar si está Activo O si el curso está Finalizado (Historial)
+    const isFinalized = !!inscripcion.curso.deletedAt;
+    const isActive = inscripcion.estado === "Activo";
+
+    if (!isActive && !isFinalized) return; // Bloqueado solo si abandonó un curso activo
+
     setSelectedCourse(inscripcion.curso as CursoParaEditar);
     onClose();
   };

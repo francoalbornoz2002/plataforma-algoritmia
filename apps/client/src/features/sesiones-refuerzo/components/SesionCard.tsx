@@ -30,8 +30,8 @@ import { EstadoSesionLabels } from "../../../types/traducciones";
 
 interface SesionCardProps {
   sesion: SesionRefuerzoResumen;
-  onEdit: (sesion: SesionRefuerzoResumen) => void;
-  onDelete: (sesion: SesionRefuerzoResumen) => void;
+  onEdit?: (sesion: SesionRefuerzoResumen) => void;
+  onDelete?: (sesion: SesionRefuerzoResumen) => void;
   onViewDetails: (sesion: SesionRefuerzoResumen) => void;
 }
 
@@ -210,20 +210,24 @@ export default function SesionCard({
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           {canEditOrDelete && (
             <>
-              <Tooltip title="Editar Sesión">
-                <IconButton size="small" onClick={() => onEdit(sesion)}>
-                  <EditIcon />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Cancelar Sesión">
-                <IconButton
-                  size="small"
-                  onClick={() => onDelete(sesion)}
-                  color="error"
-                >
-                  <DeleteIcon />
-                </IconButton>
-              </Tooltip>
+              {onEdit && (
+                <Tooltip title="Editar Sesión">
+                  <IconButton size="small" onClick={() => onEdit(sesion)}>
+                    <EditIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
+              {onDelete && (
+                <Tooltip title="Cancelar Sesión">
+                  <IconButton
+                    size="small"
+                    onClick={() => onDelete(sesion)}
+                    color="error"
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
             </>
           )}
         </Box>

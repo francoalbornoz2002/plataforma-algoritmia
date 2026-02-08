@@ -11,6 +11,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SchoolIcon from "@mui/icons-material/School";
 import GroupIcon from "@mui/icons-material/Group";
+import ArchiveIcon from "@mui/icons-material/Archive";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 
 // Datos del curso a pasar al componente Card
@@ -22,12 +23,14 @@ export interface CourseData {
   alumnosInscriptos: number;
   createdAt: Date | null;
   deletedAt: Date | null; // Para determinar el estado activo/inactivo
+  estadoFinal?: string; // Estado explícito (ej: "Finalizado")
 }
 
 interface CourseCardProps {
   course: CourseData;
   onEdit: (course: CourseData) => void;
   onDelete: (id: string) => void;
+  onFinalize: (id: string) => void;
 }
 
 const baseUrl = import.meta.env.VITE_API_URL_WITHOUT_PREFIX;
@@ -36,6 +39,7 @@ export default function CourseCard({
   course,
   onEdit,
   onDelete,
+  onFinalize,
 }: CourseCardProps) {
   const {
     id,
@@ -45,10 +49,17 @@ export default function CourseCard({
     alumnosInscriptos,
     createdAt,
     deletedAt,
+    estadoFinal,
   } = course;
 
-  const estado = deletedAt ? "Inactivo" : "Activo";
+  let estado = deletedAt ? "Inactivo" : "Activo";
+  let chipColor: "success" | "error" | "info" =
+    estado === "Activo" ? "success" : "error";
 
+  if (estadoFinal === "Finalizado") {
+    estado = "Finalizado";
+    chipColor = "info";
+  }
   // --- Lógica para mostrar docentes ---
   let docentesDisplay: string;
   if (docentes.length === 0) {
@@ -111,7 +122,7 @@ export default function CourseCard({
           <Chip
             label={estado}
             size="small"
-            color={estado === "Activo" ? "success" : "error"}
+            color={chipColor}
             variant="filled"
             sx={{ ml: 1, flexShrink: 0 }} // Margen izq y evita que se encoja
           />
@@ -170,6 +181,18 @@ export default function CourseCard({
 
       {/* Acciones (se quedan al fondo) */}
       <CardActions sx={{ justifyContent: "flex-end", pt: 0 }}>
+        <Tooltip title="Finalizar Curso (Cierre de Ciclo)">
+          <span>
+            <IconButton
+              onClick={() => onFinalize(id)}
+              size="small"
+              color="warning"
+              disabled={!!deletedAt}
+            >
+              <ArchiveIcon />
+            </IconButton>
+          </span>
+        </Tooltip>
         <Tooltip title="Editar Curso">
           <span>
             <IconButton

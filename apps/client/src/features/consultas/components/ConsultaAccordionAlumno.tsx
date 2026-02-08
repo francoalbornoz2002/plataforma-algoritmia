@@ -27,9 +27,9 @@ import EstadoConsultaChip from "../../../components/EstadoConsultaChip";
 
 interface ConsultaAccordionAlumnoProps {
   consulta: Consulta;
-  onValorar: (consulta: Consulta) => void;
-  onEdit: (consulta: Consulta) => void;
-  onDelete: (consulta: Consulta) => void;
+  onValorar?: (consulta: Consulta) => void;
+  onEdit?: (consulta: Consulta) => void;
+  onDelete?: (consulta: Consulta) => void;
 }
 
 export default function ConsultaAccordionAlumno({
@@ -146,23 +146,30 @@ export default function ConsultaAccordionAlumno({
               <CardActions sx={{ justifyContent: "flex-end", p: 0, pt: 1 }}>
                 {estado === estado_consulta.Pendiente && (
                   <Box>
-                    <Tooltip title="Editar consulta">
-                      <IconButton size="small" onClick={() => onEdit(consulta)}>
-                        <EditIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Dar de baja consulta">
-                      <IconButton
-                        size="small"
-                        onClick={() => onDelete(consulta)}
-                        color="error"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Tooltip>
+                    {onEdit && (
+                      <Tooltip title="Editar consulta">
+                        <IconButton
+                          size="small"
+                          onClick={() => onEdit(consulta)}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    {onDelete && (
+                      <Tooltip title="Dar de baja consulta">
+                        <IconButton
+                          size="small"
+                          onClick={() => onDelete(consulta)}
+                          color="error"
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Tooltip>
+                    )}
                   </Box>
                 )}
-                {estado === estado_consulta.Revisada && (
+                {estado === estado_consulta.Revisada && onValorar && (
                   <Button
                     size="small"
                     variant="outlined"

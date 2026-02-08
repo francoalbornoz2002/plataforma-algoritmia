@@ -24,7 +24,7 @@ export interface PaginatedCoursesResponse
 
 /* Busca una lista paginada de cursos (para la página principal) */
 export const findCourses = async (
-  params: FindCoursesParams
+  params: FindCoursesParams,
 ): Promise<PaginatedCoursesResponse> => {
   try {
     const response = await apiClient.get("/courses/all", {
@@ -50,7 +50,7 @@ export const findDocentesParaFiltro = async (): Promise<
   } catch (err: any) {
     console.error(
       "Error fetching docentes:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw err.response?.data || new Error("Error al buscar los docentes.");
   }
@@ -67,7 +67,7 @@ export const findCourseById = async (id: string): Promise<CursoParaEditar> => {
   } catch (err: any) {
     console.error(
       `Error fetching course ${id}:`,
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw err.response?.data || new Error("Error al buscar el curso.");
   }
@@ -76,7 +76,7 @@ export const findCourseById = async (id: string): Promise<CursoParaEditar> => {
 /* Crea un nuevo curso. Se usa FormData para incluir la imagen. */
 export const createCourse = async (
   data: CreateCourseData,
-  imagen: File | null
+  imagen: File | null,
 ): Promise<Curso> => {
   const formData = new FormData();
 
@@ -110,7 +110,7 @@ export const createCourse = async (
 export const updateCourse = async (
   id: string,
   data: UpdateCourseData,
-  imagen: File | null
+  imagen: File | null,
 ): Promise<Curso> => {
   const formData = new FormData();
 
@@ -141,7 +141,7 @@ export const updateCourse = async (
   } catch (err: any) {
     console.error(
       `Error updating course ${id}:`,
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw err.response?.data || new Error("Error al actualizar el curso.");
   }
@@ -154,8 +154,21 @@ export const deleteCourse = async (id: string): Promise<void> => {
   } catch (err: any) {
     console.error(
       `Error deleting course ${id}:`,
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw err.response?.data || new Error("Error al dar de baja el curso.");
+  }
+};
+
+/* Finaliza un curso (Cierre de ciclo) */
+export const finalizeCourse = async (id: string): Promise<void> => {
+  try {
+    await apiClient.patch(`/courses/finalize/${id}`);
+  } catch (err: any) {
+    console.error(
+      `Error finalizing course ${id}:`,
+      err.response?.data || err.message,
+    );
+    throw err.response?.data || new Error("Error al finalizar el curso.");
   }
 };

@@ -44,7 +44,7 @@ import SesionFormModal from "../components/SesionFormModal";
 import ResultadoSesionModal from "../components/ResultadoSesionModal";
 
 export default function SesionesRefuerzoPage() {
-  const { selectedCourse } = useCourseContext();
+  const { selectedCourse, isReadOnly } = useCourseContext();
 
   // --- Estados de Datos ---
   const [sesionesData, setSesionesData] =
@@ -54,7 +54,7 @@ export default function SesionesRefuerzoPage() {
   const [docentesList, setDocentesList] = useState<DocenteBasico[]>([]);
   const [alumnosList, setAlumnosList] = useState<DocenteBasico[]>([]); // Reutilizamos DocenteBasico para alumno
   const [dificultadesList, setDificultadesList] = useState<DificultadSimple[]>(
-    []
+    [],
   );
   const [filters, setFilters] = useState<
     Omit<FindSesionesParams, "page" | "limit" | "sort" | "order">
@@ -107,7 +107,7 @@ export default function SesionesRefuerzoPage() {
     } catch (err: any) {
       setError(
         err.response?.data?.message ||
-          "Error al cargar las sesiones de refuerzo."
+          "Error al cargar las sesiones de refuerzo.",
       );
     } finally {
       setLoading(false);
@@ -137,7 +137,7 @@ export default function SesionesRefuerzoPage() {
 
   const handlePageChange = (
     event: React.ChangeEvent<unknown>,
-    value: number
+    value: number,
   ) => {
     setPagination((prev) => ({ ...prev, page: value }));
   };
@@ -255,13 +255,15 @@ export default function SesionesRefuerzoPage() {
             </Select>
           </FormControl>
           <Box sx={{ flexGrow: 1 }} />
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleOpenCreate}
-          >
-            Crear Sesión
-          </Button>
+          {!isReadOnly && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleOpenCreate}
+            >
+              Crear Sesión
+            </Button>
+          )}
         </Stack>
       </Paper>
 
@@ -279,8 +281,8 @@ export default function SesionesRefuerzoPage() {
                   <Grid size={{ xs: 12, sm: 6, md: 4 }} key={sesion.id}>
                     <SesionCard
                       sesion={sesion}
-                      onEdit={handleOpenEdit}
-                      onDelete={setSesionToDelete}
+                      onEdit={!isReadOnly ? handleOpenEdit : undefined}
+                      onDelete={!isReadOnly ? setSesionToDelete : undefined}
                       onViewDetails={setSesionToView}
                     />
                   </Grid>

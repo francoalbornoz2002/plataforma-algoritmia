@@ -31,7 +31,7 @@ import { enqueueSnackbar } from "notistack";
 
 interface ConsultaAccordionProps {
   consulta: ConsultaDocente;
-  onResponseSuccess: () => void; // Para refrescar la lista
+  onResponseSuccess?: () => void; // Para refrescar la lista (Opcional)
 }
 
 export default function ConsultaAccordion({
@@ -61,7 +61,7 @@ export default function ConsultaAccordion({
       enqueueSnackbar("Respuesta enviada correctamente", {
         variant: "success",
       });
-      onResponseSuccess(); // Avisa a la página que refresque
+      if (onResponseSuccess) onResponseSuccess(); // Avisa a la página que refresque
       reset(); // Limpia el formulario
     } catch (err: any) {
       setApiError(err.message || "Error al enviar la respuesta.");
@@ -140,7 +140,7 @@ export default function ConsultaAccordion({
           <Divider />
 
           {/* Formulario de Respuesta (si está Pendiente) */}
-          {isPendiente && (
+          {isPendiente && onResponseSuccess && (
             <Box
               component="form"
               onSubmit={handleSubmit(onSubmit)}

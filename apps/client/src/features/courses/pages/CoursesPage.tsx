@@ -32,6 +32,7 @@ import { estado_simple as EstadoSimpleEnum } from "../../../types";
 import {
   deleteCourse,
   findCourses,
+  finalizeCourse,
   findDocentesParaFiltro,
   type FindCoursesParams,
   type PaginatedCoursesResponse,
@@ -96,8 +97,14 @@ export default function CoursesPage() {
   // Estado para settear el curso a dar de baja
   const [courseToDeleteId, setCourseToDeleteId] = useState<string | null>(null);
 
+  // Estado para settear el curso a finalizar
+  const [courseToFinalizeId, setCourseToFinalizeId] = useState<string | null>(
+    null,
+  );
+
   // Estado del modal para confirmar la baja
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isFinalizeDialogOpen, setIsFinalizeDialogOpen] = useState(false);
 
   // Estado de carga si se está eliminando el curso
   const [isDeleting, setIsDeleting] = useState(false);
@@ -163,6 +170,7 @@ export default function CoursesPage() {
               apellido: dc.docente?.apellido ?? "",
             })),
             alumnosInscriptos: curso._count?.alumnos ?? 0,
+            estadoFinal: curso.progresoCurso?.estado,
           }),
         );
 
@@ -207,6 +215,11 @@ export default function CoursesPage() {
     setIsDeleteDialogOpen(true);
   };
 
+  const handleFinalize = (id: string) => {
+    setCourseToFinalizeId(id);
+    setIsFinalizeDialogOpen(true);
+  };
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingCourseId(null);
@@ -222,6 +235,11 @@ export default function CoursesPage() {
   const handleCloseDeleteDialog = () => {
     setIsDeleteDialogOpen(false);
     setCourseToDeleteId(null);
+  };
+
+  const handleCloseFinalizeDialog = () => {
+    setIsFinalizeDialogOpen(false);
+    setCourseToFinalizeId(null);
   };
 
   const confirmDelete = async () => {
@@ -242,6 +260,30 @@ export default function CoursesPage() {
     } catch (err: any) {
       setError(err.message || "Error al dar de baja el curso.");
       enqueueSnackbar("Error al dar de baja el curso", {
+        variant: "error",
+        autoHideDuration: 3000,
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const confirmFinalize = async () => {
+    if (!courseToFinalizeId) return;
+
+    setIsDeleting(true); // Reusamos estado de carga
+    setError(null);
+    try {
+      await finalizeCourse(courseToFinalizeId);
+      enqueueSnackbar("Curso finalizado con éxito. Pasó a historial.", {
+        variant: "success",
+        autoHideDuration: 3000,
+      });
+      handleCloseFinalizeDialog();
+      setRefetchTrigger((prev) => prev + 1);
+    } catch (err: any) {
+      setError(err.message || "Error al finalizar el curso.");
+      enqueueSnackbar("Error al finalizar el curso", {
         variant: "error",
         autoHideDuration: 3000,
       });
@@ -423,6 +465,7 @@ export default function CoursesPage() {
                       course={curso}
                       onEdit={handleEdit}
                       onDelete={handleDelete}
+                      onFinalize={handleFinalize}
                     />
                   </Grid>
                 ))
@@ -473,6 +516,15 @@ export default function CoursesPage() {
         onConfirm={confirmDelete}
         title="Confirmar Baja de Curso"
         description="¿Estás seguro de que quieres dar de baja este curso? Esta acción es reversible."
+        isLoading={isDeleting}
+      />
+
+      <ConfirmationDialog
+        open={isFinalizeDialogOpen}
+        onClose={handleCloseFinalizeDialog}
+        onConfirm={confirmFinalize}
+        title="Confirmar Finalización de Curso"
+        description="¿Estás seguro de finalizar este curso? Se cerrarán las actas, se cancelarán clases pendientes y pasará a modo 'Solo Lectura' para el historial. Esta acción marca el fin del ciclo lectivo."
         isLoading={isDeleting}
       />
     </Box>
