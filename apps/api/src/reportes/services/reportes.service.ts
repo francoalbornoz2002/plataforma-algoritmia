@@ -658,7 +658,13 @@ export class ReportesService {
         where: {
           idCurso: idCurso,
           fechaInscripcion: { lte: end },
-          OR: [{ fechaBaja: null }, { fechaBaja: { gt: end } }],
+          OR: [
+            { fechaBaja: null },
+            { fechaBaja: { gt: end } },
+            // CORRECCIÓN: Si el estado es 'Finalizado', se incluye aunque la fecha de baja (finalización)
+            // sea anterior a la fecha de corte. Son alumnos que completaron el curso.
+            { estado: estado_simple.Finalizado },
+          ],
         },
         select: {
           idProgreso: true,
@@ -672,7 +678,11 @@ export class ReportesService {
         where: {
           idCurso: idCurso,
           fechaInscripcion: { lte: end },
-          fechaBaja: { lte: end, not: null },
+          // Inactivos reales: Tienen fecha de baja anterior al corte Y NO son finalizados
+          AND: [
+            { fechaBaja: { lte: end, not: null } },
+            { estado: { not: estado_simple.Finalizado } },
+          ],
         },
       });
 
@@ -700,7 +710,10 @@ export class ReportesService {
       if (!progreso) throw new NotFoundException('Progreso no inicializado.');
 
       const students = await this.prisma.alumnoCurso.findMany({
-        where: { idCurso: idCurso, estado: estado_simple.Activo },
+        where: {
+          idCurso: idCurso,
+          estado: { in: [estado_simple.Activo, estado_simple.Finalizado] }, // <-- Incluimos Finalizados
+        },
         select: {
           alumno: { select: { nombre: true, apellido: true } },
           progresoAlumno: { select: { cantMisionesCompletadas: true } },
@@ -837,7 +850,10 @@ export class ReportesService {
 
     // 1. Agrupación por Misión
     const totalAlumnos = await this.prisma.alumnoCurso.count({
-      where: { idCurso: idCurso, estado: estado_simple.Activo },
+      where: {
+        idCurso: idCurso,
+        estado: { in: [estado_simple.Activo, estado_simple.Finalizado] }, // <-- Incluimos Finalizados
+      },
     });
 
     const missionStats: Record<string, any> = {};
@@ -1019,7 +1035,10 @@ export class ReportesService {
     const totalCompletions = completions.length;
     const uniqueStudents = new Set(completions.map((c) => c.idProgreso)).size;
     const totalAlumnos = await this.prisma.alumnoCurso.count({
-      where: { idCurso: idCurso, estado: estado_simple.Activo },
+      where: {
+        idCurso: idCurso,
+        estado: { in: [estado_simple.Activo, estado_simple.Finalizado] }, // <-- Incluimos Finalizados
+      },
     });
 
     const totalEstrellas = completions.reduce((acc, c) => acc + c.estrellas, 0);
@@ -1075,7 +1094,11 @@ export class ReportesService {
         where: {
           idCurso: idCurso,
           fechaInscripcion: { lte: end },
-          OR: [{ fechaBaja: null }, { fechaBaja: { gt: end } }],
+          OR: [
+            { fechaBaja: null },
+            { fechaBaja: { gt: end } },
+            { estado: estado_simple.Finalizado }, // <-- Incluimos Finalizados
+          ],
         },
       });
 
@@ -1106,7 +1129,10 @@ export class ReportesService {
     } else {
       // MODO ACTUAL
       totalAlumnos = await this.prisma.alumnoCurso.count({
-        where: { idCurso: idCurso, estado: estado_simple.Activo },
+        where: {
+          idCurso: idCurso,
+          estado: { in: [estado_simple.Activo, estado_simple.Finalizado] }, // <-- Incluimos Finalizados
+        },
       });
 
       rawDifficulties = await this.prisma.dificultadAlumno.findMany({

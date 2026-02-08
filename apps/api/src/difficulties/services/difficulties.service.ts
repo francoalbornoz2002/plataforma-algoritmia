@@ -14,6 +14,7 @@ import {
   roles,
   temas,
   fuente_cambio_dificultad,
+  estado_simple,
 } from '@prisma/client';
 import { SubmitDifficultyDto } from '../dto/submit-difficulty.dto';
 import { SesionesRefuerzoService } from '../../sesiones-refuerzo/service/sesiones-refuerzo.service';
@@ -139,8 +140,10 @@ export class DifficultiesService {
           // Que estén en este curso Y activos
           some: {
             idCurso: idCurso,
-            // Si el curso está finalizado, no filtramos por estado 'Activo'
-            ...(includeInactive ? {} : { estado: 'Activo' }),
+            // Si el curso está finalizado, mostramos Finalizados y Activos, pero NO Inactivos (Abandonos)
+            estado: includeInactive
+              ? { in: [estado_simple.Activo, estado_simple.Finalizado] }
+              : estado_simple.Activo,
           },
         },
       };
@@ -533,8 +536,21 @@ export class DifficultiesService {
     if (!curso) throw new Error('Curso no encontrado en recalculate'); // Error interno
 
     // 2. Obtener TODOS los registros de dificultad de ESTE curso
+    // CORRECCIÓN: Solo de alumnos que siguen en el curso (Activos o Finalizados)
+    // Excluimos a los 'Inactivo' para no manchar los promedios.
     const allDifAlumnos = await tx.dificultadAlumno.findMany({
-      where: { idCurso: idCurso },
+      where: {
+        idCurso: idCurso,
+        alumno: {
+          cursosDelAlumno: {
+            some: {
+              idCurso: idCurso,
+              // Filtramos por estado en la tabla intermedia
+              estado: { in: [estado_simple.Activo, estado_simple.Finalizado] },
+            },
+          },
+        },
+      },
       select: {
         idAlumno: true,
         idDificultad: true,

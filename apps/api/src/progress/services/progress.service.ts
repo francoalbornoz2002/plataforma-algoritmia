@@ -13,7 +13,8 @@ import {
   StarsRange,
 } from '../dto/find-student-progress.dto';
 import { Prisma } from '@prisma/client';
-import { SubmitMissionDto } from '../dto/submit-mission.dto';
+import { SubmitMissionDto } from '../dto/submit-mission.dto'; // (Importación existente)
+import { estado_simple } from '@prisma/client'; // Aseguramos importar el enum
 
 const TOTAL_MISIONES_JUEGO = 10; // (Hardcodeado por ahora)
 
@@ -656,9 +657,12 @@ export class ProgressService {
       idCurso: idCurso,
     };
 
-    // Si el curso NO está finalizado, filtramos solo activos.
     if (!includeInactive) {
-      where.estado = 'Activo';
+      // Curso Activo: Solo alumnos activos
+      where.estado = estado_simple.Activo;
+    } else {
+      // Curso Finalizado: Alumnos que terminaron (Finalizado) o quedaron Activos. Ocultamos Inactivos (Abandonos).
+      where.estado = { in: [estado_simple.Activo, estado_simple.Finalizado] };
     }
 
     // Filtro de Búsqueda (nombre/apellido)
@@ -817,7 +821,7 @@ export class ProgressService {
       where: {
         alumnoCurso: {
           idCurso: idCurso,
-          estado: 'Activo', // Solo de alumnos activos
+          estado: { in: [estado_simple.Activo, estado_simple.Finalizado] }, // <-- CORRECCIÓN: Incluir Finalizados
         },
       },
     });
@@ -832,7 +836,7 @@ export class ProgressService {
       where: {
         alumnoCurso: {
           idCurso: idCurso,
-          estado: 'Activo',
+          estado: { in: [estado_simple.Activo, estado_simple.Finalizado] }, // <-- CORRECCIÓN: Incluir Finalizados
         },
         // ¡La clave está aquí!
         ultimaActividad: {
