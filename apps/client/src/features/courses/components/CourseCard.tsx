@@ -11,6 +11,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SchoolIcon from "@mui/icons-material/School";
 import GroupIcon from "@mui/icons-material/Group";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 
 // Datos del curso a pasar al componente Card
 export interface CourseData {
@@ -19,6 +20,7 @@ export interface CourseData {
   imagenUrl?: string;
   docentes: { nombre: string; apellido: string }[];
   alumnosInscriptos: number;
+  createdAt: Date | null;
   deletedAt: Date | null; // Para determinar el estado activo/inactivo
 }
 
@@ -35,8 +37,15 @@ export default function CourseCard({
   onEdit,
   onDelete,
 }: CourseCardProps) {
-  const { id, nombre, imagenUrl, docentes, alumnosInscriptos, deletedAt } =
-    course;
+  const {
+    id,
+    nombre,
+    imagenUrl,
+    docentes,
+    alumnosInscriptos,
+    createdAt,
+    deletedAt,
+  } = course;
 
   const estado = deletedAt ? "Inactivo" : "Activo";
 
@@ -132,10 +141,31 @@ export default function CourseCard({
           }}
         >
           <GroupIcon sx={{ fontSize: 18, mr: 1, opacity: 0.8 }} />
-          <Typography variant="body2" color="text.secondary">
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ flexGrow: 1 }}
+          >
             {alumnosInscriptos} Alumnos inscriptos
           </Typography>
         </Box>
+
+        {/* Fila 4: Fecha de creación */}
+        {createdAt && (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              mt: 0.5,
+              color: "text.secondary",
+            }}
+          >
+            <CalendarTodayIcon sx={{ fontSize: 18, mr: 1, opacity: 0.8 }} />
+            <Typography variant="body2" color="text.secondary">
+              Creado el {createdAt.toLocaleDateString("es-AR")}
+            </Typography>
+          </Box>
+        )}
       </CardContent>
 
       {/* Acciones (se quedan al fondo) */}

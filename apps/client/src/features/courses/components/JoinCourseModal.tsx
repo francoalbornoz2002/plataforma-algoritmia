@@ -5,10 +5,12 @@ import {
   DialogActions,
   Button,
   TextField,
-  Alert,
   CircularProgress,
   DialogContentText,
+  InputAdornment,
+  IconButton,
 } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useState, useEffect } from "react";
 // Importamos el servicio de alumno
 import { joinCourse } from "../../users/services/alumnos.service";
@@ -32,6 +34,7 @@ export default function JoinCourseModal({
   onJoinSuccess,
 }: JoinCourseModalProps) {
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,6 +45,7 @@ export default function JoinCourseModal({
       // Pequeño delay para que el usuario no vea el reseteo
       setTimeout(() => {
         setPassword("");
+        setShowPassword(false);
         setError(null);
         setIsJoining(false);
       }, 200);
@@ -97,12 +101,24 @@ export default function JoinCourseModal({
             autoFocus
             name="contrasenaAcceso"
             label="Contraseña del Curso"
-            type="password"
+            type={showPassword ? "text" : "password"}
             fullWidth
             variant="outlined"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={isJoining}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowPassword(!showPassword)}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
         </DialogContent>
         <DialogActions>

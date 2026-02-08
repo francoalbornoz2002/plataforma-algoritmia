@@ -171,7 +171,16 @@ export class CoursesService {
       }
 
       // --- 2. Construir el ORDER BY ---
-      const orderBy: Prisma.CursoOrderByWithRelationInput = { [sort]: order };
+      let orderBy: Prisma.CursoOrderByWithRelationInput;
+
+      if (sort === 'alumnos') {
+        // Ordenamiento especial por cantidad de relaciones
+        orderBy = {
+          alumnos: { _count: order },
+        };
+      } else {
+        orderBy = { [sort]: order };
+      }
 
       // --- 3. Ejecutar consultas ---
       const [cursos, total] = await this.prisma.$transaction([

@@ -42,8 +42,12 @@ import { enqueueSnackbar } from "notistack";
 
 // Definimos opciones de ordenamiento
 const sortOptions = [
-  { field: "nombre", label: "Nombre A-Z" },
-  { field: "createdAt", label: "Más Recientes" },
+  { value: "nombre-asc", label: "Nombre (A-Z)" },
+  { value: "nombre-desc", label: "Nombre (Z-A)" },
+  { value: "createdAt-desc", label: "Más Recientes" },
+  { value: "createdAt-asc", label: "Más Antiguas" },
+  { value: "alumnos-desc", label: "Más Alumnos" },
+  { value: "alumnos-asc", label: "Menos Alumnos" },
 ];
 
 export default function CoursesPage() {
@@ -67,7 +71,7 @@ export default function CoursesPage() {
 
   //Filtro por docente/s
   const [selectedDocentes, setSelectedDocentes] = useState<DocenteParaFiltro[]>(
-    []
+    [],
   );
   // Estados para cargar los docentes al filtro
   const [allDocentes, setAllDocentes] = useState<DocenteParaFiltro[]>([]);
@@ -151,6 +155,7 @@ export default function CoursesPage() {
             nombre: curso.nombre,
             // Handle potential null/undefined for image and deletedAt
             imagenUrl: curso.imagenUrl ?? undefined,
+            createdAt: curso.createdAt ? new Date(curso.createdAt) : null,
             deletedAt: curso.deletedAt ? new Date(curso.deletedAt) : null,
             docentes: curso.docentes.map((dc) => ({
               // Mapeamos los datos del docente
@@ -158,7 +163,7 @@ export default function CoursesPage() {
               apellido: dc.docente?.apellido ?? "",
             })),
             alumnosInscriptos: curso._count?.alumnos ?? 0,
-          })
+          }),
         );
 
         setCursos(mappedCursos);
@@ -247,21 +252,17 @@ export default function CoursesPage() {
 
   const handlePageChange = (
     event: React.ChangeEvent<unknown>,
-    value: number
+    value: number,
   ) => {
     setPage(value);
   };
 
   const handleSortChange = (event: SelectChangeEvent<string>) => {
-    const selectedField = event.target.value;
-    // Basic toggle logic: if selecting the same field, toggle order, else default to asc
-    if (selectedField === sortField) {
-      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
-    } else {
-      setSortField(selectedField);
-      setSortOrder("asc");
-    }
-    setPage(1); // Reset to page 1 when sorting changes
+    const value = event.target.value;
+    const [field, order] = value.split("-");
+    setSortField(field);
+    setSortOrder(order as "asc" | "desc");
+    setPage(1);
   };
 
   // --- AÑADIDOS: Handlers para nuevos filtros ---
@@ -272,7 +273,7 @@ export default function CoursesPage() {
 
   const handleDocentesChange = (
     event: React.SyntheticEvent,
-    newValue: DocenteParaFiltro[]
+    newValue: DocenteParaFiltro[],
   ) => {
     setSelectedDocentes(newValue);
     setPage(1); // Resetear a página 1 al cambiar filtro
@@ -304,22 +305,17 @@ export default function CoursesPage() {
           {/* --- Filtro por ordenamiento --- */}
           <FormControl
             size="small"
-            sx={{ minWidth: 180, width: { xs: "100%", sm: "auto" } }}
+            sx={{ minWidth: 200, width: { xs: "100%", sm: "auto" } }}
           >
             <InputLabel>Ordenar por</InputLabel>
             <Select
-              value={sortField}
+              value={`${sortField}-${sortOrder}`}
               label="Ordenar por"
               onChange={handleSortChange}
             >
               {sortOptions.map((option) => (
-                <MenuItem key={option.field} value={option.field}>
-                  {option.label}{" "}
-                  {sortField === option.field
-                    ? sortOrder === "asc"
-                      ? "↑"
-                      : "↓"
-                    : ""}
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
                 </MenuItem>
               ))}
             </Select>
