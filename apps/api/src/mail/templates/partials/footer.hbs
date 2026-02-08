@@ -1,9 +1,17 @@
     </div>
     <div class="footer">
       {{#if institucion}}
+        {{#if institucion.logoUrl}}
+          <img src="{{institucion.logoUrl}}" alt="{{institucion.nombre}}" style="max-height: 60px; margin-bottom: 5px; display: inline-block;">
+          <br>
+        {{/if}}
         <p><strong>{{institucion.nombre}}</strong></p>
         {{#if institucion.direccion}}<p>{{institucion.direccion}}</p>{{/if}}
-        {{#if institucion.telefono}}<p>Tel: {{institucion.telefono}}</p>{{/if}}
+        <p>
+          {{#if institucion.email}}Email: {{institucion.email}}{{/if}}
+          {{#if institucion.email}}{{#if institucion.telefono}} | {{/if}}{{/if}}
+          {{#if institucion.telefono}}Tel: {{institucion.telefono}}{{/if}}
+        </p>
         <br>
       {{/if}}
       <p>&copy; {{year}} Plataforma Algoritmia. Todos los derechos reservados.</p>

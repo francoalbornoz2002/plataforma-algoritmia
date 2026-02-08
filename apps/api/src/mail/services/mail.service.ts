@@ -105,6 +105,7 @@ export class MailService implements OnModuleInit {
       template: 'bienvenida', // Nombre del archivo .hbs sin extensión
       context: {
         ...baseContext,
+        emailTitle: '¡Bienvenido a Algoritmia! 🎮',
         nombre,
         email, // Para mostrar el usuario
         contrasena,
@@ -158,6 +159,7 @@ export class MailService implements OnModuleInit {
         template: 'clase-automatica',
         context: {
           ...baseContext,
+          emailTitle: 'Nueva Clase de Consulta Automática',
           nombreDocente: docente.nombre,
           nombreCurso: datos.nombreCurso,
           cantidadConsultas: datos.cantidadConsultas,
@@ -197,6 +199,7 @@ export class MailService implements OnModuleInit {
       template: 'sesion-automatica',
       context: {
         ...baseContext,
+        emailTitle: 'Nueva Sesión de Refuerzo Automática 📚',
         nombreAlumno: datos.nombreAlumno,
         nombreCurso: datos.nombreCurso,
         nombreDificultad: datos.nombreDificultad,

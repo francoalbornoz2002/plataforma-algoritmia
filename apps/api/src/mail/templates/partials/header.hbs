@@ -10,12 +10,9 @@
   <div class="wrapper">
     <div class="container">
       <div class="header">
-        {{#if institucion.logoUrl}}
-          <img src="{{institucion.logoUrl}}" alt="Logo" style="max-height: 80px; margin-bottom: 10px; display: inline-block;">
-        {{/if}}
         <h1>
-          {{#if institucion.nombre}}{{institucion.nombre}}{{else}}Algoritmia{{/if}}
+          Algoritmia
         </h1>
-        <div class="header-subtitle">Plataforma Educativa</div>
+        {{#if emailTitle}}<div class="header-subtitle">{{emailTitle}}</div>{{/if}}
       </div>
       <div class="content">
