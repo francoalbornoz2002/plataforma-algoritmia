@@ -16,7 +16,7 @@ import { FindConsultasDto } from 'src/consultas/dto/find-consultas.dto';
 import { CreateConsultaDto } from 'src/consultas/dto/create-consulta.dto';
 import { ValorarConsultaDto } from 'src/consultas/dto/valorar-consulta.dto';
 import { UpdateConsultaDto } from 'src/consultas/dto/update-consulta.dto';
-import { roles } from '@prisma/client';
+import { roles, estado_simple } from '@prisma/client';
 import { checkDocenteAccess } from 'src/helpers/access.helper';
 
 @Injectable()
@@ -54,7 +54,15 @@ export class AlumnosService {
                 },
               },
               _count: {
-                select: { alumnos: true },
+                select: {
+                  alumnos: {
+                    where: {
+                      estado: {
+                        in: [estado_simple.Activo, estado_simple.Finalizado],
+                      },
+                    },
+                  },
+                },
               },
               diasClase: true,
             },
@@ -148,18 +156,13 @@ export class AlumnosService {
 
         if (inscripcionExistente) {
           // El alumno ya estuvo en este curso
-          if (inscripcionExistente.estado === 'Activo') {
+          if (inscripcionExistente.estado === estado_simple.Activo) {
             throw new BadRequestException('Ya estás inscripto en este curso.');
           }
-          // Reactivación
-          await tx.progresoAlumno.update({
-            where: { id: inscripcionExistente.idProgreso },
-            data: { estado: 'Activo' },
-          });
-          return tx.alumnoCurso.update({
-            where: { idAlumno_idCurso: { idAlumno, idCurso } },
-            data: { estado: 'Activo' },
-          });
+          // Regla de Negocio: No se puede volver a cursar el mismo curso
+          throw new BadRequestException(
+            'No puedes volver a inscribirte en un curso del que ya formaste parte (Baja o Finalizado).',
+          );
         } else {
           // --- Inscripción Nueva ---
 

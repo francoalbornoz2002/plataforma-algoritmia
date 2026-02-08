@@ -190,7 +190,15 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
       field: "fecha",
       headerName: "Fecha",
       width: 120,
-      valueFormatter: (value: string) => format(new Date(value), "dd/MM/yyyy"),
+      valueFormatter: (value: string) => {
+        if (!value) return "-";
+        // Parseamos la fecha como UTC para evitar el desfase de zona horaria
+        const date = new Date(value);
+        return format(
+          new Date(date.valueOf() + date.getTimezoneOffset() * 60 * 1000),
+          "dd/MM/yyyy",
+        );
+      },
     },
     { field: "titulo", headerName: "Título", flex: 1, minWidth: 150 },
     { field: "tema", headerName: "Tema", width: 130 },

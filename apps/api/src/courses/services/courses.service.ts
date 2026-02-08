@@ -79,6 +79,7 @@ export class CoursesService {
             contrasenaAcceso, // Deberías hashear esta contraseña
             imagenUrl,
             modalidadPreferencial: modalidadPreferencial,
+            estado: estado_simple.Activo, // <-- Default explícito
             idProgreso: progreso.id,
             idDificultadesCurso: dificultades.id,
             docentes: {
@@ -162,8 +163,7 @@ export class CoursesService {
         where.nombre = { contains: search, mode: 'insensitive' };
       }
       if (estado) {
-        where.deletedAt =
-          estado === estado_simple.Activo ? null : { not: null };
+        where.estado = estado;
       }
       if (docenteIds && docenteIds.length > 0) {
         where.docentes = {
@@ -193,7 +193,7 @@ export class CoursesService {
           include: {
             docentes: {
               where: {
-                estado: 'Activo',
+                estado: { in: ['Activo', 'Finalizado'] }, // <-- CORRECCIÓN: Mostrar docentes activos y finalizados
               },
               include: {
                 docente: { select: { nombre: true, apellido: true } },
@@ -203,13 +203,12 @@ export class CoursesService {
               select: {
                 alumnos: {
                   where: {
-                    estado: estado_simple.Activo,
+                    estado: {
+                      in: [estado_simple.Activo, estado_simple.Finalizado],
+                    },
                   },
                 },
               },
-            },
-            progresoCurso: {
-              select: { estado: true },
             },
           },
         }),
@@ -506,7 +505,7 @@ export class CoursesService {
         // a. Dar de baja el curso principal
         this.prisma.curso.update({
           where: { id: curso.id },
-          data: { deletedAt: new Date() },
+          data: { deletedAt: new Date(), estado: estado_simple.Inactivo }, // <-- Marcamos como Inactivo
         }),
 
         // b. Dar de baja el ProgresoCurso
@@ -611,7 +610,7 @@ export class CoursesService {
       // a. Soft delete del curso (Marca el fin del ciclo y activa modo Solo Lectura)
       this.prisma.curso.update({
         where: { id },
-        data: { deletedAt: new Date() },
+        data: { deletedAt: new Date(), estado: estado_simple.Finalizado }, // <-- Marcamos como Finalizado
       }),
 
       // b. Inactivar relaciones (Alumnos/Docentes/Progreso/Dificultades)

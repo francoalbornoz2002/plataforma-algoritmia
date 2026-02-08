@@ -11,6 +11,7 @@ import {
   Grid,
   Tooltip,
   Typography,
+  IconButton,
 } from "@mui/material";
 
 // 1. Contexto y Tipos
@@ -40,6 +41,8 @@ import {
   findCourses,
   type PaginatedCoursesResponse,
 } from "../services/courses.service";
+import LogoutIcon from "@mui/icons-material/Logout";
+import { useAuth } from "../../authentication/context/AuthProvider";
 
 interface CourseSelectionModalProps {
   open: boolean;
@@ -56,6 +59,7 @@ export default function CourseSelectionModal({
   role,
 }: CourseSelectionModalProps) {
   const { setSelectedCourse } = useCourseContext();
+  const { logout } = useAuth();
   const [tabValue, setTabValue] = useState(0);
 
   // --- Estados para la Pestaña "Mis Cursos" ---
@@ -80,20 +84,18 @@ export default function CourseSelectionModal({
     return isStudent ? findMyStudentCourses : findMyTeacherCourses;
   }, [isStudent]);
 
-  // Creamos un Set con los IDs de los cursos en los que el alumno
-  // ya está inscripto (activa o inactivamente).
-  const enrolledCourseIds = useMemo(() => {
-    // Extraemos el idCurso (que está dentro de 'curso.id')
+  // Creamos un Set con los IDs de TODOS los cursos en los que el alumno tiene historial
+  // (Activo, Inactivo, Finalizado) para bloquear la re-inscripción al MISMO curso.
+  const historyCourseIds = useMemo(() => {
     const ids = myCourses.map((entry) => entry.curso.id);
     // Creamos un Set para búsquedas instantáneas (O(1))
     return new Set(ids);
   }, [myCourses]); // Se recalcula solo si 'myCourses' cambia
 
-  // Verificamos si el alumno ya está inscripto en CUALQUIER curso.
-  const isEnrolledInAnyCourse = useMemo(() => {
+  // Verificamos si el alumno ya está inscripto en algún curso ACTIVO.
+  const hasActiveEnrollment = useMemo(() => {
     if (!isStudent) return false;
-    // Si la lista de "Mis Cursos" tiene al menos un elemento, está inscripto.
-    return myCourses.length > 0;
+    return myCourses.some((entry) => entry.estado === estado_simple.Activo);
   }, [myCourses, isStudent]);
 
   // --- EFECTO: Cargar datos al abrir el modal ---
@@ -143,7 +145,7 @@ export default function CourseSelectionModal({
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     // Si se intenta cambiar a la pestaña "Inscribirse" (índice 1) y el alumno ya está inscripto,
     // no hacemos nada para prevenir la navegación.
-    if (newValue === 1 && isEnrolledInAnyCourse) {
+    if (newValue === 1 && hasActiveEnrollment) {
       return;
     }
     setTabValue(newValue);
@@ -151,11 +153,8 @@ export default function CourseSelectionModal({
 
   // --- Handlers ---
   const handleSelectCourse = (inscripcion: MyCourseEntry) => {
-    // Permitimos entrar si está Activo O si el curso está Finalizado (Historial)
-    const isFinalized = !!inscripcion.curso.deletedAt;
-    const isActive = inscripcion.estado === "Activo";
-
-    if (!isActive && !isFinalized) return; // Bloqueado solo si abandonó un curso activo
+    // Regla estricta: Si fue dado de baja (Inactivo), no puede entrar nunca.
+    if (inscripcion.estado === "Inactivo") return;
 
     setSelectedCourse(inscripcion.curso as CursoParaEditar);
     onClose();
@@ -186,23 +185,42 @@ export default function CourseSelectionModal({
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle align="center">Selecciona un Curso</DialogTitle>
+        <DialogTitle
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            pr: 2,
+          }}
+        >
+          {/* Espaciador para centrar el título visualmente */}
+          <Box sx={{ width: 40 }} />
+          <Typography variant="h6" component="div" sx={{ fontWeight: "bold" }}>
+            Selecciona un Curso
+          </Typography>
+          <Tooltip title="Cerrar Sesión">
+            <IconButton onClick={logout} color="default" edge="end">
+              <LogoutIcon />
+            </IconButton>
+          </Tooltip>
+        </DialogTitle>
+
         <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
           <Tabs value={tabValue} onChange={handleTabChange} centered>
             <Tab label="Mis Cursos" />
             {isStudent && (
               <Tooltip
                 title={
-                  isEnrolledInAnyCourse
-                    ? "Ya estás inscripto en un curso. Solo puedes tener una inscripción a la vez."
+                  hasActiveEnrollment
+                    ? "Ya estás inscripto en un curso activo. Solo puedes tener una inscripción activa a la vez."
                     : ""
                 }
               >
                 <Tab
                   label="Inscribirse a un Curso"
                   sx={{
-                    cursor: isEnrolledInAnyCourse ? "not-allowed" : "pointer",
-                    opacity: isEnrolledInAnyCourse ? 0.6 : 1,
+                    cursor: hasActiveEnrollment ? "not-allowed" : "pointer",
+                    opacity: hasActiveEnrollment ? 0.6 : 1,
                   }}
                 />
               </Tooltip>
@@ -255,7 +273,7 @@ export default function CourseSelectionModal({
             ) : (
               <Grid container spacing={2}>
                 {allCourses.map((curso) => {
-                  const isEnrolled = enrolledCourseIds.has(curso.id);
+                  const isEnrolled = historyCourseIds.has(curso.id);
                   return (
                     <Grid size={{ xs: 12, sm: 6, md: 4 }} key={curso.id}>
                       <JoinCourseCard

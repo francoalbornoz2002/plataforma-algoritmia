@@ -5,13 +5,13 @@ import {
   CardMedia,
   Typography,
   Box,
-  Chip,
 } from "@mui/material";
 import SchoolIcon from "@mui/icons-material/School";
 // Importamos los tipos de los servicios
 import type { InscripcionConCurso } from "../../users/services/alumnos.service";
 import type { AsignacionConCurso } from "../../users/services/docentes.service";
 import { Group } from "@mui/icons-material";
+import EstadoCursoChip from "../../../components/EstadoCursoChip";
 
 // El componente acepta la "inscripción" o "asignación" completa
 type MyCourseEntry = InscripcionConCurso | AsignacionConCurso;
@@ -32,13 +32,12 @@ export default function MyCoursesCard({
 }: MyCoursesCardProps) {
   // Sacamos el 'estado' del nivel superior y 'curso' del objeto anidado
   const { curso, estado } = inscripcion;
-  const { nombre, imagenUrl, docentes, _count, deletedAt } = curso;
+  const { nombre, imagenUrl, docentes, _count } = curso;
 
   // Lógica de acceso:
   // - Si el curso tiene 'deletedAt', está FINALIZADO -> Es accesible (Solo Lectura).
-  // - Si NO está finalizado pero el estado es 'Inactivo' -> El alumno abandonó -> NO accesible.
-  const isFinalized = !!deletedAt || estado === "Finalizado";
-  const isDroppedOut = estado === "Inactivo" && !isFinalized;
+  // - Si el estado es 'Inactivo' -> Fue dado de baja -> SIEMPRE BLOQUEADO.
+  const isDroppedOut = estado === "Inactivo";
   const isDisabled = isDroppedOut;
 
   const cantidadAlumnosInscriptos = _count?.alumnos ?? 0;
@@ -64,16 +63,6 @@ export default function MyCoursesCard({
   const fullImageUrl = imagenUrl
     ? `${API_URL_WITHOUT_PREFIX}${imagenUrl}`
     : FOTO_DEFAULT;
-
-  // Configuración del Chip de estado
-  const chipLabel = estado;
-  let chipColor: "success" | "default" | "info" | "error" = "default";
-
-  if (estado === "Finalizado") {
-    chipColor = "info"; // Azul para informativo/histórico
-  } else if (estado === "Activo") {
-    chipColor = "success";
-  }
 
   return (
     <Card
@@ -121,11 +110,9 @@ export default function MyCoursesCard({
             >
               {nombre}
             </Typography>
-            <Chip
-              label={chipLabel}
-              size="small"
-              color={chipColor}
-              variant="filled"
+            <EstadoCursoChip
+              estado={estado}
+              small
               sx={{ ml: 1, flexShrink: 0 }}
             />
           </Box>

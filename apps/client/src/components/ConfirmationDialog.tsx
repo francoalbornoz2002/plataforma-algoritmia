@@ -15,6 +15,7 @@ interface ConfirmationDialogProps {
   title: string;
   description: string;
   isLoading?: boolean;
+  confirmText?: string;
 }
 
 export default function ConfirmationDialog({
@@ -24,6 +25,7 @@ export default function ConfirmationDialog({
   title,
   description,
   isLoading = false,
+  confirmText = "Confirmar",
 }: ConfirmationDialogProps) {
   return (
     <Dialog open={open} onClose={onClose}>
@@ -36,7 +38,7 @@ export default function ConfirmationDialog({
           Cancelar
         </Button>
         <Button onClick={onConfirm} color="error" disabled={isLoading}>
-          {isLoading ? <CircularProgress size={24} /> : "Confirmar"}
+          {isLoading ? <CircularProgress size={24} /> : confirmText}
         </Button>
       </DialogActions>
     </Dialog>

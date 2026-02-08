@@ -3,12 +3,12 @@ import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
-import Chip from "@mui/material/Chip";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
 import SchoolIcon from "@mui/icons-material/School";
 import GroupIcon from "@mui/icons-material/Group";
 
+import EstadoCursoChip from "../../../components/EstadoCursoChip";
 // Importamos los tipos que necesitamos
 import type { CursoConDetalles, DocenteCursoConDocente } from "../../../types";
 
@@ -34,17 +34,15 @@ export default function JoinCourseCard({
     docentes: docentesAnidados, // Renombramos para evitar confusión
     _count,
     deletedAt,
+    estado: estadoCurso, // <-- Usamos el estado real del curso
   } = course;
-
-  // 1. Calculamos el estado (igual que en CourseCard)
-  const estado = deletedAt ? "Inactivo" : "Activo";
 
   // 2. Calculamos los alumnos (de la prop '_count')
   const alumnosInscriptos = _count?.alumnos ?? 0;
 
   // 3. Mapeamos los docentes (de anidado a plano)
   const docentes = docentesAnidados.map(
-    (dc: DocenteCursoConDocente) => dc.docente
+    (dc: DocenteCursoConDocente) => dc.docente,
   );
 
   // 4. Calculamos el display de docentes (misma lógica de CourseCard)
@@ -66,6 +64,9 @@ export default function JoinCourseCard({
 
   // 5. Calculamos la URL de la imagen
   const fullImageUrl = imagenUrl ? `${API_BASE_URL}${imagenUrl}` : FOTO_DEFAULT;
+
+  // 6. Validar si se permite inscripción (Solo si es Activo y no tiene fecha de baja)
+  const isJoinable = estadoCurso === "Activo" && !deletedAt;
 
   return (
     <Card
@@ -102,11 +103,10 @@ export default function JoinCourseCard({
           >
             {nombre}
           </Typography>
-          <Chip
-            label={estado}
-            size="small"
-            color={estado === "Activo" ? "success" : "error"}
-            variant="filled"
+          <EstadoCursoChip
+            estado={estadoCurso}
+            deletedAt={deletedAt}
+            small
             sx={{ ml: 1, flexShrink: 0 }}
           />
         </Box>
@@ -147,9 +147,15 @@ export default function JoinCourseCard({
         <Button
           variant={isEnrolled ? "outlined" : "contained"} // Cambia el estilo
           onClick={() => onJoin(course)}
-          disabled={isEnrolled} // Deshabilita el botón
+          disabled={isEnrolled || !isJoinable} // <-- Bloqueo si no es inscribible
         >
-          {isEnrolled ? "Ya estás inscripto" : "Inscribirse"}
+          {isEnrolled
+            ? "Ya estás inscripto"
+            : !isJoinable
+              ? estadoCurso === "Finalizado"
+                ? "Curso Finalizado"
+                : "No disponible"
+              : "Inscribirse"}
         </Button>
       </Box>
       {/* --- FIN DEL REEMPLAZO --- */}

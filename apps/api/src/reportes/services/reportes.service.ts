@@ -283,17 +283,27 @@ export class ReportesService {
       OR: [{ deletedAt: null }, { deletedAt: { gt: end } }],
     };
 
-    // Inactivos: (Borrados) Y (Borrados ANTES o EN la fecha de corte)
+    // Inactivos: (Borrados ANTES del corte) Y (Estado es Inactivo)
     const whereInactive: Prisma.CursoWhereInput = {
       ...whereBase,
       deletedAt: { lte: end, not: null },
+      estado: estado_simple.Inactivo,
     };
 
-    const [total, activos, inactivos] = await this.prisma.$transaction([
-      this.prisma.curso.count({ where: whereBase }),
-      this.prisma.curso.count({ where: whereActive }),
-      this.prisma.curso.count({ where: whereInactive }),
-    ]);
+    // Finalizados: (Borrados/Cerrados ANTES del corte) Y (Estado es Finalizado)
+    const whereFinalized: Prisma.CursoWhereInput = {
+      ...whereBase,
+      deletedAt: { lte: end, not: null },
+      estado: estado_simple.Finalizado,
+    };
+
+    const [total, activos, inactivos, finalizados] =
+      await this.prisma.$transaction([
+        this.prisma.curso.count({ where: whereBase }),
+        this.prisma.curso.count({ where: whereActive }),
+        this.prisma.curso.count({ where: whereInactive }),
+        this.prisma.curso.count({ where: whereFinalized }),
+      ]);
 
     // --- LISTADO DE CURSOS ---
     const whereList: Prisma.CursoWhereInput = {
@@ -308,6 +318,9 @@ export class ReportesService {
       whereList.OR = [{ deletedAt: null }, { deletedAt: { gt: end } }];
     } else if (estado === estado_simple.Inactivo) {
       whereList.deletedAt = { lte: end, not: null };
+    } else if (estado === estado_simple.Finalizado) {
+      whereList.deletedAt = { lte: end, not: null };
+      whereList.estado = estado_simple.Finalizado;
     }
 
     const coursesList = await this.prisma.curso.findMany({
@@ -316,15 +329,16 @@ export class ReportesService {
       select: {
         id: true,
         nombre: true,
+        estado: true, // <-- Traemos el estado real
         deletedAt: true,
         createdAt: true,
         alumnos: {
           where: { fechaInscripcion: { lte: end } },
-          select: { fechaBaja: true },
+          select: { fechaBaja: true, estado: true }, // <-- Necesitamos el estado
         },
         docentes: {
           where: { fechaAsignacion: { lte: end } },
-          select: { fechaBaja: true },
+          select: { fechaBaja: true, estado: true }, // <-- Necesitamos el estado
         },
       },
     });
@@ -335,21 +349,36 @@ export class ReportesService {
       let alumnosActivos = 0;
       let alumnosInactivos = 0;
       c.alumnos.forEach((a) => {
-        if (!a.fechaBaja || a.fechaBaja > end) alumnosActivos++;
+        // Consideramos activo si:
+        // 1. No tiene fecha de baja (sigue cursando)
+        // 2. La fecha de baja es posterior al corte (estaba cursando en ese momento)
+        // 3. Su estado es 'Finalizado' (completó el curso, cuenta como matrícula efectiva)
+        if (
+          !a.fechaBaja ||
+          a.fechaBaja > end ||
+          a.estado === estado_simple.Finalizado
+        )
+          alumnosActivos++;
         else alumnosInactivos++;
       });
 
       let docentesActivos = 0;
       let docentesInactivos = 0;
       c.docentes.forEach((d) => {
-        if (!d.fechaBaja || d.fechaBaja > end) docentesActivos++;
+        // Misma lógica para docentes
+        if (
+          !d.fechaBaja ||
+          d.fechaBaja > end ||
+          d.estado === estado_simple.Finalizado
+        )
+          docentesActivos++;
         else docentesInactivos++;
       });
 
       return {
         id: c.id,
         nombre: c.nombre,
-        estado: isActive ? 'Activo' : 'Inactivo',
+        estado: isActive ? 'Activo' : c.estado, // Usamos el estado real (Inactivo o Finalizado)
         createdAt: c.createdAt,
         deletedAt: isActive ? null : c.deletedAt,
         alumnos: { activos: alumnosActivos, inactivos: alumnosInactivos },
@@ -358,7 +387,7 @@ export class ReportesService {
     });
 
     return {
-      kpis: { total, activos, inactivos },
+      kpis: { total, activos, inactivos, finalizados },
       lista: formattedList,
     };
   }
@@ -428,12 +457,13 @@ export class ReportesService {
         select: {
           id: true,
           nombre: true,
+          estado: true, // <-- Necesitamos el estado para saber el tipo de baja
           deletedAt: true,
         },
       });
       bajas.forEach((c) => {
         events.push({
-          tipo: 'Baja',
+          tipo: c.estado === estado_simple.Finalizado ? 'Finalización' : 'Baja',
           fecha: c.deletedAt!,
           curso: c.nombre,
           detalle: '-',
@@ -459,7 +489,7 @@ export class ReportesService {
       }
       const entry = timelineMap.get(dateKey)!;
       if (e.tipo === 'Alta') entry.altas++;
-      else if (e.tipo === 'Baja') entry.bajas++;
+      else if (e.tipo === 'Baja' || e.tipo === 'Finalización') entry.bajas++; // Agrupamos bajas y finalizaciones en el gráfico como "salidas"
     });
 
     const chartData = Array.from(timelineMap.entries()).map(
@@ -1621,7 +1651,8 @@ export class ReportesService {
     const activeConsultations: any[] = [];
 
     allConsultations.forEach((c) => {
-      if (c.deletedAt) {
+      // Consideramos inactiva si está borrada O si fue cerrada sin resolver ("No resuelta")
+      if (c.deletedAt || c.estado === estado_consulta.No_resuelta) {
         inactiveCount++;
       } else {
         activeCount++;
@@ -1635,6 +1666,7 @@ export class ReportesService {
       [estado_consulta.A_revisar]: 0,
       [estado_consulta.Revisada]: 0,
       [estado_consulta.Resuelta]: 0,
+      [estado_consulta.No_resuelta]: 0, // <-- Agregamos el estado faltante
     };
 
     const topicCounts: Record<string, number> = {};
@@ -1656,6 +1688,7 @@ export class ReportesService {
           [estado_consulta.A_revisar]: 0,
           [estado_consulta.Revisada]: 0,
           [estado_consulta.Resuelta]: 0,
+          [estado_consulta.No_resuelta]: 0, // <-- Agregamos el estado faltante
         };
       }
       if (topicStatusCounts[tema][c.estado] !== undefined) {
@@ -1684,6 +1717,11 @@ export class ReportesService {
         value: statusCounts[estado_consulta.Resuelta],
         color: '#4caf50',
       }, // Verde
+      {
+        label: 'No Resuelta',
+        value: statusCounts[estado_consulta.No_resuelta],
+        color: '#9e9e9e', // Gris
+      },
     ];
 
     // Gráfico de Temas (Simple)
@@ -2581,7 +2619,9 @@ export class ReportesService {
     sessions.forEach((s) => {
       // A. Activas vs Inactivas
       const isInactive =
-        s.deletedAt !== null || s.estado === estado_sesion.Cancelada;
+        s.deletedAt !== null ||
+        s.estado === estado_sesion.Cancelada ||
+        s.estado === estado_sesion.No_realizada; // <-- Agregamos No_realizada como inactiva
       if (isInactive) inactiveCount++;
       else activeCount++;
 

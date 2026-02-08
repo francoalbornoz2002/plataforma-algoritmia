@@ -39,7 +39,7 @@ export const findMyCourses = async (): Promise<AsignacionConCurso[]> => {
   } catch (err: any) {
     console.error(
       "Error fetching teacher's courses:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw err.response?.data || new Error("Error al obtener tus cursos.");
   }
@@ -49,17 +49,17 @@ export const findMyCourses = async (): Promise<AsignacionConCurso[]> => {
  * Obtiene el Resumen (KPIs) de un curso específico
  */
 export const getCourseOverview = async (
-  idCurso: string
+  idCurso: string,
 ): Promise<ProgresoCurso> => {
   try {
     const response = await apiClient.get(
-      `/docentes/my/courses/${idCurso}/progress-overview`
+      `/docentes/my/courses/${idCurso}/progress-overview`,
     );
     return response.data;
   } catch (err: any) {
     console.error(
       "Error fetching course overview:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw (
       err.response?.data || new Error("Error al obtener el resumen del curso.")
@@ -72,7 +72,7 @@ export const getCourseOverview = async (
  */
 export const getStudentProgressList = async (
   idCurso: string,
-  params: FindStudentProgressParams
+  params: FindStudentProgressParams,
 ): Promise<PaginatedStudentProgressResponse> => {
   try {
     // 1. Creamos una copia tipada de los parámetros
@@ -93,13 +93,13 @@ export const getStudentProgressList = async (
       `/docentes/my/courses/${idCurso}/progress-students`,
       {
         params: cleanedParams, // Axios convierte esto en query params (ej: ?page=1&limit=10)
-      }
+      },
     );
     return response.data;
   } catch (err: any) {
     console.error(
       "Error fetching student progress list:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw (
       err.response?.data ||
@@ -112,11 +112,11 @@ export const getStudentProgressList = async (
  * Obtiene el Resumen (KPIs) de Dificultades de un curso
  */
 export const getCourseDifficultiesOverview = async (
-  idCurso: string
+  idCurso: string,
 ): Promise<DificultadesCurso> => {
   try {
     const response = await apiClient.get(
-      `/docentes/my/courses/${idCurso}/difficulties-overview`
+      `/docentes/my/courses/${idCurso}/difficulties-overview`,
     );
     // Convertimos los Decimal a Number si es necesario
     response.data.promDificultades = parseFloat(response.data.promDificultades);
@@ -124,7 +124,7 @@ export const getCourseDifficultiesOverview = async (
   } catch (err: any) {
     console.error(
       "Error fetching difficulties overview:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw (
       err.response?.data ||
@@ -154,7 +154,7 @@ export async function getAllDifficulties(): Promise<DificultadConTema[]> {
  */
 export const getStudentDifficultyList = async (
   idCurso: string,
-  params: FindStudentDifficultiesParams
+  params: FindStudentDifficultiesParams,
 ): Promise<PaginatedStudentDifficultiesResponse> => {
   try {
     // Limpiamos los params vacíos (como hicimos en ProgressPage)
@@ -171,13 +171,13 @@ export const getStudentDifficultyList = async (
       `/docentes/my/courses/${idCurso}/difficulties-list`,
       {
         params: cleanedParams,
-      }
+      },
     );
     return response.data;
   } catch (err: any) {
     console.error(
       "Error fetching student difficulty list:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw (
       err.response?.data || new Error("Error al obtener la lista de alumnos.")
@@ -190,17 +190,17 @@ export const getStudentDifficultyList = async (
  */
 export const getStudentDifficultiesDetail = async (
   idCurso: string,
-  idAlumno: string
+  idAlumno: string,
 ): Promise<DificultadAlumnoDetallada[]> => {
   try {
     const response = await apiClient.get(
-      `/docentes/my/courses/${idCurso}/student/${idAlumno}/difficulties`
+      `/docentes/my/courses/${idCurso}/student/${idAlumno}/difficulties`,
     );
     return response.data;
   } catch (err: any) {
     console.error(
       "Error fetching student difficulties detail:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw (
       err.response?.data || new Error("Error al obtener el detalle del alumno.")
@@ -214,17 +214,17 @@ export const getStudentDifficultiesDetail = async (
  */
 export const getStudentMissions = async (
   idCurso: string,
-  idAlumno: string
+  idAlumno: string,
 ): Promise<MisionConEstado[]> => {
   try {
     const response = await apiClient.get(
-      `/docentes/my/courses/${idCurso}/student/${idAlumno}/missions`
+      `/docentes/my/courses/${idCurso}/student/${idAlumno}/missions`,
     );
     return response.data;
   } catch (err: any) {
     console.error(
       "Error fetching student missions for teacher:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw (
       err.response?.data ||
@@ -235,7 +235,7 @@ export const getStudentMissions = async (
 
 export const findConsultas = async (
   idCurso: string,
-  params: FindConsultasParams
+  params: FindConsultasParams,
 ): Promise<PaginatedConsultasDocenteResponse> => {
   try {
     // Limpiamos params (para filtros vacíos)
@@ -245,20 +245,20 @@ export const findConsultas = async (
         if (cleanedParams[key] === "") {
           delete cleanedParams[key];
         }
-      }
+      },
     );
 
     const response = await apiClient.get(
       `/docentes/my/courses/${idCurso}/consults`, // <-- Usamos tu ruta 'my'
       {
         params: cleanedParams,
-      }
+      },
     );
     return response.data;
   } catch (err: any) {
     console.error(
       "Error fetching course consults:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw (
       err.response?.data ||
@@ -272,18 +272,18 @@ export const findConsultas = async (
  */
 export const createRespuesta = async (
   idConsulta: string,
-  data: CreateRespuestaFormValues
+  data: CreateRespuestaFormValues,
 ): Promise<Consulta> => {
   try {
     const response = await apiClient.post(
       `/docentes/my/consults/${idConsulta}/respond`,
-      data
+      data,
     );
     return response.data;
   } catch (err: any) {
     console.error(
       "Error creating consult response:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw err.response?.data || new Error("Error al enviar la respuesta.");
   }
@@ -293,17 +293,17 @@ export const createRespuesta = async (
  * Obtiene la lista de docentes activos de un curso (para filtros)
  */
 export const findActiveDocentes = async (
-  idCurso: string
+  idCurso: string,
 ): Promise<DocenteBasico[]> => {
   try {
     const response = await apiClient.get(
-      `/docentes/my/courses/${idCurso}/active-docentes`
+      `/docentes/my/courses/${idCurso}/active-docentes`,
     );
     return response.data;
   } catch (err: any) {
     console.error(
       "Error fetching active docentes:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw err.response?.data || new Error("Error al obtener los docentes.");
   }
@@ -313,21 +313,41 @@ export const findActiveDocentes = async (
  * Obtiene la lista de consultas pendientes de un curso
  */
 export const findPendingConsultas = async (
-  idCurso: string
+  idCurso: string,
 ): Promise<ConsultaSimple[]> => {
   try {
     const response = await apiClient.get(
-      `/docentes/my/courses/${idCurso}/pending-consultas`
+      `/docentes/my/courses/${idCurso}/pending-consultas`,
     );
     return response.data;
   } catch (err: any) {
     console.error(
       "Error fetching pending consultas:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw (
       err.response?.data ||
       new Error("Error al obtener las consultas pendientes.")
     );
+  }
+};
+
+/**
+ * Da de baja a un alumno de un curso (Docente)
+ */
+export const removeStudentFromCourse = async (
+  idCurso: string,
+  idAlumno: string,
+): Promise<void> => {
+  try {
+    await apiClient.delete(
+      `/docentes/my/courses/${idCurso}/students/${idAlumno}`,
+    );
+  } catch (err: any) {
+    console.error(
+      "Error removing student from course:",
+      err.response?.data || err.message,
+    );
+    throw err.response?.data || new Error("Error al dar de baja al alumno.");
   }
 };

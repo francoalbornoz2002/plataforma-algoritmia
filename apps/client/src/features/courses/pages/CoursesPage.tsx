@@ -170,7 +170,7 @@ export default function CoursesPage() {
               apellido: dc.docente?.apellido ?? "",
             })),
             alumnosInscriptos: curso._count?.alumnos ?? 0,
-            estadoFinal: curso.progresoCurso?.estado,
+            estadoFinal: curso.estado,
           }),
         );
 
@@ -418,6 +418,9 @@ export default function CoursesPage() {
               </MenuItem>
               <MenuItem value={EstadoSimpleEnum.Activo}>Activo</MenuItem>
               <MenuItem value={EstadoSimpleEnum.Inactivo}>Inactivo</MenuItem>
+              <MenuItem value={EstadoSimpleEnum.Finalizado}>
+                Finalizado
+              </MenuItem>
             </Select>
           </FormControl>
           <Box
@@ -459,7 +462,7 @@ export default function CoursesPage() {
             <Grid container spacing={3}>
               {cursos.length > 0 ? (
                 cursos.map((curso) => (
-                  // --- AQUÍ LA CORRECCIÓN que tenías ---
+                  // --- Grid Item ---
                   <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={curso.id}>
                     <CourseCard
                       course={curso}

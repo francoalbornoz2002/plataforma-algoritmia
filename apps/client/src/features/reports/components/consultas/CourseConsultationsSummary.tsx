@@ -280,6 +280,12 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
                         color: "#4caf50",
                         stack: "A",
                       },
+                      {
+                        dataKey: "No_resuelta",
+                        label: "No Resuelta",
+                        color: "#9e9e9e",
+                        stack: "A",
+                      },
                     ]}
                     height={280}
                     width={600}

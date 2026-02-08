@@ -137,6 +137,7 @@ export interface Curso {
   imagenUrl?: string | null; // Hacerlo opcional o nulable
   contrasenaAcceso: string; // El backend devuelve el hash, ¡no la muestres!
   modalidadPreferencial: modalidad;
+  estado: estado_simple;
   createdAt: string; // Las fechas llegan como strings ISO
   updatedAt: string;
   deletedAt?: string | null;

@@ -99,15 +99,22 @@ export default function CoursesHistorySection() {
     {
       field: "tipo",
       headerName: "Movimiento",
-      width: 120,
-      renderCell: (params) => (
-        <Chip
-          label={params.value}
-          color={params.value === "Alta" ? "primary" : "error"}
-          size="small"
-          variant="outlined"
-        />
-      ),
+      width: 140,
+      renderCell: (params) => {
+        let color: "primary" | "error" | "info" | "default" = "default";
+        if (params.value === "Alta") color = "primary";
+        else if (params.value === "Baja") color = "error";
+        else if (params.value === "Finalización") color = "info";
+
+        return (
+          <Chip
+            label={params.value}
+            color={color}
+            size="small"
+            variant="outlined"
+          />
+        );
+      },
     },
     {
       field: "fecha",

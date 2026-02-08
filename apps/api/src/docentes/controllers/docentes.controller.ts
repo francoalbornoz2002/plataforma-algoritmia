@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Delete,
   Param,
   ParseUUIDPipe,
   Post,
@@ -145,5 +146,19 @@ export class DocentesController {
   ) {
     const idDocente = req.user.userId;
     return this.consultasService.findPendingConsultasByCurso(idCurso);
+  }
+
+  @Delete('my/courses/:idCurso/students/:idAlumno')
+  removeStudent(
+    @Param('idCurso', ParseUUIDPipe) idCurso: string,
+    @Param('idAlumno', ParseUUIDPipe) idAlumno: string,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const idDocente = req.user.userId;
+    return this.docentesService.removeStudentFromCourse(
+      idCurso,
+      idAlumno,
+      idDocente,
+    );
   }
 }

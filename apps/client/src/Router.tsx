@@ -14,7 +14,7 @@ import MyDifficultiesPage from "./features/difficulties/pages/MyDifficultiesPage
 import CourseSettingsPage from "./features/courses/pages/CourseSettingsPage";
 import SidebarLayout from "./layout/SidebarLayout";
 import AdminDashboardPage from "./features/dashboards/AdminDashboardPage";
-import DocenteDashboardPage from "./features/dashboards/DocenteDashboard";
+import DocenteDashboardPage from "./features/dashboards/DocenteDashboardPage";
 import AlumnoDashboardPage from "./features/dashboards/AlumnoDashboardPage";
 import { Roles } from "./types/roles";
 import SettingsPage from "./features/institution/pages/SettingsPage";

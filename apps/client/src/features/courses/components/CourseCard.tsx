@@ -4,7 +4,6 @@ import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
-import Chip from "@mui/material/Chip";
 import Tooltip from "@mui/material/Tooltip";
 import IconButton from "@mui/material/IconButton";
 import EditIcon from "@mui/icons-material/Edit";
@@ -13,6 +12,7 @@ import SchoolIcon from "@mui/icons-material/School";
 import GroupIcon from "@mui/icons-material/Group";
 import ArchiveIcon from "@mui/icons-material/Archive";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import EstadoCursoChip from "../../../components/EstadoCursoChip";
 
 // Datos del curso a pasar al componente Card
 export interface CourseData {
@@ -52,14 +52,6 @@ export default function CourseCard({
     estadoFinal,
   } = course;
 
-  let estado = deletedAt ? "Inactivo" : "Activo";
-  let chipColor: "success" | "error" | "info" =
-    estado === "Activo" ? "success" : "error";
-
-  if (estadoFinal === "Finalizado") {
-    estado = "Finalizado";
-    chipColor = "info";
-  }
   // --- Lógica para mostrar docentes ---
   let docentesDisplay: string;
   if (docentes.length === 0) {
@@ -119,11 +111,10 @@ export default function CourseCard({
           >
             {nombre}
           </Typography>
-          <Chip
-            label={estado}
-            size="small"
-            color={chipColor}
-            variant="filled"
+          <EstadoCursoChip
+            estado={estadoFinal || (deletedAt ? "Inactivo" : "Activo")}
+            deletedAt={deletedAt}
+            small
             sx={{ ml: 1, flexShrink: 0 }} // Margen izq y evita que se encoja
           />
         </Box>

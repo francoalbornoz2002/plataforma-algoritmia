@@ -7,23 +7,20 @@ import {
   Alert,
   Paper,
   Stack,
-  Chip,
   Divider,
-  TextField,
-  InputAdornment,
+  Chip,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
-import SearchIcon from "@mui/icons-material/Search";
 import { BarChart } from "@mui/x-charts/BarChart";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import {
   getCoursesSummary,
   type CoursesSummaryFilters,
 } from "../../service/reports.service";
-import { useDebounce } from "../../../../hooks/useDebounce";
 import PdfExportButton from "../common/PdfExportButton";
 import ExcelExportButton from "../common/ExcelExportButton";
+import EstadoCursoChip from "../../../../components/EstadoCursoChip";
 
 export default function CoursesSummarySection() {
   const [filters, setFilters] = useState<CoursesSummaryFilters>({
@@ -40,15 +37,6 @@ export default function CoursesSummarySection() {
   const [chartFilter, setChartFilter] = useState<{
     estado?: string;
   } | null>(null);
-
-  // Debounce para la búsqueda de texto
-  const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearch = useDebounce(searchTerm, 500);
-
-  // Sincronizar el debounce con los filtros principales
-  useEffect(() => {
-    setFilters((prev) => ({ ...prev, search: debouncedSearch }));
-  }, [debouncedSearch]);
 
   const handleGenerate = async () => {
     setLoading(true);
@@ -71,7 +59,7 @@ export default function CoursesSummarySection() {
   useEffect(() => {
     handleGenerate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.fechaCorte, filters.search]);
+  }, [filters.fechaCorte]);
 
   // Filtrado local de la tabla basado en el click del gráfico
   const filteredCourses = useMemo(() => {
@@ -88,6 +76,7 @@ export default function CoursesSummarySection() {
         category: "Total",
         Activo: summaryData.activos,
         Inactivo: summaryData.inactivos,
+        Finalizado: summaryData.finalizados,
       },
     ];
 
@@ -120,6 +109,16 @@ export default function CoursesSummarySection() {
               ? `${value} (${((value / summaryData.total) * 100).toFixed(1)}%)`
               : "",
         },
+        {
+          dataKey: "Finalizado",
+          label: "Finalizado",
+          id: "Finalizado",
+          color: "#0288d1", // Azul info
+          valueFormatter: (value: number | null) =>
+            value !== null
+              ? `${value} (${((value / summaryData.total) * 100).toFixed(1)}%)`
+              : "",
+        },
       ],
     };
   }, [summaryData]);
@@ -137,15 +136,8 @@ export default function CoursesSummarySection() {
     {
       field: "estado",
       headerName: "Estado",
-      width: 100,
-      renderCell: (params) => (
-        <Chip
-          label={params.value}
-          size="small"
-          color={params.value === "Activo" ? "success" : "error"}
-          variant="filled"
-        />
-      ),
+      width: 120,
+      renderCell: (params) => <EstadoCursoChip estado={params.value} small />,
     },
     {
       field: "alumnosActivos",
@@ -215,21 +207,6 @@ export default function CoursesSummarySection() {
             slotProps={{ textField: { size: "small" } }}
             sx={{ minWidth: 200 }}
           />
-          <TextField
-            label="Buscar curso..."
-            variant="outlined"
-            size="small"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-            sx={{ minWidth: 250 }}
-          />
         </Stack>
       </Paper>
 
@@ -293,6 +270,24 @@ export default function CoursesSummarySection() {
                     <Typography variant="caption" color="error.main">
                       {summaryData.total > 0
                         ? `${((summaryData.inactivos / summaryData.total) * 100).toFixed(1)}%`
+                        : "0%"}
+                    </Typography>
+                  </Box>
+                  <Divider flexItem />
+                  <Box sx={{ textAlign: "center" }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Finalizados
+                    </Typography>
+                    <Typography
+                      variant="h4"
+                      color="info.main"
+                      fontWeight="bold"
+                    >
+                      {summaryData.finalizados}
+                    </Typography>
+                    <Typography variant="caption" color="info.main">
+                      {summaryData.total > 0
+                        ? `${((summaryData.finalizados / summaryData.total) * 100).toFixed(1)}%`
                         : "0%"}
                     </Typography>
                   </Box>
