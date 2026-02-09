@@ -15,6 +15,8 @@ import {
   TextField,
   Pagination,
 } from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { format } from "date-fns";
 import AddIcon from "@mui/icons-material/Add";
 
 // 1. Hooks, Servicios y Tipos
@@ -59,7 +61,13 @@ export default function SesionesRefuerzoPage() {
   const [filters, setFilters] = useState<
     Omit<FindSesionesParams, "page" | "limit" | "sort" | "order">
   >({});
+  const [dateFilters, setDateFilters] = useState<{
+    fechaDesde: Date | null;
+    fechaHasta: Date | null;
+  }>({ fechaDesde: null, fechaHasta: null });
+
   const [pagination, setPagination] = useState({ page: 1, limit: 9 });
+  const [sortOption, setSortOption] = useState("recent");
 
   // --- Estados de Carga/Error ---
   const [loading, setLoading] = useState(true);
@@ -96,11 +104,34 @@ export default function SesionesRefuerzoPage() {
     setLoading(true);
     setError(null);
     try {
+      let sort = "nroSesion";
+      let order: "asc" | "desc" = "desc";
+
+      if (sortOption === "recent") {
+        sort = "createdAt";
+        order = "desc";
+      } else if (sortOption === "old") {
+        sort = "createdAt";
+        order = "asc";
+      } else if (sortOption === "nro_desc") {
+        sort = "nroSesion";
+        order = "desc";
+      } else if (sortOption === "nro_asc") {
+        sort = "nroSesion";
+        order = "asc";
+      }
+
       const params: FindSesionesParams = {
         ...pagination, // 3. Eliminado el debounce
         ...filters,
-        sort: "nroSesion",
-        order: "desc",
+        sort,
+        order,
+        fechaDesde: dateFilters.fechaDesde
+          ? format(dateFilters.fechaDesde, "yyyy-MM-dd")
+          : undefined,
+        fechaHasta: dateFilters.fechaHasta
+          ? format(dateFilters.fechaHasta, "yyyy-MM-dd")
+          : undefined,
       };
       const data = await findAllSesiones(selectedCourse.id, params);
       setSesionesData(data);
@@ -112,7 +143,7 @@ export default function SesionesRefuerzoPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedCourse, pagination, filters]);
+  }, [selectedCourse, pagination, filters, dateFilters, sortOption]);
 
   useEffect(() => {
     if (selectedCourse) {
@@ -163,7 +194,14 @@ export default function SesionesRefuerzoPage() {
         <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
           Filtros de búsqueda
         </Typography>
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Stack
+          direction="row"
+          spacing={2}
+          alignItems="center"
+          flexWrap="wrap"
+          useFlexGap
+          sx={{ mb: 2 }}
+        >
           <TextField
             sx={{ width: 120 }}
             label="N° Sesión"
@@ -254,6 +292,41 @@ export default function SesionesRefuerzoPage() {
               ))}
             </Select>
           </FormControl>
+        </Stack>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <DatePicker
+            label="Desde"
+            value={dateFilters.fechaDesde}
+            onChange={(newValue) => {
+              setDateFilters((prev) => ({ ...prev, fechaDesde: newValue }));
+              setPagination((prev) => ({ ...prev, page: 1 }));
+            }}
+            slotProps={{ textField: { size: "small", sx: { width: 170 } } }}
+          />
+          <DatePicker
+            label="Hasta"
+            value={dateFilters.fechaHasta}
+            onChange={(newValue) => {
+              setDateFilters((prev) => ({ ...prev, fechaHasta: newValue }));
+              setPagination((prev) => ({ ...prev, page: 1 }));
+            }}
+            slotProps={{ textField: { size: "small", sx: { width: 170 } } }}
+          />
+
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel>Ordenar por</InputLabel>
+            <Select
+              value={sortOption}
+              label="Ordenar por"
+              onChange={(e) => setSortOption(e.target.value)}
+            >
+              <MenuItem value="recent">Más recientes</MenuItem>
+              <MenuItem value="old">Más antiguas</MenuItem>
+              <MenuItem value="nro_desc">N° Sesión (Mayor a menor)</MenuItem>
+              <MenuItem value="nro_asc">N° Sesión (Menor a mayor)</MenuItem>
+            </Select>
+          </FormControl>
+
           <Box sx={{ flexGrow: 1 }} />
           {!isReadOnly && (
             <Button

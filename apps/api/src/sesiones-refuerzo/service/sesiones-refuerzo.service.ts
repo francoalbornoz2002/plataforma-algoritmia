@@ -311,6 +311,8 @@ export class SesionesRefuerzoService {
       idDificultad,
       gradoSesion,
       estado,
+      fechaDesde,
+      fechaHasta,
     } = dto;
 
     const skip = (page - 1) * limit;
@@ -342,6 +344,19 @@ export class SesionesRefuerzoService {
     if (idDificultad) where.idDificultad = idDificultad;
     if (gradoSesion) where.gradoSesion = gradoSesion;
     if (estado) where.estado = estado;
+
+    // Filtro por fecha de creación
+    if (fechaDesde || fechaHasta) {
+      where.createdAt = {};
+      if (fechaDesde) {
+        where.createdAt.gte = new Date(fechaDesde);
+      }
+      if (fechaHasta) {
+        const hasta = new Date(fechaHasta);
+        hasta.setDate(hasta.getDate() + 1); // Incluir todo el día
+        where.createdAt.lt = hasta;
+      }
+    }
 
     // 3. Realizar las consultas a la BD en paralelo
     const [total, sesiones] = await this.prisma.$transaction([

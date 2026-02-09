@@ -1,4 +1,5 @@
 import {
+  IsDateString,
   IsEnum,
   IsNumber,
   IsOptional,
@@ -34,4 +35,12 @@ export class FindAllSesionesDto extends PaginationDto {
   @IsOptional()
   @IsEnum(estado_sesion)
   estado?: estado_sesion;
+
+  @IsOptional()
+  @IsDateString()
+  fechaDesde?: string;
+
+  @IsOptional()
+  @IsDateString()
+  fechaHasta?: string;
 }

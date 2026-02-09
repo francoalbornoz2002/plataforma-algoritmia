@@ -84,7 +84,7 @@ export default function AddExtraPreguntaModal({
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   const [allDifficulties, setAllDifficulties] = useState<DificultadConTema[]>(
-    []
+    [],
   );
   const [filteredDifficulties, setFilteredDifficulties] = useState<
     DificultadConTema[]
@@ -106,7 +106,7 @@ export default function AddExtraPreguntaModal({
         .catch(() =>
           enqueueSnackbar("Error al cargar dificultades para filtro.", {
             variant: "error",
-          })
+          }),
         );
     }
   }, [open]);
@@ -120,7 +120,7 @@ export default function AddExtraPreguntaModal({
       allDifficulties.length > 0
     ) {
       const dificultadSeleccionada = allDifficulties.find(
-        (d) => d.id === idDificultadFiltro
+        (d) => d.id === idDificultadFiltro,
       );
       setFilters({
         idDificultad: idDificultadFiltro,
@@ -134,7 +134,7 @@ export default function AddExtraPreguntaModal({
   useEffect(() => {
     if (filters.tema) {
       setFilteredDifficulties(
-        allDifficulties.filter((d) => d.tema === filters.tema)
+        allDifficulties.filter((d) => d.tema === filters.tema),
       );
     } else {
       setFilteredDifficulties(allDifficulties);
@@ -168,11 +168,11 @@ export default function AddExtraPreguntaModal({
           setTotalPages(response.meta.totalPages);
         })
         .catch((err) =>
-          setError(err.message || "Error al cargar las preguntas.")
+          setError(err.message || "Error al cargar las preguntas."),
         )
         .finally(() => setLoading(false));
     },
-    [debouncedSearchTerm, filters]
+    [debouncedSearchTerm, filters],
   );
 
   // Efecto que reacciona a los filtros, búsqueda y paginación
@@ -209,7 +209,7 @@ export default function AddExtraPreguntaModal({
 
   const handlePageChange = (
     event: React.ChangeEvent<unknown>,
-    value: number
+    value: number,
   ) => {
     setPage(value);
   };
@@ -234,7 +234,7 @@ export default function AddExtraPreguntaModal({
     if (!preguntaToDelete) return;
     // 1. Remove the deleted question from the current selection state
     setSelectedPreguntas((prev) =>
-      prev.filter((p) => p.id !== preguntaToDelete.id)
+      prev.filter((p) => p.id !== preguntaToDelete.id),
     );
     // 2. Refetch the list of available questions to update the view
     fetchPreguntas(page);
@@ -251,7 +251,7 @@ export default function AddExtraPreguntaModal({
             `Solo puedes seleccionar hasta ${limit} preguntas extra.`,
             {
               variant: "warning",
-            }
+            },
           );
           return prevSelected;
         }
@@ -263,6 +263,24 @@ export default function AddExtraPreguntaModal({
   const handleConfirm = () => {
     onConfirm(selectedPreguntas);
     onClose();
+  };
+
+  // Lógica para determinar qué grados se pueden seleccionar
+  const getGradosPermitidos = (gradoSesion: grado_dificultad) => {
+    if (gradoSesion === grado_dificultad.Alto) {
+      return [
+        grado_dificultad.Alto,
+        grado_dificultad.Medio,
+        grado_dificultad.Bajo,
+      ];
+    }
+    if (gradoSesion === grado_dificultad.Medio) {
+      return [grado_dificultad.Medio, grado_dificultad.Bajo];
+    }
+    if (gradoSesion === grado_dificultad.Bajo) {
+      return [grado_dificultad.Bajo];
+    }
+    return [];
   };
 
   return (
@@ -326,17 +344,15 @@ export default function AddExtraPreguntaModal({
                   name="gradoDificultad"
                   value={filters.gradoDificultad}
                   label="Grado"
-                  disabled // Deshabilitado
+                  // disabled eliminado
                   onChange={handleFilterChange}
                 >
                   <MenuItem value="">Todos</MenuItem>
-                  {Object.values(grado_dificultad)
-                    .filter((g) => g !== grado_dificultad.Ninguno)
-                    .map((g) => (
-                      <MenuItem key={g} value={g}>
-                        {g}
-                      </MenuItem>
-                    ))}
+                  {getGradosPermitidos(gradoSesionFiltro).map((g) => (
+                    <MenuItem key={g} value={g}>
+                      {g}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
               <Box sx={{ flexGrow: 1 }} />
@@ -385,7 +401,7 @@ export default function AddExtraPreguntaModal({
                     <Stack spacing={1.5}>
                       {preguntas.map((p) => {
                         const isSelected = selectedPreguntas.some(
-                          (sp) => sp.id === p.id
+                          (sp) => sp.id === p.id,
                         );
                         const isDisabled =
                           !isSelected && selectedPreguntas.length >= limit;

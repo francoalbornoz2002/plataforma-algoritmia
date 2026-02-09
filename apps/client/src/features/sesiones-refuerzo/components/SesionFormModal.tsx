@@ -16,6 +16,7 @@ import {
   Typography,
   Box,
   Alert,
+  InputAdornment,
 } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,6 +24,7 @@ import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { useEffect, useState } from "react";
 import { enqueueSnackbar } from "notistack";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 
 import {
   sesionRefuerzoSchema,
@@ -36,10 +38,7 @@ import {
   type SesionRefuerzoResumen,
   grado_dificultad,
 } from "../../../types";
-import {
-  findEligibleAlumnos,
-  getStudentDifficulties,
-} from "../../users/services/alumnos.service";
+import { getStudentDifficulties } from "../../users/services/alumnos.service";
 import { findSystemPreguntasForSesion } from "../../preguntas/service/preguntas.service";
 import AddExtraPreguntaModal from "./AddExtraPreguntaModal";
 import {
@@ -48,6 +47,7 @@ import {
   findSesionById,
 } from "../service/sesiones-refuerzo.service";
 import PreguntaSesionAccordion from "./PreguntaSesionAccordion";
+import SelectStudentModal from "./SelectStudentModal";
 
 interface SesionFormModalProps {
   open: boolean;
@@ -90,23 +90,26 @@ export default function SesionFormModal({
   });
 
   // --- Data for Selects ---
-  const [eligibleAlumnos, setEligibleAlumnos] = useState<DocenteBasico[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<DocenteBasico | null>(
+    null,
+  );
   const [alumnoDificultades, setAlumnoDificultades] = useState<
     DificultadAlumnoDetallada[]
   >([]);
 
   // --- Questions State ---
   const [systemPreguntas, setSystemPreguntas] = useState<PreguntaConDetalles[]>(
-    []
+    [],
   );
   const [extraPreguntas, setExtraPreguntas] = useState<PreguntaConDetalles[]>(
-    []
+    [],
   );
   const [isExtraPreguntaModalOpen, setIsExtraPreguntaModalOpen] =
     useState(false);
+  const [isSelectStudentModalOpen, setIsSelectStudentModalOpen] =
+    useState(false);
 
   // --- Loading States ---
-  const [loadingAlumnos, setLoadingAlumnos] = useState(false);
   const [loadingDificultades, setLoadingDificultades] = useState(false);
   const [loadingSystemPreguntas, setLoadingSystemPreguntas] = useState(false);
   const [loadingDetails, setLoadingDetails] = useState(false);
@@ -114,19 +117,6 @@ export default function SesionFormModal({
   // --- Watch form fields to trigger effects ---
   const selectedAlumnoId = watch("idAlumno");
   const selectedDificultadId = watch("idDificultad");
-
-  // Effect 1: Load eligible alumnos when modal opens
-  useEffect(() => {
-    if (open && selectedCourse) {
-      setLoadingAlumnos(true);
-      findEligibleAlumnos(selectedCourse.id)
-        .then(setEligibleAlumnos)
-        .catch(() =>
-          enqueueSnackbar("Error al cargar alumnos.", { variant: "error" })
-        )
-        .finally(() => setLoadingAlumnos(false));
-    }
-  }, [open, selectedCourse]);
 
   // Effect 2: Load student's difficulties when an alumno is selected
   useEffect(() => {
@@ -145,14 +135,14 @@ export default function SesionFormModal({
           // Filtramos las dificultades que ya han sido superadas (Grado Ninguno)
           // ya que no se pueden generar sesiones para ellas.
           const filtered = data.filter(
-            (d) => d.grado !== grado_dificultad.Ninguno
+            (d) => d.grado !== grado_dificultad.Ninguno,
           );
           setAlumnoDificultades(filtered);
         })
         .catch(() =>
           enqueueSnackbar("Error al cargar dificultades del alumno.", {
             variant: "error",
-          })
+          }),
         )
         .finally(() => setLoadingDificultades(false));
     }
@@ -163,7 +153,7 @@ export default function SesionFormModal({
     // This should ONLY run in CREATE mode. In EDIT mode, questions are loaded from the session itself.
     if (selectedDificultadId && !isEditMode) {
       const dificultad = alumnoDificultades.find(
-        (d) => d.id === selectedDificultadId
+        (d) => d.id === selectedDificultadId,
       );
       if (dificultad) {
         setValue("gradoSesion", dificultad.grado);
@@ -176,7 +166,7 @@ export default function SesionFormModal({
           .catch(() =>
             enqueueSnackbar("Error al cargar preguntas de sistema.", {
               variant: "error",
-            })
+            }),
           )
           .finally(() => setLoadingSystemPreguntas(false));
       }
@@ -199,6 +189,11 @@ export default function SesionFormModal({
               fechaHoraLimite: new Date(fullSesion.fechaHoraLimite),
               tiempoLimite: fullSesion.tiempoLimite,
               preguntas: fullSesion.preguntas.map((p) => p.pregunta.id),
+            });
+            setSelectedStudent({
+              id: fullSesion.alumno.id,
+              nombre: fullSesion.alumno.nombre,
+              apellido: fullSesion.alumno.apellido,
             });
 
             // 2. Separate system and extra questions to display them in the list
@@ -225,6 +220,7 @@ export default function SesionFormModal({
         setSystemPreguntas([]);
         setExtraPreguntas([]);
         setAlumnoDificultades([]);
+        setSelectedStudent(null);
       }
     }
   }, [isEditMode, open, sesionToEdit, selectedCourse, reset, onClose]);
@@ -238,6 +234,25 @@ export default function SesionFormModal({
 
   const onSubmit = async (data: SesionRefuerzoFormValues) => {
     if (!selectedCourse) return;
+
+    // Validación extra de fechas
+    if (data.fechaHoraLimite) {
+      const now = new Date();
+      const limit = new Date(data.fechaHoraLimite);
+      const minTime = now.getTime() + data.tiempoLimite * 60 * 1000;
+
+      if (limit.getTime() < minTime) {
+        enqueueSnackbar(
+          "La fecha límite debe ser posterior al tiempo necesario para resolver la sesión.",
+          {
+            variant: "error",
+            anchorOrigin: { vertical: "top", horizontal: "center" },
+          },
+        );
+        return;
+      }
+    }
+
     try {
       if (isEditMode && sesionToEdit) {
         await updateSesion(selectedCourse.id, sesionToEdit.id, data);
@@ -246,7 +261,7 @@ export default function SesionFormModal({
       }
       enqueueSnackbar(
         `Sesión ${isEditMode ? "actualizada" : "creada"} correctamente.`,
-        { variant: "success" }
+        { variant: "success" },
       );
       onSave();
       onClose();
@@ -257,7 +272,7 @@ export default function SesionFormModal({
           "Error al guardar la sesión.",
         {
           variant: "error",
-        }
+        },
       );
     }
   };
@@ -285,28 +300,36 @@ export default function SesionFormModal({
               <Stack spacing={1} sx={{ mt: 1 }}>
                 {/* --- Fila 1: Alumno, Dificultad, Grado --- */}
                 <Stack direction="row" spacing={2}>
-                  <FormControl fullWidth error={!!errors.idAlumno}>
-                    <InputLabel>Alumno</InputLabel>
-                    <Controller
-                      name="idAlumno"
-                      control={control}
-                      defaultValue=""
-                      render={({ field }) => (
-                        <Select
-                          {...field}
-                          label="Alumno"
-                          disabled={loadingAlumnos || isEditMode}
-                        >
-                          {eligibleAlumnos.map((a) => (
-                            <MenuItem key={a.id} value={a.id}>
-                              {a.nombre} {a.apellido}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      )}
+                  <Box sx={{ width: "100%" }}>
+                    <TextField
+                      fullWidth
+                      label="Alumno"
+                      value={
+                        selectedStudent
+                          ? `${selectedStudent.apellido}, ${selectedStudent.nombre}`
+                          : ""
+                      }
+                      disabled
+                      error={!!errors.idAlumno}
+                      InputProps={{
+                        endAdornment: !isEditMode && (
+                          <InputAdornment position="end">
+                            <Button
+                              size="small"
+                              onClick={() => setIsSelectStudentModalOpen(true)}
+                              startIcon={<PersonSearchIcon />}
+                            >
+                              Seleccionar
+                            </Button>
+                          </InputAdornment>
+                        ),
+                      }}
                     />
-                    <FormHelperText>{errors.idAlumno?.message}</FormHelperText>
-                  </FormControl>
+                    <FormHelperText error>
+                      {errors.idAlumno?.message}
+                    </FormHelperText>
+                  </Box>
+
                   <FormControl fullWidth error={!!errors.idDificultad}>
                     <InputLabel>Dificultad</InputLabel>
                     <Controller
@@ -325,7 +348,7 @@ export default function SesionFormModal({
                         >
                           {alumnoDificultades.map((d) => (
                             <MenuItem key={d.id} value={d.id}>
-                              {d.nombre}
+                              {d.nombre} ({d.grado})
                             </MenuItem>
                           ))}
                         </Select>
@@ -351,6 +374,8 @@ export default function SesionFormModal({
                       <DateTimePicker
                         {...field}
                         label="Fecha y Hora Límite"
+                        minDate={new Date()}
+                        disablePast
                         slotProps={{
                           textField: {
                             error: !!errors.fechaHoraLimite,
@@ -407,7 +432,7 @@ export default function SesionFormModal({
                           pregunta={p}
                           onRemove={() =>
                             setExtraPreguntas((prev) =>
-                              prev.filter((ep) => ep.id !== p.id)
+                              prev.filter((ep) => ep.id !== p.id),
                             )
                           }
                         />
@@ -450,6 +475,15 @@ export default function SesionFormModal({
         initialSelection={extraPreguntas}
         idDificultadFiltro={selectedDificultadId}
         gradoSesionFiltro={watch("gradoSesion")}
+      />
+
+      <SelectStudentModal
+        open={isSelectStudentModalOpen}
+        onClose={() => setIsSelectStudentModalOpen(false)}
+        onSelect={(student) => {
+          setSelectedStudent(student);
+          setValue("idAlumno", student.id, { shouldValidate: true });
+        }}
       />
     </>
   );

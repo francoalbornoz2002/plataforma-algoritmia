@@ -15,6 +15,7 @@ import {
   temas,
   fuente_cambio_dificultad,
   estado_simple,
+  estado_sesion,
 } from '@prisma/client';
 import { SubmitDifficultyDto } from '../dto/submit-difficulty.dto';
 import { SesionesRefuerzoService } from '../../sesiones-refuerzo/service/sesiones-refuerzo.service';
@@ -406,6 +407,42 @@ export class DifficultiesService {
 
           if (fechaDto > fechaRegistroLote) {
             fechaRegistroLote = fechaDto;
+          }
+
+          // --- Lógica de Cancelación de Sesiones por cambio de Grado ---
+          const sesionPendiente = await tx.sesionRefuerzo.findFirst({
+            where: {
+              idAlumno,
+              idCurso,
+              idDificultad: dto.idDificultad,
+              estado: estado_sesion.Pendiente,
+              deletedAt: null,
+            },
+          });
+
+          if (sesionPendiente) {
+            const gradoValor = {
+              [grado_dificultad.Ninguno]: 0,
+              [grado_dificultad.Bajo]: 1,
+              [grado_dificultad.Medio]: 2,
+              [grado_dificultad.Alto]: 3,
+            };
+            const valorSesion = gradoValor[sesionPendiente.gradoSesion];
+            const valorNuevo = gradoValor[dto.grado];
+
+            // 1. Mejora (Nuevo < Sesion) O 2. Empeora a Alto (Nuevo > Sesion && Nuevo == Alto)
+            if (
+              valorNuevo < valorSesion ||
+              (valorNuevo > valorSesion && dto.grado === grado_dificultad.Alto)
+            ) {
+              await tx.sesionRefuerzo.update({
+                where: { id: sesionPendiente.id },
+                data: {
+                  estado: estado_sesion.Cancelada,
+                  deletedAt: new Date(),
+                },
+              });
+            }
           }
 
           // 1. Buscamos el estado actual para saber si cambió

@@ -14,6 +14,8 @@ import {
   TextField,
   Pagination,
 } from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { format } from "date-fns";
 import { useNavigate } from "react-router";
 
 // Hooks, Services, Types
@@ -54,7 +56,12 @@ export default function MisSesionesPage() {
   const [filters, setFilters] = useState<
     Omit<FindSesionesParams, "page" | "limit" | "sort" | "order">
   >({});
+  const [dateFilters, setDateFilters] = useState<{
+    fechaDesde: Date | null;
+    fechaHasta: Date | null;
+  }>({ fechaDesde: null, fechaHasta: null });
   const [pagination, setPagination] = useState({ page: 1, limit: 9 });
+  const [sortOption, setSortOption] = useState("recent");
 
   // --- Loading/Error States ---
   const [loading, setLoading] = useState(true);
@@ -84,11 +91,34 @@ export default function MisSesionesPage() {
     setLoading(true);
     setError(null);
     try {
+      let sort = "nroSesion";
+      let order: "asc" | "desc" = "desc";
+
+      if (sortOption === "recent") {
+        sort = "createdAt";
+        order = "desc";
+      } else if (sortOption === "old") {
+        sort = "createdAt";
+        order = "asc";
+      } else if (sortOption === "nro_desc") {
+        sort = "nroSesion";
+        order = "desc";
+      } else if (sortOption === "nro_asc") {
+        sort = "nroSesion";
+        order = "asc";
+      }
+
       const params: FindSesionesParams = {
         ...pagination,
         ...filters,
-        sort: "nroSesion",
-        order: "desc",
+        sort,
+        order,
+        fechaDesde: dateFilters.fechaDesde
+          ? format(dateFilters.fechaDesde, "yyyy-MM-dd")
+          : undefined,
+        fechaHasta: dateFilters.fechaHasta
+          ? format(dateFilters.fechaHasta, "yyyy-MM-dd")
+          : undefined,
         // El backend filtra automáticamente por el ID del alumno logueado
       };
       const data = await findAllSesiones(selectedCourse.id, params);
@@ -101,7 +131,7 @@ export default function MisSesionesPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedCourse, pagination, filters]);
+  }, [selectedCourse, pagination, filters, dateFilters, sortOption]);
 
   useEffect(() => {
     if (selectedCourse) {
@@ -153,6 +183,7 @@ export default function MisSesionesPage() {
           alignItems="center"
           flexWrap="wrap"
           useFlexGap
+          sx={{ mb: 2 }}
         >
           <TextField
             sx={{ width: 120 }}
@@ -226,6 +257,40 @@ export default function MisSesionesPage() {
                   {EstadoSesionLabels[e]}
                 </MenuItem>
               ))}
+            </Select>
+          </FormControl>
+        </Stack>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <DatePicker
+            label="Desde"
+            value={dateFilters.fechaDesde}
+            onChange={(newValue) => {
+              setDateFilters((prev) => ({ ...prev, fechaDesde: newValue }));
+              setPagination((prev) => ({ ...prev, page: 1 }));
+            }}
+            slotProps={{ textField: { size: "small", sx: { width: 170 } } }}
+          />
+          <DatePicker
+            label="Hasta"
+            value={dateFilters.fechaHasta}
+            onChange={(newValue) => {
+              setDateFilters((prev) => ({ ...prev, fechaHasta: newValue }));
+              setPagination((prev) => ({ ...prev, page: 1 }));
+            }}
+            slotProps={{ textField: { size: "small", sx: { width: 170 } } }}
+          />
+
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel>Ordenar por</InputLabel>
+            <Select
+              value={sortOption}
+              label="Ordenar por"
+              onChange={(e) => setSortOption(e.target.value)}
+            >
+              <MenuItem value="recent">Más recientes</MenuItem>
+              <MenuItem value="old">Más antiguas</MenuItem>
+              <MenuItem value="nro_desc">N° Sesión (Mayor a menor)</MenuItem>
+              <MenuItem value="nro_asc">N° Sesión (Menor a mayor)</MenuItem>
             </Select>
           </FormControl>
         </Stack>

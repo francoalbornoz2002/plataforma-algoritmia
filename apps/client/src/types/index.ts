@@ -657,6 +657,8 @@ export interface FindSesionesParams extends BaseFilterParams {
   idDificultad?: string;
   gradoSesion?: grado_dificultad | "";
   estado?: estado_sesion | "";
+  fechaDesde?: string;
+  fechaHasta?: string;
 }
 
 // 7. Para la respuesta paginada
