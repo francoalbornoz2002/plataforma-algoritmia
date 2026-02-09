@@ -75,6 +75,7 @@ export enum estado_clase_consulta {
 
 export enum estado_sesion {
   Pendiente = "Pendiente",
+  En_curso = "En_curso",
   Cancelada = "Cancelada",
   Completada = "Completada",
   Incompleta = "Incompleta",

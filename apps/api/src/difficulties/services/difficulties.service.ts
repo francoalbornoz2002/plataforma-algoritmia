@@ -435,13 +435,17 @@ export class DifficultiesService {
               valorNuevo < valorSesion ||
               (valorNuevo > valorSesion && dto.grado === grado_dificultad.Alto)
             ) {
-              await tx.sesionRefuerzo.update({
-                where: { id: sesionPendiente.id },
-                data: {
-                  estado: estado_sesion.Cancelada,
-                  deletedAt: new Date(),
-                },
-              });
+              try {
+                // Usamos el servicio de sesiones para cancelar, pasando la transacción actual
+                await this.sesionesRefuerzoService.remove(
+                  idCurso,
+                  sesionPendiente.id,
+                  tx,
+                );
+              } catch (error) {
+                // Si falla (ej: la fecha límite ya pasó), ignoramos y no cancelamos.
+                // Esto respeta la validación del servicio de sesiones.
+              }
             }
           }
 

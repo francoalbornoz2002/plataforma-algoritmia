@@ -641,8 +641,13 @@ export class SesionesRefuerzoService {
     });
   }
 
-  async remove(idCurso: string, idSesion: string) {
-    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+  async remove(
+    idCurso: string,
+    idSesion: string,
+    externalTx?: Prisma.TransactionClient,
+  ) {
+    // Función auxiliar con la lógica de negocio
+    const execute = async (tx: Prisma.TransactionClient) => {
       // 1. Obtener la sesión
       const sesion = await tx.sesionRefuerzo.findUnique({
         where: {
@@ -678,7 +683,13 @@ export class SesionesRefuerzoService {
           deletedAt: new Date(),
         },
       });
-    });
+    };
+
+    if (externalTx) {
+      return execute(externalTx);
+    } else {
+      return this.prisma.$transaction(execute);
+    }
   }
 
   async iniciarSesion(idCurso: string, idSesion: string, idAlumno: string) {
@@ -707,7 +718,10 @@ export class SesionesRefuerzoService {
 
     return this.prisma.sesionRefuerzo.update({
       where: { id: idSesion },
-      data: { fechaInicioReal: new Date() },
+      data: {
+        fechaInicioReal: new Date(),
+        estado: estado_sesion.En_curso,
+      },
     });
   }
 
@@ -911,11 +925,11 @@ export class SesionesRefuerzoService {
       },
     });
 
-    // 2. Caso: El tiempo límite pasó, el alumno inició pero NO envió respuestas (se quedó a medias).
+    // 2. Caso: El tiempo límite pasó, el alumno estaba "En curso" pero NO envió respuestas.
     // Estado -> Incompleta
     await this.prisma.sesionRefuerzo.updateMany({
       where: {
-        estado: estado_sesion.Pendiente,
+        estado: estado_sesion.En_curso,
         fechaHoraLimite: { lt: now },
         fechaInicioReal: { not: null },
         deletedAt: null,
