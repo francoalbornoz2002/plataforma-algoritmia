@@ -18,6 +18,10 @@
       <div class="kpi-label">Activos</div>
     </div>
     <div class="kpi-card">
+      <div class="kpi-value" style="color: #424242;">{{kpis.finalizados}}</div>
+      <div class="kpi-label">Finalizados</div>
+    </div>
+    <div class="kpi-card">
       <div class="kpi-value" style="color: #d32f2f;">{{kpis.inactivos}}</div>
       <div class="kpi-label">Inactivos</div>
     </div>
@@ -46,7 +50,7 @@
         <tr>
           <td>{{this.nombre}}</td>
           <td>
-            <span class="badge {{#if (eq this.estado 'Activo')}}badge-Realizada{{else}}badge-No_realizada{{/if}}">
+            <span class="badge {{#if (eq this.estado 'Activo')}}badge-Realizada{{else if (eq this.estado 'Finalizado')}}badge-Finalizado{{else}}badge-No_realizada{{/if}}">
               {{this.estado}}
             </span>
           </td>

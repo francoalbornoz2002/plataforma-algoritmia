@@ -699,12 +699,19 @@ export class ExcelService {
     };
     worksheet.getCell(`E${currentRow}`).value = kpis.activos;
 
-    worksheet.getCell(`F${currentRow}`).value = 'INACTIVOS';
+    worksheet.getCell(`F${currentRow}`).value = 'FINALIZADOS';
     worksheet.getCell(`F${currentRow}`).font = {
+      bold: true,
+      color: { argb: 'FF424242' },
+    };
+    worksheet.getCell(`G${currentRow}`).value = kpis.finalizados;
+
+    worksheet.getCell(`H${currentRow}`).value = 'INACTIVOS';
+    worksheet.getCell(`H${currentRow}`).font = {
       bold: true,
       color: { argb: 'FFD32F2F' },
     };
-    worksheet.getCell(`G${currentRow}`).value = kpis.inactivos;
+    worksheet.getCell(`I${currentRow}`).value = kpis.inactivos;
 
     currentRow += 2;
 
@@ -742,9 +749,14 @@ export class ExcelService {
       worksheet.mergeCells(`A${currentRow}:B${currentRow}`);
       worksheet.getCell(`A${currentRow}`).value = c.nombre;
       worksheet.getCell(`C${currentRow}`).value = c.estado;
-      worksheet.getCell(`C${currentRow}`).font = {
-        color: { argb: c.estado === 'Activo' ? 'FF2E7D32' : 'FFD32F2F' },
-      };
+
+      let color = 'FFD32F2F'; // Inactivo (Rojo)
+      if (c.estado === 'Activo')
+        color = 'FF2E7D32'; // Verde
+      else if (c.estado === 'Finalizado') color = 'FF424242'; // Gris
+
+      worksheet.getCell(`C${currentRow}`).font = { color: { argb: color } };
+
       worksheet.mergeCells(`D${currentRow}:E${currentRow}`);
       worksheet.getCell(`D${currentRow}`).value = c.alumnos.activos;
       worksheet.mergeCells(`F${currentRow}:G${currentRow}`);

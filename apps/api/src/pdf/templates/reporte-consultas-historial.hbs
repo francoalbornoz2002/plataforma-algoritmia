@@ -49,7 +49,7 @@
         <td>{{titulo}}</td>
         <td>{{tema}}</td>
         <td>{{alumno}}</td>
-        <td><span class="badge badge-{{estadoRaw}}" style="background-color: {{#if (eq estadoRaw 'Pendiente')}}#ed6c02{{else if (eq estadoRaw 'A_revisar')}}#0288d1{{else if (eq estadoRaw 'Revisada')}}#9c27b0{{else if (eq estadoRaw 'Resuelta')}}#2e7d32{{else}}#9e9e9e{{/if}};">{{estado}}</span></td>
+        <td><span class="badge badge-{{estadoRaw}}" style="background-color: {{#if (eq estadoRaw 'Pendiente')}}#ed6c02{{else if (eq estadoRaw 'A_revisar')}}#0288d1{{else if (eq estadoRaw 'Revisada')}}#9c27b0{{else if (eq estadoRaw 'Resuelta')}}#2e7d32{{else if (eq estadoRaw 'No_resuelta')}}#d32f2f{{else}}#9e9e9e{{/if}};">{{estado}}</span></td>
         <td>{{docente}}</td>
         <td class="text-center">{{valoracion}}</td>
       </tr>

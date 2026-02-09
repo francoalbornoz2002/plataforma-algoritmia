@@ -705,6 +705,11 @@ export class PdfService {
             backgroundColor: '#2e7d32',
           },
           {
+            label: `Finalizados (${kpis.finalizados})`,
+            data: [kpis.finalizados],
+            backgroundColor: '#424242',
+          },
+          {
             label: `Inactivos (${kpis.inactivos})`,
             data: [kpis.inactivos],
             backgroundColor: '#d32f2f',
@@ -1042,6 +1047,7 @@ export class PdfService {
         { key: 'A_revisar', color: '#2196f3', label: 'A revisar' },
         { key: 'Revisada', color: '#9c27b0', label: 'Revisada' },
         { key: 'Resuelta', color: '#4caf50', label: 'Resuelta' },
+        { key: 'No_resuelta', color: '#d32f2f', label: 'No resuelta' },
       ];
 
       const datasets = statuses.map((s) => ({
