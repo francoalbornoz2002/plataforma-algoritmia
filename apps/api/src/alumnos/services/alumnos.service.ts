@@ -242,6 +242,10 @@ export class AlumnosService {
     return this.consultasService.findConsultasForAlumno(idAlumno, idCurso, dto);
   }
 
+  async findPublicConsultas(idCurso: string, dto: FindConsultasDto) {
+    return this.consultasService.findConsultasPublicas(idCurso, dto);
+  }
+
   async createConsulta(
     idAlumno: string,
     idCurso: string,

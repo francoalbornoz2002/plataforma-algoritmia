@@ -451,6 +451,8 @@ export interface FindConsultasParams extends BaseFilterParams {
   tema?: temas | "";
   estado?: estado_consulta | "";
   search?: string;
+  fechaDesde?: string;
+  fechaHasta?: string;
 }
 
 // 1. TIPO CONSULTA (Alumno)

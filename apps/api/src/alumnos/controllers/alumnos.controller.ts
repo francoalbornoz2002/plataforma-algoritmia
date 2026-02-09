@@ -85,6 +85,15 @@ export class AlumnosController {
   }
 
   @Roles(roles.Alumno)
+  @Get('course/:idCurso/consultas-publicas')
+  findPublicConsultas(
+    @Param('idCurso', ParseUUIDPipe) idCurso: string,
+    @Query() dto: FindConsultasDto,
+  ) {
+    return this.alumnosService.findPublicConsultas(idCurso, dto);
+  }
+
+  @Roles(roles.Alumno)
   @Post('my/courses/:idCurso/consults/create')
   createConsulta(
     @Req() req: AuthenticatedUserRequest,

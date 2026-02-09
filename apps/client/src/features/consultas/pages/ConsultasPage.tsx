@@ -14,6 +14,8 @@ import {
   Pagination,
   Paper, // <-- Usaremos paginación
 } from "@mui/material";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { format } from "date-fns";
 import { useCourseContext } from "../../../context/CourseContext";
 import { useDebounce } from "../../../hooks/useDebounce";
 import { findConsultas } from "../../users/services/docentes.service"; // <-- Servicio del Docente
@@ -45,9 +47,14 @@ export default function ConsultasPage() {
   const [filters, setFilters] = useState({
     tema: "",
     estado: "",
+    fechaDesde: null as Date | null,
+    fechaHasta: null as Date | null,
   });
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  // Estado para ordenamiento
+  const [sortOption, setSortOption] = useState("recent"); // recent, old, az, za
 
   // --- Data Fetching ---
   const fetchConsultas = (currentPage: number) => {
@@ -56,14 +63,37 @@ export default function ConsultasPage() {
     setLoading(true);
     setError(null);
 
+    let sort = "fechaConsulta";
+    let order: "asc" | "desc" = "desc";
+
+    if (sortOption === "recent") {
+      sort = "fechaConsulta";
+      order = "desc";
+    } else if (sortOption === "old") {
+      sort = "fechaConsulta";
+      order = "asc";
+    } else if (sortOption === "az") {
+      sort = "titulo";
+      order = "asc";
+    } else if (sortOption === "za") {
+      sort = "titulo";
+      order = "desc";
+    }
+
     const params: FindConsultasParams = {
       page: currentPage,
       limit: PAGE_SIZE,
-      sort: "fechaConsulta",
-      order: "desc",
+      sort,
+      order,
       search: debouncedSearchTerm,
       tema: filters.tema as temas | "",
       estado: filters.estado as estado_consulta | "",
+      fechaDesde: filters.fechaDesde
+        ? format(filters.fechaDesde, "yyyy-MM-dd")
+        : undefined,
+      fechaHasta: filters.fechaHasta
+        ? format(filters.fechaHasta, "yyyy-MM-dd")
+        : undefined,
     };
 
     findConsultas(selectedCourse.id, params)
@@ -78,7 +108,7 @@ export default function ConsultasPage() {
   // Efecto que reacciona a los filtros y a la página
   useEffect(() => {
     fetchConsultas(page);
-  }, [selectedCourse, debouncedSearchTerm, filters, page]);
+  }, [selectedCourse, debouncedSearchTerm, filters, page, sortOption]);
 
   // --- Handlers ---
   const handleFilterChange = (e: SelectChangeEvent<string>) => {
@@ -121,7 +151,7 @@ export default function ConsultasPage() {
         <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
           Filtros de búsqueda
         </Typography>
-        <Stack direction="row" spacing={2}>
+        <Stack direction="row" spacing={2} flexWrap="wrap" sx={{ mb: 2 }}>
           <TextField
             label="Buscar por título o descripción..."
             variant="outlined"
@@ -130,14 +160,13 @@ export default function ConsultasPage() {
             onChange={handleSearchChange}
             sx={{ minWidth: 200, flexGrow: 1 }}
           />
-          <FormControl size="small" sx={{ minWidth: 180 }}>
+          <FormControl size="small" sx={{ width: 220 }}>
             <InputLabel>Tema</InputLabel>
             <Select
               name="tema"
               value={filters.tema}
               label="Tema"
               onChange={handleFilterChange}
-              sx={{ minWidth: 300 }}
             >
               <MenuItem value="">Todos</MenuItem>
               {Object.values(temas)
@@ -163,6 +192,40 @@ export default function ConsultasPage() {
                   {EstadoConsultaLabels[e]}
                 </MenuItem>
               ))}
+            </Select>
+          </FormControl>
+          <DatePicker
+            label="Desde"
+            value={filters.fechaDesde}
+            onChange={(newValue) => {
+              setFilters((prev) => ({ ...prev, fechaDesde: newValue }));
+              setPage(1);
+            }}
+            slotProps={{ textField: { size: "small", sx: { width: 170 } } }}
+          />
+          <DatePicker
+            label="Hasta"
+            value={filters.fechaHasta}
+            onChange={(newValue) => {
+              setFilters((prev) => ({ ...prev, fechaHasta: newValue }));
+              setPage(1);
+            }}
+            slotProps={{ textField: { size: "small", sx: { width: 170 } } }}
+          />
+
+          <Box sx={{ flexGrow: 1 }} />
+
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel>Ordenar por</InputLabel>
+            <Select
+              value={sortOption}
+              label="Ordenar por"
+              onChange={(e) => setSortOption(e.target.value)}
+            >
+              <MenuItem value="recent">Más recientes</MenuItem>
+              <MenuItem value="old">Más antiguas</MenuItem>
+              <MenuItem value="az">Título (A-Z)</MenuItem>
+              <MenuItem value="za">Título (Z-A)</MenuItem>
             </Select>
           </FormControl>
         </Stack>

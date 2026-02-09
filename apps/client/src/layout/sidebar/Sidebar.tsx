@@ -221,7 +221,7 @@ export default function Sidebar({
   };
 
   return (
-    <Box sx={{ display: "flex" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "grey.100" }}>
       <AppBar position="fixed" open={open} style={{ borderRadius: 0 }}>
         <Toolbar>
           {/* Icono para abrir la Sidebar */}
@@ -314,11 +314,10 @@ export default function Sidebar({
       <Container
         component="main"
         maxWidth={isReportsPage ? false : "xl"} // Sin límite de ancho en reportes
-        disableGutters={isReportsPage} // Sin padding lateral en reportes
+        disableGutters // Desactivamos gutters por defecto para controlar el padding manualmente
         sx={{
           flexGrow: 1,
-          pt: isReportsPage ? 0 : 3, // Sin padding superior en reportes
-          pb: isReportsPage ? 0 : 3, // Sin padding inferior en reportes
+          p: isReportsPage ? 0 : 2,
         }}
       >
         <DrawerHeader />

@@ -10,6 +10,7 @@ import {
   CircularProgress,
   Alert,
   Divider,
+  Rating,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useForm, Controller, type SubmitHandler } from "react-hook-form";
@@ -196,9 +197,21 @@ export default function ConsultaAccordion({
           {/* Valoración (si ya está Resuelta) */}
           {isResuelta && (
             <Box>
-              <Typography variant="overline" color="text.secondary">
-                Valoración del Alumno
-              </Typography>
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={1}
+                sx={{ mb: 0.5 }}
+              >
+                <Typography variant="overline" color="text.secondary">
+                  Valoración del Alumno
+                </Typography>
+                <Rating
+                  value={consulta.valoracionAlumno || 0}
+                  readOnly
+                  size="small"
+                />
+              </Stack>
               <Typography variant="body2">
                 {consulta.comentarioValoracion || "(Sin comentario)"}
               </Typography>

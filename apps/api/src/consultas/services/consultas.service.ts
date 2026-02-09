@@ -47,9 +47,10 @@ export class ConsultasService {
       );
     }
 
-    // Validar que el título o la descripción no se repitan en otras consultas
+    // Validar que el título o la descripción no se repitan en otras consultas DEL MISMO CURSO
     const existingConsulta = await this.prisma.consulta.findFirst({
       where: {
+        idCurso, // <--- IMPORTANTE: Filtramos por el curso actual
         OR: [{ titulo: titulo }, { descripcion: descripcion }],
       },
     });
@@ -206,7 +207,17 @@ export class ConsultasService {
     idCurso: string,
     dto: FindConsultasDto, // <-- 2. Usar el DTO
   ) {
-    const { page, limit, sort, order, tema, estado, search } = dto;
+    const {
+      page,
+      limit,
+      sort,
+      order,
+      tema,
+      estado,
+      search,
+      fechaDesde,
+      fechaHasta,
+    } = dto;
     const skip = (page - 1) * limit;
     const take = limit;
 
@@ -220,6 +231,12 @@ export class ConsultasService {
           { titulo: { contains: search, mode: 'insensitive' } },
           { descripcion: { contains: search, mode: 'insensitive' } },
         ],
+      }),
+      ...((fechaDesde || fechaHasta) && {
+        fechaConsulta: {
+          ...(fechaDesde && { gte: new Date(fechaDesde) }),
+          ...(fechaHasta && { lte: new Date(fechaHasta) }),
+        },
       }),
     };
 
@@ -256,12 +273,87 @@ export class ConsultasService {
     }
   }
 
+  // --- 6. SERVICIO DE LECTURA (PÚBLICAS PARA ALUMNOS) ---
+  async findConsultasPublicas(idCurso: string, dto: FindConsultasDto) {
+    const { page, limit, sort, order, tema, search, fechaDesde, fechaHasta } =
+      dto;
+    // Nota: Ignoramos el filtro de 'estado' intencionalmente para la vista pública general,
+    // o podríamos permitirlo si se desea. Por ahora, traemos todas las no borradas.
+
+    const skip = (page - 1) * limit;
+    const take = limit;
+
+    const where: Prisma.ConsultaWhereInput = {
+      idCurso,
+      deletedAt: null,
+      ...(tema && { tema: tema }),
+      ...(search && {
+        OR: [
+          { titulo: { contains: search, mode: 'insensitive' } },
+          { descripcion: { contains: search, mode: 'insensitive' } },
+        ],
+      }),
+      ...((fechaDesde || fechaHasta) && {
+        fechaConsulta: {
+          ...(fechaDesde && { gte: new Date(fechaDesde) }),
+          ...(fechaHasta && { lte: new Date(fechaHasta) }),
+        },
+      }),
+    };
+
+    const orderBy: Prisma.ConsultaOrderByWithRelationInput = {
+      [sort || 'fechaConsulta']: order || 'desc',
+    };
+
+    try {
+      const [consultas, total] = await this.prisma.$transaction([
+        this.prisma.consulta.findMany({
+          where,
+          orderBy,
+          skip,
+          take,
+          include: {
+            alumno: {
+              select: { nombre: true, apellido: true },
+            },
+            respuestaConsulta: {
+              include: {
+                docente: {
+                  select: { nombre: true, apellido: true },
+                },
+              },
+            },
+          },
+        }),
+        this.prisma.consulta.count({ where }),
+      ]);
+
+      const totalPages = Math.ceil(total / limit);
+      return { data: consultas, total, page, totalPages };
+    } catch (error) {
+      console.error('Error en findConsultasPublicas:', error);
+      throw new InternalServerErrorException(
+        'Error al obtener las consultas públicas.',
+      );
+    }
+  }
+
   // --- 5. SERVICIO DE LECTURA (DOCENTE) (Refactorizado) ---
   async findConsultasForDocente(
     idCurso: string,
     dto: FindConsultasDto, // <-- 2. Usar el DTO
   ) {
-    const { page, limit, sort, order, tema, estado, search } = dto;
+    const {
+      page,
+      limit,
+      sort,
+      order,
+      tema,
+      estado,
+      search,
+      fechaDesde,
+      fechaHasta,
+    } = dto;
     const skip = (page - 1) * limit;
     const take = limit;
 
@@ -275,6 +367,12 @@ export class ConsultasService {
           { titulo: { contains: search, mode: 'insensitive' } },
           { descripcion: { contains: search, mode: 'insensitive' } },
         ],
+      }),
+      ...((fechaDesde || fechaHasta) && {
+        fechaConsulta: {
+          ...(fechaDesde && { gte: new Date(fechaDesde) }),
+          ...(fechaHasta && { lte: new Date(fechaHasta) }),
+        },
       }),
     };
 
@@ -330,38 +428,44 @@ export class ConsultasService {
       );
     }
 
-    // Validar que el título o la descripción no se repitan en OTRAS consultas
-    const orConditions: Prisma.ConsultaWhereInput[] = [];
-    if (dto.titulo) {
-      orConditions.push({ titulo: dto.titulo });
-    }
-    if (dto.descripcion) {
-      orConditions.push({ descripcion: dto.descripcion });
-    }
-
-    if (orConditions.length > 0) {
-      const existingConsulta = await this.prisma.consulta.findFirst({
-        where: {
-          id: { not: idConsulta }, // Excluimos la consulta actual
-          OR: orConditions,
-        },
-      });
-
-      if (existingConsulta) {
-        const field =
-          dto.titulo && existingConsulta.titulo === dto.titulo
-            ? 'título'
-            : 'descripción';
-        throw new ConflictException(
-          `Ya existe otra consulta con ese ${field}.`,
-        );
-      }
-    }
     try {
-      // 1. Validar permisos (dueño, pendiente y no borrado)
-      await this.checkConsultaOwnershipAndState(idConsulta, idAlumno);
+      // 1. Validar permisos (dueño, pendiente y no borrado) Y OBTENER DATOS
+      // Modificamos el helper para que nos devuelva la consulta y así saber su idCurso
+      const consultaActual = await this.checkConsultaOwnershipAndState(
+        idConsulta,
+        idAlumno,
+      );
 
-      // 2. Actualizar (El trigger de auditoría captura esto)
+      // 2. Validar duplicados (AHORA CONTEXTUALIZADO AL CURSO)
+      const orConditions: Prisma.ConsultaWhereInput[] = [];
+      if (dto.titulo) {
+        orConditions.push({ titulo: dto.titulo });
+      }
+      if (dto.descripcion) {
+        orConditions.push({ descripcion: dto.descripcion });
+      }
+
+      if (orConditions.length > 0) {
+        const existingConsulta = await this.prisma.consulta.findFirst({
+          where: {
+            id: { not: idConsulta }, // Excluimos la consulta actual
+            idCurso: consultaActual.idCurso, // <--- IMPORTANTE: Usamos el curso de la consulta
+            OR: orConditions,
+          },
+        });
+
+        if (existingConsulta) {
+          const field =
+            dto.titulo && existingConsulta.titulo === dto.titulo
+              ? 'título'
+              : 'descripción';
+          throw new ConflictException(
+            `Ya existe otra consulta con ese ${field} en este curso.`,
+          );
+        }
+      }
+
+      // 3. Actualizar (El trigger de auditoría captura esto)
       const consultaActualizada = await this.prisma.consulta.update({
         where: { id: idConsulta },
         data: dto,
@@ -369,7 +473,11 @@ export class ConsultasService {
 
       return consultaActualizada;
     } catch (error) {
-      if (error instanceof ForbiddenException) throw error;
+      if (
+        error instanceof ForbiddenException ||
+        error instanceof ConflictException
+      )
+        throw error;
       console.error('Error en updateConsulta:', error);
       throw new InternalServerErrorException(
         'Error al actualizar la consulta.',
@@ -451,6 +559,8 @@ export class ConsultasService {
         'No puedes modificar una consulta que ya fue respondida o está resuelta.',
       );
     }
+
+    return consulta; // <--- Devolvemos la consulta para usar sus datos (ej: idCurso)
   }
 
   private async generarClaseAutomatica(idCurso: string) {

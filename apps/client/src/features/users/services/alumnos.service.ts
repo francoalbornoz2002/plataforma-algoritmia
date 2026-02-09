@@ -9,6 +9,7 @@ import type {
   FindConsultasParams,
   MisionConEstado,
   PaginatedConsultasResponse,
+  PaginatedConsultasDocenteResponse, // Usamos este tipo porque incluye datos del alumno autor
   ProgresoAlumno,
 } from "../../../types";
 import type {
@@ -35,7 +36,7 @@ export const findMyCourses = async (): Promise<InscripcionConCurso[]> => {
   } catch (err: any) {
     console.error(
       "Error fetching student's courses:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw err.response?.data || new Error("Error al obtener tus cursos.");
   }
@@ -46,7 +47,7 @@ export const findMyCourses = async (): Promise<InscripcionConCurso[]> => {
  */
 export const joinCourse = async (
   idCurso: string,
-  contrasenaAcceso: string
+  contrasenaAcceso: string,
 ): Promise<any> => {
   try {
     // Asumo que tu endpoint de 'join' está en el AlumnosController
@@ -63,7 +64,7 @@ export const joinCourse = async (
 };
 
 export const getMyProgress = async (
-  idCurso: string
+  idCurso: string,
 ): Promise<ProgresoAlumno> => {
   try {
     const response = await apiClient.get("/alumnos/my/progress", {
@@ -73,14 +74,14 @@ export const getMyProgress = async (
   } catch (err: any) {
     console.error(
       "Error fetching student progress:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw err.response?.data || new Error("Error al obtener tu progreso.");
   }
 };
 
 export const getMyDifficulties = async (
-  idCurso: string
+  idCurso: string,
 ): Promise<DificultadAlumnoDetallada[]> => {
   try {
     const response = await apiClient.get("/alumnos/my/difficulties", {
@@ -90,7 +91,7 @@ export const getMyDifficulties = async (
   } catch (err: any) {
     console.error(
       "Error fetching student difficulties:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw err.response?.data || new Error("Error al obtener tus dificultades.");
   }
@@ -101,7 +102,7 @@ export const getMyDifficulties = async (
  * para el alumno actual en el curso seleccionado.
  */
 export const getMyMissions = async (
-  idCurso: string
+  idCurso: string,
 ): Promise<MisionConEstado[]> => {
   try {
     const response = await apiClient.get("/alumnos/my/missions", {
@@ -111,7 +112,7 @@ export const getMyMissions = async (
   } catch (err: any) {
     console.error(
       "Error fetching student missions:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw err.response?.data || new Error("Error al obtener tus misiones.");
   }
@@ -122,7 +123,7 @@ export const getMyMissions = async (
  */
 export const getMyConsultas = async (
   idCurso: string,
-  params: FindConsultasParams
+  params: FindConsultasParams,
 ): Promise<PaginatedConsultasResponse> => {
   try {
     // Limpiamos los params (filtros vacíos)
@@ -132,22 +133,57 @@ export const getMyConsultas = async (
         if (cleanedParams[key] === "") {
           delete cleanedParams[key];
         }
-      }
+      },
     );
 
     const response = await apiClient.get(
       `/alumnos/my/courses/${idCurso}/consults`,
       {
         params: cleanedParams,
-      }
+      },
     );
     return response.data;
   } catch (err: any) {
     console.error(
       "Error fetching student consults:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw err.response?.data || new Error("Error al obtener tus consultas.");
+  }
+};
+
+/**
+ * Obtiene la lista paginada de consultas PÚBLICAS del curso
+ */
+export const getPublicConsultas = async (
+  idCurso: string,
+  params: FindConsultasParams,
+): Promise<PaginatedConsultasDocenteResponse> => {
+  try {
+    const cleanedParams: Partial<FindConsultasParams> = { ...params };
+    (Object.keys(cleanedParams) as Array<keyof FindConsultasParams>).forEach(
+      (key) => {
+        if (cleanedParams[key] === "") {
+          delete cleanedParams[key];
+        }
+      },
+    );
+
+    const response = await apiClient.get(
+      `/alumnos/course/${idCurso}/consultas-publicas`,
+      {
+        params: cleanedParams,
+      },
+    );
+    return response.data;
+  } catch (err: any) {
+    console.error(
+      "Error fetching public consults:",
+      err.response?.data || err.message,
+    );
+    throw (
+      err.response?.data || new Error("Error al obtener consultas públicas.")
+    );
   }
 };
 
@@ -156,7 +192,7 @@ export const getMyConsultas = async (
  */
 export const createConsulta = async (
   idCurso: string,
-  data: CreateConsultaFormValues
+  data: CreateConsultaFormValues,
 ): Promise<Consulta> => {
   try {
     // El backend DTO espera 'fechaConsulta', la añadimos
@@ -167,7 +203,7 @@ export const createConsulta = async (
 
     const response = await apiClient.post(
       `/alumnos/my/courses/${idCurso}/consults/create`,
-      payload
+      payload,
     );
     return response.data;
   } catch (err: any) {
@@ -181,13 +217,13 @@ export const createConsulta = async (
  */
 export const updateConsulta = async (
   idConsulta: string,
-  data: UpdateConsultaFormValues // Usamos el DTO de Update
+  data: UpdateConsultaFormValues, // Usamos el DTO de Update
 ): Promise<Consulta> => {
   try {
     // Apuntamos a la nueva ruta "edit"
     const response = await apiClient.patch(
       `/alumnos/my/consults/edit/${idConsulta}`,
-      data
+      data,
     );
     return response.data;
   } catch (err: any) {
@@ -204,7 +240,7 @@ export const deleteConsulta = async (idConsulta: string): Promise<Consulta> => {
   try {
     // Apuntamos a la nueva ruta "delete"
     const response = await apiClient.delete(
-      `/alumnos/my/consults/delete/${idConsulta}`
+      `/alumnos/my/consults/delete/${idConsulta}`,
     );
     return response.data;
   } catch (err: any) {
@@ -218,12 +254,12 @@ export const deleteConsulta = async (idConsulta: string): Promise<Consulta> => {
  */
 export const valorarConsulta = async (
   idConsulta: string,
-  data: ValorarConsultaFormValues
+  data: ValorarConsultaFormValues,
 ): Promise<Consulta> => {
   try {
     const response = await apiClient.patch(
       `/alumnos/my/consults/${idConsulta}/valorar`,
-      data
+      data,
     );
     return response.data;
   } catch (err: any) {
@@ -237,18 +273,18 @@ export const valorarConsulta = async (
  * @param idCurso - El ID del curso.
  */
 export const findActiveAlumnos = async (
-  idCurso: string
+  idCurso: string,
 ): Promise<DocenteBasico[]> => {
   try {
     // Asumimos que existe un endpoint para esto, similar a active-docentes.
     const response = await apiClient.get(
-      `/alumnos/my/courses/${idCurso}/active-alumnos`
+      `/alumnos/my/courses/${idCurso}/active-alumnos`,
     );
     return response.data;
   } catch (err: any) {
     console.error(
       "Error fetching active alumnos:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw (
       err.response?.data ||
@@ -263,18 +299,18 @@ export const findActiveAlumnos = async (
  * @param idCurso - El ID del curso.
  */
 export const findEligibleAlumnos = async (
-  idCurso: string
+  idCurso: string,
 ): Promise<DocenteBasico[]> => {
   try {
     // NOTA: Asumimos que este endpoint existe para optimizar la carga.
     const response = await apiClient.get(
-      `/alumnos/courses/${idCurso}/elegibles-refuerzo`
+      `/alumnos/courses/${idCurso}/elegibles-refuerzo`,
     );
     return response.data;
   } catch (err: any) {
     console.error(
       "Error fetching eligible alumnos:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw (
       err.response?.data ||
@@ -290,7 +326,7 @@ export const findEligibleAlumnos = async (
  */
 export const getStudentDifficulties = async (
   idCurso: string,
-  idAlumno: string
+  idAlumno: string,
 ): Promise<DificultadAlumnoDetallada[]> => {
   // Reutiliza el endpoint existente `getMyDifficulties` pero para un alumno específico
   const response = await apiClient.get(`/alumnos/${idAlumno}/difficulties`, {
