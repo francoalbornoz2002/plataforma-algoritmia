@@ -2,7 +2,7 @@ import { Chip, type ChipProps } from "@mui/material";
 import { grado_dificultad } from "../types";
 import DangerousIcon from "@mui/icons-material/Dangerous";
 import WarningIcon from "@mui/icons-material/Warning";
-import InfoIcon from "@mui/icons-material/Info";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
 
 interface GradeChipProps {
@@ -26,8 +26,8 @@ export default function GradeChip({ texto, grado, small }: GradeChipProps) {
       color = "warning";
       break;
     case grado_dificultad.Bajo:
-      icon = <InfoIcon sx={{ fontSize: "1.25rem" }} />;
-      color = "info";
+      icon = <CheckCircleIcon sx={{ fontSize: "1.25rem" }} />;
+      color = "success";
       break;
     case grado_dificultad.Ninguno:
       icon = <RemoveCircleIcon sx={{ fontSize: "1.25rem" }} />;

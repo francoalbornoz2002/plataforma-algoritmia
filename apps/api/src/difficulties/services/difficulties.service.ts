@@ -600,8 +600,16 @@ export class DifficultiesService {
       },
     });
 
-    // Si no hay dificultades, reseteamos y salimos
-    if (allDifAlumnos.length === 0) {
+    // 2.1. Contar el total de alumnos activos/finalizados para el cálculo del promedio
+    const totalAlumnos = await tx.alumnoCurso.count({
+      where: {
+        idCurso: idCurso,
+        estado: { in: [estado_simple.Activo, estado_simple.Finalizado] },
+      },
+    });
+
+    // Si no hay dificultades (o no hay alumnos), reseteamos y salimos
+    if (allDifAlumnos.length === 0 || totalAlumnos === 0) {
       const reset = await tx.dificultadesCurso.update({
         where: { id: curso.idDificultadesCurso },
         data: {
@@ -630,8 +638,8 @@ export class DifficultiesService {
     // --- 3. Calcular KPIs (Lógica en TypeScript) ---
 
     // KPI: Promedio de dificultades por alumno
-    const totalAlumnosSet = new Set(allDifAlumnos.map((d) => d.idAlumno));
-    const promDificultades = allDifAlumnos.length / totalAlumnosSet.size;
+    // Dividimos por el total de alumnos del curso, no solo los que tienen dificultades
+    const promDificultades = allDifAlumnos.length / totalAlumnos;
 
     // KPI: Dificultad más frecuente (Moda)
     const difCounts = new Map<string, number>();

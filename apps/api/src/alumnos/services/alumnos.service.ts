@@ -200,6 +200,11 @@ export class AlumnosService {
 
           // Actualizamos el progreso general del curso (para incluir al nuevo alumno en los promedios)
           await this.progressService.recalculateCourseProgress(tx, idCurso);
+          // Actualizamos también las estadísticas de dificultades (el promedio bajará al entrar un alumno sin dificultades)
+          await this.difficultiesService.recalculateCourseDifficulties(
+            tx,
+            idCurso,
+          );
 
           return inscripcion;
         }
