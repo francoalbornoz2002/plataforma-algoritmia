@@ -631,6 +631,7 @@ enum estado_consulta {
 
 enum estado_sesion {
   Pendiente
+  En_curso     @map("En curso")
   Cancelada
   Completada
   Incompleta
