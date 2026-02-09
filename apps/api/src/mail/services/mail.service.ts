@@ -5,16 +5,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as Handlebars from 'handlebars';
-
-// Mapa para convertir Enum Prisma a índice JS (0=Domingo, 1=Lunes...)
-const MAPA_DIAS: Record<dias_semana, number> = {
-  Lunes: 1,
-  Martes: 2,
-  Miercoles: 3,
-  Jueves: 4,
-  Viernes: 5,
-  Sabado: 6,
-};
+import { calcularFechaProximaClase } from '../../helpers';
 
 @Injectable()
 export class MailService implements OnModuleInit {
@@ -156,7 +147,7 @@ export class MailService implements OnModuleInit {
     fechaFuturaBase.setHours(fechaFuturaBase.getHours() + 1);
 
     const fechaSiguiente =
-      this.calcularProximaOcurrencia(datos.diasClaseConfig, fechaFuturaBase) ||
+      calcularFechaProximaClase(datos.diasClaseConfig, fechaFuturaBase) ||
       fechaFuturaBase; // Fallback a la misma si falla
 
     // 2. Formateadores de texto
@@ -407,54 +398,5 @@ export class MailService implements OnModuleInit {
         },
       });
     }
-  }
-
-  /**
-   * HELPER PRIVADO: Calcula la próxima fecha de clase a partir de una fecha base.
-   * (Lógica autocontenida para no depender de archivos externos)
-   */
-  private calcularProximaOcurrencia(
-    diasClase: DiaClase[],
-    desde: Date,
-  ): Date | null {
-    if (!diasClase || diasClase.length === 0) return null;
-
-    const fechaBase = new Date(desde);
-    let candidatos: Date[] = [];
-
-    // Buscamos en los próximos 21 días
-    for (let i = 0; i < 21; i++) {
-      const fechaFutura = new Date(fechaBase);
-      fechaFutura.setDate(fechaBase.getDate() + i);
-
-      const diaSemanaJS = fechaFutura.getDay(); // 0-6
-
-      // Verificamos si el curso tiene clase este día
-      const clasesDelDia = diasClase.filter(
-        (d) => MAPA_DIAS[d.dia] === diaSemanaJS,
-      );
-
-      for (const clase of clasesDelDia) {
-        const horaInicio = new Date(clase.horaInicio); // La hora base (ej. 1970-01-01T14:00...)
-
-        // Configuramos la fecha candidata
-        const fechaCandidata = new Date(fechaFutura);
-        fechaCandidata.setHours(
-          horaInicio.getHours() - 1, // Regla: 1 hora antes de la clase
-          horaInicio.getMinutes(),
-          0,
-          0,
-        );
-
-        // Debe ser estrictamente mayor a la fecha 'desde'
-        if (fechaCandidata > desde) {
-          candidatos.push(fechaCandidata);
-        }
-      }
-    }
-
-    // Ordenamos cronológicamente y devolvemos la primera
-    candidatos.sort((a, b) => a.getTime() - b.getTime());
-    return candidatos.length > 0 ? candidatos[0] : null;
   }
 }

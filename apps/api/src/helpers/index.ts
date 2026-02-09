@@ -64,15 +64,20 @@ export function getDiaSemanaEnum(date: Date): dias_semana | null {
 /**
  * Calcula la fecha y hora para la próxima clase de consulta automática.
  * Regla: 1 hora antes del inicio de la próxima clase del curso.
+ * Excepción: Si 1 hora antes es < 08:00 AM, se programa 1 hora después del fin de la clase.
  * * @param diasClase Lista de horarios configurados para el curso
+ * @param desde Fecha a partir de la cual buscar (por defecto: ahora)
  * @returns Date La fecha de inicio de la clase de consulta
  */
-export function calcularFechaProximaClase(diasClase: DiaClase[]): Date | null {
+export function calcularFechaProximaClase(
+  diasClase: DiaClase[],
+  desde: Date = new Date(),
+): Date | null {
   if (!diasClase || diasClase.length === 0) {
     return null; // El curso no tiene horarios definidos
   }
 
-  const ahora = new Date();
+  const ahora = desde;
   let candidatos: Date[] = [];
 
   // Iteramos los próximos 7 días para encontrar la ocurrencia más cercana
@@ -90,15 +95,27 @@ export function calcularFechaProximaClase(diasClase: DiaClase[]): Date | null {
     for (const clase of clasesDelDia) {
       // Extraemos la hora de inicio de la clase.
       const horaInicioClase = new Date(clase.horaInicio);
+      const horaFinClase = new Date(clase.horaFin);
 
       // Creamos la fecha candidata combinando el Día Futuro + Hora Clase
       const fechaCandidata = new Date(fechaFutura);
-      fechaCandidata.setHours(
-        horaInicioClase.getHours() - 1, // <--- 1 hora antes
-        horaInicioClase.getMinutes(),
-        0,
-        0,
-      );
+
+      // 1. Calculamos 1 hora antes en UTC
+      let hCandidataUTC = horaInicioClase.getUTCHours() - 1;
+      let mCandidataUTC = horaInicioClase.getUTCMinutes();
+
+      // 2. Convertimos a hora Argentina (UTC-3) para validar restricción < 8 AM
+      let hArg = hCandidataUTC - 3;
+      while (hArg < 0) hArg += 24;
+      while (hArg >= 24) hArg -= 24;
+
+      if (hArg < 8) {
+        // Es muy temprano (< 8 AM Arg). Usamos la hora de FIN de la clase como inicio.
+        hCandidataUTC = horaFinClase.getUTCHours();
+        mCandidataUTC = horaFinClase.getUTCMinutes();
+      }
+
+      fechaCandidata.setUTCHours(hCandidataUTC, mCandidataUTC, 0, 0);
 
       // Validación Clave:
       // La clase de consulta debe ser en el FUTURO.
