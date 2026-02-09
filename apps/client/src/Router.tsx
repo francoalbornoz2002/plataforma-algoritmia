@@ -2,7 +2,6 @@ import React from "react";
 import LoginPage from "./features/authentication/pages/LoginPage";
 import { Navigate, Route, Routes } from "react-router";
 import UsersPage from "./features/users/pages/UsersPage";
-import AuditPage from "./features/audit/pages/AuditPage";
 import CoursesPage from "./features/courses/pages/CoursesPage";
 import AccountPage from "./features/users/pages/AccountPage";
 import ProtectedRoute from "./features/authentication/guards/ProtectedRoute";
@@ -62,7 +61,6 @@ export const AppRouter: React.FC<{}> = () => {
               <Route path="users" element={<UsersPage />} />
               <Route path="courses" element={<CoursesPage />} />
               <Route path="reports" element={<ReportsPage />} />
-              <Route path="audit" element={<AuditPage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
           </Route>

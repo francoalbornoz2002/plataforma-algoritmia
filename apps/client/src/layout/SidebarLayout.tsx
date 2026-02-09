@@ -1,9 +1,7 @@
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PeopleIcon from "@mui/icons-material/People";
 import SchoolIcon from "@mui/icons-material/School";
-import BarChartIcon from "@mui/icons-material/BarChart";
 import AssessmentIcon from "@mui/icons-material/Assessment";
-import VpnKeyIcon from "@mui/icons-material/VpnKey";
 import SettingsIcon from "@mui/icons-material/Settings";
 import Sidebar from "./sidebar/Sidebar";
 import { Outlet } from "react-router";
@@ -15,7 +13,7 @@ import {
   Quiz,
   SwitchAccessShortcutAdd,
 } from "@mui/icons-material";
-import type { MenuItemType, UserData } from "../types";
+import type { MenuItemType } from "../types";
 import MarkUnreadChatAltIcon from "@mui/icons-material/MarkUnreadChatAlt";
 
 import CourseContextLayout from "./CourseContextLayout";
@@ -36,7 +34,6 @@ export default function SidebarLayout() {
       icon: <AssessmentIcon />,
       path: "/dashboard/reports",
     },
-    { text: "Auditoría", icon: <VpnKeyIcon />, path: "/dashboard/audit" },
     {
       text: "Datos de la Institución",
       icon: <LocationCity />,

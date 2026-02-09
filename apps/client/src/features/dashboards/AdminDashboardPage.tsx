@@ -207,7 +207,7 @@ export default function AdminDashboardPage() {
                 fullWidth
                 variant="outlined"
                 startIcon={<Assessment />}
-                onClick={() => navigate("/auditoria")}
+                onClick={() => navigate("/dashboard/reports")}
               >
                 Ver Auditoría
               </Button>
