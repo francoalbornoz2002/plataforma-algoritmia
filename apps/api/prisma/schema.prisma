@@ -31,9 +31,8 @@ model ClaseConsulta {
   idCurso                String                  @map("id_curso") @db.Uuid
   nombre                 String                  @db.VarChar(255)
   descripcion            String                  @db.VarChar(255)
-  fechaClase             DateTime                @map("fecha_clase") @db.Date
-  horaInicio             DateTime                @map("hora_inicio") @db.Time(6)
-  horaFin                DateTime                @map("hora_fin") @db.Time(6)
+  fechaInicio            DateTime                @map("fecha_inicio") @db.Timestamptz(6)
+  fechaFin               DateTime                @map("fecha_fin") @db.Timestamptz(6)
   modalidad              modalidad
   estadoClase            estado_clase_consulta   @map("estado_clase")
   esAutomatica           Boolean                 @default(false) @map("es_automatica")
@@ -50,7 +49,7 @@ model ClaseConsulta {
   @@index([idCurso], map: "idx_clases_consulta_curso")
   @@index([idDocente], map: "idx_clases_consulta_docente")
   @@index([estadoClase], map: "idx_clases_consulta_estadoc")
-  @@index([fechaClase], map: "idx_clases_consulta_fecha")
+  @@index([fechaInicio], map: "idx_clases_consulta_fecha_inicio")
   @@map("clases_consulta")
 }
 
