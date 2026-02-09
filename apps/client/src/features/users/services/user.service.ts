@@ -115,3 +115,14 @@ export const getUserById = async (userId: string): Promise<UserData> => {
     throw error;
   }
 };
+
+// --- Función para obtener estadísticas del dashboard de ADMIN ---
+export const getAdminDashboardStats = async () => {
+  try {
+    const response = await apiClient.get("/users/admin/dashboard");
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener stats de admin:", error);
+    throw error;
+  }
+};

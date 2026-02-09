@@ -49,6 +49,13 @@ export class UsersController {
   }
 
   @UseGuards(RolesGuard)
+  @Roles(roles.Administrador)
+  @Get('admin/dashboard')
+  getAdminDashboardStats() {
+    return this.usersService.getAdminDashboardStats();
+  }
+
+  @UseGuards(RolesGuard)
   @Get('teachers')
   @ApiCreatedResponse({ type: UserEntity, isArray: true })
   findTeachers() {

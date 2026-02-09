@@ -21,6 +21,7 @@ import {
 } from "@mui/material";
 import DashboardStatCard from "./components/DashboardStatCard";
 import DashboardTextCard from "./components/DashboardTextCard";
+import CourseInfoCard from "./components/CourseInfoCard";
 
 import { useCourseContext } from "../../context/CourseContext";
 
@@ -37,13 +38,9 @@ import type { CourseDashboardData } from "../../types";
 import { useAuth } from "../authentication/context/AuthProvider";
 import {
   Assessment,
-  CalendarToday,
   Class,
   Delete,
-  Description,
-  Edit,
   Event,
-  Group,
   MarkUnreadChatAlt,
   School,
   Search,
@@ -190,87 +187,12 @@ export default function DocenteDashboardPage() {
             <Grid container spacing={2}>
               {/* A. INFORMACIÓN DEL CURSO (75% del ancho disponible) */}
               <Grid size={{ xs: 12, md: 9 }}>
-                <Paper elevation={2} sx={{ p: 2, height: "100%" }}>
-                  <Stack spacing={2}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        mb: 1,
-                      }}
-                    >
-                      <Typography variant="h6" color="primary">
-                        Información del Curso
-                      </Typography>
-                      {!isReadOnly && (
-                        <Button
-                          startIcon={<Edit />}
-                          size="small"
-                          variant="outlined"
-                          onClick={() => setIsEditModalOpen(true)}
-                        >
-                          Editar Info
-                        </Button>
-                      )}
-                    </Box>
-
-                    <Stack spacing={2}>
-                      {/* Descripción */}
-
-                      {/* Detalles */}
-                      <Stack spacing={1}>
-                        <Box sx={{ display: "flex", alignItems: "center" }}>
-                          <School
-                            fontSize="small"
-                            sx={{ mr: 1, color: "text.secondary" }}
-                          />
-                          <Typography variant="body2">
-                            <strong>Docentes:</strong>{" "}
-                            {selectedCourse.docentes
-                              .map((d) => `${d.nombre} ${d.apellido}`)
-                              .join(", ")}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ display: "flex", alignItems: "center" }}>
-                          <CalendarToday
-                            fontSize="small"
-                            sx={{ mr: 1, color: "text.secondary" }}
-                          />
-                          <Typography variant="body2">
-                            <strong>Días:</strong>{" "}
-                            {selectedCourse.diasClase
-                              .map((d) => d.dia)
-                              .join(", ") || "Sin definir"}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ display: "flex", alignItems: "center" }}>
-                          <Group
-                            fontSize="small"
-                            sx={{ mr: 1, color: "text.secondary" }}
-                          />
-                          <Typography variant="body2">
-                            <strong>Alumnos:</strong> {students.length}{" "}
-                            inscriptos
-                          </Typography>
-                        </Box>
-                        <Box sx={{ display: "flex", alignItems: "start" }}>
-                          <Description
-                            fontSize="small"
-                            sx={{ mr: 1, color: "text.secondary" }}
-                          />
-                          <Box>
-                            <Typography variant="body2" fontWeight="bold">
-                              Descripción del curso
-                            </Typography>
-                            <Typography variant="body1">
-                              {selectedCourse.descripcion}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Stack>
-                    </Stack>
-                  </Stack>
-                </Paper>
+                <CourseInfoCard
+                  course={selectedCourse}
+                  studentCount={students.length}
+                  isReadOnly={isReadOnly}
+                  onEdit={() => setIsEditModalOpen(true)}
+                />
               </Grid>
 
               {/* B. ACCIONES RÁPIDAS (25% del ancho disponible) */}

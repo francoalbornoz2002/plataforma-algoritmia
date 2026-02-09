@@ -886,6 +886,78 @@ export class CoursesService {
     };
   }
 
+  /**
+   * Obtiene estadísticas para el dashboard del ALUMNO.
+   */
+  async getStudentDashboardStats(idCurso: string, idAlumno: string) {
+    const now = new Date();
+    const startOfDay = new Date(now);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(now);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const startOfWeek = new Date(now);
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+    startOfWeek.setDate(diff);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    // 1. Misiones Completadas (Hoy y Semana)
+    const [misionesHoy, misionesSemana] = await Promise.all([
+      this.prisma.misionCompletada.count({
+        where: {
+          progresoAlumno: { alumnoCurso: { idAlumno, idCurso } },
+          fechaCompletado: { gte: startOfDay, lte: endOfDay },
+        },
+      }),
+      this.prisma.misionCompletada.count({
+        where: {
+          progresoAlumno: { alumnoCurso: { idAlumno, idCurso } },
+          fechaCompletado: { gte: startOfWeek },
+        },
+      }),
+    ]);
+
+    // 2. Sesión Pendiente (La más próxima)
+    const sesionPendiente = await this.prisma.sesionRefuerzo.findFirst({
+      where: {
+        idCurso,
+        idAlumno,
+        estado: estado_sesion.Pendiente,
+        deletedAt: null,
+      },
+      orderBy: { fechaHoraLimite: 'asc' },
+      select: {
+        id: true,
+        fechaHoraLimite: true,
+        dificultad: { select: { nombre: true } },
+      },
+    });
+
+    // 3. Próxima Clase
+    const proximaClase = await this.prisma.claseConsulta.findFirst({
+      where: {
+        idCurso,
+        fechaInicio: { gte: now },
+        estadoClase: {
+          in: [
+            estado_clase_consulta.Programada,
+            estado_clase_consulta.Pendiente_Asignacion,
+          ],
+        },
+        deletedAt: null,
+      },
+      orderBy: { fechaInicio: 'asc' },
+      select: { id: true, fechaInicio: true, modalidad: true },
+    });
+
+    return {
+      misiones: { hoy: misionesHoy, semana: misionesSemana },
+      sesionPendiente,
+      proximaClase,
+    };
+  }
+
   // --- MÉTODO HELPER PARA SINCRONIZAR DÍAS ---
   // Esta función es privada y se ejecuta dentro de un transaction.
   private async sincronizarDiasClase(

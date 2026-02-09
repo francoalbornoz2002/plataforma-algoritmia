@@ -162,7 +162,7 @@ export default function SesionResolverPage() {
       // Empujamos de nuevo el estado actual para anular la acción de "Atrás"
       window.history.pushState(null, "", window.location.href);
       alert(
-        "No puedes volver atrás durante la sesión. Si sales, perderás tu progreso."
+        "No puedes volver atrás durante la sesión. Si sales, perderás tu progreso.",
       );
     };
 
@@ -238,7 +238,7 @@ export default function SesionResolverPage() {
         ([idPregunta, idOpcionElegida]) => ({
           idPregunta,
           idOpcionElegida,
-        })
+        }),
       ),
     };
 
@@ -246,10 +246,10 @@ export default function SesionResolverPage() {
       const resultResponse = await resolverSesion(
         selectedCourse.id,
         sesion.id,
-        payload
+        payload,
       );
 
-      // ¡CLAVE! Volvemos a buscar la sesión para obtener los resultados completos
+      // Volvemos a buscar la sesión para obtener los resultados completos
       const updatedSesion = await findSesionById(selectedCourse.id, sesion.id);
 
       // Actualizamos el estado final en un solo paso para evitar race conditions
@@ -264,7 +264,7 @@ export default function SesionResolverPage() {
     } catch (error: any) {
       enqueueSnackbar(
         error.response?.data?.message || "Error al enviar las respuestas.",
-        { variant: "error" }
+        { variant: "error" },
       );
     } finally {
       setIsSubmitting(false);
@@ -448,7 +448,7 @@ export default function SesionResolverPage() {
               onChange={(e) =>
                 handleOptionChange(
                   sesion.preguntas[activeStep].pregunta.id,
-                  e.target.value
+                  e.target.value,
                 )
               }
             >
@@ -470,7 +470,7 @@ export default function SesionResolverPage() {
                       "&:hover": { bgcolor: "action.hover" },
                     }}
                   />
-                )
+                ),
               )}
             </RadioGroup>
           </Paper>

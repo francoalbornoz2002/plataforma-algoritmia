@@ -58,6 +58,16 @@ export class CoursesController {
   }
 
   @UseGuards(RolesGuard)
+  @Roles(roles.Alumno)
+  @Get(':id/student-dashboard')
+  getStudentDashboardStats(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    return this.coursesService.getStudentDashboardStats(id, req.user.userId);
+  }
+
+  @UseGuards(RolesGuard)
   @Roles(roles.Administrador, roles.Docente)
   @Patch('edit/:id')
   @UseInterceptors(FileInterceptor('imagen'))

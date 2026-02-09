@@ -172,3 +172,19 @@ export const finalizeCourse = async (id: string): Promise<void> => {
     throw err.response?.data || new Error("Error al finalizar el curso.");
   }
 };
+
+// --- Función para obtener estadísticas del dashboard de ALUMNO ---
+export const getStudentDashboardStats = async (idCurso: string) => {
+  try {
+    const response = await apiClient.get(
+      `/courses/${idCurso}/student-dashboard`,
+    );
+    return response.data;
+  } catch (err: any) {
+    console.error("Error fetching student dashboard stats:", err);
+    throw (
+      err.response?.data ||
+      new Error("Error al obtener estadísticas del alumno.")
+    );
+  }
+};

@@ -544,4 +544,116 @@ export class UsersService {
       }
     }
   }
+
+  /**
+   * Obtiene estadísticas globales para el Dashboard del Administrador.
+   */
+  async getAdminDashboardStats() {
+    const now = new Date();
+
+    // Fechas para Semana y Mes
+    const startOfWeek = new Date(now);
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1); // Lunes
+    startOfWeek.setDate(diff);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // 1. USUARIOS
+    const [totalUsers, activeUsers, admins, docentes, alumnos] =
+      await this.prisma.$transaction([
+        this.prisma.usuario.count(),
+        this.prisma.usuario.count({ where: { deletedAt: null } }),
+        this.prisma.usuario.count({
+          where: { rol: roles.Administrador, deletedAt: null },
+        }),
+        this.prisma.usuario.count({
+          where: { rol: roles.Docente, deletedAt: null },
+        }),
+        this.prisma.usuario.count({
+          where: { rol: roles.Alumno, deletedAt: null },
+        }),
+      ]);
+
+    // 2. CURSOS
+    const [totalCourses, activeCourses, inactiveCourses, finalizedCourses] =
+      await this.prisma.$transaction([
+        this.prisma.curso.count(),
+        this.prisma.curso.count({ where: { estado: 'Activo' } }),
+        this.prisma.curso.count({ where: { estado: 'Inactivo' } }),
+        this.prisma.curso.count({ where: { estado: 'Finalizado' } }),
+      ]);
+
+    // Helper para calcular %
+    const calcPct = (part: number, total: number) =>
+      total > 0 ? (part / total) * 100 : 0;
+
+    // 3. CLASES DE CONSULTA (Semana y Mes)
+    const getClassesStats = async (since: Date) => {
+      const classes = await this.prisma.claseConsulta.findMany({
+        where: { createdAt: { gte: since } },
+        select: { estadoClase: true },
+      });
+      const total = classes.length;
+      const realizadas = classes.filter(
+        (c) => c.estadoClase === estado_clase_consulta.Realizada,
+      ).length;
+      const canceladas = classes.filter(
+        (c) => c.estadoClase === estado_clase_consulta.Cancelada,
+      ).length;
+
+      return {
+        total,
+        pctRealizadas: calcPct(realizadas, total),
+        pctCanceladas: calcPct(canceladas, total),
+      };
+    };
+
+    // 4. SESIONES DE REFUERZO (Semana y Mes)
+    const getSessionsStats = async (since: Date) => {
+      const sessions = await this.prisma.sesionRefuerzo.findMany({
+        where: { createdAt: { gte: since } },
+        select: { estado: true },
+      });
+      const total = sessions.length;
+      const completadas = sessions.filter(
+        (s) => s.estado === estado_sesion.Completada,
+      ).length;
+      const pendientes = sessions.filter(
+        (s) => s.estado === estado_sesion.Pendiente,
+      ).length;
+
+      return {
+        total,
+        pctCompletadas: calcPct(completadas, total),
+        pctPendientes: calcPct(pendientes, total),
+      };
+    };
+
+    return {
+      users: {
+        total: totalUsers,
+        active: activeUsers,
+        inactive: totalUsers - activeUsers,
+        admins,
+        docentes,
+        alumnos,
+      },
+      courses: {
+        total: totalCourses,
+        active: activeCourses,
+        inactive: inactiveCourses,
+        finalized: finalizedCourses,
+      },
+      classes: {
+        week: await getClassesStats(startOfWeek),
+        month: await getClassesStats(startOfMonth),
+      },
+      sessions: {
+        week: await getSessionsStats(startOfWeek),
+        month: await getSessionsStats(startOfMonth),
+      },
+    };
+  }
 }
