@@ -32,7 +32,7 @@ export default function DashboardStatCard({
         },
       }}
     >
-      <Stack spacing={1}>
+      <Stack spacing={0.5}>
         <Stack direction="row" alignItems="center" spacing={1}>
           <Box sx={{ color: `${color}.main`, display: "flex" }}>{icon}</Box>
           <Typography
@@ -43,14 +43,18 @@ export default function DashboardStatCard({
             {title}
           </Typography>
         </Stack>
-        <Typography variant="h4" fontWeight="bold">
-          {value}
-        </Typography>
         {subtitle && (
-          <Typography variant="caption" color="text.secondary">
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ lineHeight: 1.2 }}
+          >
             {subtitle}
           </Typography>
         )}
+        <Typography variant="h4" fontWeight="bold" color={`${color}.main`}>
+          {value}
+        </Typography>
       </Stack>
     </Paper>
   );

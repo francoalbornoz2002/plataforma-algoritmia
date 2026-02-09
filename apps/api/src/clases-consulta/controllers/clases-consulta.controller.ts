@@ -62,7 +62,7 @@ export class ClasesConsultaController {
   @Roles(roles.Docente)
   async aceptarYReprogramar(
     @Param('id', ParseUUIDPipe) idClase: string,
-    @Body() body: { fechaClase: string; horaInicio: string; horaFin: string },
+    @Body() body: { fechaInicio: string; fechaFin: string },
     @Req() req: any,
   ) {
     const idDocente = req.user.userId; // Tu ID de usuario

@@ -45,7 +45,11 @@ const MAPA_DIAS: Record<dias_semana, number> = {
 
 // Helper para mapear JS Date day (0-6) a Enum Prisma
 export function getDiaSemanaEnum(date: Date): dias_semana | null {
-  const dayIndex = date.getUTCDay(); // Usamos UTC day para coincidir con la fecha enviada
+  // Ajustamos a Hora Local Argentina (UTC-3) para saber qué día es realmente para el usuario
+  const localDate = new Date(date);
+  localDate.setUTCHours(localDate.getUTCHours() - 3);
+  const dayIndex = localDate.getUTCDay();
+
   const map: Record<number, dias_semana> = {
     1: dias_semana.Lunes,
     2: dias_semana.Martes,

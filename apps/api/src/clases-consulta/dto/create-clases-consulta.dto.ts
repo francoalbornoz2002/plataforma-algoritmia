@@ -1,13 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { modalidad } from '@prisma/client';
 import {
-  IsString,
   IsUUID,
   IsDateString,
   IsEnum,
   IsArray,
   ArrayMinSize,
-  Matches,
+  IsString,
 } from 'class-validator';
 
 export class CreateClasesConsultaDto {
@@ -39,32 +38,13 @@ export class CreateClasesConsultaDto {
   @IsString()
   descripcion: string;
 
-  @ApiProperty({
-    description: 'Fecha de la clase en formato YYYY-MM-DD.',
-    example: '2025-11-20',
-  })
+  @ApiProperty({ description: 'Fecha y hora de inicio (ISO 8601)' })
   @IsDateString()
-  fechaClase: string;
+  fechaInicio: string;
 
-  @ApiProperty({
-    description: 'Hora de inicio en formato HH:mm (24hs).',
-    example: '14:00',
-  })
-  @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/, {
-    message: 'La hora de inicio debe estar en formato HH:mm (ej: 14:00)',
-  })
-  @IsString()
-  horaInicio: string;
-
-  @ApiProperty({
-    description: 'Hora de fin en formato HH:mm (24hs).',
-    example: '15:30',
-  })
-  @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/, {
-    message: 'La hora de fin debe estar en formato HH:mm (ej: 15:30)',
-  })
-  @IsString()
-  horaFin: string;
+  @ApiProperty({ description: 'Fecha y hora de fin (ISO 8601)' })
+  @IsDateString()
+  fechaFin: string;
 
   @ApiProperty({
     description: 'Modalidad de la clase (Presencial, Virtual, Hibrida).',

@@ -2,31 +2,27 @@ import apiClient from "../../../lib/axios";
 import type {
   ClaseConsulta,
   // FindClasesConsultaParams, // (Lo usaremos si paginamos)
+  CreateClaseConsultaPayload,
+  UpdateClaseConsultaPayload,
 } from "../../../types";
-
-// Importamos los DTOs del frontend
-import type {
-  CreateClaseConsultaFormValues,
-  UpdateClaseConsultaFormValues,
-} from "../validations/clase-consulta.schema";
 
 /**
  * Obtiene TODAS las clases de consulta de un curso
  * (Para Alumno y Docente)
  */
 export const findAllClasesByCurso = async (
-  idCurso: string
+  idCurso: string,
 ): Promise<ClaseConsulta[]> => {
   try {
     const response = await apiClient.get(
       // Usamos la ruta que definimos en el controller
-      `/clases-consulta/all/${idCurso}`
+      `/clases-consulta/all/${idCurso}`,
     );
     return response.data;
   } catch (err: any) {
     console.error(
       "Error fetching clases de consulta:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw (
       err.response?.data ||
@@ -39,8 +35,8 @@ export const findAllClasesByCurso = async (
  * Crea una nueva clase de consulta (Docente)
  */
 export const createClaseConsulta = async (
-  data: CreateClaseConsultaFormValues,
-  idCurso: string // El DTO del backend espera idCurso
+  data: CreateClaseConsultaPayload,
+  idCurso: string, // El DTO del backend espera idCurso
 ): Promise<ClaseConsulta> => {
   try {
     const payload = {
@@ -53,7 +49,7 @@ export const createClaseConsulta = async (
   } catch (err: any) {
     console.error(
       "Error creating clase de consulta:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw err.response?.data || new Error("Error al crear la clase.");
   }
@@ -64,18 +60,18 @@ export const createClaseConsulta = async (
  */
 export const updateClaseConsulta = async (
   idClase: string,
-  data: UpdateClaseConsultaFormValues
+  data: UpdateClaseConsultaPayload,
 ): Promise<ClaseConsulta> => {
   try {
     const response = await apiClient.patch(
       `/clases-consulta/edit/${idClase}`,
-      data
+      data,
     );
     return response.data;
   } catch (err: any) {
     console.error(
       "Error updating clase de consulta:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw err.response?.data || new Error("Error al actualizar la clase.");
   }
@@ -85,17 +81,17 @@ export const updateClaseConsulta = async (
  * Cancela (Soft Delete) una clase de consulta (Docente)
  */
 export const deleteClaseConsulta = async (
-  idClase: string
+  idClase: string,
 ): Promise<ClaseConsulta> => {
   try {
     const response = await apiClient.delete(
-      `/clases-consulta/delete/${idClase}`
+      `/clases-consulta/delete/${idClase}`,
     );
     return response.data;
   } catch (err: any) {
     console.error(
       "Error deleting clase de consulta:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     throw err.response?.data || new Error("Error al cancelar la clase.");
   }
@@ -104,7 +100,7 @@ export const deleteClaseConsulta = async (
 // Método para aceptar/tomar una clase automática
 export const aceptarClaseAutomatica = async (
   idClase: string,
-  nuevaFecha?: string // <--- Opcional
+  nuevaFecha?: string, // <--- Opcional
 ): Promise<void> => {
   try {
     // Enviamos la fecha en el body si existe
@@ -126,7 +122,7 @@ export const finalizarClase = async (
     realizada: boolean;
     motivo?: string;
     consultasRevisadasIds?: string[];
-  }
+  },
 ) => {
   // Preparamos el payload que espera el DTO
   const payload = {
@@ -137,7 +133,7 @@ export const finalizarClase = async (
 
   const response = await apiClient.patch(
     `/clases-consulta/${idClase}/finalizar`,
-    payload
+    payload,
   );
   return response.data;
 };

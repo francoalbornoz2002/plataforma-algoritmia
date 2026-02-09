@@ -324,11 +324,7 @@ export class CoursesService {
           'No tienes permiso para editar este curso.',
         );
       }
-      if (dto.nombre || dto.docenteIds) {
-        throw new ForbiddenException(
-          'Los docentes solo pueden modificar: descripción, imagen, días de clase, contraseña y modalidad preferencial.',
-        );
-      }
+      // Eliminamos la validación estricta. Si llegan nombre/docentes, simplemente los ignoramos abajo.
       if (dto.descripcion) dataToUpdate.descripcion = dto.descripcion;
       if (dto.contrasenaAcceso)
         dataToUpdate.contrasenaAcceso = dto.contrasenaAcceso;
@@ -342,20 +338,34 @@ export class CoursesService {
     }
 
     // 1. Verificamos si el nombre o descripción ya existen en los cursos registrados
-    const otroCurso = await this.prisma.curso.findFirst({
-      where: {
-        OR: [
-          { nombre: dataBasica.nombre },
-          { descripcion: dataBasica.descripcion },
-        ],
-      },
-    });
+    const orConditions: Prisma.CursoWhereInput[] = [];
+    if (dataBasica.nombre) {
+      orConditions.push({ nombre: dataBasica.nombre });
+    }
+    if (dataBasica.descripcion) {
+      orConditions.push({ descripcion: dataBasica.descripcion });
+    }
 
-    if (otroCurso?.id !== id) {
-      if (otroCurso?.nombre === dataBasica.nombre) {
-        throw new ConflictException('Ya existe un curso con ese nombre.');
-      } else {
-        throw new ConflictException('Ya existe un curso con esa descripción.');
+    if (orConditions.length > 0) {
+      const otroCurso = await this.prisma.curso.findFirst({
+        where: {
+          OR: orConditions,
+          id: { not: id }, // Excluimos el curso actual directamente en la query
+        },
+      });
+
+      if (otroCurso) {
+        if (dataBasica.nombre && otroCurso.nombre === dataBasica.nombre) {
+          throw new ConflictException('Ya existe un curso con ese nombre.');
+        }
+        if (
+          dataBasica.descripcion &&
+          otroCurso.descripcion === dataBasica.descripcion
+        ) {
+          throw new ConflictException(
+            'Ya existe un curso con esa descripción.',
+          );
+        }
       }
     }
 
@@ -799,10 +809,10 @@ export class CoursesService {
       this.prisma.claseConsulta.findFirst({
         where: {
           idCurso,
-          fechaClase: { gte: now },
+          fechaInicio: { gte: now },
           estadoClase: { not: 'Cancelada' },
         },
-        orderBy: { fechaClase: 'asc' },
+        orderBy: { fechaInicio: 'asc' },
       }),
     ]);
 

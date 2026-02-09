@@ -700,9 +700,8 @@ export interface ClaseConsulta {
   idCurso: string;
   nombre: string;
   descripcion: string;
-  fechaClase: string; // Llega como string ISO
-  horaInicio: string; // Llega como string (formato "HH:mm" o ISO)
-  horaFin: string; // Llega como string
+  fechaInicio: string; // ISO
+  fechaFin: string; // ISO
   modalidad: modalidad;
   estadoClase: estado_clase_consulta;
   estadoActual?: estado_clase_consulta;
@@ -717,6 +716,21 @@ export interface ClaseConsulta {
     consulta: ConsultaSimple & { id: string };
   }[];
 }
+
+// 2. Payload para CREAR una clase (Lo que se envía al Backend)
+export interface CreateClaseConsultaPayload {
+  idCurso?: string; // Se inyecta en el servicio
+  idDocente: string;
+  nombre: string;
+  descripcion: string;
+  fechaInicio: string; // ISO
+  fechaFin: string; // ISO
+  modalidad: modalidad;
+  consultasIds: string[];
+}
+
+// 3. Payload para EDITAR una clase
+export type UpdateClaseConsultaPayload = Partial<CreateClaseConsultaPayload>;
 
 export interface ConsultaSimple {
   id: string;

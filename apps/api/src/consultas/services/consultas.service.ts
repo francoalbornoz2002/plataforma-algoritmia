@@ -570,7 +570,7 @@ export class ConsultasService {
       where: {
         idCurso: idCurso,
         estadoClase: { in: ['Pendiente_Asignacion', 'Programada'] },
-        fechaClase: { gte: new Date() }, // Futura
+        fechaInicio: { gte: new Date() }, // Futura
         deletedAt: null,
       },
     });
@@ -635,9 +635,8 @@ export class ConsultasService {
             nombre: 'Clase de Consulta Automática',
             descripcion:
               'Generada automáticamente por acumulación de consultas.',
-            fechaClase: horaInicio, // Fecha correcta (Inicio Consulta)
-            horaInicio: horaInicio, // Hora correcta
-            horaFin: horaFin, // 09:00 (Empalme perfecto con la cursada)
+            fechaInicio: horaInicio,
+            fechaFin: horaFin,
             modalidad: curso.modalidadPreferencial,
             estadoClase: estado_clase_consulta.Pendiente_Asignacion,
           },

@@ -158,7 +158,7 @@ export default function ClasesConsultaPage() {
       // --- CASO 1: ACEPTAR ORIGINAL ---
       if (action === "accept") {
         // Formateo de fecha para el mensaje
-        const [year, month, day] = clase.fechaClase.split("T")[0].split("-");
+        const [year, month, day] = clase.fechaInicio.split("T")[0].split("-");
         const fechaVisual = `${day}/${month}/${year}`;
 
         // Abrimos el diálogo en lugar de window.confirm
@@ -252,10 +252,10 @@ export default function ClasesConsultaPage() {
       clases = clases.filter((c) => c.estadoClase === estadoFiltro);
     }
     if (fechaDesde) {
-      clases = clases.filter((c) => new Date(c.fechaClase) >= fechaDesde);
+      clases = clases.filter((c) => new Date(c.fechaInicio) >= fechaDesde);
     }
     if (fechaHasta) {
-      clases = clases.filter((c) => new Date(c.fechaClase) <= fechaHasta);
+      clases = clases.filter((c) => new Date(c.fechaInicio) <= fechaHasta);
     }
 
     // 2. Ordenar
@@ -263,7 +263,8 @@ export default function ClasesConsultaPage() {
       case "fecha-asc":
         clases.sort(
           (a, b) =>
-            new Date(a.fechaClase).getTime() - new Date(b.fechaClase).getTime(),
+            new Date(a.fechaInicio).getTime() -
+            new Date(b.fechaInicio).getTime(),
         );
         break;
       case "consultas-desc":
@@ -280,7 +281,8 @@ export default function ClasesConsultaPage() {
       default:
         clases.sort(
           (a, b) =>
-            new Date(b.fechaClase).getTime() - new Date(a.fechaClase).getTime(),
+            new Date(b.fechaInicio).getTime() -
+            new Date(a.fechaInicio).getTime(),
         );
     }
 

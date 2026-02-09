@@ -18,12 +18,13 @@ import {
   Prisma,
   roles,
 } from '@prisma/client';
-import { getDiaSemanaEnum, timeToDate } from 'src/helpers';
+import { getDiaSemanaEnum } from 'src/helpers';
 import { FinalizarClaseDto } from '../dto/finalizar-clase.dto';
 import {
   checkAlumnoAccess,
   checkDocenteAccess,
 } from 'src/helpers/access.helper';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class ClasesConsultaService {
@@ -37,45 +38,44 @@ export class ClasesConsultaService {
       idCurso,
       idDocente, // Docente a cargo (elegido)
       consultasIds, // Array de IDs de consultas
-      fechaClase,
-      horaInicio,
-      horaFin,
+      fechaInicio,
+      fechaFin,
       ...restDto // nombre, descripcion, modalidad
     } = dto;
 
-    // 1. Validación básica de horas
-    if (horaInicio >= horaFin) {
+    const dbFechaInicio = new Date(fechaInicio);
+    const dbFechaFin = new Date(fechaFin);
+
+    // 1. Validación básica de fechas
+    if (dbFechaInicio >= dbFechaFin) {
       throw new BadRequestException(
-        'La hora de fin debe ser mayor a la de inicio.',
+        'La fecha/hora de fin debe ser mayor a la de inicio.',
       );
     }
-    if (horaFin > '23:00') {
-      throw new BadRequestException('Hora fin inválida (> 23:00).');
+    if (dbFechaInicio < new Date()) {
+      throw new BadRequestException('No puedes crear una clase en el pasado.');
     }
 
-    // Validar que no exista otra clase con la misma fecha, hora inicio y hora fin
-    const dbFechaClase = new Date(fechaClase);
-    const dbHoraInicio = this.construirFechaCompleta(
-      dbFechaClase,
-      timeToDate(horaInicio),
-    );
-    const dbHoraFin = this.construirFechaCompleta(
-      dbFechaClase,
-      timeToDate(horaFin),
-    );
+    // Validar que no supere los 7 días
+    const limitDate = new Date();
+    limitDate.setDate(limitDate.getDate() + 7);
+    limitDate.setHours(23, 59, 59, 999); // Final del 7mo día
+    if (dbFechaInicio > limitDate) {
+      throw new BadRequestException(
+        'La fecha de la clase no puede superar los 7 días desde hoy.',
+      );
+    }
 
+    // Validar rango horario (08:00 - 21:00)
+    this.validarRangoHorario(dbFechaInicio, dbFechaFin);
+
+    // Validar superposición con otras clases de consulta
     const overlappingClase = await this.prisma.claseConsulta.findFirst({
       where: {
         idCurso: idCurso,
         deletedAt: null,
-        fechaClase: dbFechaClase,
-        // Condición de solapamiento: (InicioA < FinB) y (FinA > InicioB)
-        horaInicio: {
-          lt: dbHoraFin,
-        },
-        horaFin: {
-          gt: dbHoraInicio,
-        },
+        fechaInicio: { lt: dbFechaFin },
+        fechaFin: { gt: dbFechaInicio },
       },
     });
 
@@ -107,14 +107,11 @@ export class ClasesConsultaService {
     const idDocenteCreador = user.userId;
 
     // --- Validación de superposición con horario de cursada ---
-    // Convertimos fechaClase (string o Date) a objeto Date real para sacar el día
-    const fechaObj = new Date(fechaClase);
 
     await this.validarSuperposicionConClaseCurso(
       idCurso,
-      fechaObj,
-      horaInicio,
-      horaFin,
+      dbFechaInicio,
+      dbFechaFin,
     );
     // --------------------------------------------------------------
 
@@ -158,9 +155,8 @@ export class ClasesConsultaService {
             ...restDto,
             idCurso,
             idDocente,
-            fechaClase: dbFechaClase,
-            horaInicio: dbHoraInicio,
-            horaFin: dbHoraFin,
+            fechaInicio: dbFechaInicio,
+            fechaFin: dbFechaFin,
             estadoClase: estado_clase_consulta.Programada,
           },
         });
@@ -211,7 +207,7 @@ export class ClasesConsultaService {
         idCurso,
       },
       orderBy: {
-        fechaClase: 'desc',
+        fechaInicio: 'desc',
       },
       include: {
         docenteResponsable: {
@@ -252,7 +248,7 @@ export class ClasesConsultaService {
    * Servicio para editar una clase de consulta
    */
   async update(id: string, dto: UpdateClasesConsultaDto, user: UserPayload) {
-    const { consultasIds, fechaClase, horaInicio, horaFin, ...restDto } = dto;
+    const { consultasIds, fechaInicio, fechaFin, ...restDto } = dto;
 
     // --- Obtemos la clase de consulta ---
     const actual = await this.prisma.claseConsulta.findUnique({
@@ -260,75 +256,67 @@ export class ClasesConsultaService {
     });
     if (!actual) throw new NotFoundException('Clase no encontrada');
 
-    // Helper para recuperar string HH:mm de la BD (reversión del hack +3)
-    const toTimeStr = (d: Date) => {
-      const date = new Date(d);
-      date.setUTCHours(date.getUTCHours() - 3);
-      return date.toISOString().substring(11, 16);
-    };
-
     // Variables finales para validar
-    const fechaParaValidar = fechaClase
-      ? new Date(fechaClase)
-      : actual.fechaClase;
-    const inicioParaValidar = horaInicio
-      ? horaInicio
-      : toTimeStr(actual.horaInicio);
-    const finParaValidar = horaFin ? horaFin : toTimeStr(actual.horaFin);
+    const dbFechaInicio = fechaInicio
+      ? new Date(fechaInicio)
+      : actual.fechaInicio;
+    const dbFechaFin = fechaFin ? new Date(fechaFin) : actual.fechaFin;
 
     // Validamos que la hora de inicio sea menor a la hora de fin.
-    if (inicioParaValidar >= finParaValidar) {
+    if (dbFechaInicio >= dbFechaFin) {
       throw new BadRequestException(
-        'La hora de fin debe ser mayor a la de inicio.',
+        'La fecha/hora de fin debe ser mayor a la de inicio.',
       );
+    }
+
+    // Validar pasado (solo si se está cambiando la fecha)
+    if (fechaInicio && dbFechaInicio < new Date()) {
+      throw new BadRequestException(
+        'No puedes reprogramar una clase al pasado.',
+      );
+    }
+
+    // Validar que no supere los 7 días (si se cambia la fecha)
+    if (fechaInicio) {
+      const limitDate = new Date();
+      limitDate.setDate(limitDate.getDate() + 7);
+      limitDate.setHours(23, 59, 59, 999);
+      if (dbFechaInicio > limitDate) {
+        throw new BadRequestException(
+          'La fecha de la clase no puede superar los 7 días desde hoy.',
+        );
+      }
+    }
+
+    // Validar rango horario (08:00 - 21:00) si cambiaron las fechas
+    if (fechaInicio || fechaFin) {
+      this.validarRangoHorario(dbFechaInicio, dbFechaFin);
     }
 
     // --- Validación de superposición en Update ---
-    // Si cambiaron la fecha o las horas, validamos de nuevo
-    if (fechaClase || horaInicio || horaFin) {
+    if (fechaInicio || fechaFin) {
       await this.validarSuperposicionConClaseCurso(
         actual.idCurso,
-        fechaParaValidar,
-        inicioParaValidar,
-        finParaValidar,
+        dbFechaInicio,
+        dbFechaFin,
       );
+      const overlappingClase = await this.prisma.claseConsulta.findFirst({
+        where: {
+          id: { not: id },
+          idCurso: actual.idCurso,
+          deletedAt: null,
+          fechaInicio: { lt: dbFechaFin },
+          fechaFin: { gt: dbFechaInicio },
+        },
+      });
+      if (overlappingClase) {
+        throw new ConflictException(
+          'El horario se solapa con otra clase de consulta ya programada.',
+        );
+      }
     }
 
-    // Validar que no exista otra clase con la misma fecha, hora inicio y hora fin
-    const fechaParaValidarStr =
-      fechaClase || actual.fechaClase.toISOString().split('T')[0];
-    const inicioParaValidarStr = horaInicio || toTimeStr(actual.horaInicio);
-    const finParaValidarStr = horaFin || toTimeStr(actual.horaFin);
-
-    const dbFechaClaseForUpdate = new Date(fechaParaValidarStr);
-    const dbHoraInicioForUpdate = this.construirFechaCompleta(
-      dbFechaClaseForUpdate,
-      timeToDate(inicioParaValidarStr),
-    );
-    const dbHoraFinForUpdate = this.construirFechaCompleta(
-      dbFechaClaseForUpdate,
-      timeToDate(finParaValidarStr),
-    );
-
-    const overlappingClase = await this.prisma.claseConsulta.findFirst({
-      where: {
-        id: { not: id }, // Excluir la clase actual
-        idCurso: actual.idCurso,
-        fechaClase: dbFechaClaseForUpdate,
-        // Condición de solapamiento: (InicioA < FinB) y (FinA > InicioB)
-        horaInicio: {
-          lt: dbHoraFinForUpdate,
-        },
-        horaFin: {
-          gt: dbHoraInicioForUpdate,
-        },
-      },
-    });
-    if (overlappingClase) {
-      throw new ConflictException(
-        'El horario se solapa con otra clase de consulta ya programada para el mismo día.',
-      );
-    } // Validar que el nombre o la descripción no se repitan en OTRAS clases
+    // Validar que el nombre o la descripción no se repitan en OTRAS clases
     const orConditions: Prisma.ClaseConsultaWhereInput[] = [];
     if (restDto.nombre) {
       orConditions.push({ nombre: restDto.nombre });
@@ -374,12 +362,8 @@ export class ClasesConsultaService {
 
       const dataToUpdate: Prisma.ClaseConsultaUpdateInput = {
         ...restDto,
-        ...(fechaClase && { fechaClase: new Date(fechaClase) }),
-        ...(horaInicio && { horaInicio: timeToDate(horaInicio) }),
-        ...(horaFin && { horaFin: timeToDate(horaFin) }),
-        ...(fechaClase && { fechaClase: dbFechaClaseForUpdate }),
-        ...(horaInicio && { horaInicio: dbHoraInicioForUpdate }),
-        ...(horaFin && { horaFin: dbHoraFinForUpdate }),
+        ...(fechaInicio && { fechaInicio: dbFechaInicio }),
+        ...(fechaFin && { fechaFin: dbFechaFin }),
       };
 
       // --- Iniciamos la transacción para actualizar la clase ---
@@ -491,7 +475,7 @@ export class ClasesConsultaService {
   async aceptarYReprogramar(
     idClase: string,
     idDocente: string,
-    datos: { fechaClase: string; horaInicio: string; horaFin: string },
+    datos: { fechaInicio: string; fechaFin: string },
   ) {
     try {
       // Obtenemos la clase de consulta
@@ -514,9 +498,8 @@ export class ClasesConsultaService {
         data: {
           idDocente: idDocente, // Se asigna
           estadoClase: estado_clase_consulta.Programada, // Se confirma
-          fechaClase: new Date(datos.fechaClase),
-          horaInicio: timeToDate(datos.horaInicio),
-          horaFin: timeToDate(datos.horaFin),
+          fechaInicio: new Date(datos.fechaInicio),
+          fechaFin: new Date(datos.fechaFin),
         },
         include: {
           docenteResponsable: { select: { nombre: true, apellido: true } },
@@ -566,10 +549,8 @@ export class ClasesConsultaService {
       // Si nos pasaron una nueva fecha, la aplicamos
       if (nuevaFecha) {
         const fechaObj = new Date(nuevaFecha);
-        dataUpdate.fechaClase = fechaObj;
-        dataUpdate.horaInicio = fechaObj;
-        // Recalculamos fin (1 hora de duración de la clase)
-        dataUpdate.horaFin = new Date(fechaObj.getTime() + 60 * 60 * 1000);
+        dataUpdate.fechaInicio = fechaObj;
+        dataUpdate.fechaFin = new Date(fechaObj.getTime() + 60 * 60 * 1000);
       }
 
       // Actualizamos la clase
@@ -759,6 +740,47 @@ export class ClasesConsultaService {
     });
   }
 
+  /**
+   * CRON JOB: Actualización automática de estados de clases de consulta.
+   * Se ejecuta cada minuto.
+   */
+  @Cron(CronExpression.EVERY_MINUTE)
+  async handleCronEstadosClases() {
+    const now = new Date();
+
+    // 1. Pasar a "En curso"
+    // Clases Programada que ya empezaron y no terminaron
+    await this.prisma.claseConsulta.updateMany({
+      where: {
+        estadoClase: estado_clase_consulta.Programada,
+        fechaInicio: { lte: now },
+        fechaFin: { gt: now },
+        deletedAt: null,
+      },
+      data: {
+        estadoClase: estado_clase_consulta.En_curso,
+      },
+    });
+
+    // 2. Pasar a "Finalizada"
+    // Clases En_curso o Programada que ya terminaron
+    await this.prisma.claseConsulta.updateMany({
+      where: {
+        estadoClase: {
+          in: [
+            estado_clase_consulta.Programada,
+            estado_clase_consulta.En_curso,
+          ],
+        },
+        fechaFin: { lte: now },
+        deletedAt: null,
+      },
+      data: {
+        estadoClase: estado_clase_consulta.Finalizada,
+      },
+    });
+  }
+
   // --------------- HELPERS PRIVADOS --------------- //
 
   /**
@@ -766,11 +788,10 @@ export class ClasesConsultaService {
    */
   private async validarSuperposicionConClaseCurso(
     idCurso: string,
-    fechaClase: Date,
-    horaInicioStr: string,
-    horaFinStr: string,
+    fechaInicio: Date,
+    fechaFin: Date,
   ) {
-    const diaEnum = getDiaSemanaEnum(fechaClase);
+    const diaEnum = getDiaSemanaEnum(fechaInicio);
     if (!diaEnum) return;
 
     // 1. Buscamos los horarios de cursada para ese día
@@ -783,31 +804,32 @@ export class ClasesConsultaService {
 
     if (!diasDeClase.length) return;
 
-    // 2. Convertir el INPUT (Hora Local) a minutos
-    // Ejemplo: "09:00" -> 9 * 60 = 540 minutos
+    // 2. Convertir el INPUT a minutos del día (UTC)
     const consultaInicioMin =
-      parseInt(horaInicioStr.split(':')[0]) * 60 +
-      parseInt(horaInicioStr.split(':')[1]);
-    const consultaFinMin =
-      parseInt(horaFinStr.split(':')[0]) * 60 +
-      parseInt(horaFinStr.split(':')[1]);
+      fechaInicio.getUTCHours() * 60 + fechaInicio.getUTCMinutes();
+    let consultaFinMin = fechaFin.getUTCHours() * 60 + fechaFin.getUTCMinutes();
+
+    // Ajuste por cruce de medianoche UTC (ej: 21:00 Local -> 00:00 UTC del día siguiente)
+    // Si el fin es menor o igual al inicio (en minutos del día), significa que cruzó al día siguiente.
+    if (consultaFinMin <= consultaInicioMin) {
+      consultaFinMin += 24 * 60;
+    }
 
     // 3. Iterar y comparar, ajustando la BD a Hora Local (-3)
     for (const claseCurso of diasDeClase) {
-      // BD tiene 12:00 (UTC). Restamos 3 para tener 09:00 (Local)
-      const offsetArg = 3;
-
-      let horaInicioDb = claseCurso.horaInicio.getUTCHours() - offsetArg;
-      let horaFinDb = claseCurso.horaFin.getUTCHours() - offsetArg;
-
-      // Manejo básico por si la resta da negativo (ej: 02:00 UTC - 3 = -1 -> 23:00 del dia anterior),
-      // aunque en tu esquema de "DiaClase" esto es raro.
-      if (horaInicioDb < 0) horaInicioDb += 24;
-      if (horaFinDb < 0) horaFinDb += 24;
-
+      // COMPARACIÓN UTC vs UTC (Sin offsets)
+      // Si BD tiene 12:00 (UTC) y Input tiene 12:00 (UTC), comparamos 12 con 12.
       const cursoInicioMin =
-        horaInicioDb * 60 + claseCurso.horaInicio.getUTCMinutes();
-      const cursoFinMin = horaFinDb * 60 + claseCurso.horaFin.getUTCMinutes();
+        claseCurso.horaInicio.getUTCHours() * 60 +
+        claseCurso.horaInicio.getUTCMinutes();
+      let cursoFinMin =
+        claseCurso.horaFin.getUTCHours() * 60 +
+        claseCurso.horaFin.getUTCMinutes();
+
+      // Ajuste similar para el horario de cursada (por si acaso cruza medianoche UTC)
+      if (cursoFinMin <= cursoInicioMin) {
+        cursoFinMin += 24 * 60;
+      }
 
       // Lógica de solapamiento
       const noSeSolapa =
@@ -815,8 +837,15 @@ export class ClasesConsultaService {
 
       if (!noSeSolapa) {
         // Formateamos la hora para mostrarla amigablemente en el error
-        const inicioLegible = `${horaInicioDb}:${claseCurso.horaInicio.getUTCMinutes().toString().padStart(2, '0')}`;
-        const finLegible = `${horaFinDb}:${claseCurso.horaFin.getUTCMinutes().toString().padStart(2, '0')}`;
+        // Aquí SÍ aplicamos el offset para que el usuario vea "09:00" y no "12:00"
+        const offsetArg = 3;
+        let hInicioLocal = claseCurso.horaInicio.getUTCHours() - offsetArg;
+        let hFinLocal = claseCurso.horaFin.getUTCHours() - offsetArg;
+        if (hInicioLocal < 0) hInicioLocal += 24;
+        if (hFinLocal < 0) hFinLocal += 24;
+
+        const inicioLegible = `${hInicioLocal.toString().padStart(2, '0')}:${claseCurso.horaInicio.getUTCMinutes().toString().padStart(2, '0')}`;
+        const finLegible = `${hFinLocal.toString().padStart(2, '0')}:${claseCurso.horaFin.getUTCMinutes().toString().padStart(2, '0')}`;
 
         throw new BadRequestException(
           `Conflicto de horario: El curso tiene clase regular los ${diaEnum} de ${inicioLegible} a ${finLegible}.`,
@@ -826,26 +855,36 @@ export class ClasesConsultaService {
   }
 
   /**
-   * Helper para combinar Fecha del día + Hora del horario
+   * Helper para validar que la clase esté entre las 08:00 y las 21:00 (Hora Local UTC-3)
    */
-  private construirFechaCompleta(
-    fechaDia: Date | string,
-    horaTime: Date | string,
-  ): Date {
-    // Aseguramos objetos Date
-    const fechaBase = new Date(fechaDia);
-    const horaBase = new Date(horaTime);
+  private validarRangoHorario(fechaInicio: Date, fechaFin: Date) {
+    // Convertimos a hora local (UTC-3)
+    // (getUTCHours() devuelve 0-23. Restamos 3 y ajustamos si es negativo)
+    const getLocalHour = (date: Date) => {
+      let hour = date.getUTCHours() - 3;
+      if (hour < 0) hour += 24;
+      return hour;
+    };
 
-    // Creamos una nueva fecha usando el AÑO-MES-DIA de la clase
-    const fechaFinal = new Date(fechaBase);
+    const startHour = getLocalHour(fechaInicio);
+    const endHour = getLocalHour(fechaFin);
+    const endMinutes = fechaFin.getUTCMinutes();
 
-    // Le inyectamos la HORA-MINUTO del horario guardado
-    fechaFinal.setUTCHours(horaBase.getUTCHours());
-    fechaFinal.setUTCMinutes(horaBase.getUTCMinutes());
-    fechaFinal.setUTCSeconds(0);
-    fechaFinal.setUTCMilliseconds(0);
+    // Reglas: Inicio >= 8, Fin <= 21 (si es 21, minutos deben ser 0)
+    if (startHour < 8 || endHour > 21 || (endHour === 21 && endMinutes > 0)) {
+      throw new BadRequestException(
+        'El horario de clase debe estar entre las 08:00 y las 21:00 hs.',
+      );
+    }
 
-    return fechaFinal;
+    // Regla: Duración máxima de 4 horas
+    const diffMs = fechaFin.getTime() - fechaInicio.getTime();
+    const diffHours = diffMs / (1000 * 60 * 60);
+    if (diffHours > 4) {
+      throw new BadRequestException(
+        'La duración máxima de una clase de consulta es de 4 horas.',
+      );
+    }
   }
 
   /**
@@ -861,17 +900,11 @@ export class ClasesConsultaService {
     }
 
     const ahora = new Date();
-    // Usamos la fecha combinada (2025 + Hora)
-    const inicio = this.construirFechaCompleta(
-      clase.fechaClase,
-      clase.horaInicio,
-    );
-    const fin = this.construirFechaCompleta(clase.fechaClase, clase.horaFin);
 
     // Lógica de estados temporales
-    if (ahora >= inicio && ahora < fin) {
+    if (ahora >= clase.fechaInicio && ahora < clase.fechaFin) {
       return estado_clase_consulta.En_curso;
-    } else if (ahora >= fin) {
+    } else if (ahora >= clase.fechaFin) {
       return estado_clase_consulta.Finalizada;
     }
 
@@ -883,14 +916,9 @@ export class ClasesConsultaService {
    */
   private validarBloqueoPorTiempo(clase: ClaseConsulta) {
     const ahora = new Date();
-    // Usamos la fecha combinada
-    const inicio = this.construirFechaCompleta(
-      clase.fechaClase,
-      clase.horaInicio,
-    );
 
     // Si la clase ya empezó (ahora >= inicio), bloqueamos edición/borrado
-    if (ahora >= inicio) {
+    if (ahora >= clase.fechaInicio) {
       throw new ForbiddenException(
         'No se puede editar, cancelar o eliminar una clase que ya está en curso o finalizó.',
       );

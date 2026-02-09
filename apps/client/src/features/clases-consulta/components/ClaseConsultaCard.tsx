@@ -47,9 +47,8 @@ export default function ClaseConsultaCard({
   const {
     nombre,
     descripcion,
-    fechaClase,
-    horaInicio,
-    horaFin,
+    fechaInicio,
+    fechaFin,
     modalidad,
     estadoClase,
     estadoActual,
@@ -82,15 +81,15 @@ export default function ClaseConsultaCard({
     isProgramada && !isEnCurso && !isPorCerrar && !isCanceled;
 
   // 1. Formateo de Fecha (el "hack" anti-UTC)
-  const fechaString = fechaClase.split("T")[0]; // "2025-11-11"
+  const fechaString = fechaInicio.split("T")[0]; // "2025-11-11"
   const [year, month, day] = fechaString.split("-");
   const fecha = `${day}/${month}/${year}`; // "11/11/2025"
 
   // 2. Formateo de Hora (CORREGIDO)
   // Convertimos el string ISO UTC a un objeto Date local
   // El navegador restará automáticamente las 3 horas (10:00 UTC -> 07:00 Local)
-  const fechaInicioObj = new Date(horaInicio);
-  const fechaFinObj = new Date(horaFin);
+  const fechaInicioObj = new Date(fechaInicio);
+  const fechaFinObj = new Date(fechaFin);
 
   // Formateamos a "HH:mm" usando date-fns
   const horaInicioStr = format(fechaInicioObj, "HH:mm");

@@ -19,19 +19,6 @@ import {
   Tabs,
   Tab,
 } from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
-import SchoolIcon from "@mui/icons-material/School";
-import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
-import GroupIcon from "@mui/icons-material/Group";
-import SearchIcon from "@mui/icons-material/Search";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import WarningIcon from "@mui/icons-material/Warning";
-import EventIcon from "@mui/icons-material/Event";
-import ClassIcon from "@mui/icons-material/Class";
-import AssessmentIcon from "@mui/icons-material/Assessment";
-import PersonIcon from "@mui/icons-material/Person";
-import DescriptionIcon from "@mui/icons-material/Description";
 import DashboardStatCard from "./components/DashboardStatCard";
 import DashboardTextCard from "./components/DashboardTextCard";
 
@@ -48,6 +35,21 @@ import { enqueueSnackbar } from "notistack";
 import { useNavigate } from "react-router";
 import type { CourseDashboardData } from "../../types";
 import { useAuth } from "../authentication/context/AuthProvider";
+import {
+  Assessment,
+  CalendarToday,
+  Class,
+  Delete,
+  Description,
+  Edit,
+  Event,
+  Group,
+  MarkUnreadChatAlt,
+  School,
+  Search,
+  TrendingUp,
+  Warning,
+} from "@mui/icons-material";
 
 export default function DocenteDashboardPage() {
   const { selectedCourse, isReadOnly, refreshCourse } = useCourseContext();
@@ -202,7 +204,7 @@ export default function DocenteDashboardPage() {
                       </Typography>
                       {!isReadOnly && (
                         <Button
-                          startIcon={<EditIcon />}
+                          startIcon={<Edit />}
                           size="small"
                           variant="outlined"
                           onClick={() => setIsEditModalOpen(true)}
@@ -218,7 +220,7 @@ export default function DocenteDashboardPage() {
                       {/* Detalles */}
                       <Stack spacing={1}>
                         <Box sx={{ display: "flex", alignItems: "center" }}>
-                          <SchoolIcon
+                          <School
                             fontSize="small"
                             sx={{ mr: 1, color: "text.secondary" }}
                           />
@@ -230,7 +232,7 @@ export default function DocenteDashboardPage() {
                           </Typography>
                         </Box>
                         <Box sx={{ display: "flex", alignItems: "center" }}>
-                          <CalendarTodayIcon
+                          <CalendarToday
                             fontSize="small"
                             sx={{ mr: 1, color: "text.secondary" }}
                           />
@@ -242,7 +244,7 @@ export default function DocenteDashboardPage() {
                           </Typography>
                         </Box>
                         <Box sx={{ display: "flex", alignItems: "center" }}>
-                          <GroupIcon
+                          <Group
                             fontSize="small"
                             sx={{ mr: 1, color: "text.secondary" }}
                           />
@@ -252,7 +254,7 @@ export default function DocenteDashboardPage() {
                           </Typography>
                         </Box>
                         <Box sx={{ display: "flex", alignItems: "start" }}>
-                          <DescriptionIcon
+                          <Description
                             fontSize="small"
                             sx={{ mr: 1, color: "text.secondary" }}
                           />
@@ -281,7 +283,7 @@ export default function DocenteDashboardPage() {
                     <Button
                       fullWidth
                       variant="outlined"
-                      startIcon={<TrendingUpIcon />}
+                      startIcon={<TrendingUp />}
                       onClick={() => navigate("/course/progress")}
                       sx={{ justifyContent: "flex-start" }}
                     >
@@ -290,7 +292,7 @@ export default function DocenteDashboardPage() {
                     <Button
                       fullWidth
                       variant="outlined"
-                      startIcon={<WarningIcon />}
+                      startIcon={<Warning />}
                       onClick={() => navigate("/course/difficulties")}
                       sx={{ justifyContent: "flex-start" }}
                     >
@@ -299,8 +301,8 @@ export default function DocenteDashboardPage() {
                     <Button
                       fullWidth
                       variant="outlined"
-                      startIcon={<EventIcon />}
-                      onClick={() => navigate("/course/consults")}
+                      startIcon={<Event />}
+                      onClick={() => navigate("/course/consult-classes")}
                       sx={{ justifyContent: "flex-start" }}
                     >
                       Agendar Clase
@@ -308,7 +310,7 @@ export default function DocenteDashboardPage() {
                     <Button
                       fullWidth
                       variant="outlined"
-                      startIcon={<ClassIcon />}
+                      startIcon={<Class />}
                       onClick={() => navigate("/course/sessions")}
                       sx={{ justifyContent: "flex-start" }}
                     >
@@ -317,7 +319,7 @@ export default function DocenteDashboardPage() {
                     <Button
                       fullWidth
                       variant="outlined"
-                      startIcon={<AssessmentIcon />}
+                      startIcon={<Assessment />}
                       onClick={() => navigate("/course/reports")}
                       sx={{ justifyContent: "flex-start" }}
                     >
@@ -341,12 +343,34 @@ export default function DocenteDashboardPage() {
                 </Tabs>
               </Box>
               <Box sx={{ p: 3 }}>
+                {" "}
+                {tabValue === 0 && (
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: "block", mb: 2, mt: -1 }}
+                  >
+                    Periodo:{" "}
+                    {(() => {
+                      const now = new Date();
+                      const day = now.getDay();
+                      const diffToMonday =
+                        now.getDate() - day + (day === 0 ? -6 : 1);
+                      const monday = new Date(now.setDate(diffToMonday));
+                      const sunday = new Date(
+                        now.setDate(monday.getDate() + 6),
+                      );
+                      return `${monday.toLocaleDateString()} - ${sunday.toLocaleDateString()}`;
+                    })()}
+                  </Typography>
+                )}
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                     <DashboardStatCard
                       title="Misiones Completadas"
                       value={currentStats?.misionesCompletadas ?? "-"}
-                      icon={<TrendingUpIcon />}
+                      subtitle="Total en este periodo"
+                      icon={<TrendingUp />}
                       color="success"
                     />
                   </Grid>
@@ -354,7 +378,8 @@ export default function DocenteDashboardPage() {
                     <DashboardStatCard
                       title="Consultas Realizadas"
                       value={currentStats?.consultasRealizadas ?? "-"}
-                      icon={<PersonIcon />}
+                      subtitle="Total en este periodo"
+                      icon={<MarkUnreadChatAlt />}
                       color="info"
                     />
                   </Grid>
@@ -362,7 +387,8 @@ export default function DocenteDashboardPage() {
                     <DashboardTextCard
                       title="Misión más difícil"
                       value={currentStats?.misionMasDificil || "Ninguna"}
-                      icon={<WarningIcon />}
+                      description="Con mayor tasa de intentos promedio"
+                      icon={<Warning />}
                       color="warning"
                     />
                   </Grid>
@@ -370,7 +396,8 @@ export default function DocenteDashboardPage() {
                     <DashboardTextCard
                       title="Dificultad frecuente"
                       value={currentStats?.dificultadMasDetectada || "Ninguna"}
-                      icon={<WarningIcon />}
+                      description="La más detectada en alumnos"
+                      icon={<Warning />}
                       color="error"
                     />
                   </Grid>
@@ -378,7 +405,8 @@ export default function DocenteDashboardPage() {
                     <DashboardTextCard
                       title="Alumno más activo"
                       value={currentStats?.alumnoMasActivo || "Ninguno"}
-                      icon={<SchoolIcon />}
+                      description="Con más misiones completadas"
+                      icon={<School />}
                       color="primary"
                     />
                   </Grid>
@@ -386,15 +414,16 @@ export default function DocenteDashboardPage() {
                   {tabValue === 0 && (
                     <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                       <DashboardTextCard
-                        title="Próxima Clase"
+                        title="Próxima Clase de Consulta"
                         value={
                           stats?.nextClass
                             ? new Date(
-                                stats.nextClass.fechaClase,
+                                stats.nextClass.fechaInicio,
                               ).toLocaleDateString()
                             : "No hay"
                         }
-                        icon={<EventIcon />}
+                        description="Fecha programada"
+                        icon={<Event />}
                         color="secondary"
                       />
                     </Grid>
@@ -429,7 +458,7 @@ export default function DocenteDashboardPage() {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <SearchIcon fontSize="small" />
+                      <Search fontSize="small" />
                     </InputAdornment>
                   ),
                 }}
@@ -450,7 +479,7 @@ export default function DocenteDashboardPage() {
                             color="error"
                             onClick={() => handleRemoveClick(student)}
                           >
-                            <DeleteIcon fontSize="small" />
+                            <Delete fontSize="small" />
                           </IconButton>
                         </Tooltip>
                       )

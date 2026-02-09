@@ -43,9 +43,9 @@ export default function AceptarManualModal({
     if (clase && open) {
       // El backend envía strings ISO (ej: "2025-11-25T10:00:00.000Z")
       // El constructor new Date() los parsea correctamente para los Pickers.
-      setFecha(new Date(clase.fechaClase));
-      setHoraInicio(new Date(clase.horaInicio));
-      setHoraFin(new Date(clase.horaFin));
+      setFecha(new Date(clase.fechaInicio));
+      setHoraInicio(new Date(clase.fechaInicio));
+      setHoraFin(new Date(clase.fechaFin));
 
       setError(null);
     }
@@ -61,16 +61,27 @@ export default function AceptarManualModal({
     setError(null);
 
     try {
-      // Formateamos los objetos Date a strings para el Backend
+      // Construimos fechas completas
+      const fechaBase = fecha;
+      const inicio = new Date(fechaBase);
+      inicio.setHours(horaInicio.getHours(), horaInicio.getMinutes());
+
+      let fin = new Date(fechaBase);
+      fin.setHours(horaFin.getHours(), horaFin.getMinutes());
+
+      // Cruce de medianoche
+      if (fin <= inicio) {
+        fin = addDays(fin, 1);
+      }
+
       const payload = {
-        fechaClase: format(fecha, "yyyy-MM-dd"),
-        horaInicio: format(horaInicio, "HH:mm"),
-        horaFin: format(horaFin, "HH:mm"),
+        fechaInicio: inicio.toISOString(),
+        fechaFin: fin.toISOString(),
       };
 
       await apiClient.patch(
         `/clases-consulta/${clase.id}/aceptar-reprogramar`,
-        payload
+        payload,
       );
 
       onSuccess();
@@ -80,7 +91,7 @@ export default function AceptarManualModal({
     } catch (err: any) {
       console.error(err);
       setError(
-        err.response?.data?.message || "Error al procesar la solicitud."
+        err.response?.data?.message || "Error al procesar la solicitud.",
       );
     } finally {
       setLoading(false);

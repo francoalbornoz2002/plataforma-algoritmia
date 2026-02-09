@@ -235,19 +235,26 @@ export default function CourseFormDialog({
     try {
       if (isEditMode) {
         const updateData: UpdateCourseData = {
-          nombre: data.nombre,
           descripcion: data.descripcion,
           contrasenaAcceso: data.contrasenaAcceso,
           modalidadPreferencial: data.modalidadPreferencial,
-          docenteIds,
           diasClase: diasClaseLimpios,
         };
+
+        // Solo enviamos nombre y docentes si NO es modo docente (es Admin)
+        if (!isTeacherMode) {
+          updateData.nombre = data.nombre;
+          updateData.docenteIds = docenteIds;
+        }
+
         // 'selectedFile' sigue viniendo del state
         await updateCourse(courseToEditId, updateData, selectedFile);
-        enqueueSnackbar("Curso actualizado con éxito", {
-          variant: "success",
-          autoHideDuration: 3000,
-        });
+        if (!isTeacherMode) {
+          enqueueSnackbar("Curso actualizado con éxito", {
+            variant: "success",
+            autoHideDuration: 3000,
+          });
+        }
       } else {
         const createData: CreateCourseData = {
           nombre: data.nombre,

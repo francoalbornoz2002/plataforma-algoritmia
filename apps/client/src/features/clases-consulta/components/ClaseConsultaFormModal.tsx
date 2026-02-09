@@ -28,6 +28,7 @@ import {
   type DocenteBasico,
   type ConsultaSimple,
   type ClaseConsulta,
+  type CreateClaseConsultaPayload, // <-- Importamos el tipo para tipar el payload
   modalidad,
 } from "../../../types"; // Ajusta la ruta a 'types'
 import {
@@ -55,9 +56,12 @@ const parseLocalDate = (dateStr: string) => {
   return new Date(year, month - 1, day); // Mes es 0-indexado
 };
 
-// Límite para TimePicker: 23:00 hs
-const maxTimeValue = new Date();
-maxTimeValue.setHours(23, 0, 0, 0);
+// Helper para crear objetos Date solo con hora (usando fecha actual para referencia)
+const createTime = (hours: number, minutes: number) => {
+  const d = new Date();
+  d.setHours(hours, minutes, 0, 0);
+  return d;
+};
 
 interface ClaseConsultaFormModalProps {
   open: boolean;
@@ -128,12 +132,40 @@ export default function ClaseConsultaFormModal({
     return selectedDate.toDateString() === today.toDateString();
   }, [fechaClaseValue]);
 
+  // --- Lógica de Límites para TimePickers ---
+  const horaInicioValue = watch("horaInicio");
+
+  // Límites estáticos para Hora Inicio
+  const minStartTime = createTime(8, 0); // 08:00
+  const maxStartTime = createTime(20, 30); // 20:30 (para permitir al menos 30 min de clase hasta las 21:00)
+
+  // Límites dinámicos para Hora Fin
+  const { minEndTime, maxEndTime } = useMemo(() => {
+    if (!horaInicioValue)
+      return { minEndTime: undefined, maxEndTime: undefined };
+
+    const [h, m] = horaInicioValue.split(":").map(Number);
+    const start = new Date();
+    start.setHours(h, m, 0, 0);
+
+    // Mínimo: Inicio + 30 min
+    const min = new Date(start.getTime() + 30 * 60000);
+
+    // Máximo: Inicio + 4 horas, pero topeado a las 21:00
+    const maxCalc = new Date(start.getTime() + 4 * 60 * 60000);
+    const absoluteMax = createTime(21, 0);
+    const max = maxCalc > absoluteMax ? absoluteMax : maxCalc;
+
+    return { minEndTime: min, maxEndTime: max };
+  }, [horaInicioValue]);
+
   // 2. useEffect de 'reset' (Corregido)
   useEffect(() => {
     if (isEditMode && claseToEdit) {
-      const fechaRaw = claseToEdit.fechaClase.split("T")[0];
-      const horaInicioObj = new Date(claseToEdit.horaInicio);
-      const horaFinObj = new Date(claseToEdit.horaFin);
+      // Extraemos la fecha y las horas de los ISO strings
+      const fechaRaw = claseToEdit.fechaInicio.split("T")[0]; // YYYY-MM-DD
+      const horaInicioObj = new Date(claseToEdit.fechaInicio);
+      const horaFinObj = new Date(claseToEdit.fechaFin);
 
       // Modo Edición
       reset({
@@ -173,7 +205,7 @@ export default function ClaseConsultaFormModal({
 
   // 3. onSubmit (Corregido)
   const onSubmit: SubmitHandler<UpdateClaseConsultaFormValues> = async (
-    data
+    data,
   ) => {
     setApiError(null);
     if (!selectedCourse) {
@@ -181,10 +213,26 @@ export default function ClaseConsultaFormModal({
       return;
     }
 
-    // El payload ya es correcto
-    const payload = {
-      ...data,
+    // --- CONSTRUCCIÓN DE FECHAS ISO ---
+    const [year, month, day] = (data.fechaClase || "").split("-").map(Number);
+    const [startH, startM] = (data.horaInicio || "").split(":").map(Number);
+    const [endH, endM] = (data.horaFin || "").split(":").map(Number);
+
+    const fechaInicio = new Date(year, month - 1, day, startH, startM);
+    const fechaFin = new Date(year, month - 1, day, endH, endM);
+    // Nota: Ya no necesitamos lógica de cruce de medianoche porque la validación
+    // asegura que horaFin > horaInicio y todo ocurre en el mismo día.
+
+    // Construimos el payload asegurando que los campos obligatorios tengan valor
+    const payload: CreateClaseConsultaPayload = {
+      nombre: data.nombre || "",
+      descripcion: data.descripcion || "",
+      idDocente: data.idDocente || "", // <-- Solución al error: fallback a string vacío
+      modalidad: data.modalidad || modalidad.Presencial,
       consultasIds: data.consultasIds || [],
+      // Enviamos ISO strings
+      fechaInicio: fechaInicio.toISOString(),
+      fechaFin: fechaFin.toISOString(),
     };
 
     try {
@@ -195,8 +243,8 @@ export default function ClaseConsultaFormModal({
         });
       } else {
         await createClaseConsulta(
-          payload as CreateClaseConsultaFormValues, // Forzamos el tipo (Zod ya validó)
-          selectedCourse.id
+          payload, // Ya coincide con CreateClaseConsultaPayload
+          selectedCourse.id,
         );
         enqueueSnackbar("Clase de cosnulta creada correctamente", {
           variant: "success",
@@ -313,14 +361,14 @@ export default function ClaseConsultaFormModal({
                       onChange={
                         (newDate) =>
                           field.onChange(
-                            newDate ? format(newDate, "yyyy-MM-dd") : ""
+                            newDate ? format(newDate, "yyyy-MM-dd") : "",
                           ) // Guardamos string
                       }
                       maxDate={maxDate}
                       disablePast
                       slotProps={{
                         textField: {
-                          InputProps: { readOnly: true }, // Deshabilita la escritura directa
+                          InputProps: { readOnly: true }, // Evita escritura manual
                           fullWidth: true,
                           required: true,
                           error: !!errors.fechaClase,
@@ -337,6 +385,8 @@ export default function ClaseConsultaFormModal({
                     <TimePicker
                       label="Hora Inicio"
                       ampm={false}
+                      minTime={minStartTime}
+                      maxTime={maxStartTime}
                       disablePast={isTodaySelected} // Condicionalmente deshabilitar pasado
                       value={field.value ? timeToDate(field.value) : null}
                       onChange={(newDate) =>
@@ -344,7 +394,7 @@ export default function ClaseConsultaFormModal({
                       }
                       slotProps={{
                         textField: {
-                          InputProps: { readOnly: true },
+                          InputProps: { readOnly: true }, // Evita escritura manual
                           fullWidth: true,
                           required: true,
                           error: !!errors.horaInicio,
@@ -361,15 +411,16 @@ export default function ClaseConsultaFormModal({
                     <TimePicker
                       label="Hora Fin"
                       ampm={false}
+                      minTime={minEndTime}
+                      maxTime={maxEndTime}
                       disablePast={isTodaySelected} // Condicionalmente deshabilitar pasado
                       value={field.value ? timeToDate(field.value) : null}
                       onChange={(newDate) =>
                         field.onChange(newDate ? format(newDate, "HH:mm") : "")
                       }
-                      maxTime={maxTimeValue}
                       slotProps={{
                         textField: {
-                          InputProps: { readOnly: true },
+                          InputProps: { readOnly: true }, // Evita escritura manual
                           fullWidth: true,
                           required: true,
                           error: !!errors.horaFin,

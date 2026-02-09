@@ -2043,7 +2043,7 @@ export class ReportesService {
     const allClasses = await this.prisma.claseConsulta.findMany({
       where: {
         idCurso,
-        fechaClase: { gte: start, ...(end && { lte: end }) },
+        fechaInicio: { gte: start, ...(end && { lte: end }) },
       },
       include: {
         docenteResponsable: {
@@ -2290,7 +2290,7 @@ export class ReportesService {
 
     const where: Prisma.ClaseConsultaWhereInput = {
       idCurso,
-      fechaClase: { gte: start, ...(end && { lte: end }) },
+      fechaInicio: { gte: start, ...(end && { lte: end }) },
     };
 
     if (docenteId) {
@@ -2313,7 +2313,7 @@ export class ReportesService {
           },
         },
       },
-      orderBy: { fechaClase: 'desc' },
+      orderBy: { fechaInicio: 'desc' },
     });
 
     // Obtener lista de docentes del curso para el filtro del frontend
@@ -2336,7 +2336,7 @@ export class ReportesService {
       // Lógica de Gráfico: Mapear estado a series de datos
       const chartEntry = {
         id: c.id, // <-- ID único para separar barras en el frontend
-        fecha: c.fechaClase.toISOString().split('T')[0],
+        fecha: c.fechaInicio.toISOString().split('T')[0],
         nombre: c.nombre,
         estado: c.estadoClase,
         revisadas: 0,
@@ -2374,7 +2374,7 @@ export class ReportesService {
         docente: c.docenteResponsable
           ? `${c.docenteResponsable.nombre} ${c.docenteResponsable.apellido}`
           : 'Sin asignar',
-        fechaAgenda: c.fechaClase,
+        fechaAgenda: c.fechaInicio,
         fechaRealizacion,
         estado: c.estadoClase,
         totalConsultas,

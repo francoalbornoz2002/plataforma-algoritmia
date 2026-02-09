@@ -32,8 +32,8 @@ export default function DashboardTextCard({
         },
       }}
     >
-      <Stack spacing={1}>
-        <Stack direction="row" alignItems="center" spacing={1}>
+      <Stack spacing={0.5}>
+        <Stack direction="row" alignItems="center" spacing={1} mb={0.5}>
           <Box sx={{ color: `${color}.main`, display: "flex" }}>{icon}</Box>
           <Typography
             variant="subtitle2"
@@ -47,7 +47,11 @@ export default function DashboardTextCard({
           {value}
         </Typography>
         {description && (
-          <Typography variant="caption" color="text.secondary">
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{ lineHeight: 1.2 }}
+          >
             {description}
           </Typography>
         )}
