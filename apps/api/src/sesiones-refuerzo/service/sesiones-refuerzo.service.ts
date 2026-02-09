@@ -779,7 +779,10 @@ export class SesionesRefuerzoService {
         );
       }
 
-      if (sesion.estado !== estado_sesion.Pendiente) {
+      if (
+        sesion.estado !== estado_sesion.Pendiente &&
+        sesion.estado !== estado_sesion.En_curso
+      ) {
         throw new BadRequestException(
           'La sesión ya ha sido completada o cancelada.',
         );

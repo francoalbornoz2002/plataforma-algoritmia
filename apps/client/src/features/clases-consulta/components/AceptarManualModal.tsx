@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -7,15 +7,67 @@ import {
   Button,
   Stack,
   Typography,
-  Alert,
+  Box,
 } from "@mui/material";
 // Componentes MUI X
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 // Utilidades de fecha
 import { format, addDays } from "date-fns";
+import { z } from "zod";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { enqueueSnackbar } from "notistack";
+
 import type { ClaseConsulta } from "../../../types";
 import apiClient from "../../../lib/axios";
+import { timeToDate } from "../../../utils/dateHelpers";
+
+// --- Helpers Locales ---
+const parseLocalDate = (dateStr: string) => {
+  if (!dateStr) return null;
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
+
+const createTime = (hours: number, minutes: number) => {
+  const d = new Date();
+  d.setHours(hours, minutes, 0, 0);
+  return d;
+};
+
+// --- Esquema de Validación (Réplica de clase-consulta.schema.ts) ---
+const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+const schema = z
+  .object({
+    fechaClase: z.string().min(1, "La fecha es obligatoria"),
+    horaInicio: z.string().regex(timeRegex, "Formato inválido"),
+    horaFin: z.string().regex(timeRegex, "Formato inválido"),
+  })
+  .refine((data) => data.horaFin > data.horaInicio, {
+    message: "La hora de fin debe ser mayor a la de inicio",
+    path: ["horaFin"],
+  })
+  .refine((data) => data.horaInicio >= "08:00" && data.horaFin <= "21:00", {
+    message: "El horario debe estar entre las 08:00 y las 21:00 hs",
+    path: ["horaFin"],
+  })
+  .refine(
+    (data) => {
+      const [startH, startM] = data.horaInicio.split(":").map(Number);
+      const [endH, endM] = data.horaFin.split(":").map(Number);
+      const startMinutes = startH * 60 + startM;
+      const endMinutes = endH * 60 + endM;
+      return endMinutes - startMinutes <= 4 * 60;
+    },
+    {
+      message: "La duración máxima es de 4 horas",
+      path: ["horaFin"],
+    },
+  );
+
+type FormValues = z.infer<typeof schema>;
 
 interface AceptarManualModalProps {
   open: boolean;
@@ -30,53 +82,67 @@ export default function AceptarManualModal({
   onSuccess,
   clase,
 }: AceptarManualModalProps) {
-  // Estados: Ahora guardamos objetos Date para compatibilidad con MUI X
-  const [fecha, setFecha] = useState<Date | null>(null);
-  const [horaInicio, setHoraInicio] = useState<Date | null>(null);
-  const [horaFin, setHoraFin] = useState<Date | null>(null);
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    control,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      fechaClase: "",
+      horaInicio: "",
+      horaFin: "",
+    },
+  });
 
   // Cargar datos iniciales
   useEffect(() => {
     if (clase && open) {
-      // El backend envía strings ISO (ej: "2025-11-25T10:00:00.000Z")
-      // El constructor new Date() los parsea correctamente para los Pickers.
-      setFecha(new Date(clase.fechaInicio));
-      setHoraInicio(new Date(clase.fechaInicio));
-      setHoraFin(new Date(clase.fechaFin));
+      const fechaObj = new Date(clase.fechaInicio);
+      const finObj = new Date(clase.fechaFin);
 
-      setError(null);
+      reset({
+        fechaClase: format(fechaObj, "yyyy-MM-dd"),
+        horaInicio: format(fechaObj, "HH:mm"),
+        horaFin: format(finObj, "HH:mm"),
+      });
     }
-  }, [clase, open]);
+  }, [clase, open, reset]);
 
-  const handleSubmit = async () => {
-    if (!clase || !fecha || !horaInicio || !horaFin) {
-      setError("Todos los campos son obligatorios");
-      return;
-    }
+  // --- Lógica de Límites para TimePickers (Igual que en ClaseConsultaFormModal) ---
+  const horaInicioValue = watch("horaInicio");
+  const minStartTime = createTime(8, 0);
+  const maxStartTime = createTime(20, 30);
 
-    setLoading(true);
-    setError(null);
+  const { minEndTime, maxEndTime } = useMemo(() => {
+    if (!horaInicioValue)
+      return { minEndTime: undefined, maxEndTime: undefined };
+    const [h, m] = horaInicioValue.split(":").map(Number);
+    const start = new Date();
+    start.setHours(h, m, 0, 0);
+    const min = new Date(start.getTime() + 30 * 60000); // +30 min
+    const maxCalc = new Date(start.getTime() + 4 * 60 * 60000); // +4 hs
+    const absoluteMax = createTime(21, 0);
+    const max = maxCalc > absoluteMax ? absoluteMax : maxCalc;
+    return { minEndTime: min, maxEndTime: max };
+  }, [horaInicioValue]);
 
+  // --- Submit ---
+  const onSubmit = async (data: FormValues) => {
+    if (!clase) return;
     try {
-      // Construimos fechas completas
-      const fechaBase = fecha;
-      const inicio = new Date(fechaBase);
-      inicio.setHours(horaInicio.getHours(), horaInicio.getMinutes());
+      const [year, month, day] = data.fechaClase.split("-").map(Number);
+      const [startH, startM] = data.horaInicio.split(":").map(Number);
+      const [endH, endM] = data.horaFin.split(":").map(Number);
 
-      let fin = new Date(fechaBase);
-      fin.setHours(horaFin.getHours(), horaFin.getMinutes());
-
-      // Cruce de medianoche
-      if (fin <= inicio) {
-        fin = addDays(fin, 1);
-      }
+      const fechaInicio = new Date(year, month - 1, day, startH, startM);
+      const fechaFin = new Date(year, month - 1, day, endH, endM);
 
       const payload = {
-        fechaInicio: inicio.toISOString(),
-        fechaFin: fin.toISOString(),
+        fechaInicio: fechaInicio.toISOString(),
+        fechaFin: fechaFin.toISOString(),
       };
 
       await apiClient.patch(
@@ -86,15 +152,15 @@ export default function AceptarManualModal({
 
       onSuccess();
       onClose();
-      // (Opcional) Podrías usar enqueueSnackbar aquí si tienes notistack
-      alert("¡Clase aceptada y reprogramada con éxito!");
+      enqueueSnackbar("¡Clase aceptada y reprogramada con éxito!", {
+        variant: "success",
+      });
     } catch (err: any) {
       console.error(err);
-      setError(
+      enqueueSnackbar(
         err.response?.data?.message || "Error al procesar la solicitud.",
+        { variant: "error" },
       );
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -105,75 +171,109 @@ export default function AceptarManualModal({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
       <DialogTitle>Aceptar y Reprogramar</DialogTitle>
-      <DialogContent>
-        <Stack spacing={3} sx={{ mt: 1 }}>
-          <Typography variant="body2" color="text.secondary">
-            Define el nuevo horario para confirmar la clase.
-          </Typography>
+      <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
+        <DialogContent>
+          <Stack spacing={3} sx={{ mt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Define el nuevo horario para confirmar la clase.
+            </Typography>
 
-          {/* DatePicker con límites */}
-          <DatePicker
-            label="Nueva Fecha"
-            value={fecha}
-            onChange={(newValue) => setFecha(newValue)}
-            minDate={minDate}
-            maxDate={maxDate}
-            disablePast
-            slotProps={{
-              textField: {
-                fullWidth: true,
-                helperText: " ",
-                InputProps: { readOnly: true }, // Deshabilita la escritura directa
-              },
-            }}
-          />
+            <Controller
+              name="fechaClase"
+              control={control}
+              render={({ field }) => (
+                <DatePicker
+                  label="Nueva Fecha"
+                  value={field.value ? parseLocalDate(field.value) : null}
+                  onChange={(newValue) =>
+                    field.onChange(
+                      newValue ? format(newValue, "yyyy-MM-dd") : "",
+                    )
+                  }
+                  minDate={minDate}
+                  maxDate={maxDate}
+                  disablePast
+                  slotProps={{
+                    textField: {
+                      fullWidth: true,
+                      required: true,
+                      error: !!errors.fechaClase,
+                      helperText: errors.fechaClase?.message || " ",
+                      InputProps: { readOnly: true },
+                    },
+                  }}
+                />
+              )}
+            />
 
-          <Stack direction="row" spacing={2}>
-            {/* TimePickers */}
-            <TimePicker
-              label="Hora Inicio"
-              ampm={false} // Formato 24hs
-              value={horaInicio}
-              onChange={(newValue) => setHoraInicio(newValue)}
-              slotProps={{
-                textField: {
-                  fullWidth: true,
-                  helperText: " ",
-                  InputProps: { readOnly: true }, // Deshabilita la escritura directa
-                },
-              }}
-            />
-            <TimePicker
-              label="Hora Fin"
-              ampm={false}
-              value={horaFin}
-              onChange={(newValue) => setHoraFin(newValue)}
-              slotProps={{
-                textField: {
-                  fullWidth: true,
-                  helperText: " ",
-                  InputProps: { readOnly: true }, // Deshabilita la escritura directa
-                },
-              }}
-            />
+            <Stack direction="row" spacing={2}>
+              <Controller
+                name="horaInicio"
+                control={control}
+                render={({ field }) => (
+                  <TimePicker
+                    label="Hora Inicio"
+                    ampm={false}
+                    minTime={minStartTime}
+                    maxTime={maxStartTime}
+                    value={field.value ? timeToDate(field.value) : null}
+                    onChange={(newValue) =>
+                      field.onChange(newValue ? format(newValue, "HH:mm") : "")
+                    }
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        required: true,
+                        error: !!errors.horaInicio,
+                        helperText: errors.horaInicio?.message || " ",
+                        InputProps: { readOnly: true },
+                      },
+                    }}
+                  />
+                )}
+              />
+              <Controller
+                name="horaFin"
+                control={control}
+                render={({ field }) => (
+                  <TimePicker
+                    label="Hora Fin"
+                    ampm={false}
+                    minTime={minEndTime}
+                    maxTime={maxEndTime}
+                    value={field.value ? timeToDate(field.value) : null}
+                    onChange={(newValue) =>
+                      field.onChange(newValue ? format(newValue, "HH:mm") : "")
+                    }
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        required: true,
+                        error: !!errors.horaFin,
+                        helperText: errors.horaFin?.message || " ",
+                        InputProps: { readOnly: true },
+                      },
+                    }}
+                  />
+                )}
+              />
+            </Stack>
           </Stack>
-
-          {error && <Alert severity="error">{error}</Alert>}
-        </Stack>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={loading}>
-          Cancelar
-        </Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          color="primary"
-          disabled={loading}
-        >
-          {loading ? "Confirmando..." : "Confirmar Cambio"}
-        </Button>
-      </DialogActions>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose} disabled={isSubmitting}>
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Confirmando..." : "Confirmar Cambio"}
+          </Button>
+        </DialogActions>
+      </Box>
     </Dialog>
   );
 }

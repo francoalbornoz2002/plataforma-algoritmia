@@ -681,13 +681,20 @@ export class ConsultasService {
     // 5. Crear la Clase Automática
     const claseCreada = await this.prisma.$transaction(
       async (tx: Prisma.TransactionClient) => {
+        // Generamos un nombre único usando la fecha y hora para evitar conflicto de Unique Constraint
+        const day = horaInicio.getDate().toString().padStart(2, '0');
+        const month = (horaInicio.getMonth() + 1).toString().padStart(2, '0');
+        const year = horaInicio.getFullYear();
+        const hours = horaInicio.getHours().toString().padStart(2, '0');
+        const minutes = horaInicio.getMinutes().toString().padStart(2, '0');
+        const nombreClase = `Clase de Consulta Automática (${day}/${month}/${year} ${hours}:${minutes})`;
+
         const nuevaClase = await tx.claseConsulta.create({
           data: {
             idCurso: idCurso,
             // idDocente: null (Pendiente)
-            nombre: 'Clase de Consulta Automática',
-            descripcion:
-              'Generada automáticamente por acumulación de consultas.',
+            nombre: nombreClase,
+            descripcion: `Generada automáticamente por acumulación de consultas. Fecha propuesta: ${day}/${month}/${year} a las ${hours}:${minutes} hs.`,
             fechaInicio: horaInicio,
             fechaFin: horaFin,
             modalidad: curso.modalidadPreferencial,

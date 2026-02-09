@@ -538,20 +538,69 @@ export class ClasesConsultaService {
         );
       }
 
+      const dbFechaInicio = new Date(datos.fechaInicio);
+      const dbFechaFin = new Date(datos.fechaFin);
+
+      // --- VALIDACIONES DE FECHA Y HORA (Igual que en create/update) ---
+      if (dbFechaInicio >= dbFechaFin) {
+        throw new BadRequestException(
+          'La fecha/hora de fin debe ser mayor a la de inicio.',
+        );
+      }
+      if (dbFechaInicio < new Date()) {
+        throw new BadRequestException(
+          'No puedes reprogramar una clase al pasado.',
+        );
+      }
+
+      // Validar rango horario (08:00 - 21:00) y duración (max 4hs)
+      this.validarRangoHorario(dbFechaInicio, dbFechaFin);
+
+      // Validar superposición con horario de cursada
+      await this.validarSuperposicionConClaseCurso(
+        clase.idCurso,
+        dbFechaInicio,
+        dbFechaFin,
+      );
+
+      // Validar superposición con otras clases de consulta
+      const overlappingClase = await this.prisma.claseConsulta.findFirst({
+        where: {
+          id: { not: idClase },
+          idCurso: clase.idCurso,
+          deletedAt: null,
+          fechaInicio: { lt: dbFechaFin },
+          fechaFin: { gt: dbFechaInicio },
+        },
+      });
+
+      if (overlappingClase) {
+        throw new ConflictException(
+          'El horario se solapa con otra clase de consulta ya programada.',
+        );
+      }
+
       // Actualizamos solo lo necesario
       return await this.prisma.claseConsulta.update({
         where: { id: idClase },
         data: {
           idDocente: idDocente, // Se asigna
           estadoClase: estado_clase_consulta.Programada, // Se confirma
-          fechaInicio: new Date(datos.fechaInicio),
-          fechaFin: new Date(datos.fechaFin),
+          fechaInicio: dbFechaInicio,
+          fechaFin: dbFechaFin,
         },
         include: {
           docenteResponsable: { select: { nombre: true, apellido: true } },
         },
       });
     } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof ConflictException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
       console.error('Error en aceptarYReprogramar:', error);
       throw new InternalServerErrorException('Error al reprogramar la clase.');
     }
