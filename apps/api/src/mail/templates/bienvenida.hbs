@@ -1,16 +1,27 @@
-{{> header }}
-  <h2>¡Bienvenido, {{nombre}}! 🎮</h2>
-  <p>Estamos muy contentos de que te unas a <strong>Algoritmia</strong>.</p>
-  <p>Tu cuenta ha sido creada exitosamente. A continuación encontrarás tus credenciales de acceso:</p>
-  
-  <div class="info-box">
-    <p><strong>Email:</strong> {{email}}</p>
-    <p><strong>Contraseña temporal:</strong> {{contrasena}}</p>
-  </div>
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  {{> styles}}
+</head>
+<body>
+  {{> header}}
+  <div class="content">
+    <h2>¡Bienvenido, {{nombre}}! 🎮</h2>
+    <p>Estamos muy contentos de que te unas a <strong>Algoritmia</strong>.</p>
+    <p>Tu cuenta ha sido creada exitosamente. A continuación encontrarás tus credenciales de acceso:</p>
+    
+    <div class="info-box">
+      <p><strong>Email:</strong> {{email}}</p>
+      <p><strong>Contraseña temporal:</strong> {{contrasena}}</p>
+    </div>
 
-  <p>Cuando ingreses por primera vez, podrás cambiar tu contraseña.</p>
-  
-  <div style="text-align: center; margin-top: 30px;">
-    <a href="{{loginUrl}}" class="btn">Ingresar a la Plataforma</a>
+    <p>Cuando ingreses por primera vez, podrás cambiar tu contraseña.</p>
+    
+    <div style="text-align: center; margin-top: 30px;">
+      <a href="{{loginUrl}}" class="btn">Ingresar a la Plataforma</a>
+    </div>
   </div>
-{{> footer }}
+  {{> footer}}
+</body>
+</html>

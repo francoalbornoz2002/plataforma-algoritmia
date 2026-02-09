@@ -25,10 +25,14 @@ import {
   checkDocenteAccess,
 } from 'src/helpers/access.helper';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { MailService } from 'src/mail/services/mail.service';
 
 @Injectable()
 export class ClasesConsultaService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   /**
    * Servicio para crear una clase de consulta.
@@ -174,6 +178,48 @@ export class ClasesConsultaService {
           where: { id: { in: consultasIds } },
           data: { estado: estado_consulta.A_revisar },
         });
+
+        // --- NOTIFICACIÓN A ALUMNOS ---
+        // Agrupamos las consultas por alumno para enviar un solo correo
+        const consultasConAlumno = await tx.consulta.findMany({
+          where: { id: { in: consultasIds } },
+          include: { alumno: true },
+        });
+
+        const alumnosMap = new Map<
+          string,
+          { email: string; nombre: string; consultas: string[] }
+        >();
+
+        consultasConAlumno.forEach((c) => {
+          if (!alumnosMap.has(c.idAlumno)) {
+            alumnosMap.set(c.idAlumno, {
+              email: c.alumno.email,
+              nombre: c.alumno.nombre,
+              consultas: [],
+            });
+          }
+          alumnosMap.get(c.idAlumno)?.consultas.push(c.titulo);
+        });
+
+        const docente = await tx.usuario.findUnique({
+          where: { id: idDocente },
+          select: { nombre: true, apellido: true },
+        });
+
+        // Enviamos los correos (fuera del hilo principal si es posible, pero aquí es directo)
+        // Usamos Array.from para iterar el Map
+        const destinatarios = Array.from(alumnosMap.values());
+
+        if (docente) {
+          this.mailService.enviarAvisoClaseConsultaAlumno(destinatarios, {
+            nombreClase: restDto.nombre,
+            nombreDocente: `${docente.nombre} ${docente.apellido}`,
+            fechaInicio: dbFechaInicio,
+            modalidad: restDto.modalidad,
+            idClase: nuevaClase.id,
+          });
+        }
 
         return nuevaClase;
       });

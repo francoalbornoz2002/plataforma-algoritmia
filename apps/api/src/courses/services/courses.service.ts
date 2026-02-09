@@ -24,10 +24,14 @@ import { DiaClaseDto } from '../dto/dia-clase.dto';
 import { UserPayload } from 'src/interfaces/authenticated-user.interface';
 import { unlink } from 'fs';
 import { basename, join } from 'path';
+import { MailService } from 'src/mail/services/mail.service';
 
 @Injectable()
 export class CoursesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   /**
    * Crea un nuevo curso.
@@ -124,6 +128,31 @@ export class CoursesService {
             fechaRegistro: fechaInicio,
           },
         });
+
+        // 4. Enviar correo de bienvenida a los docentes asignados
+        // (Lo hacemos dentro del try pero fuera de la transacción crítica si queremos,
+        // o aquí mismo. Para simplificar, lo hacemos después de crear el curso)
+        const docentesAsignados = await tx.usuario.findMany({
+          where: { id: { in: docenteIds } },
+        });
+
+        const diasTexto = diasClase
+          .map((d) => `${d.dia} (${d.horaInicio}-${d.horaFin})`)
+          .join(', ');
+
+        for (const docente of docentesAsignados) {
+          this.mailService.enviarBienvenidaCursoDocente(
+            docente.email,
+            docente.nombre,
+            {
+              nombre: curso.nombre,
+              descripcion: curso.descripcion,
+              diasClase: diasTexto,
+              contrasena: contrasenaAcceso,
+              idCurso: curso.id,
+            },
+          );
+        }
 
         return curso;
       });
@@ -372,6 +401,7 @@ export class CoursesService {
     try {
       // 4. Ejecutar la transacción
       const cursoActualizado = await this.prisma.$transaction(async (tx) => {
+        let nuevosDocentesIds: string[] = [];
         const cursoActualizadoTx = await tx.curso.update({
           where: { id },
           data: dataToUpdate,
@@ -433,12 +463,45 @@ export class CoursesService {
                 estado: 'Activo',
               })),
             });
+            nuevosDocentesIds = idsParaCrear;
           }
         }
 
         // Sincronizar Días de Clase
         if (diasClaseToSync) {
           await this.sincronizarDiasClase(tx, id, diasClaseToSync);
+        }
+
+        // Enviar correo a los NUEVOS docentes asignados
+        if (nuevosDocentesIds.length > 0) {
+          const nuevosDocentes = await tx.usuario.findMany({
+            where: { id: { in: nuevosDocentesIds } },
+          });
+
+          // Obtenemos los días actualizados para el correo
+          const diasActuales = await tx.diaClase.findMany({
+            where: { idCurso: id },
+          });
+          const diasTexto = diasActuales
+            .map(
+              (d) =>
+                `${d.dia} (${dateToTime(d.horaInicio)}-${dateToTime(d.horaFin)})`,
+            )
+            .join(', ');
+
+          for (const docente of nuevosDocentes) {
+            this.mailService.enviarBienvenidaCursoDocente(
+              docente.email,
+              docente.nombre,
+              {
+                nombre: cursoActualizadoTx.nombre,
+                descripcion: cursoActualizadoTx.descripcion,
+                diasClase: diasTexto,
+                contrasena: cursoActualizadoTx.contrasenaAcceso,
+                idCurso: id,
+              },
+            );
+          }
         }
 
         return cursoActualizadoTx;

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  {{> styles}}
+</head>
+<body>
+  {{> header}}
+  <div class="content">
+    <p>Hola <strong>{{nombreDocente}}</strong>,</p>
+    <p>El alumno <strong>{{nombreAlumno}}</strong> ha realizado una nueva consulta en el curso <strong>{{nombreCurso}}</strong>.</p>
+    
+    <div class="info-box">
+      <p><strong>Tema:</strong> {{tema}}</p>
+      <p><strong>Título:</strong> {{tituloConsulta}}</p>
+      <p><strong>Descripción:</strong></p>
+      <p><i>{{descripcionConsulta}}</i></p>
+    </div>
+
+    <div class="text-center mt-2">
+      <a href="{{linkResponder}}" class="btn">Responder Consulta</a>
+    </div>
+  </div>
+  {{> footer}}
+</body>
+</html>

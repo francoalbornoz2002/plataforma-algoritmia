@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  {{> styles}}
+</head>
+<body>
+  {{> header}}
+  <div class="content">
+    <p>Hola <strong>{{nombreAlumno}}</strong>,</p>
+    <p>El docente <strong>{{nombreDocente}}</strong> te ha asignado una nueva Sesión de Refuerzo en el curso <strong>{{nombreCurso}}</strong>.</p>
+    
+    <div class="info-box">
+      <p><strong>Dificultad:</strong> {{dificultad}}</p>
+      <p><strong>Grado:</strong> {{grado}}</p>
+      <p><strong>Fecha Límite:</strong> {{fechaLimite}}</p>
+      <p><strong>Tiempo Límite:</strong> {{tiempoLimite}} minutos</p>
+    </div>
+
+    <div class="text-center mt-2">
+      <a href="{{linkSesion}}" class="btn">Resolver Sesión</a>
+    </div>
+  </div>
+  {{> footer}}
+</body>
+</html>

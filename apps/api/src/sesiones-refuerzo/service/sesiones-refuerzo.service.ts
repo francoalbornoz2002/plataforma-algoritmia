@@ -191,6 +191,27 @@ export class SesionesRefuerzoService {
         })),
       });
 
+      // --- NOTIFICACIÓN AL ALUMNO ---
+      const alumno = await tx.usuario.findUnique({ where: { id: idAlumno } });
+      const docente = await tx.usuario.findUnique({ where: { id: idDocente } });
+      const curso = await tx.curso.findUnique({ where: { id: idCurso } });
+      const dificultad = await tx.dificultad.findUnique({
+        where: { id: idDificultad },
+      });
+
+      if (alumno && docente && curso && dificultad) {
+        this.mailService.enviarSesionAsignadaAlumno({
+          email: alumno.email,
+          nombreAlumno: alumno.nombre,
+          nombreDocente: `${docente.nombre} ${docente.apellido}`,
+          nombreCurso: curso.nombre,
+          dificultad: dificultad.nombre,
+          grado: gradoSesion,
+          fechaLimite: fechaLimite,
+          tiempoLimite: tiempoLimite,
+        });
+      }
+
       return nuevaSesion;
     });
   }

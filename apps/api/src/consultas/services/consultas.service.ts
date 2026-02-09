@@ -80,6 +80,39 @@ export class ConsultasService {
         },
       });
 
+      // --- NOTIFICACIÓN A DOCENTES ---
+      // Obtenemos datos del alumno y curso para el correo
+      const alumno = await this.prisma.usuario.findUnique({
+        where: { id: idAlumno },
+        select: { nombre: true, apellido: true },
+      });
+      const curso = await this.prisma.curso.findUnique({
+        where: { id: idCurso },
+        select: { nombre: true },
+      });
+      // Buscamos docentes activos
+      const docentes = await this.prisma.docenteCurso.findMany({
+        where: { idCurso, estado: 'Activo' },
+        include: { docente: true },
+      });
+
+      if (alumno && curso) {
+        this.mailService.enviarNuevaConsultaDocente(
+          docentes.map((d) => ({
+            email: d.docente.email,
+            nombre: d.docente.nombre,
+          })),
+          {
+            nombreAlumno: `${alumno.nombre} ${alumno.apellido}`,
+            nombreCurso: curso.nombre,
+            tema: tema,
+            titulo: titulo,
+            descripcion: descripcion,
+            idCurso,
+          },
+        );
+      }
+
       // --- INICIO PROCESO AUTOMATIZADO ---
       // Verificamos si llegamos al umbral para disparar la clase automática
       const conteoPendientes = await this.prisma.consulta.count({
@@ -137,6 +170,26 @@ export class ConsultasService {
               estado: estado_consulta.Revisada,
             },
           });
+
+          // --- NOTIFICACIÓN AL ALUMNO ---
+          const consulta = await tx.consulta.findUnique({
+            where: { id: idConsulta },
+            include: { alumno: true, curso: true },
+          });
+          const docente = await tx.usuario.findUnique({
+            where: { id: idDocente },
+          });
+
+          if (consulta && docente) {
+            this.mailService.enviarConsultaRespondidaAlumno({
+              email: consulta.alumno.email,
+              nombreAlumno: consulta.alumno.nombre,
+              nombreDocente: `${docente.nombre} ${docente.apellido}`,
+              tituloConsulta: consulta.titulo,
+              respuesta: descripcion,
+              idCurso: consulta.idCurso,
+            });
+          }
 
           return consultaActualizada;
         },

@@ -231,6 +231,184 @@ export class MailService implements OnModuleInit {
     });
   }
 
+  // --- 4. BIENVENIDA AL CURSO (Docentes) ---
+  async enviarBienvenidaCursoDocente(
+    email: string,
+    nombreDocente: string,
+    datosCurso: {
+      nombre: string;
+      descripcion: string;
+      diasClase: string;
+      contrasena: string;
+      idCurso: string;
+    },
+  ) {
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const baseContext = await this.getBaseContext();
+
+    await this.mailerService.sendMail({
+      to: email,
+      subject: `Asignación al curso: ${datosCurso.nombre}`,
+      template: 'bienvenida-curso-docente',
+      context: {
+        ...baseContext,
+        emailTitle: 'Nuevo Curso Asignado',
+        nombreDocente,
+        nombreCurso: datosCurso.nombre,
+        descripcionCurso: datosCurso.descripcion,
+        diasClase: datosCurso.diasClase,
+        contrasena: datosCurso.contrasena,
+        linkCurso: `${baseUrl}/course/dashboard`, // Redirige al dashboard general
+      },
+    });
+  }
+
+  // --- 5. NUEVA CONSULTA (Docentes) ---
+  async enviarNuevaConsultaDocente(
+    destinatarios: { email: string; nombre: string }[],
+    datos: {
+      nombreAlumno: string;
+      nombreCurso: string;
+      tema: string;
+      titulo: string;
+      descripcion: string;
+      idCurso: string;
+    },
+  ) {
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const baseContext = await this.getBaseContext();
+    const linkResponder = `${baseUrl}/course/consults`; // Link a la lista de consultas
+
+    for (const docente of destinatarios) {
+      await this.mailerService.sendMail({
+        to: docente.email,
+        subject: `Nueva Consulta en ${datos.nombreCurso}: ${datos.titulo}`,
+        template: 'nueva-consulta-docente',
+        context: {
+          ...baseContext,
+          emailTitle: 'Nueva Consulta de Alumno',
+          nombreDocente: docente.nombre,
+          nombreAlumno: datos.nombreAlumno,
+          nombreCurso: datos.nombreCurso,
+          tema: datos.tema,
+          tituloConsulta: datos.titulo,
+          descripcionConsulta: datos.descripcion,
+          linkResponder,
+        },
+      });
+    }
+  }
+
+  // --- 6. CONSULTA RESPONDIDA (Alumno) ---
+  async enviarConsultaRespondidaAlumno(datos: {
+    email: string;
+    nombreAlumno: string;
+    nombreDocente: string;
+    tituloConsulta: string;
+    respuesta: string;
+    idCurso: string;
+  }) {
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const baseContext = await this.getBaseContext();
+    const linkValorar = `${baseUrl}/my/consults`;
+
+    await this.mailerService.sendMail({
+      to: datos.email,
+      subject: `Respuesta a tu consulta: ${datos.tituloConsulta}`,
+      template: 'consulta-respondida-alumno',
+      context: {
+        ...baseContext,
+        emailTitle: 'Consulta Respondida',
+        nombreAlumno: datos.nombreAlumno,
+        nombreDocente: datos.nombreDocente,
+        tituloConsulta: datos.tituloConsulta,
+        respuestaDocente: datos.respuesta,
+        linkValorar,
+      },
+    });
+  }
+
+  // --- 7. SESIÓN ASIGNADA (Alumno) ---
+  async enviarSesionAsignadaAlumno(datos: {
+    email: string;
+    nombreAlumno: string;
+    nombreDocente: string;
+    nombreCurso: string;
+    dificultad: string;
+    grado: string;
+    fechaLimite: Date;
+    tiempoLimite: number;
+  }) {
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const baseContext = await this.getBaseContext();
+    const linkSesion = `${baseUrl}/my/sessions`;
+
+    await this.mailerService.sendMail({
+      to: datos.email,
+      subject: `Sesión de Refuerzo Asignada: ${datos.dificultad}`,
+      template: 'sesion-asignada',
+      context: {
+        ...baseContext,
+        emailTitle: 'Nueva Sesión Asignada',
+        nombreAlumno: datos.nombreAlumno,
+        nombreDocente: datos.nombreDocente,
+        nombreCurso: datos.nombreCurso,
+        dificultad: datos.dificultad,
+        grado: datos.grado,
+        fechaLimite: datos.fechaLimite.toLocaleString('es-AR'),
+        tiempoLimite: datos.tiempoLimite,
+        linkSesion,
+      },
+    });
+  }
+
+  // --- 8. CLASE DE CONSULTA PROGRAMADA (Alumnos) ---
+  async enviarAvisoClaseConsultaAlumno(
+    destinatarios: {
+      email: string;
+      nombre: string;
+      consultas: string[]; // Títulos de sus consultas
+    }[],
+    datosClase: {
+      nombreClase: string;
+      nombreDocente: string;
+      fechaInicio: Date;
+      modalidad: string;
+      idClase: string;
+    },
+  ) {
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const baseContext = await this.getBaseContext();
+    const linkClase = `${baseUrl}/my/consult-classes`;
+
+    const fechaLegible = datosClase.fechaInicio.toLocaleString('es-AR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    for (const alumno of destinatarios) {
+      await this.mailerService.sendMail({
+        to: alumno.email,
+        subject: `📅 Clase de Consulta Programada: ${datosClase.nombreClase}`,
+        template: 'clase-consulta-alumno',
+        context: {
+          ...baseContext,
+          emailTitle: 'Clase de Consulta Programada',
+          nombreAlumno: alumno.nombre,
+          nombreClase: datosClase.nombreClase,
+          nombreDocente: datosClase.nombreDocente,
+          fechaHora: fechaLegible,
+          modalidad: datosClase.modalidad,
+          consultas: alumno.consultas,
+          linkClase,
+        },
+      });
+    }
+  }
+
   /**
    * HELPER PRIVADO: Calcula la próxima fecha de clase a partir de una fecha base.
    * (Lógica autocontenida para no depender de archivos externos)

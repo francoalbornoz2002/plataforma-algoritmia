@@ -317,7 +317,7 @@ export default function Sidebar({
         disableGutters // Desactivamos gutters por defecto para controlar el padding manualmente
         sx={{
           flexGrow: 1,
-          p: isReportsPage ? 0 : 2,
+          p: isReportsPage ? 0 : 3,
         }}
       >
         <DrawerHeader />

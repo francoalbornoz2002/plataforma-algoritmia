@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  {{> styles}}
+</head>
+<body>
+  {{> header}}
+  <div class="content">
+    <p>Hola <strong>{{nombreDocente}}</strong>,</p>
+    <p>Has sido asignado como docente al curso <strong>{{nombreCurso}}</strong>.</p>
+    
+    <div class="info-box">
+      <p><strong>Descripción:</strong> {{descripcionCurso}}</p>
+      <p><strong>Días de Clase:</strong> {{diasClase}}</p>
+      <p><strong>Contraseña de Acceso (Alumnos):</strong> {{contrasena}}</p>
+    </div>
+
+    <p>Como docente, puedes modificar la descripción, días de clase y contraseña si es necesario.</p>
+
+    <div class="text-center mt-2">
+      <a href="{{linkCurso}}" class="btn">Ir al Curso</a>
+    </div>
+  </div>
+  {{> footer}}
+</body>
+</html>

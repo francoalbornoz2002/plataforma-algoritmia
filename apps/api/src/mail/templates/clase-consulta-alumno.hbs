@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  {{> styles}}
+</head>
+<body>
+  {{> header}}
+  <div class="content">
+    <p>Hola <strong>{{nombreAlumno}}</strong>,</p>
+    <p>Se ha programado una nueva Clase de Consulta donde se revisarán tus consultas pendientes.</p>
+    
+    <div class="info-box">
+      <p><strong>Clase:</strong> {{nombreClase}}</p>
+      <p><strong>Docente:</strong> {{nombreDocente}}</p>
+      <p><strong>Fecha y Hora:</strong> {{fechaHora}}</p>
+      <p><strong>Modalidad:</strong> {{modalidad}}</p>
+    </div>
+
+    <p><strong>Tus consultas a revisar:</strong></p>
+    <ul>
+      {{#each consultas}}
+        <li>{{this}}</li>
+      {{/each}}
+    </ul>
+
+    <div class="text-center mt-2">
+      <a href="{{linkClase}}" class="btn">Ver Detalle</a>
+    </div>
+  </div>
+  {{> footer}}
+</body>
+</html>
