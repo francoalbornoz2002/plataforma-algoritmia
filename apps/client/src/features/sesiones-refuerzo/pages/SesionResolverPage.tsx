@@ -60,6 +60,7 @@ export default function SesionResolverPage() {
   const [activeStep, setActiveStep] = useState(0);
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [openCancelDialog, setOpenCancelDialog] = useState(false);
+  const [openTimeoutDialog, setOpenTimeoutDialog] = useState(false);
 
   // ESTADO REFACTORIZADO: Un solo objeto para el resultado final.
   const [finalResultData, setFinalResultData] = useState<{
@@ -125,6 +126,63 @@ export default function SesionResolverPage() {
     }
   }, [finalResultData]);
 
+  const handleSubmit = useCallback(async () => {
+    if (!sesion || !selectedCourse || isSubmitting) return;
+    setIsSubmitting(true);
+
+    // Merge current selection into answers (for the last question or timer expiry)
+    const finalRespuestas = { ...respuestas };
+    const currentQId = sesion.preguntas[activeStep].pregunta.id;
+    if (currentSelection) {
+      finalRespuestas[currentQId] = currentSelection;
+    }
+
+    // Formatear respuestas para el DTO
+    const payload = {
+      respuestas: Object.entries(finalRespuestas).map(
+        ([idPregunta, idOpcionElegida]) => ({
+          idPregunta,
+          idOpcionElegida,
+        }),
+      ),
+    };
+
+    try {
+      const resultResponse = await resolverSesion(
+        selectedCourse.id,
+        sesion.id,
+        payload,
+      );
+
+      // Volvemos a buscar la sesión para obtener los resultados completos
+      const updatedSesion = await findSesionById(selectedCourse.id, sesion.id);
+
+      // Actualizamos el estado final en un solo paso para evitar race conditions
+      setFinalResultData({
+        sesion: updatedSesion,
+        nuevoGrado: resultResponse.resultados.nuevoGrado,
+      });
+
+      if (timerRef.current) clearInterval(timerRef.current);
+      setTimeLeft(null);
+      enqueueSnackbar("Sesión enviada correctamente.", { variant: "success" });
+    } catch (error: any) {
+      enqueueSnackbar(
+        error.response?.data?.message || "Error al enviar las respuestas.",
+        { variant: "error" },
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [
+    sesion,
+    selectedCourse,
+    respuestas,
+    currentSelection,
+    activeStep,
+    isSubmitting,
+  ]);
+
   // --- Lógica del Timer ---
   useEffect(() => {
     if (timeLeft !== null && timeLeft > 0 && !finalResultData) {
@@ -134,16 +192,32 @@ export default function SesionResolverPage() {
           return prev - 1;
         });
       }, 1000);
-    } else if (timeLeft === 0 && !finalResultData && !isSubmitting) {
-      // Tiempo agotado: Enviar automáticamente
-      handleSubmit();
+    } else if (
+      timeLeft === 0 &&
+      !finalResultData &&
+      !isSubmitting &&
+      !openTimeoutDialog
+    ) {
+      // Tiempo agotado: Mostrar modal y luego enviar automáticamente tras 3 segundos
+      setOpenTimeoutDialog(true);
+      const timeout = setTimeout(() => {
+        setOpenConfirmDialog(false); // Cerramos el de confirmación si estaba abierto
+        handleSubmit();
+        setOpenTimeoutDialog(false);
+      }, 3000);
+      return () => clearTimeout(timeout);
     }
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeLeft, finalResultData]); // isSubmitting omitido para evitar loops, se controla dentro
+  }, [
+    timeLeft,
+    finalResultData,
+    isSubmitting,
+    openTimeoutDialog,
+    handleSubmit,
+  ]);
 
   // --- Prevent Accidental Navigation ---
   const isExamInProgress = timeLeft !== null && !finalResultData;
@@ -220,63 +294,6 @@ export default function SesionResolverPage() {
       enqueueSnackbar("Error al iniciar la sesión.", { variant: "error" });
     }
   };
-
-  const handleSubmit = useCallback(async () => {
-    if (!sesion || !selectedCourse || isSubmitting) return;
-    setIsSubmitting(true);
-
-    // Merge current selection into answers (for the last question or timer expiry)
-    const finalRespuestas = { ...respuestas };
-    const currentQId = sesion.preguntas[activeStep].pregunta.id;
-    if (currentSelection) {
-      finalRespuestas[currentQId] = currentSelection;
-    }
-
-    // Formatear respuestas para el DTO
-    const payload = {
-      respuestas: Object.entries(finalRespuestas).map(
-        ([idPregunta, idOpcionElegida]) => ({
-          idPregunta,
-          idOpcionElegida,
-        }),
-      ),
-    };
-
-    try {
-      const resultResponse = await resolverSesion(
-        selectedCourse.id,
-        sesion.id,
-        payload,
-      );
-
-      // Volvemos a buscar la sesión para obtener los resultados completos
-      const updatedSesion = await findSesionById(selectedCourse.id, sesion.id);
-
-      // Actualizamos el estado final en un solo paso para evitar race conditions
-      setFinalResultData({
-        sesion: updatedSesion,
-        nuevoGrado: resultResponse.resultados.nuevoGrado,
-      });
-
-      if (timerRef.current) clearInterval(timerRef.current);
-      setTimeLeft(null);
-      enqueueSnackbar("Sesión enviada correctamente.", { variant: "success" });
-    } catch (error: any) {
-      enqueueSnackbar(
-        error.response?.data?.message || "Error al enviar las respuestas.",
-        { variant: "error" },
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [
-    sesion,
-    selectedCourse,
-    respuestas,
-    currentSelection,
-    activeStep,
-    isSubmitting,
-  ]);
 
   // --- Render Helpers ---
 
@@ -687,6 +704,25 @@ export default function SesionResolverPage() {
             Salir y Cancelar
           </Button>
         </DialogActions>
+      </Dialog>
+
+      {/* Dialogo de Tiempo Agotado */}
+      <Dialog open={openTimeoutDialog} aria-labelledby="timeout-dialog-title">
+        <DialogTitle
+          id="timeout-dialog-title"
+          sx={{ textAlign: "center", color: "error.main", fontWeight: "bold" }}
+        >
+          ¡Se acabó el tiempo!
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ textAlign: "center" }}>
+            Tu sesión está siendo enviada automáticamente con las respuestas
+            completadas hasta el momento.
+          </DialogContentText>
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+            <CircularProgress color="error" />
+          </Box>
+        </DialogContent>
       </Dialog>
     </Container>
   );

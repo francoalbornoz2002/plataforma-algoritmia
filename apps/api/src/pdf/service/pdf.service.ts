@@ -35,6 +35,23 @@ export class PdfService {
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
+  private platformLogoBase64: string | null = null;
+
+  private async loadPlatformLogo() {
+    if (this.platformLogoBase64 !== null) return;
+    try {
+      const logoPath = path.join(process.cwd(), 'public', 'logo_web.png');
+      const imageBuffer = await readFile(logoPath);
+      this.platformLogoBase64 = `data:image/png;base64,${imageBuffer.toString('base64')}`;
+    } catch (error) {
+      console.error(
+        'Error cargando logo de plataforma para PDF. Ruta intentada:',
+        error.path || 'desconocida',
+      );
+      this.platformLogoBase64 = ''; // Evitar reintentos si falla
+    }
+  }
+
   private async registerPartials() {
     const partialsDir = path.join(
       process.cwd(),
@@ -124,6 +141,12 @@ export class PdfService {
   async generatePdf(templateName: string, data: any): Promise<Buffer> {
     // 0. Registrar parciales
     await this.registerPartials();
+
+    // Asegurar que el logo de la plataforma esté cargado y disponible en el template
+    if (this.platformLogoBase64 === null) {
+      await this.loadPlatformLogo();
+    }
+    data.platformLogo = this.platformLogoBase64;
 
     // 1. Compilar la plantilla HBS
     const templatePath = path.join(

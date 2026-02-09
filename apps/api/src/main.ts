@@ -69,6 +69,11 @@ async function bootstrap() {
     prefix: '/uploads/',
   });
 
+  // Servir assets propios del backend (como el logo para PDFs)
+  app.useStaticAssets(join(process.cwd(), 'apps', 'api', 'public'), {
+    prefix: '/assets/',
+  });
+
   app.setBaseViewsDir(join(__dirname, '..', 'src', 'pdf', 'templates'));
   app.setViewEngine('hbs');
 

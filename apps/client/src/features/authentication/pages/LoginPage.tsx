@@ -114,29 +114,32 @@ export default function LoginPage() {
         justifyContent: "center",
         alignItems: "center",
         minHeight: "100vh",
-        bgcolor: "grey.100",
+        background:
+          "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)",
+        p: 2,
       }}
     >
       {/* --- Usamos <Paper /> --- */}
       <Paper
-        elevation={6} // Más sombra para que "flote"
+        elevation={24}
         sx={{
           p: 4,
           width: "100%",
           maxWidth: 420,
-          borderRadius: 2, // Bordes redondeados
+          borderRadius: 4,
+          backgroundColor: "rgba(255, 255, 255, 0.95)",
+          backdropFilter: "blur(10px)",
         }}
       >
-        <Typography
-          variant="h4"
-          component="h1"
-          gutterBottom
-          align="center"
-          sx={{ fontWeight: "bold" }} // Un poco más de énfasis
-        >
-          Plataforma Algoritmia
-        </Typography>
-        <Divider sx={{ mb: 2 }} />
+        <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
+          <img
+            src="/logo_web.png"
+            alt="Algoritmia"
+            style={{ width: "100%", maxWidth: "280px", height: "auto" }}
+          />
+        </Box>
+
+        <Divider sx={{ mb: 1 }} />
         <Stack
           component="form"
           onSubmit={handleSubmit(onSubmit)}
@@ -147,7 +150,7 @@ export default function LoginPage() {
             variant="h5"
             component="h2"
             align="center"
-            sx={{ fontWeight: "bold", mb: 2 }}
+            sx={{ fontWeight: "bold", mb: 1 }}
           >
             Iniciar sesión
           </Typography>
@@ -251,7 +254,7 @@ export default function LoginPage() {
             fullWidth
             variant="contained"
             disabled={isSubmitting}
-            sx={{ mt: 2, py: 1 }}
+            sx={{ mt: 2, py: 1.5, fontWeight: "bold", fontSize: "1.1rem" }}
           >
             {isSubmitting ? <CircularProgress size={24} /> : "Ingresar"}
           </Button>
