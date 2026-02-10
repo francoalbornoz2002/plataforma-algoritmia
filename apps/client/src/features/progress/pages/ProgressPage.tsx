@@ -273,7 +273,6 @@ export default function ProgressPage() {
           >
             Resumen de Progreso del Curso
           </Typography>
-
           <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
             {/* KPIs */}
             <Box sx={{ flex: 1 }}>

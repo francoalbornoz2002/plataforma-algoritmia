@@ -5,7 +5,6 @@ import {
   Grid,
   CircularProgress,
   Alert,
-  Divider,
   Paper,
   Stack,
 } from "@mui/material";
@@ -14,7 +13,6 @@ import { es } from "date-fns/locale";
 import StarIcon from "@mui/icons-material/Star";
 import BoltIcon from "@mui/icons-material/Bolt";
 import ReplayIcon from "@mui/icons-material/Replay";
-import PercentIcon from "@mui/icons-material/Percent";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 
@@ -26,6 +24,8 @@ import { getMyProgress } from "../../users/services/alumnos.service";
 import type { ProgresoAlumno } from "../../../types";
 import MissionCard from "../components/MissionCard";
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
+import DashboardStatCard from "../../dashboards/components/DashboardStatCard";
+import DashboardTextCard from "../../dashboards/components/DashboardTextCard";
 
 export default function MyProgressPage() {
   // --- 1. CONTEXTO ---
@@ -77,172 +77,122 @@ export default function MyProgressPage() {
       {isLoading ? (
         <CircularProgress sx={{ mb: 3 }} />
       ) : progress ? (
-        <Paper elevation={5} component="section" sx={{ p: 2, mb: 4 }}>
-          <Typography
-            variant="h5"
-            gutterBottom
-            sx={{ mb: 3, fontWeight: "bold", color: "primary.main" }}
+        <Stack spacing={2} sx={{ height: "100%" }}>
+          <Paper
+            elevation={3}
+            sx={{
+              p: 3,
+              borderLeft: "4px solid",
+              borderColor: "primary.main",
+            }}
           >
-            Mi Progreso en {selectedCourse.nombre}
-          </Typography>
+            <Typography
+              variant="h5"
+              gutterBottom
+              color="primary"
+              fontWeight="bold"
+            >
+              Mi Progreso en {selectedCourse.nombre}
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Consulta tu avance y estadísticas de progreso en el curso{" "}
+            </Typography>
+          </Paper>
+          <Paper elevation={5} component="section" sx={{ p: 2, mb: 4 }}>
+            <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
+              {/* KPIs */}
+              <Box sx={{ flex: 2 }}>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <DashboardStatCard
+                      title="Misiones Completadas"
+                      value={progress.cantMisionesCompletadas}
+                      icon={<TaskAltIcon />}
+                      color="success"
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <DashboardTextCard
+                      title="Última Actividad"
+                      value={ultimaActividadFormateada}
+                      icon={<AccessTimeIcon />}
+                      color="info"
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <DashboardStatCard
+                      title="Estrellas Totales"
+                      value={progress.totalEstrellas}
+                      icon={<StarIcon />}
+                      color="warning"
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <DashboardStatCard
+                      title="Experiencia Total"
+                      value={progress.totalExp}
+                      icon={<BoltIcon />}
+                      color="primary"
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <DashboardStatCard
+                      title="Promedio Estrellas"
+                      value={progress.promEstrellas.toFixed(1)}
+                      icon={<StarIcon />}
+                      color="warning"
+                      subtitle="Por misión"
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <DashboardStatCard
+                      title="Promedio Intentos"
+                      value={progress.promIntentos.toFixed(1)}
+                      icon={<ReplayIcon />}
+                      color="info"
+                      subtitle="Por misión"
+                    />
+                  </Grid>
+                </Grid>
+              </Box>
 
-          <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
-            {/* KPIs */}
-            <Box sx={{ flex: 1 }}>
-              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-                <Stack spacing={2}>
-                  <Box>
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                      <PercentIcon color="success" />
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Progreso Total
-                      </Typography>
-                    </Stack>
-                    <Typography
-                      variant="h3"
-                      color="primary.main"
-                      fontWeight="bold"
-                    >
-                      {progress.pctMisionesCompletadas.toFixed(1)}%
-                    </Typography>
-                  </Box>
-                  <Divider />
-                  <Stack direction="row" justifyContent="space-between">
-                    <Box>
-                      <Stack direction="row" alignItems="center" spacing={1}>
-                        <TaskAltIcon color="info" fontSize="small" />
-                        <Typography variant="caption" display="block">
-                          Misiones Completadas
-                        </Typography>
-                      </Stack>
-                      <Typography variant="h6">
-                        {progress.cantMisionesCompletadas}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Stack direction="row" alignItems="center" spacing={1}>
-                        <AccessTimeIcon color="action" fontSize="small" />
-                        <Typography variant="caption" display="block">
-                          Última Actividad
-                        </Typography>
-                      </Stack>
-                      <Typography variant="h6">
-                        {ultimaActividadFormateada}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                  <Divider />
-                  <Stack direction="row" spacing={4}>
-                    <Box>
-                      <Stack direction="row" alignItems="center" spacing={0.5}>
-                        <StarIcon color="warning" fontSize="small" />
-                        <Typography variant="caption" display="block">
-                          Estrellas
-                        </Typography>
-                      </Stack>
-                      <Typography variant="body1" fontWeight="bold">
-                        {progress.totalEstrellas}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Stack direction="row" alignItems="center" spacing={0.5}>
-                        <BoltIcon color="primary" fontSize="small" />
-                        <Typography variant="caption" display="block">
-                          Exp Total
-                        </Typography>
-                      </Stack>
-                      <Typography variant="body1" fontWeight="bold">
-                        {progress.totalExp}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Stack direction="row" alignItems="center" spacing={0.5}>
-                        <ReplayIcon color="action" fontSize="small" />
-                        <Typography variant="caption" display="block">
-                          Intentos
-                        </Typography>
-                      </Stack>
-                      <Typography variant="body1" fontWeight="bold">
-                        {progress.totalIntentos}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                  <Divider />
-                  <Box>
-                    <Typography variant="subtitle2" gutterBottom>
-                      Mis Promedios
-                    </Typography>
-                    <Stack direction="row" spacing={4}>
-                      <Box>
-                        <Stack
-                          direction="row"
-                          alignItems="center"
-                          spacing={0.5}
-                        >
-                          <StarIcon color="warning" fontSize="inherit" />
-                          <Typography variant="caption">Estrellas</Typography>
-                        </Stack>
-                        <Typography variant="h6" color="warning.main">
-                          {progress.promEstrellas.toFixed(1)}
-                        </Typography>
-                      </Box>
-                      <Box>
-                        <Stack
-                          direction="row"
-                          alignItems="center"
-                          spacing={0.5}
-                        >
-                          <ReplayIcon color="info" fontSize="inherit" />
-                          <Typography variant="caption">Intentos</Typography>
-                        </Stack>
-                        <Typography variant="h6" color="info.main">
-                          {progress.promIntentos.toFixed(1)}
-                        </Typography>
-                      </Box>
-                    </Stack>
-                  </Box>
-                </Stack>
-              </Paper>
-            </Box>
-
-            {/* Gráfico */}
-            <Box sx={{ flex: 1, minHeight: 300 }}>
-              <Paper
-                elevation={3}
-                sx={{
-                  p: 2,
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Typography variant="h6" gutterBottom>
-                  Gráfico de mi progreso
-                </Typography>
-                <Gauge
-                  value={progress.pctMisionesCompletadas}
-                  cornerRadius="50%"
+              {/* Gráfico */}
+              <Box sx={{ flex: 1, minHeight: 300 }}>
+                <Paper
+                  elevation={3}
                   sx={{
-                    [`& .${gaugeClasses.valueText}`]: {
-                      fontSize: 35,
-                      fontWeight: "bold",
-                    },
-                    [`& .${gaugeClasses.valueArc}`]: {
-                      fill: "#4caf50",
-                    },
+                    p: 2,
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
-                  text={({ value }) => `${value?.toFixed(1)}%`}
-                  height={250}
-                />
-              </Paper>
-            </Box>
-          </Stack>
-        </Paper>
+                >
+                  <Typography variant="h6" gutterBottom>
+                    Gráfico de mi progreso
+                  </Typography>
+                  <Gauge
+                    value={progress.pctMisionesCompletadas}
+                    cornerRadius="50%"
+                    sx={{
+                      [`& .${gaugeClasses.valueText}`]: {
+                        fontSize: 35,
+                        fontWeight: "bold",
+                      },
+                      [`& .${gaugeClasses.valueArc}`]: {
+                        fill: "#4caf50",
+                      },
+                    }}
+                    text={({ value }) => `${value?.toFixed(1)}%`}
+                    height={250}
+                  />
+                </Paper>
+              </Box>
+            </Stack>
+          </Paper>
+        </Stack>
       ) : null}
-
-      <Divider sx={{ mb: 4 }} />
 
       {/* --- SECCIÓN 1: MISIONES DE CAMPAÑA (Normales) --- */}
       <Typography

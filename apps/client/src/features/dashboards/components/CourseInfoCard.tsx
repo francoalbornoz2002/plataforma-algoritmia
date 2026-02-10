@@ -27,7 +27,15 @@ export default function CourseInfoCard({
   };
 
   return (
-    <Paper elevation={2} sx={{ p: 2, height: "100%" }}>
+    <Paper
+      elevation={2}
+      sx={{
+        p: 2,
+        height: "100%",
+        borderLeft: "4px solid",
+        borderColor: "primary.main",
+      }}
+    >
       <Stack spacing={2}>
         <Box
           sx={{

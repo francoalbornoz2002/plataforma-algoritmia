@@ -16,6 +16,9 @@ import {
   PlayCircleFilled,
   MarkUnreadChatAlt,
   SwitchAccessShortcutAdd,
+  Gamepad,
+  Games,
+  VideogameAsset,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router";
 import { useAuth } from "../authentication/context/AuthProvider";
@@ -68,15 +71,17 @@ export default function AlumnoDashboardPage() {
   return (
     <Stack spacing={3} sx={{ height: "100%" }}>
       {/* HEADER */}
-      <Box>
+      <Paper
+        elevation={3}
+        sx={{ p: 3, borderLeft: "4px solid", borderColor: "primary.main" }}
+      >
         <Typography variant="h4" gutterBottom>
           ¡Hola, {profile?.nombre}! 👋
         </Typography>
         <Typography variant="subtitle1" color="text.secondary">
-          Bienvenido a tu espacio de aprendizaje en:{" "}
-          <strong>{selectedCourse.nombre}</strong>
+          Bienvenido a <strong>{selectedCourse.nombre}</strong>
         </Typography>
-      </Box>
+      </Paper>
 
       {error && <Alert severity="error">{error}</Alert>}
 
@@ -104,16 +109,19 @@ export default function AlumnoDashboardPage() {
                   justifyContent: "space-between",
                 }}
               >
-                <Box>
-                  <Typography variant="h6" fontWeight="bold">
-                    ¡Tienes una Sesión de Refuerzo Pendiente!
-                  </Typography>
-                  <Typography variant="body2">
-                    Vence el:{" "}
-                    {new Date(
-                      stats.sesionPendiente.fechaHoraLimite,
-                    ).toLocaleString()}
-                  </Typography>
+                <Box sx={{ display: "flex", alignItems: "anchor-center" }}>
+                  <Warning sx={{ mr: 2 }} />
+                  <Box>
+                    <Typography variant="h6" fontWeight="bold">
+                      ¡Tienes una Sesión de Refuerzo Pendiente!
+                    </Typography>
+                    <Typography variant="body2">
+                      Vence el:{" "}
+                      {new Date(
+                        stats.sesionPendiente.fechaHoraLimite,
+                      ).toLocaleString()}
+                    </Typography>
+                  </Box>
                 </Box>
                 <Button
                   variant="contained"
@@ -128,25 +136,25 @@ export default function AlumnoDashboardPage() {
 
             {/* 3. ESTADÍSTICAS */}
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <DashboardStatCard
-                  title="Misiones Hoy"
+                  title="Misiones completadas hoy"
                   value={stats?.misiones.hoy ?? 0}
                   subtitle="Completadas hoy"
                   icon={<TrendingUp />}
                   color="success"
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <DashboardStatCard
-                  title="Misiones Semana"
+                  title="Misiones completadas en la semana"
                   value={stats?.misiones.semana ?? 0}
                   subtitle="Completadas esta semana"
                   icon={<TrendingUp />}
                   color="primary"
                 />
               </Grid>
-              <Grid size={{ xs: 12 }}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <DashboardTextCard
                   title="Próxima Clase de Consulta"
                   value={
@@ -159,7 +167,7 @@ export default function AlumnoDashboardPage() {
                   description={
                     stats?.proximaClase
                       ? `Modalidad: ${stats.proximaClase.modalidad}`
-                      : "Revisa el calendario pronto"
+                      : "Estate atento a las próximas clases"
                   }
                   icon={<Event />}
                   color="info"
@@ -176,6 +184,15 @@ export default function AlumnoDashboardPage() {
               Acciones Rápidas
             </Typography>
             <Stack spacing={2}>
+              <Button
+                fullWidth
+                variant="outlined"
+                startIcon={<VideogameAsset />}
+                onClick={() => navigate("/my/download-game")}
+                sx={{ justifyContent: "flex-start" }}
+              >
+                Descargar Videojuego
+              </Button>
               <Button
                 fullWidth
                 variant="outlined"
