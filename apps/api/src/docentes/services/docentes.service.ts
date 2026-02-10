@@ -12,8 +12,16 @@ import { dateToTime } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { FindStudentProgressDto } from 'src/progress/dto/find-student-progress.dto';
 import { ProgressService } from 'src/progress/services/progress.service';
-import { checkDocenteAccess } from 'src/helpers/access.helper';
-import { estado_consulta, estado_sesion, estado_simple } from '@prisma/client';
+import {
+  checkAlumnoAccess,
+  checkDocenteAccess,
+} from 'src/helpers/access.helper';
+import {
+  estado_consulta,
+  estado_sesion,
+  estado_simple,
+  roles,
+} from '@prisma/client';
 
 @Injectable()
 export class DocentesService {
@@ -194,10 +202,15 @@ export class DocentesService {
    */
   async findActiveDocentesByCurso(
     idCurso: string,
-    idDocenteSolicitante: string,
+    idUsuarioSolicitante: string,
+    rol: roles,
   ) {
-    // 1. Validamos que el docente que pide tenga acceso
-    await checkDocenteAccess(this.prisma, idDocenteSolicitante, idCurso);
+    // 1. Validamos acceso según el rol del solicitante
+    if (rol === roles.Alumno) {
+      await checkAlumnoAccess(this.prisma, idUsuarioSolicitante, idCurso);
+    } else {
+      await checkDocenteAccess(this.prisma, idUsuarioSolicitante, idCurso);
+    }
 
     // 2. Buscamos los docentes activos
     const asignaciones = await this.prisma.docenteCurso.findMany({

@@ -134,8 +134,8 @@ export class DocentesController {
     @Param('idCurso', ParseUUIDPipe) idCurso: string,
     @Req() req: AuthenticatedUserRequest,
   ) {
-    const idDocente = req.user.userId;
-    return this.docentesService.findActiveDocentesByCurso(idCurso, idDocente);
+    const { userId, rol } = req.user;
+    return this.docentesService.findActiveDocentesByCurso(idCurso, userId, rol);
   }
 
   // --- ¡NUEVO ENDPOINT 2! ---

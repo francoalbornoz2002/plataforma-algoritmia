@@ -40,7 +40,6 @@ export class DifficultiesController {
   /**
    * Endpoint para obtener la lista de dificultades para filtros.
    */
-  @Roles(roles.Docente, roles.Administrador)
   @Get('all')
   findAllForFilter() {
     return this.difficultiesService.findAllForFilter();

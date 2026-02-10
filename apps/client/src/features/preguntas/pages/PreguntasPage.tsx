@@ -61,7 +61,7 @@ export default function PreguntasPage() {
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   const [allDifficulties, setAllDifficulties] = useState<DificultadConTema[]>(
-    []
+    [],
   );
   const [filteredDifficulties, setFilteredDifficulties] = useState<
     DificultadConTema[]
@@ -72,7 +72,7 @@ export default function PreguntasPage() {
     getAllDifficulties()
       .then((data) => setAllDifficulties(data))
       .catch((err) =>
-        console.error("Error al cargar dificultades para filtro", err)
+        console.error("Error al cargar dificultades para filtro", err),
       );
   }, []);
 
@@ -80,7 +80,7 @@ export default function PreguntasPage() {
   useEffect(() => {
     if (filters.tema) {
       setFilteredDifficulties(
-        allDifficulties.filter((d) => d.tema === filters.tema)
+        allDifficulties.filter((d) => d.tema === filters.tema),
       );
     } else {
       setFilteredDifficulties(allDifficulties); // Mostrar todas si no hay tema
@@ -148,7 +148,7 @@ export default function PreguntasPage() {
 
   const handlePageChange = (
     event: React.ChangeEvent<unknown>,
-    value: number
+    value: number,
   ) => {
     setPage(value);
   };

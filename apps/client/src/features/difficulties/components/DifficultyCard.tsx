@@ -1,5 +1,15 @@
-import { Card, CardContent, Box, Typography, Stack } from "@mui/material";
-import type { DificultadAlumnoDetallada } from "../../../types";
+import {
+  Card,
+  CardContent,
+  Box,
+  Typography,
+  Stack,
+  Paper,
+} from "@mui/material";
+import {
+  grado_dificultad,
+  type DificultadAlumnoDetallada,
+} from "../../../types";
 import GradeChip from "../../../components/GradeChip";
 import TemaChip from "../../../components/TemaChip";
 
@@ -11,7 +21,21 @@ export default function DifficultyCard({ dificultad }: DificultadCardProps) {
   const { nombre, grado, tema, descripcion } = dificultad;
 
   return (
-    <Card sx={{ height: "100%" }} variant="outlined">
+    <Paper
+      elevation={2}
+      sx={{
+        height: "100%",
+        borderTop: "4px solid",
+        borderColor:
+          grado === grado_dificultad.Bajo
+            ? "success.main"
+            : grado === grado_dificultad.Medio
+              ? "warning.main"
+              : grado === grado_dificultad.Alto
+                ? "error.main"
+                : "divider",
+      }}
+    >
       <CardContent>
         {/* Fila 1: Título y Grado */}
         <Box
@@ -22,11 +46,7 @@ export default function DifficultyCard({ dificultad }: DificultadCardProps) {
             mb: 1,
           }}
         >
-          <Typography
-            variant="h6"
-            component="div"
-            sx={{ mb: 0, lineHeight: 1.3 }}
-          >
+          <Typography variant="h6" component="div" sx={{ lineHeight: 1.3 }}>
             {nombre}
           </Typography>
           <GradeChip grado={grado} />
@@ -42,6 +62,6 @@ export default function DifficultyCard({ dificultad }: DificultadCardProps) {
           {descripcion}
         </Typography>
       </CardContent>
-    </Card>
+    </Paper>
   );
 }

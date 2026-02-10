@@ -6,6 +6,7 @@ import LoopIcon from "@mui/icons-material/Loop"; // Estructuras
 import DataObjectIcon from "@mui/icons-material/DataObject"; // Variables
 import SubdirectoryArrowRightIcon from "@mui/icons-material/SubdirectoryArrowRight"; // Procedimientos
 import BlockIcon from "@mui/icons-material/Block"; // Ninguno
+import { TemasLabels } from "../types/traducciones";
 
 interface TemaChipProps {
   tema: temas;
@@ -42,7 +43,7 @@ export default function TemaChip({ tema, small }: TemaChipProps) {
   return (
     <Chip
       icon={icon}
-      label={tema}
+      label={TemasLabels[tema]}
       variant="outlined"
       size={small ? "small" : "medium"}
     />

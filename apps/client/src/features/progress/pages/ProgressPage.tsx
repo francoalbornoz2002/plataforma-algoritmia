@@ -34,6 +34,7 @@ import BoltIcon from "@mui/icons-material/Bolt";
 import ReplayIcon from "@mui/icons-material/Replay";
 import PercentIcon from "@mui/icons-material/Percent";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
+import AssessmentIcon from "@mui/icons-material/Assessment";
 
 // 1. Hooks y Servicios
 import { useCourseContext } from "../../../context/CourseContext";
@@ -55,6 +56,7 @@ import {
   StarsRange,
 } from "../../../types/progress-filters";
 import StudentProgressDetailModal from "../components/StudentProgressDetailModal";
+import HeaderPage from "client/src/components/HeaderPage";
 
 type StudentRow = ProgresoAlumnoDetallado;
 
@@ -259,6 +261,13 @@ export default function ProgressPage() {
 
   return (
     <Box>
+      <HeaderPage
+        title={`Progreso del Curso: ${selectedCourse.nombre}`}
+        description="Visualiza el rendimiento global del curso y el detalle individual de cada alumno."
+        icon={<AssessmentIcon />}
+        color="primary"
+        sx={{ mb: 4 }}
+      />
       {/* --- A. Resumen (KPIs) --- */}
       {overviewError && <Alert severity="error">{overviewError}</Alert>}
 

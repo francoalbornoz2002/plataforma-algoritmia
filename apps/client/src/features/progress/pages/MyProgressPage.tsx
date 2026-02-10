@@ -7,6 +7,7 @@ import {
   Alert,
   Paper,
   Stack,
+  LinearProgress,
 } from "@mui/material";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
@@ -26,6 +27,8 @@ import MissionCard from "../components/MissionCard";
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 import DashboardStatCard from "../../dashboards/components/DashboardStatCard";
 import DashboardTextCard from "../../dashboards/components/DashboardTextCard";
+import { Assessment } from "@mui/icons-material";
+import HeaderPage from "client/src/components/HeaderPage";
 
 export default function MyProgressPage() {
   // --- 1. CONTEXTO ---
@@ -73,31 +76,23 @@ export default function MyProgressPage() {
     : "Nunca";
 
   return (
-    <Box>
+    <Box
+      sx={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       {isLoading ? (
         <CircularProgress sx={{ mb: 3 }} />
       ) : progress ? (
         <Stack spacing={2} sx={{ height: "100%" }}>
-          <Paper
-            elevation={3}
-            sx={{
-              p: 3,
-              borderLeft: "4px solid",
-              borderColor: "primary.main",
-            }}
-          >
-            <Typography
-              variant="h5"
-              gutterBottom
-              color="primary"
-              fontWeight="bold"
-            >
-              Mi Progreso en {selectedCourse.nombre}
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Consulta tu avance y estadísticas de progreso en el curso{" "}
-            </Typography>
-          </Paper>
+          <HeaderPage
+            title={`Mi Progreso en ${selectedCourse.nombre}`}
+            description="Consulta tu avance y estadísticas de progreso en el curso"
+            icon={<Assessment />}
+            color="primary"
+          />
           <Paper elevation={5} component="section" sx={{ p: 2, mb: 4 }}>
             <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
               {/* KPIs */}
