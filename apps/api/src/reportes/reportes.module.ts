@@ -4,10 +4,13 @@ import { ReportesController } from './controllers/reportes.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { PdfModule } from '../pdf/pdf.module';
 import { ExcelModule } from '../excel/excel.module';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { ProgressModule } from 'src/progress/progress.module';
 
 @Module({
   imports: [
     PrismaModule,
+    ProgressModule,
     forwardRef(() => PdfModule),
     forwardRef(() => ExcelModule),
   ],

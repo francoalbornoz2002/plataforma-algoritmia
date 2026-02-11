@@ -48,12 +48,17 @@ import {
 } from '@prisma/client';
 import { readFile } from 'fs/promises';
 import * as path from 'path';
+import { ProgressService } from '../../progress/services/progress.service';
+import { GetStudentProgressListReportDto } from 'src/progress/dto/get-student-progress-list-report.dto';
 
 const TOTAL_MISIONES = 10;
 
 @Injectable()
 export class ReportesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly progressService: ProgressService,
+  ) {}
 
   async getUsersSummary(dto: GetUsersSummaryDto) {
     const { fechaCorte, agruparPor, rol } = dto;
@@ -864,6 +869,121 @@ export class ReportesService {
       },
       evolucion: evolutionChartData,
     };
+  }
+
+  /**
+   * Obtiene la lista de progreso de alumnos, soportando modo histórico (fechaCorte).
+   */
+  async getStudentProgressListReport(
+    idCurso: string,
+    dto: GetStudentProgressListReportDto,
+  ) {
+    const { fechaCorte, ...progressDto } = dto;
+
+    // 1. Si NO hay fecha de corte, usamos el servicio de progreso actual (tiempo real)
+    if (!fechaCorte) {
+      return this.progressService.getStudentProgressList(idCurso, progressDto);
+    }
+
+    // 2. MODO HISTÓRICO
+    const end = new Date(fechaCorte);
+    end.setUTCHours(23, 59, 59, 999);
+
+    const { page = 1, limit = 10, search, sort, order } = progressDto;
+    const skip = (page - 1) * limit;
+
+    // Construir WHERE para alumnos activos en esa fecha
+    const where: Prisma.AlumnoCursoWhereInput = {
+      idCurso,
+      fechaInscripcion: { lte: end },
+      OR: [
+        { fechaBaja: null },
+        { fechaBaja: { gt: end } },
+        { estado: estado_simple.Finalizado },
+      ],
+    };
+
+    if (search) {
+      where.alumno = {
+        OR: [
+          { nombre: { contains: search, mode: 'insensitive' } },
+          { apellido: { contains: search, mode: 'insensitive' } },
+        ],
+      };
+    }
+
+    // Ordenamiento básico por nombre (ordenar por campos históricos es complejo y costoso)
+    let orderBy: Prisma.AlumnoCursoOrderByWithRelationInput = {};
+    if (sort === 'nombre' || sort === 'apellido') {
+      orderBy = { alumno: { [sort]: order } };
+    } else {
+      orderBy = { alumno: { nombre: 'asc' } }; // Fallback
+    }
+
+    // Ejecutar consulta de alumnos
+    const [alumnos, total] = await this.prisma.$transaction([
+      this.prisma.alumnoCurso.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy,
+        include: {
+          alumno: {
+            select: {
+              id: true,
+              nombre: true,
+              apellido: true,
+              fotoPerfilUrl: true,
+            },
+          },
+        },
+      }),
+      this.prisma.alumnoCurso.count({ where }),
+    ]);
+
+    // Buscar el historial para cada alumno encontrado
+    const data = await Promise.all(
+      alumnos.map(async (ac) => {
+        const history = await this.prisma.historialProgresoAlumno.findFirst({
+          where: {
+            idProgreso: ac.idProgreso,
+            fechaRegistro: { lte: end },
+          },
+          orderBy: { fechaRegistro: 'desc' },
+        });
+
+        // Valores por defecto si no hay historial previo a la fecha
+        const stats = history || {
+          cantMisionesCompletadas: 0,
+          totalEstrellas: 0,
+          totalExp: 0,
+          totalIntentos: 0,
+          pctMisionesCompletadas: 0,
+          promEstrellas: 0,
+          promIntentos: 0,
+        };
+
+        return {
+          id: ac.idProgreso,
+          idAlumno: ac.idAlumno,
+          nombre: ac.alumno.nombre,
+          apellido: ac.alumno.apellido,
+          fotoPerfilUrl: ac.alumno.fotoPerfilUrl,
+          cantMisionesCompletadas: stats.cantMisionesCompletadas,
+          totalEstrellas: Number(stats.totalEstrellas),
+          totalExp: Number(stats.totalExp),
+          totalIntentos: Number(stats.totalIntentos),
+          pctMisionesCompletadas: Number(stats.pctMisionesCompletadas),
+          promEstrellas: Number(stats.promEstrellas),
+          promIntentos: Number(stats.promIntentos),
+          ultimaActividad: (stats as any).fechaRegistro || null,
+          estado: ac.estado,
+        };
+      }),
+    );
+
+    const totalPages = Math.ceil(total / limit);
+    return { data, total, page, totalPages };
   }
 
   async getCourseMissionsReport(

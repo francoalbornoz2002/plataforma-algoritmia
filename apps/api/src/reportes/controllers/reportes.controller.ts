@@ -90,6 +90,7 @@ import {
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
 import { PdfService } from '../../pdf/service/pdf.service';
 import { ExcelService } from '../../excel/services/excel.service';
+import { GetStudentProgressListReportDto } from 'src/progress/dto/get-student-progress-list-report.dto';
 
 @Controller('reportes')
 @UseGuards(RolesGuard)
@@ -366,6 +367,16 @@ export class ReportesController {
     @Query() dto: GetCourseProgressSummaryDto,
   ) {
     return this.reportesService.getCourseProgressSummary(id, dto);
+  }
+
+  // Progreso - Sección 1.5: Lista de alumnos (Actual o Histórica)
+  @Get('cursos/:id/progreso/alumnos')
+  @Roles(roles.Administrador, roles.Docente)
+  getStudentProgressListReport(
+    @Param('id') id: string,
+    @Query() dto: GetStudentProgressListReportDto,
+  ) {
+    return this.reportesService.getStudentProgressListReport(id, dto);
   }
 
   @Get('cursos/:id/progreso/resumen/pdf')

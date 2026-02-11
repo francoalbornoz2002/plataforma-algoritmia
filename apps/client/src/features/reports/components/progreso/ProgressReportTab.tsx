@@ -6,6 +6,8 @@ import CourseProgressSummary from "./CourseProgressSummary";
 import CourseMissionsReport from "./CourseMissionsReport";
 import CourseMissionDetailReport from "./CourseMissionDetailReport";
 import { Assessment } from "@mui/icons-material";
+import { useAuth } from "../../../../features/authentication/context/AuthProvider";
+import { roles } from "../../../../types";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -35,6 +37,8 @@ interface Props {
 
 export default function ProgressReportTab({ courseId }: Props) {
   const [value, setValue] = useState(0);
+  const { profile } = useAuth();
+  const isAdmin = profile?.rol === roles.Administrador;
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
@@ -49,11 +53,13 @@ export default function ProgressReportTab({ courseId }: Props) {
           variant="scrollable"
           scrollButtons="auto"
         >
-          <Tab
-            icon={<Assessment />}
-            iconPosition="start"
-            label="Resumen General"
-          />
+          {isAdmin && (
+            <Tab
+              icon={<Assessment />}
+              iconPosition="start"
+              label="Resumen General"
+            />
+          )}
           <Tab
             icon={<ListAltIcon />}
             iconPosition="start"
@@ -67,13 +73,15 @@ export default function ProgressReportTab({ courseId }: Props) {
         </Tabs>
       </Box>
 
-      <CustomTabPanel value={value} index={0}>
-        <CourseProgressSummary courseId={courseId} />
-      </CustomTabPanel>
-      <CustomTabPanel value={value} index={1}>
+      {isAdmin && (
+        <CustomTabPanel value={value} index={0}>
+          <CourseProgressSummary courseId={courseId} />
+        </CustomTabPanel>
+      )}
+      <CustomTabPanel value={value} index={isAdmin ? 1 : 0}>
         <CourseMissionsReport courseId={courseId} />
       </CustomTabPanel>
-      <CustomTabPanel value={value} index={2}>
+      <CustomTabPanel value={value} index={isAdmin ? 2 : 1}>
         <CourseMissionDetailReport courseId={courseId} />
       </CustomTabPanel>
     </Box>

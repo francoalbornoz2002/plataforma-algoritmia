@@ -228,6 +228,22 @@ export const getCourseProgressSummary = async (
   return response.data;
 };
 
+export const getStudentProgressListReport = async (
+  courseId: string,
+  params: any,
+) => {
+  const cleanParams = Object.fromEntries(
+    Object.entries(params).filter(
+      ([_, v]) => v !== "" && v !== null && v !== undefined,
+    ),
+  );
+  const response = await apiClient.get(
+    `/reportes/cursos/${courseId}/progreso/alumnos`,
+    { params: cleanParams },
+  );
+  return response.data;
+};
+
 export const getCourseMissionsReport = async (
   courseId: string,
   params: CourseMissionsReportFilters,
