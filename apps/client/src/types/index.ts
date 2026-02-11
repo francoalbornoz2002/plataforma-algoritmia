@@ -265,6 +265,7 @@ export interface ProgresoAlumnoDetallado {
   // Campos añadidos por el servicio:
   nombre: string;
   apellido: string;
+  fotoPerfilUrl?: string | null;
   misionesCompletadas?: MisionCompletada[];
   misionesEspeciales?: MisionEspecial[];
 }

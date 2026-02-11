@@ -11,13 +11,15 @@ import {
   MenuItem,
   Grid,
   Paper,
-  TextField,
   Pagination,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
 import { useNavigate } from "react-router";
 import HistoryIcon from "@mui/icons-material/History";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
 // Hooks, Services, Types
 import { useCourseContext } from "../../../context/CourseContext";
@@ -162,6 +164,13 @@ export default function MisSesionesPage() {
     setPagination((prev) => ({ ...prev, page: value }));
   };
 
+  const handleClearFilters = () => {
+    setFilters({});
+    setDateFilters({ fechaDesde: null, fechaHasta: null });
+    setSortOption("recent");
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
   const handleResolver = (idSesion: string) => {
     if (!selectedCourse) return;
     // Navegación a la página de resolución (Ruta definida en Router.tsx bajo /my)
@@ -189,14 +198,6 @@ export default function MisSesionesPage() {
             Filtros de búsqueda
           </Typography>
           <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-            <TextField
-              sx={{ width: 120 }}
-              label="N° Sesión"
-              name="nroSesion"
-              size="small"
-              type="number"
-              onChange={handleFilterChange}
-            />
             <FormControl sx={{ width: 200 }} size="small">
               <InputLabel>Docente Asignador</InputLabel>
               <Select
@@ -256,11 +257,13 @@ export default function MisSesionesPage() {
                 onChange={handleFilterChange}
               >
                 <MenuItem value="">Todos</MenuItem>
-                {Object.values(estado_sesion).map((e) => (
-                  <MenuItem key={e} value={e}>
-                    {EstadoSesionLabels[e]}
-                  </MenuItem>
-                ))}
+                {Object.values(estado_sesion)
+                  .filter((e) => e !== estado_sesion.En_curso)
+                  .map((e) => (
+                    <MenuItem key={e} value={e}>
+                      {EstadoSesionLabels[e]}
+                    </MenuItem>
+                  ))}
               </Select>
             </FormControl>
             <DatePicker
@@ -270,7 +273,7 @@ export default function MisSesionesPage() {
                 setDateFilters((prev) => ({ ...prev, fechaDesde: newValue }));
                 setPagination((prev) => ({ ...prev, page: 1 }));
               }}
-              slotProps={{ textField: { size: "small", sx: { width: 170 } } }}
+              slotProps={{ textField: { size: "small", sx: { width: 165 } } }}
             />
             <DatePicker
               label="Hasta"
@@ -279,7 +282,7 @@ export default function MisSesionesPage() {
                 setDateFilters((prev) => ({ ...prev, fechaHasta: newValue }));
                 setPagination((prev) => ({ ...prev, page: 1 }));
               }}
-              slotProps={{ textField: { size: "small", sx: { width: 170 } } }}
+              slotProps={{ textField: { size: "small", sx: { width: 165 } } }}
             />
 
             <FormControl size="small" sx={{ minWidth: 180 }}>
@@ -295,6 +298,15 @@ export default function MisSesionesPage() {
                 <MenuItem value="nro_asc">N° Sesión (Menor a mayor)</MenuItem>
               </Select>
             </FormControl>
+            <Tooltip title="Limpiar filtros">
+              <IconButton
+                onClick={handleClearFilters}
+                size="small"
+                color="primary"
+              >
+                <FilterAltOffIcon />
+              </IconButton>
+            </Tooltip>
           </Stack>
         </Paper>
 

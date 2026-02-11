@@ -23,6 +23,14 @@ export class ProgressService {
   constructor(private prisma: PrismaService) {}
 
   /**
+   * Helper para convertir valores Decimal de Prisma a Number de forma segura.
+   */
+  private toNum(value: any): number {
+    if (value === null || value === undefined) return 0;
+    return typeof value === 'number' ? value : parseFloat(value.toString());
+  }
+
+  /**
    * MÉTODO 1: Obtener el Resumen (KPIs) del Curso
    */
   async getCourseOverview(idCurso: string) {
@@ -41,11 +49,9 @@ export class ProgressService {
       const progreso = curso.progresoCurso;
       return {
         ...progreso,
-        pctMisionesCompletadas: parseFloat(
-          progreso.pctMisionesCompletadas as any,
-        ),
-        promEstrellas: parseFloat(progreso.promEstrellas as any),
-        promIntentos: parseFloat(progreso.promIntentos as any),
+        pctMisionesCompletadas: this.toNum(progreso.pctMisionesCompletadas),
+        promEstrellas: this.toNum(progreso.promEstrellas),
+        promIntentos: this.toNum(progreso.promIntentos),
       };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -107,7 +113,7 @@ export class ProgressService {
           take,
           include: {
             alumno: {
-              select: { nombre: true, apellido: true },
+              select: { nombre: true, apellido: true, fotoPerfilUrl: true },
             },
             // --- CAMBIO AQUÍ ---
             progresoAlumno: {
@@ -141,12 +147,12 @@ export class ProgressService {
         idAlumno: ac.idAlumno, // <-- AÑADIMOS EL ID DEL ALUMNO
         nombre: ac.alumno.nombre,
         apellido: ac.alumno.apellido,
-        // Conversión de Decimal a Number
-        pctMisionesCompletadas: parseFloat(
-          ac.progresoAlumno.pctMisionesCompletadas as any,
+        fotoPerfilUrl: ac.alumno.fotoPerfilUrl,
+        pctMisionesCompletadas: this.toNum(
+          ac.progresoAlumno.pctMisionesCompletadas,
         ),
-        promEstrellas: parseFloat(ac.progresoAlumno.promEstrellas as any),
-        promIntentos: parseFloat(ac.progresoAlumno.promIntentos as any),
+        promEstrellas: this.toNum(ac.progresoAlumno.promEstrellas),
+        promIntentos: this.toNum(ac.progresoAlumno.promIntentos),
       }));
 
       const totalPages = Math.ceil(total / limit);
@@ -171,6 +177,7 @@ export class ProgressService {
         },
         // 2. Incluimos el progreso de esa inscripción y misiones
         include: {
+          alumno: { select: { fotoPerfilUrl: true } },
           progresoAlumno: {
             include: {
               misionesEspeciales: {
@@ -196,11 +203,10 @@ export class ProgressService {
       const progreso = inscripcion.progresoAlumno;
       return {
         ...progreso,
-        pctMisionesCompletadas: parseFloat(
-          progreso.pctMisionesCompletadas as any,
-        ),
-        promEstrellas: parseFloat(progreso.promEstrellas as any),
-        promIntentos: parseFloat(progreso.promIntentos as any),
+        fotoPerfilUrl: inscripcion.alumno.fotoPerfilUrl,
+        pctMisionesCompletadas: this.toNum(progreso.pctMisionesCompletadas),
+        promEstrellas: this.toNum(progreso.promEstrellas),
+        promIntentos: this.toNum(progreso.promIntentos),
       };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;

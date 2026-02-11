@@ -32,7 +32,7 @@ export default function CourseInfoCard({
       sx={{
         p: 2,
         height: "100%",
-        borderLeft: "4px solid",
+        borderTop: "5px solid",
         borderColor: "primary.main",
       }}
     >

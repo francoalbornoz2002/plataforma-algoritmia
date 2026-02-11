@@ -132,7 +132,7 @@ export default function DifficultiesPage() {
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   const [allDifficulties, setAllDifficulties] = useState<DificultadConTema[]>(
-    []
+    [],
   );
 
   // --- DATA FETCHING (KPIs) ---
@@ -202,7 +202,7 @@ export default function DifficultiesPage() {
   };
 
   const handleFilterChange = (
-    e: SelectChangeEvent<string> | React.ChangeEvent<HTMLInputElement>
+    e: SelectChangeEvent<string> | React.ChangeEvent<HTMLInputElement>,
   ) => {
     setQueryOptions((prev) => ({
       ...prev,
@@ -278,7 +278,7 @@ export default function DifficultiesPage() {
         ),
       },
     ],
-    []
+    [],
   );
 
   if (!selectedCourse) {

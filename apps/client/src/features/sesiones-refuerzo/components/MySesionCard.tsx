@@ -8,6 +8,8 @@ import {
   CardActions,
   Button,
   Chip,
+  Grid,
+  Paper,
 } from "@mui/material";
 // Íconos
 import EventIcon from "@mui/icons-material/Event";
@@ -84,108 +86,164 @@ export default function MySesionCard({
   };
 
   return (
-    <Card
-      variant="outlined"
+    <Paper
+      elevation={2}
       sx={{
         height: "100%",
         display: "flex",
         flexDirection: "column",
         opacity: isCancelada ? 0.6 : 1,
-        borderColor: isPendiente ? "primary.main" : undefined,
-        borderWidth: isPendiente ? 2 : 1,
+        borderLeft: "5px solid",
+        borderColor:
+          getEstadoChipColor(estado) === "default"
+            ? "divider"
+            : `${getEstadoChipColor(estado)}.main`,
+        transition: "transform 0.2s, box-shadow 0.2s",
+        "&:hover": {
+          transform: "translateY(-3px)",
+          boxShadow: 4,
+        },
       }}
     >
-      <CardContent sx={{ flexGrow: 1 }}>
+      <CardContent sx={{ flexGrow: 1, p: 2 }}>
+        {/* Título (Nro Sesión) y Estado */}
         <Box
           sx={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "flex-start",
-            mb: 1.5,
+            alignItems: "center",
           }}
         >
-          <Typography variant="h6" component="div">
-            Sesión N° {nroSesion}
+          <Typography
+            variant="caption"
+            fontWeight="bold"
+            color="text.secondary"
+            sx={{ textTransform: "uppercase" }}
+          >
+            Sesión #{nroSesion}
           </Typography>
           <Chip
             label={EstadoSesionLabels[estado]}
             color={getEstadoChipColor(estado)}
             size="small"
+            sx={{ fontSize: "0.7rem" }}
           />
         </Box>
 
+        {/* Información Principal: Dificultad y Grado */}
         <Stack
           direction="row"
-          spacing={1}
+          spacing={1.5}
           alignItems="center"
-          color="text.secondary"
-          sx={{ mb: 2 }}
+          sx={{ mb: 2, mt: 1 }}
         >
-          {isAutomatic ? (
-            <SmartToyIcon fontSize="small" color="primary" />
-          ) : (
-            <PersonIcon fontSize="small" />
-          )}
-          <Typography
-            variant="body2"
-            color={isAutomatic ? "primary.main" : "text.secondary"}
-            fontWeight={isAutomatic ? "medium" : "regular"}
-          >
-            Asignada por: {nombreDocente}
-          </Typography>
+          <PsychologyIcon color="primary" />
+          <Box>
+            <Typography variant="caption" color="text.secondary">
+              Dificultad a reforzar
+            </Typography>
+            <Typography
+              variant="subtitle1"
+              fontWeight="bold"
+              sx={{ lineHeight: 1.2 }}
+            >
+              {dificultad.nombre}
+            </Typography>
+            <Typography
+              variant="caption"
+              fontWeight="bold"
+              sx={{
+                color:
+                  gradoSesion === grado_dificultad.Bajo
+                    ? "success.main"
+                    : gradoSesion === grado_dificultad.Medio
+                      ? "warning.main"
+                      : gradoSesion === grado_dificultad.Alto
+                        ? "error.main"
+                        : "text.secondary",
+              }}
+            >
+              Grado:{" "}
+              {gradoSesion === grado_dificultad.Ninguno ? "N/A" : gradoSesion}
+            </Typography>
+          </Box>
         </Stack>
 
-        <Stack spacing={1.5}>
-          <Stack
-            direction="row"
-            spacing={1}
-            alignItems="center"
-            color="text.secondary"
-          >
-            <PsychologyIcon fontSize="small" />
-            <Typography variant="body2">
-              Dificultad: {dificultad.nombre} (Grado:{" "}
-              {gradoSesion === grado_dificultad.Ninguno ? "N/A" : gradoSesion})
-            </Typography>
-          </Stack>
-          <Stack
-            direction="row"
-            spacing={1}
-            alignItems="center"
-            color="text.secondary"
-          >
-            <EventIcon fontSize="small" />
-            <Typography variant="body2">
-              Fecha Límite: {fechaLimiteStr}
-            </Typography>
-          </Stack>
-          <Stack
-            direction="row"
-            spacing={1}
-            alignItems="center"
-            color="text.secondary"
-          >
-            <AccessTimeIcon fontSize="small" />
-            <Typography variant="body2">
-              Hora Límite: {horaLimiteStr}
-            </Typography>
-          </Stack>
-          <Stack
-            direction="row"
-            spacing={1}
-            alignItems="center"
-            color="text.secondary"
-          >
-            <TimerIcon fontSize="small" />
-            <Typography variant="body2">
-              Tiempo: {tiempoLimite} minutos
-            </Typography>
-          </Stack>
-        </Stack>
+        <Divider sx={{ mb: 2, borderStyle: "dashed" }} />
+
+        {/* Grid de Detalles */}
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12 }}>
+            <Stack spacing={0.5}>
+              <Stack
+                direction="row"
+                spacing={0.5}
+                alignItems="center"
+                color="text.secondary"
+              >
+                {isAutomatic ? (
+                  <SmartToyIcon sx={{ fontSize: 16 }} />
+                ) : (
+                  <PersonIcon sx={{ fontSize: 16 }} />
+                )}
+                <Typography variant="caption" fontWeight="bold">
+                  Asignada por
+                </Typography>
+              </Stack>
+              <Typography variant="body2" noWrap>
+                {nombreDocente}
+              </Typography>
+            </Stack>
+          </Grid>
+
+          <Grid size={{ xs: 6 }}>
+            <Stack spacing={0.5}>
+              <Stack
+                direction="row"
+                spacing={0.5}
+                alignItems="center"
+                color="text.secondary"
+              >
+                <EventIcon sx={{ fontSize: 16 }} />
+                <Typography variant="caption" fontWeight="bold">
+                  Fecha límite
+                </Typography>
+              </Stack>
+              <Stack
+                direction="row"
+                spacing={0.5}
+                alignItems="baseline"
+                color="text.secondary"
+              >
+                <Typography variant="body2">{fechaLimiteStr}</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {horaLimiteStr} hs
+                </Typography>
+              </Stack>
+            </Stack>
+          </Grid>
+
+          <Grid size={{ xs: 6 }}>
+            <Stack spacing={0.5}>
+              <Stack
+                direction="row"
+                spacing={0.5}
+                alignItems="center"
+                color="text.secondary"
+              >
+                <TimerIcon sx={{ fontSize: 16 }} />
+                <Typography variant="caption" fontWeight="bold">
+                  Duración
+                </Typography>
+              </Stack>
+              <Typography variant="body2">{tiempoLimite} min</Typography>
+            </Stack>
+          </Grid>
+        </Grid>
       </CardContent>
 
       <Divider sx={{ mt: "auto" }} />
-      <CardActions sx={{ justifyContent: "space-between", p: 1, px: 2 }}>
+      <CardActions sx={{ justifyContent: "flex-end", p: 1, px: 2, gap: 1 }}>
         {canResolver && onResolver && (
           <Button
             variant="contained"
@@ -207,8 +265,7 @@ export default function MySesionCard({
             Ver Resultados
           </Button>
         )}
-        <Box /> {/* Espaciador para alinear a la derecha si no hay botón */}
       </CardActions>
-    </Card>
+    </Paper>
   );
 }

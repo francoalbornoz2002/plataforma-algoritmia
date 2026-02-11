@@ -25,6 +25,7 @@ export const EstadoConsultaLabels: Record<estado_consulta, string> = {
 
 export const EstadoSesionLabels: Record<estado_sesion, string> = {
   [estado_sesion.Pendiente]: "Pendiente",
+  [estado_sesion.En_curso]: "En Curso",
   [estado_sesion.Cancelada]: "Cancelada",
   [estado_sesion.Completada]: "Completada",
   [estado_sesion.Incompleta]: "Incompleta",

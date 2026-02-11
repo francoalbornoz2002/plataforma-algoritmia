@@ -14,10 +14,14 @@ import {
   Paper,
   TextField,
   Pagination,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
 import AddIcon from "@mui/icons-material/Add";
+import HistoryIcon from "@mui/icons-material/History";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
 // 1. Hooks, Servicios y Tipos
 import { useCourseContext } from "../../../context/CourseContext";
@@ -44,6 +48,7 @@ import {
 } from "../../users/services/docentes.service";
 import SesionFormModal from "../components/SesionFormModal";
 import ResultadoSesionModal from "../components/ResultadoSesionModal";
+import HeaderPage from "../../../components/HeaderPage";
 
 export default function SesionesRefuerzoPage() {
   const { selectedCourse, isReadOnly } = useCourseContext();
@@ -173,6 +178,13 @@ export default function SesionesRefuerzoPage() {
     setPagination((prev) => ({ ...prev, page: value }));
   };
 
+  const handleClearFilters = () => {
+    setFilters({});
+    setDateFilters({ fechaDesde: null, fechaHasta: null });
+    setSortOption("recent");
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
   const handleOpenCreate = () => {
     setSesionToEdit(null);
     setIsFormModalOpen(true);
@@ -189,194 +201,201 @@ export default function SesionesRefuerzoPage() {
 
   return (
     <Box>
-      {/* --- 1. Filtros --- */}
-      <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
-        <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
-          Filtros de búsqueda
-        </Typography>
-        <Stack
-          direction="row"
-          spacing={2}
-          alignItems="center"
-          flexWrap="wrap"
-          useFlexGap
-          sx={{ mb: 2 }}
-        >
-          <TextField
-            sx={{ width: 120 }}
-            label="N° Sesión"
-            name="nroSesion"
-            size="small"
-            type="number"
-            onChange={handleFilterChange}
-          />
-          <FormControl sx={{ width: 200 }} size="small">
-            <InputLabel>Alumno</InputLabel>
-            <Select
-              name="idAlumno"
-              label="Alumno"
-              value={filters.idAlumno || ""}
-              onChange={handleFilterChange}
-            >
-              <MenuItem value="">Todos</MenuItem>
-              {alumnosList.map((a) => (
-                <MenuItem key={a.id} value={a.id}>
-                  {a.nombre} {a.apellido}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl sx={{ width: 200 }} size="small">
-            <InputLabel>Docente Creador</InputLabel>
-            <Select
-              name="idDocente"
-              label="Docente Creador"
-              value={filters.idDocente || ""}
-              onChange={handleFilterChange}
-            >
-              <MenuItem value="">Todos</MenuItem>
-              {docentesList.map((d) => (
-                <MenuItem key={d.id} value={d.id}>
-                  {d.nombre} {d.apellido}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl sx={{ width: 300 }} size="small">
-            <InputLabel>Dificultad</InputLabel>
-            <Select
-              name="idDificultad"
-              label="Dificultad"
-              value={filters.idDificultad || ""}
-              onChange={handleFilterChange}
-            >
-              <MenuItem value="">Todas</MenuItem>
-              {dificultadesList.map((d) => (
-                <MenuItem key={d.id} value={d.id}>
-                  {d.nombre}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl sx={{ width: 100 }} size="small">
-            <InputLabel>Grado</InputLabel>
-            <Select
-              name="gradoSesion"
-              label="Grado"
-              value={filters.gradoSesion || ""}
-              onChange={handleFilterChange}
-            >
-              <MenuItem value="">Todos</MenuItem>
-              {Object.values(grado_dificultad)
-                .filter((g) => g !== grado_dificultad.Ninguno)
-                .map((g) => (
-                  <MenuItem key={g} value={g}>
-                    {g}
+      <Stack spacing={1} sx={{ height: "100%" }}>
+        {/* --- TÍTULO --- */}
+        <HeaderPage
+          title={`Sesiones de Refuerzo en ${selectedCourse.nombre}`}
+          description="Gestiona y asigna sesiones de refuerzo a los alumnos."
+          icon={<HistoryIcon />}
+          color="primary"
+        />
+
+        {/* --- SECCIÓN DE FILTROS --- */}
+        <Paper elevation={2} sx={{ pt: 1, pb: 2, pr: 2, pl: 2 }}>
+          <Typography variant="overline" sx={{ fontSize: "14px" }}>
+            Filtros de búsqueda
+          </Typography>
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            <DatePicker
+              label="Desde"
+              value={dateFilters.fechaDesde}
+              onChange={(newValue) => {
+                setDateFilters((prev) => ({ ...prev, fechaDesde: newValue }));
+                setPagination((prev) => ({ ...prev, page: 1 }));
+              }}
+              slotProps={{ textField: { size: "small", sx: { width: 165 } } }}
+            />
+            <DatePicker
+              label="Hasta"
+              value={dateFilters.fechaHasta}
+              onChange={(newValue) => {
+                setDateFilters((prev) => ({ ...prev, fechaHasta: newValue }));
+                setPagination((prev) => ({ ...prev, page: 1 }));
+              }}
+              slotProps={{ textField: { size: "small", sx: { width: 165 } } }}
+            />
+            <FormControl sx={{ width: 200 }} size="small">
+              <InputLabel>Alumno</InputLabel>
+              <Select
+                name="idAlumno"
+                label="Alumno"
+                value={filters.idAlumno || ""}
+                onChange={handleFilterChange}
+              >
+                <MenuItem value="">Todos</MenuItem>
+                {alumnosList.map((a) => (
+                  <MenuItem key={a.id} value={a.id}>
+                    {a.nombre} {a.apellido}
                   </MenuItem>
                 ))}
-            </Select>
-          </FormControl>
-          <FormControl sx={{ width: 150 }} size="small">
-            <InputLabel>Estado</InputLabel>
-            <Select
-              name="estado"
-              label="Estado"
-              value={filters.estado || ""}
-              onChange={handleFilterChange}
-            >
-              <MenuItem value="">Todos</MenuItem>
-              {Object.values(estado_sesion).map((e) => (
-                <MenuItem key={e} value={e}>
-                  {EstadoSesionLabels[e]}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Stack>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <DatePicker
-            label="Desde"
-            value={dateFilters.fechaDesde}
-            onChange={(newValue) => {
-              setDateFilters((prev) => ({ ...prev, fechaDesde: newValue }));
-              setPagination((prev) => ({ ...prev, page: 1 }));
-            }}
-            slotProps={{ textField: { size: "small", sx: { width: 170 } } }}
-          />
-          <DatePicker
-            label="Hasta"
-            value={dateFilters.fechaHasta}
-            onChange={(newValue) => {
-              setDateFilters((prev) => ({ ...prev, fechaHasta: newValue }));
-              setPagination((prev) => ({ ...prev, page: 1 }));
-            }}
-            slotProps={{ textField: { size: "small", sx: { width: 170 } } }}
-          />
-
-          <FormControl size="small" sx={{ minWidth: 180 }}>
-            <InputLabel>Ordenar por</InputLabel>
-            <Select
-              value={sortOption}
-              label="Ordenar por"
-              onChange={(e) => setSortOption(e.target.value)}
-            >
-              <MenuItem value="recent">Más recientes</MenuItem>
-              <MenuItem value="old">Más antiguas</MenuItem>
-              <MenuItem value="nro_desc">N° Sesión (Mayor a menor)</MenuItem>
-              <MenuItem value="nro_asc">N° Sesión (Menor a mayor)</MenuItem>
-            </Select>
-          </FormControl>
-
-          <Box sx={{ flexGrow: 1 }} />
-          {!isReadOnly && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleOpenCreate}
-            >
-              Crear Sesión
-            </Button>
-          )}
-        </Stack>
-      </Paper>
-
-      {/* --- 2. Lista de Sesiones (Cards) --- */}
-      {loading ? (
-        <CircularProgress sx={{ display: "block", margin: "auto", mt: 4 }} />
-      ) : error ? (
-        <Alert severity="error">{error}</Alert>
-      ) : (
-        <Box>
-          {sesionesData && sesionesData.data.length > 0 ? (
-            <>
-              <Grid container spacing={2}>
-                {sesionesData.data.map((sesion) => (
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={sesion.id}>
-                    <SesionCard
-                      sesion={sesion}
-                      onEdit={!isReadOnly ? handleOpenEdit : undefined}
-                      onDelete={!isReadOnly ? setSesionToDelete : undefined}
-                      onViewDetails={setSesionToView}
-                    />
-                  </Grid>
+              </Select>
+            </FormControl>
+            <FormControl sx={{ width: 200 }} size="small">
+              <InputLabel>Docente Creador</InputLabel>
+              <Select
+                name="idDocente"
+                label="Docente Creador"
+                value={filters.idDocente || ""}
+                onChange={handleFilterChange}
+              >
+                <MenuItem value="">Todos</MenuItem>
+                {docentesList.map((d) => (
+                  <MenuItem key={d.id} value={d.id}>
+                    {d.nombre} {d.apellido}
+                  </MenuItem>
                 ))}
-              </Grid>
-              <Stack spacing={2} sx={{ mt: 3, alignItems: "center" }}>
-                <Pagination
-                  count={sesionesData.meta.totalPages}
-                  page={pagination.page}
-                  onChange={handlePageChange}
-                  color="primary"
-                />
-              </Stack>
-            </>
-          ) : (
-            <Alert severity="info" sx={{ mt: 2 }}>
-              No se encontraron sesiones de refuerzo con los filtros aplicados.
-            </Alert>
-          )}
-        </Box>
-      )}
+              </Select>
+            </FormControl>
+            <FormControl sx={{ width: 300 }} size="small">
+              <InputLabel>Dificultad</InputLabel>
+              <Select
+                name="idDificultad"
+                label="Dificultad"
+                value={filters.idDificultad || ""}
+                onChange={handleFilterChange}
+              >
+                <MenuItem value="">Todas</MenuItem>
+                {dificultadesList.map((d) => (
+                  <MenuItem key={d.id} value={d.id}>
+                    {d.nombre}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl sx={{ width: 100 }} size="small">
+              <InputLabel>Grado</InputLabel>
+              <Select
+                name="gradoSesion"
+                label="Grado"
+                value={filters.gradoSesion || ""}
+                onChange={handleFilterChange}
+              >
+                <MenuItem value="">Todos</MenuItem>
+                {Object.values(grado_dificultad)
+                  .filter((g) => g !== grado_dificultad.Ninguno)
+                  .map((g) => (
+                    <MenuItem key={g} value={g}>
+                      {g}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+            <FormControl sx={{ width: 140 }} size="small">
+              <InputLabel>Estado</InputLabel>
+              <Select
+                name="estado"
+                label="Estado"
+                value={filters.estado || ""}
+                onChange={handleFilterChange}
+              >
+                <MenuItem value="">Todos</MenuItem>
+                {Object.values(estado_sesion).map((e) => (
+                  <MenuItem key={e} value={e}>
+                    {EstadoSesionLabels[e]}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={{ minWidth: 180 }}>
+              <InputLabel>Ordenar por</InputLabel>
+              <Select
+                value={sortOption}
+                label="Ordenar por"
+                onChange={(e) => setSortOption(e.target.value)}
+              >
+                <MenuItem value="recent">Más recientes</MenuItem>
+                <MenuItem value="old">Más antiguas</MenuItem>
+                <MenuItem value="nro_desc">N° Sesión (Mayor a menor)</MenuItem>
+                <MenuItem value="nro_asc">N° Sesión (Menor a mayor)</MenuItem>
+              </Select>
+            </FormControl>
+            <Tooltip title="Limpiar filtros" sx={{ flex: 1 }}>
+              <IconButton
+                onClick={handleClearFilters}
+                size="small"
+                color="primary"
+              >
+                <FilterAltOffIcon />
+              </IconButton>
+            </Tooltip>
+            <Box>
+              {!isReadOnly && (
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<AddIcon />}
+                  onClick={handleOpenCreate}
+                  sx={{ mr: 1 }}
+                >
+                  Crear Sesión
+                </Button>
+              )}
+            </Box>
+          </Stack>
+        </Paper>
+
+        {/* --- 2. Lista de Sesiones (Cards) --- */}
+        {loading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : error ? (
+          <Alert severity="error">{error}</Alert>
+        ) : (
+          <Box>
+            {sesionesData && sesionesData.data.length > 0 ? (
+              <>
+                <Grid container spacing={2}>
+                  {sesionesData.data.map((sesion) => (
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={sesion.id}>
+                      <SesionCard
+                        sesion={sesion}
+                        onEdit={!isReadOnly ? handleOpenEdit : undefined}
+                        onDelete={!isReadOnly ? setSesionToDelete : undefined}
+                        onViewDetails={setSesionToView}
+                      />
+                    </Grid>
+                  ))}
+                </Grid>
+                <Stack spacing={2} sx={{ mt: 3, alignItems: "center" }}>
+                  <Pagination
+                    count={sesionesData.meta.totalPages}
+                    page={pagination.page}
+                    onChange={handlePageChange}
+                    color="primary"
+                  />
+                </Stack>
+              </>
+            ) : (
+              <Alert severity="info" sx={{ mt: 2 }}>
+                No se encontraron sesiones de refuerzo con los filtros
+                aplicados.
+              </Alert>
+            )}
+          </Box>
+        )}
+      </Stack>
 
       {/* --- 3. Modales --- */}
       <SesionFormModal

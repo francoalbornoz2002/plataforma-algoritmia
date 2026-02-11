@@ -41,6 +41,7 @@ import {
   Class,
   Delete,
   Event,
+  Info,
   MarkUnreadChatAlt,
   School,
   Search,
@@ -52,6 +53,8 @@ export default function DocenteDashboardPage() {
   const { selectedCourse, isReadOnly, refreshCourse } = useCourseContext();
   const { profile } = useAuth(); // <-- Usamos 'profile' que tiene el nombre completo
   const navigate = useNavigate();
+
+  const baseUrl = import.meta.env.VITE_API_URL_WITHOUT_PREFIX;
 
   // Estados de Datos
   const [loadingStudents, setLoadingStudents] = useState(false);
@@ -167,7 +170,10 @@ export default function DocenteDashboardPage() {
   return (
     <Stack spacing={2} sx={{ height: "100%" }}>
       {/* HEADER */}
-      <Box>
+      <Paper
+        elevation={2}
+        sx={{ p: 2, borderLeft: "5px solid", borderColor: "primary.main" }}
+      >
         <Typography variant="h4" gutterBottom>
           ¡Hola, {profile?.nombre}! 👋
         </Typography>
@@ -175,7 +181,7 @@ export default function DocenteDashboardPage() {
           Bienvenido al panel de control de:{" "}
           <strong>{selectedCourse.nombre}</strong>
         </Typography>
-      </Box>
+      </Paper>
 
       {error && <Alert severity="error">{error}</Alert>}
 
@@ -197,7 +203,15 @@ export default function DocenteDashboardPage() {
 
               {/* B. ACCIONES RÁPIDAS (25% del ancho disponible) */}
               <Grid size={{ xs: 12, md: 3 }}>
-                <Paper elevation={2} sx={{ p: 2, height: "100%" }}>
+                <Paper
+                  elevation={2}
+                  sx={{
+                    p: 2,
+                    height: "100%",
+                    borderTop: 5,
+                    borderColor: "primary.main",
+                  }}
+                >
                   <Typography variant="h6" gutterBottom color="primary">
                     Acciones rápidas
                   </Typography>
@@ -253,7 +267,10 @@ export default function DocenteDashboardPage() {
             </Grid>
 
             {/* 2. SECCIÓN DE ESTADÍSTICAS */}
-            <Paper elevation={2}>
+            <Paper
+              elevation={2}
+              sx={{ height: "100%", borderTop: 5, borderColor: "primary.main" }}
+            >
               <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
                 <Tabs
                   value={tabValue}
@@ -365,10 +382,12 @@ export default function DocenteDashboardPage() {
               display: "flex",
               flexDirection: "column",
               overflow: "hidden",
+              borderTop: 5,
+              borderColor: "primary.main",
             }}
           >
             <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
-              <Typography variant="h6" gutterBottom>
+              <Typography variant="h6" color="primary.main" gutterBottom>
                 Alumnos
               </Typography>
               <TextField
@@ -393,23 +412,45 @@ export default function DocenteDashboardPage() {
                     key={student.idAlumno}
                     divider
                     secondaryAction={
-                      !isReadOnly && (
-                        <Tooltip title="Dar de baja">
+                      <Stack direction="row" spacing={0.5}>
+                        <Tooltip title="Ver información">
                           <IconButton
-                            edge="end"
                             size="small"
-                            color="error"
-                            onClick={() => handleRemoveClick(student)}
+                            color="primary"
+                            onClick={() => {
+                              // Aquí podrías abrir un modal rápido con info del alumno
+                              // O navegar a su detalle
+                              console.log("Ver info de", student.nombre);
+                            }}
                           >
-                            <Delete fontSize="small" />
+                            <Info fontSize="small" />
                           </IconButton>
                         </Tooltip>
-                      )
+                        {!isReadOnly && (
+                          <Tooltip title="Dar de baja">
+                            <IconButton
+                              edge="end"
+                              size="small"
+                              color="error"
+                              onClick={() => handleRemoveClick(student)}
+                            >
+                              <Delete fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </Stack>
                     }
                   >
                     <ListItemAvatar>
-                      <Avatar sx={{ width: 32, height: 32 }}>
-                        {student.nombre[0]}
+                      <Avatar
+                        src={
+                          student.fotoPerfilUrl
+                            ? `${baseUrl}${student.fotoPerfilUrl}`
+                            : undefined
+                        }
+                        sx={{ width: 32, height: 32, border: 1 }}
+                      >
+                        {student.apellido[0]?.toUpperCase()}
                       </Avatar>
                     </ListItemAvatar>
                     <ListItemText
@@ -418,24 +459,7 @@ export default function DocenteDashboardPage() {
                         variant: "body2",
                         fontWeight: "medium",
                       }}
-                      secondary={
-                        <Typography
-                          variant="caption"
-                          component="span"
-                          sx={{
-                            cursor: "pointer",
-                            color: "primary.main",
-                            "&:hover": { textDecoration: "underline" },
-                          }}
-                          onClick={() => {
-                            // Aquí podrías abrir un modal rápido con info del alumno
-                            // O navegar a su detalle
-                            console.log("Ver info de", student.nombre);
-                          }}
-                        >
-                          Ver info
-                        </Typography>
-                      }
+                      sx={{ ml: -1.5 }}
                     />
                   </ListItem>
                 ))

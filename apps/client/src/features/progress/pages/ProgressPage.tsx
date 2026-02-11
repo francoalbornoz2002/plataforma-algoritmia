@@ -16,8 +16,8 @@ import {
   Tooltip,
   Button,
   Paper,
-  Divider,
   CircularProgress,
+  Grid,
 } from "@mui/material";
 import {
   DataGrid,
@@ -32,7 +32,6 @@ import { es } from "date-fns/locale";
 import StarIcon from "@mui/icons-material/Star";
 import BoltIcon from "@mui/icons-material/Bolt";
 import ReplayIcon from "@mui/icons-material/Replay";
-import PercentIcon from "@mui/icons-material/Percent";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 
@@ -56,6 +55,8 @@ import {
   StarsRange,
 } from "../../../types/progress-filters";
 import StudentProgressDetailModal from "../components/StudentProgressDetailModal";
+import DashboardStatCard from "../../dashboards/components/DashboardStatCard";
+import DashboardTextCard from "../../dashboards/components/DashboardTextCard";
 import HeaderPage from "client/src/components/HeaderPage";
 
 type StudentRow = ProgresoAlumnoDetallado;
@@ -169,17 +170,14 @@ export default function ProgressPage() {
       {
         field: "nombre",
         headerName: "Alumno",
-        flex: 2,
+        flex: 1,
         valueGetter: (value: any, row: ProgresoAlumnoDetallado) =>
           `${row.nombre} ${row.apellido}`,
       },
       {
         field: "pctMisionesCompletadas",
         headerName: "Progreso (%)",
-        flex: 1,
-        // --- CORRECCIÓN AQUÍ ---
-        // La firma es (value).
-        // 'value' es el número de pctMisionesCompletadas
+        width: 100,
         valueFormatter: (value: number) => {
           if (typeof value !== "number") return "N/A";
           return `${value.toFixed(1)}%`;
@@ -188,8 +186,7 @@ export default function ProgressPage() {
       {
         field: "promEstrellas",
         headerName: "Estrellas (Prom.)",
-        flex: 1,
-        // --- CORRECCIÓN AQUÍ ---
+        width: 125,
         valueFormatter: (value: number) => {
           if (typeof value !== "number") return "N/A";
           return `⭐ ${value.toFixed(1)}`;
@@ -198,8 +195,7 @@ export default function ProgressPage() {
       {
         field: "promIntentos",
         headerName: "Intentos (Prom.)",
-        flex: 1,
-        // --- CORRECCIÓN AQUÍ ---
+        width: 125,
         valueFormatter: (value: number) => {
           if (typeof value !== "number") return "N/A";
           return value.toFixed(1);
@@ -208,13 +204,11 @@ export default function ProgressPage() {
       {
         field: "totalExp",
         headerName: "EXP Total",
-        flex: 1,
       },
       {
         field: "ultimaActividad",
         headerName: "Última Actividad",
-        flex: 2,
-        // --- CORRECCIÓN AQUÍ ---
+        width: 125,
         valueFormatter: (value: string | null) => {
           if (!value) return "Nunca";
           return (
@@ -229,11 +223,10 @@ export default function ProgressPage() {
       {
         field: "actions",
         headerName: "Misiones",
-        flex: 1,
         align: "center",
         headerAlign: "center",
         sortable: false,
-        minWidth: 120,
+        width: 95,
         renderCell: (params) => (
           <Tooltip title="Ver detalle de misiones">
             <Button
@@ -260,291 +253,236 @@ export default function ProgressPage() {
   }
 
   return (
-    <Box>
-      <HeaderPage
-        title={`Progreso del Curso: ${selectedCourse.nombre}`}
-        description="Visualiza el rendimiento global del curso y el detalle individual de cada alumno."
-        icon={<AssessmentIcon />}
-        color="primary"
-        sx={{ mb: 4 }}
-      />
-      {/* --- A. Resumen (KPIs) --- */}
-      {overviewError && <Alert severity="error">{overviewError}</Alert>}
+    <Box
+      sx={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Stack spacing={2} sx={{ height: "100%" }}>
+        <HeaderPage
+          title={`Progreso del Curso: ${selectedCourse.nombre}`}
+          description="Visualiza el rendimiento global del curso y el detalle individual de cada alumno."
+          icon={<AssessmentIcon />}
+          color="primary"
+          sx={{ mb: 4 }}
+        />
+        {/* --- A. Resumen (KPIs) --- */}
+        {overviewError && <Alert severity="error">{overviewError}</Alert>}
 
-      {overviewLoading ? (
-        <CircularProgress sx={{ mb: 3 }} />
-      ) : overview ? (
-        <Paper elevation={5} component="section" sx={{ p: 2, mb: 4 }}>
-          <Typography
-            variant="h5"
-            gutterBottom
-            sx={{ mb: 3, fontWeight: "bold", color: "primary.main" }}
-          >
-            Resumen de Progreso del Curso
-          </Typography>
-          <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
+        {overviewLoading ? (
+          <CircularProgress sx={{ mb: 3 }} />
+        ) : overview ? (
+          <Stack spacing={2}>
             {/* KPIs */}
-            <Box sx={{ flex: 1 }}>
-              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-                <Stack spacing={2}>
-                  <Box>
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                      <PercentIcon color="success" />
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Progreso Promedio del Curso
-                      </Typography>
-                    </Stack>
-                    <Typography
-                      variant="h3"
-                      color="primary.main"
-                      fontWeight="bold"
-                    >
-                      {overview.pctMisionesCompletadas.toFixed(1)}%
-                    </Typography>
-                  </Box>
-                  <Divider />
-                  <Box>
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                      <TaskAltIcon color="info" fontSize="small" />
-                      <Typography variant="caption" display="block">
-                        Misiones Completadas (Total acumulado)
-                      </Typography>
-                    </Stack>
-                    <Typography variant="h6">
-                      {overview.misionesCompletadas}
-                    </Typography>
-                  </Box>
-                  <Divider />
-                  <Stack direction="row" spacing={4}>
-                    <Box>
-                      <Stack direction="row" alignItems="center" spacing={0.5}>
-                        <StarIcon color="warning" fontSize="small" />
-                        <Typography variant="caption" display="block">
-                          Estrellas
-                        </Typography>
-                      </Stack>
-                      <Typography variant="body1" fontWeight="bold">
-                        {overview.totalEstrellas}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Stack direction="row" alignItems="center" spacing={0.5}>
-                        <BoltIcon color="primary" fontSize="small" />
-                        <Typography variant="caption" display="block">
-                          Exp Total
-                        </Typography>
-                      </Stack>
-                      <Typography variant="body1" fontWeight="bold">
-                        {overview.totalExp}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Stack direction="row" alignItems="center" spacing={0.5}>
-                        <ReplayIcon color="action" fontSize="small" />
-                        <Typography variant="caption" display="block">
-                          Intentos
-                        </Typography>
-                      </Stack>
-                      <Typography variant="body1" fontWeight="bold">
-                        {overview.totalIntentos}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                  <Divider />
-                  <Box>
-                    <Typography variant="subtitle2" gutterBottom>
-                      Promedios por Alumno
-                    </Typography>
-                    <Stack direction="row" spacing={4}>
-                      <Box>
-                        <Stack
-                          direction="row"
-                          alignItems="center"
-                          spacing={0.5}
-                        >
-                          <StarIcon color="warning" fontSize="inherit" />
-                          <Typography variant="caption">Estrellas</Typography>
-                        </Stack>
-                        <Typography variant="h6" color="warning.main">
-                          {overview.promEstrellas.toFixed(1)}
-                        </Typography>
-                      </Box>
-                      <Box>
-                        <Stack
-                          direction="row"
-                          alignItems="center"
-                          spacing={0.5}
-                        >
-                          <ReplayIcon color="info" fontSize="inherit" />
-                          <Typography variant="caption">Intentos</Typography>
-                        </Stack>
-                        <Typography variant="h6" color="info.main">
-                          {overview.promIntentos.toFixed(1)}
-                        </Typography>
-                      </Box>
-                    </Stack>
-                  </Box>
-                </Stack>
-              </Paper>
-            </Box>
-
-            {/* Gráfico */}
-            <Box sx={{ flex: 1, minHeight: 300 }}>
-              <Paper
-                elevation={3}
-                sx={{
-                  p: 2,
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Typography variant="h6" gutterBottom>
-                  Gráfico de progreso global
-                </Typography>
-                <Gauge
-                  value={overview.pctMisionesCompletadas}
-                  cornerRadius="50%"
-                  sx={{
-                    [`& .${gaugeClasses.valueText}`]: {
-                      fontSize: 35,
-                      fontWeight: "bold",
-                    },
-                    [`& .${gaugeClasses.valueArc}`]: {
-                      fill: "#4caf50",
-                    },
-                  }}
-                  text={({ value }) => `${value?.toFixed(1)}%`}
-                  height={250}
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 2 }}>
+                <DashboardStatCard
+                  title="Misiones Completadas"
+                  value={overview.misionesCompletadas}
+                  icon={<TaskAltIcon />}
+                  color="success"
+                  subtitle="Total acumulado por el curso"
                 />
-              </Paper>
-            </Box>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 2 }}>
+                <DashboardStatCard
+                  title="Estrellas"
+                  value={overview.totalEstrellas}
+                  icon={<StarIcon />}
+                  color="warning"
+                  subtitle="Total acumulado por el curso"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 2 }}>
+                <DashboardStatCard
+                  title="Intentos"
+                  value={overview.totalIntentos}
+                  icon={<ReplayIcon />}
+                  color="info"
+                  subtitle="Total acumulado por el curso"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 2 }}>
+                <DashboardStatCard
+                  title="Experiencia"
+                  value={overview.totalExp}
+                  icon={<BoltIcon />}
+                  color="primary"
+                  subtitle="Total acumulado por el curso"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 2 }}>
+                <DashboardStatCard
+                  title="Promedio Estrellas"
+                  value={overview.promEstrellas.toFixed(1)}
+                  icon={<StarIcon />}
+                  color="warning"
+                  subtitle="Por alumno"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 2 }}>
+                <DashboardStatCard
+                  title="Promedio Intentos"
+                  value={overview.promIntentos.toFixed(1)}
+                  icon={<ReplayIcon />}
+                  color="info"
+                  subtitle="Por alumno"
+                />
+              </Grid>
+            </Grid>
+
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 8 }}>
+                {/* --- B. Filtros --- */}
+                <Paper elevation={1} sx={{ pt: 1, pb: 2, pr: 2, pl: 2, mb: 1 }}>
+                  <Typography variant="overline" sx={{ fontSize: "14px" }}>
+                    Filtros
+                  </Typography>
+                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                    <TextField
+                      label="Buscar Alumno..."
+                      variant="outlined"
+                      size="small"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      sx={{ flexGrow: 1 }}
+                    />
+                    <FormControl size="small" sx={{ minWidth: 160 }}>
+                      <InputLabel>Progreso</InputLabel>
+                      <Select
+                        name="progressRange"
+                        value={queryOptions.progressRange}
+                        label="Progreso"
+                        onChange={handleFilterChange}
+                      >
+                        <MenuItem value="">Todos</MenuItem>
+                        {Object.entries(ProgressRange).map(([key, value]) => (
+                          <MenuItem key={key} value={value}>
+                            {value}%
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    <FormControl size="small" sx={{ minWidth: 160 }}>
+                      <InputLabel>Estrellas</InputLabel>
+                      <Select
+                        name="starsRange"
+                        value={queryOptions.starsRange}
+                        label="Estrellas"
+                        onChange={handleFilterChange}
+                      >
+                        <MenuItem value="">Todas</MenuItem>
+                        {Object.entries(StarsRange).map(([key, value]) => (
+                          <MenuItem key={key} value={value}>
+                            {value} ⭐
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    <FormControl size="small" sx={{ minWidth: 160 }}>
+                      <InputLabel>Últ. Actividad</InputLabel>
+                      <Select
+                        name="activityRange"
+                        value={queryOptions.activityRange}
+                        label="Últ. Actividad"
+                        onChange={handleFilterChange}
+                      >
+                        <MenuItem value="">Todos</MenuItem>
+                        <MenuItem value={ActivityRange.LAST_24H}>
+                          Últimas 24h
+                        </MenuItem>
+                        <MenuItem value={ActivityRange.LAST_3D}>
+                          Últimos 3 días
+                        </MenuItem>
+                        <MenuItem value={ActivityRange.LAST_7D}>
+                          Últimos 7 días
+                        </MenuItem>
+                        <MenuItem value={ActivityRange.INACTIVE}>
+                          Inactivo (+7d)
+                        </MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Stack>
+                </Paper>
+                {/* --- C. DataGrid --- */}
+                {gridError && <Alert severity="error">{gridError}</Alert>}
+                <Box sx={{ height: 400, width: "100%" }}>
+                  <DataGrid
+                    rows={rows}
+                    columns={columns}
+                    rowCount={totalRows}
+                    loading={gridLoading}
+                    // Paginación
+                    paginationMode="server"
+                    paginationModel={{
+                      page: queryOptions.page - 1,
+                      pageSize: queryOptions.limit,
+                    }}
+                    onPaginationModelChange={handlePaginationChange}
+                    pageSizeOptions={[5, 10, 25]}
+                    sortingMode="server"
+                    sortModel={[
+                      { field: queryOptions.sort, sort: queryOptions.order },
+                    ]}
+                    onSortModelChange={handleSortChange}
+                    disableRowSelectionOnClick
+                    disableColumnResize={true}
+                    sx={{
+                      "& .MuiDataGrid-cell:focus": {
+                        outline: "none",
+                      },
+                      "& .MuiDataGrid-cell:focus-within": {
+                        outline: "none",
+                      },
+                      "& .MuiDataGrid-columnHeader:focus": {
+                        outline: "none",
+                      },
+                      "& .MuiDataGrid-columnHeader:focus-within": {
+                        outline: "none",
+                      },
+                    }}
+                  />
+                </Box>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                {/* Gráfico */}
+                <Paper
+                  elevation={2}
+                  sx={{
+                    p: 2,
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "flex-start",
+                  }}
+                >
+                  <Typography variant="h6" gutterBottom>
+                    Gráfico de progreso global
+                  </Typography>
+                  <Gauge
+                    value={overview.pctMisionesCompletadas}
+                    cornerRadius="50%"
+                    sx={{
+                      [`& .${gaugeClasses.valueText}`]: {
+                        fontSize: 35,
+                        fontWeight: "bold",
+                      },
+                      [`& .${gaugeClasses.valueArc}`]: {
+                        fill: "#4caf50",
+                      },
+                    }}
+                    text={({ value }) => `${value?.toFixed(1)}%`}
+                    height={185}
+                  />
+                </Paper>
+              </Grid>
+            </Grid>
           </Stack>
-        </Paper>
-      ) : null}
+        ) : null}
 
-      {/* --- B. Filtros --- */}
-      <Paper elevation={5} component="section" sx={{ p: 2, mb: 4 }}>
-        <Typography
-          variant="h5"
-          gutterBottom
-          sx={{ mb: 3, fontWeight: "bold", color: "primary.main" }}
-        >
-          Progresos individuales de alumnos
-        </Typography>
-        <Accordion sx={{ mb: 2 }}>
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography>Filtros de búsqueda</Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-              <TextField
-                label="Buscar Alumno..."
-                variant="outlined"
-                size="small"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ flexGrow: 1 }}
-              />
-              <FormControl size="small" sx={{ minWidth: 160 }}>
-                <InputLabel>Progreso</InputLabel>
-                <Select
-                  name="progressRange"
-                  value={queryOptions.progressRange}
-                  label="Progreso"
-                  onChange={handleFilterChange}
-                >
-                  <MenuItem value="">Todos</MenuItem>
-                  {Object.entries(ProgressRange).map(([key, value]) => (
-                    <MenuItem key={key} value={value}>
-                      {value}%
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl size="small" sx={{ minWidth: 160 }}>
-                <InputLabel>Estrellas</InputLabel>
-                <Select
-                  name="starsRange"
-                  value={queryOptions.starsRange}
-                  label="Estrellas"
-                  onChange={handleFilterChange}
-                >
-                  <MenuItem value="">Todas</MenuItem>
-                  {Object.entries(StarsRange).map(([key, value]) => (
-                    <MenuItem key={key} value={value}>
-                      {value} ⭐
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl size="small" sx={{ minWidth: 160 }}>
-                <InputLabel>Últ. Actividad</InputLabel>
-                <Select
-                  name="activityRange"
-                  value={queryOptions.activityRange}
-                  label="Últ. Actividad"
-                  onChange={handleFilterChange}
-                >
-                  <MenuItem value="">Todos</MenuItem>
-                  <MenuItem value={ActivityRange.LAST_24H}>
-                    Últimas 24h
-                  </MenuItem>
-                  <MenuItem value={ActivityRange.LAST_3D}>
-                    Últimos 3 días
-                  </MenuItem>
-                  <MenuItem value={ActivityRange.LAST_7D}>
-                    Últimos 7 días
-                  </MenuItem>
-                  <MenuItem value={ActivityRange.INACTIVE}>
-                    Inactivo (+7d)
-                  </MenuItem>
-                </Select>
-              </FormControl>
-            </Stack>
-          </AccordionDetails>
-        </Accordion>
-
-        {/* --- C. DataGrid --- */}
-        {gridError && <Alert severity="error">{gridError}</Alert>}
-        <Box sx={{ height: 600, width: "100%" }}>
-          <DataGrid
-            rows={rows}
-            columns={columns}
-            rowCount={totalRows}
-            loading={gridLoading}
-            // Paginación
-            paginationMode="server"
-            paginationModel={{
-              page: queryOptions.page - 1, // MUI es 0-indexed
-              pageSize: queryOptions.limit,
-            }}
-            onPaginationModelChange={handlePaginationChange}
-            pageSizeOptions={[5, 10, 25]}
-            // Ordenamiento
-            sortingMode="server"
-            sortModel={[{ field: queryOptions.sort, sort: queryOptions.order }]}
-            onSortModelChange={handleSortChange}
-            disableRowSelectionOnClick
-            disableColumnResize={true}
-            sx={{
-              "& .MuiDataGrid-cell:focus": {
-                outline: "none",
-              },
-              "& .MuiDataGrid-cell:focus-within": {
-                outline: "none",
-              },
-              "& .MuiDataGrid-columnHeader:focus": {
-                outline: "none",
-              },
-              "& .MuiDataGrid-columnHeader:focus-within": {
-                outline: "none",
-              },
-            }}
-          />
-        </Box>
         {/* --- D. RENDERIZADO DEL MODAL DE DETALLE --- */}
         {viewingStudent && (
           <StudentProgressDetailModal
@@ -553,7 +491,7 @@ export default function ProgressPage() {
             studentData={viewingStudent}
           />
         )}
-      </Paper>
+      </Stack>
     </Box>
   );
 }

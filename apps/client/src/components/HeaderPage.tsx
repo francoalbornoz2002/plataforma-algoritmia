@@ -30,7 +30,7 @@ export default function HeaderPage({
         p: 2.5,
         display: "flex",
         flexDirection: "column",
-        borderLeft: "4px solid",
+        borderLeft: "5px solid",
         borderColor: `${color}.main`,
         ...sx,
       }}

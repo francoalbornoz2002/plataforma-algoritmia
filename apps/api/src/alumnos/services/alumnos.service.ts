@@ -297,6 +297,7 @@ export class AlumnosService {
             id: true,
             nombre: true,
             apellido: true,
+            fotoPerfilUrl: true,
           },
         },
       },
@@ -332,6 +333,7 @@ export class AlumnosService {
         id: true,
         nombre: true,
         apellido: true,
+        fotoPerfilUrl: true,
       },
       orderBy: [{ apellido: 'asc' }, { nombre: 'asc' }],
     });
