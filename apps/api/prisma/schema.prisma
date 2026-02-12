@@ -580,12 +580,25 @@ model Usuario {
   respuestasConsultas   RespuestaConsulta[]         @relation("RespuestasDocente")
   sesionesRefuerzo      SesionRefuerzo[]            @relation("SesionesAlumno")
   sesionesCreadas       SesionRefuerzo[]            @relation("SesionesCreadas")
+  refreshTokens         RefreshToken[]
 
   @@index([deletedAt], map: "idx_usuario_activo")
   @@index([apellido], map: "idx_usuario_apellido")
   @@index([nombre], map: "idx_usuario_nombre")
   @@index([rol], map: "idx_usuario_rol")
   @@map("usuarios")
+}
+
+model RefreshToken {
+  id          String   @id @default(uuid()) @db.Uuid
+  hashedToken String   @unique @map("hashed_token") @db.Text
+  userId      String   @map("user_id") @db.Uuid
+  usuario     Usuario  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt   DateTime @map("expires_at") @db.Timestamptz(6)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([userId])
+  @@map("refresh_tokens")
 }
 
 model Valoracion {

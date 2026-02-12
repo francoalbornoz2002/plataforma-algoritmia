@@ -9,6 +9,7 @@ import { PrismaService } from './prisma/prisma.service';
 import { AuditInterceptor } from './auditoria/interceptors/audit.interceptor';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -18,6 +19,9 @@ async function bootstrap() {
 
   // Usamos la libería morgan para poder auditar las instrucciones o peticiones ejecutadas
   app.use(morgan('dev'));
+
+  // Habilitamos el manejo de cookies
+  app.use(cookieParser());
 
   // Configuración de Swagger para la documentación de la API.
   const config = new DocumentBuilder()

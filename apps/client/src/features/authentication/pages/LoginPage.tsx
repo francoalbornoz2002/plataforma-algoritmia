@@ -86,7 +86,7 @@ export default function LoginPage() {
     // (Ya no necesitamos setIsLoading ni setLoginError)
     try {
       // Llama a la función login del AuthProvider
-      await login(data.email, data.password);
+      await login(data.email, data.password, data.remember);
     } catch (error: any) {
       console.error("Error en LoginPage onSubmit:", error);
       const message =

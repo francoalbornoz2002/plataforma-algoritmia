@@ -25,7 +25,11 @@ interface AuthContextType {
   profile: UserData | null; // <-- Nuevo estado con datos completos
   token: string | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (
+    email: string,
+    password: string,
+    rememberMe: boolean,
+  ) => Promise<void>;
   logout: () => void;
   refreshProfile: () => Promise<void>; // <-- Función para recargar datos
   mustChangePassword: boolean;
@@ -106,20 +110,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // Efecto para verificar token inicial y configurar interceptor
   useEffect(() => {
-    const initialToken = localStorage.getItem("accessToken");
-    const validUser = getUserFromToken(initialToken);
-    if (validUser) {
-      setToken(initialToken);
-      setUser(validUser);
-      // El refreshProfile se ejecutará automáticamente porque 'user' cambió
-      // y está en las dependencias del hook de abajo (o del propio refreshProfile)
-      // El interceptor en apiClient se encargará de añadir el header
-    } else {
-      localStorage.removeItem("accessToken");
-      setToken(null);
-      setUser(null);
-    }
-    setIsLoading(false);
+    const initAuth = async () => {
+      const initialToken = localStorage.getItem("accessToken");
+      const validUser = getUserFromToken(initialToken);
+
+      if (validUser) {
+        setToken(initialToken);
+        setUser(validUser);
+        setIsLoading(false);
+      } else {
+        // Si no hay token o expiró, intentamos usar el Refresh Token (Cookie)
+        try {
+          const { data } = await apiClient.post("/auth/refresh");
+          const newToken = data.accessToken;
+
+          localStorage.setItem("accessToken", newToken);
+          setToken(newToken);
+          setUser(getUserFromToken(newToken));
+        } catch (error) {
+          // Si falla el refresh, limpiamos todo
+          localStorage.removeItem("accessToken");
+          setToken(null);
+          setUser(null);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    initAuth();
   }, []); // Ejecutar solo al montar
 
   // Efecto para cargar el perfil cuando cambia el usuario
@@ -132,11 +151,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [user, refreshProfile]);
 
   const login = useCallback(
-    async (email: string, password: string) => {
+    async (email: string, password: string, rememberMe: boolean) => {
       try {
         const response = await apiClient.post<{ accessToken: string }>(
           "/auth/login",
-          { email, password },
+          { email, password, remember: rememberMe },
         );
         const new_token = response.data.accessToken;
         const newUser = getUserFromToken(new_token);
@@ -174,17 +193,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw error;
       }
     },
-    [navigate], // <-- Añadir 'navigate' a las dependencias
+    [navigate],
   );
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    // 1. Llamada al backend para limpiar la cookie (mientras el token aún está en memoria/localStorage)
+    try {
+      await apiClient.post("/auth/logout");
+    } catch (err) {
+      console.error("Error informando logout al servidor", err);
+    }
+
+    // 2. Limpiamos todo el estado local independientemente del resultado de la API
     localStorage.removeItem("accessToken"); // Limpia el token
     setToken(null); // Limpia el estado del token
     setUser(null); // Limpia el estado del usuario
     setProfile(null); // Limpia el perfil
     setMustChangePassword(false); // Resetea el modal
     localStorage.removeItem("selectedCourseId"); // Limpia el curso seleccionado
-    // El interceptor de Axios dejará de añadir el token
+
     navigate("/login"); // Redirige al login
   }, [navigate]);
 

@@ -1,7 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 // Importa TransformFnParams para un tipado correcto
 import { Transform, TransformFnParams } from 'class-transformer';
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsEmail,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator';
 
 export class LoginDto {
   @ApiProperty({ required: true })
@@ -18,4 +24,9 @@ export class LoginDto {
   @MinLength(6)
   @IsString()
   password: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsBoolean()
+  remember?: boolean;
 }

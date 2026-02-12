@@ -193,6 +193,10 @@ export class PrismaService implements OnModuleInit {
     return this.extendedClient.valoracion;
   }
 
+  get refreshToken() {
+    return this.extendedClient.refreshToken;
+  }
+
   get $transaction() {
     return this.extendedClient.$transaction.bind(this.extendedClient);
   }
