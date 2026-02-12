@@ -43,6 +43,7 @@ import {
 } from "../../users/services/docentes.service";
 import ResultadoSesionModal from "../components/ResultadoSesionModal";
 import HeaderPage from "../../../components/HeaderPage";
+import { SwitchAccessShortcutAdd } from "@mui/icons-material";
 
 export default function MisSesionesPage() {
   const { selectedCourse, isReadOnly } = useCourseContext();
@@ -194,7 +195,7 @@ export default function MisSesionesPage() {
         <HeaderPage
           title={`Mis Sesiones en ${selectedCourse.nombre}`}
           description="Revisa y resuelve tus sesiones de refuerzo asignadas para mejorar en los temas que te resultan difíciles."
-          icon={<HistoryIcon />}
+          icon={<SwitchAccessShortcutAdd />}
           color="primary"
         />
 

@@ -10,7 +10,6 @@ import MyProgressPage from "./features/progress/pages/MyProgressPage";
 import DifficultiesPage from "./features/difficulties/pages/DifficultiesPage";
 import ProgressPage from "./features/progress/pages/ProgressPage";
 import MyDifficultiesPage from "./features/difficulties/pages/MyDifficultiesPage";
-import CourseSettingsPage from "./features/courses/pages/CourseSettingsPage";
 import SidebarLayout from "./layout/SidebarLayout";
 import AdminDashboardPage from "./features/dashboards/AdminDashboardPage";
 import DocenteDashboardPage from "./features/dashboards/DocenteDashboardPage";
@@ -81,7 +80,6 @@ export const AppRouter: React.FC<{}> = () => {
               <Route path="consults" element={<ConsultasPage />} />
               <Route path="consult-classes" element={<ClasesConsultaPage />} />
               <Route path="reports" element={<CourseReportsPage />} />
-              <Route path="settings" element={<CourseSettingsPage />} />
             </Route>
           </Route>
 

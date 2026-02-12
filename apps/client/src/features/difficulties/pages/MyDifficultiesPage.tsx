@@ -23,7 +23,7 @@ import { getMyDifficulties } from "../../users/services/alumnos.service";
 import DifficultyCard from "../components/DifficultyCard";
 import { TemasLabels } from "../../../types/traducciones";
 import HeaderPage from "../../../components/HeaderPage";
-import { Warning, WarningAmber } from "@mui/icons-material";
+import { AssignmentLate, Warning, WarningAmber } from "@mui/icons-material";
 
 export default function MyDifficultiesPage() {
   const { selectedCourse } = useCourseContext();
@@ -115,7 +115,7 @@ export default function MyDifficultiesPage() {
         <HeaderPage
           title={`Mis dificultades en ${selectedCourse.nombre}`}
           description="Consulta aquellos temas y conceptos que te están resultando desafiantes."
-          icon={<Warning />}
+          icon={<AssignmentLate />}
           color="primary"
         />
         {/* --- SECCIÓN DE FILTROS --- */}

@@ -35,6 +35,8 @@ const PAGE_SIZE = 5;
 
 import { getAllDifficulties } from "../../users/services/docentes.service";
 import { TemasLabels } from "../../../types/traducciones";
+import HeaderPage from "../../../components/HeaderPage";
+import { Quiz } from "@mui/icons-material";
 export default function PreguntasPage() {
   // Estados de la lista
   const [preguntas, setPreguntas] = useState<PreguntaConDetalles[]>([]);
@@ -166,159 +168,174 @@ export default function PreguntasPage() {
   };
 
   return (
-    <Box>
-      {/* --- 1. Filtros y Acción Principal --- */}
-      <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
-        <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
-          Filtros de búsqueda
-        </Typography>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <TextField
-            label="Buscar por enunciado..."
-            variant="outlined"
-            size="small"
-            value={searchTerm}
-            onChange={handleSearchChange}
-            sx={{ minWidth: 400 }}
-          />
-          <FormControl size="small" sx={{ minWidth: 160 }}>
-            <InputLabel>Tema</InputLabel>
-            <Select
-              name="tema"
-              value={filters.tema}
-              label="Tema"
-              onChange={handleFilterChange}
-            >
-              <MenuItem value="">Todos</MenuItem>
-              {Object.values(temas)
-                .filter((t) => t !== temas.Ninguno)
-                .map((t) => (
-                  <MenuItem key={t} value={t}>
-                    {TemasLabels[t]}
-                  </MenuItem>
-                ))}
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ width: 300 }}>
-            <InputLabel>Dificultad</InputLabel>
-            <Select
-              name="idDificultad"
-              value={filters.idDificultad}
-              label="Dificultad"
-              onChange={handleFilterChange}
-              disabled={allDifficulties.length === 0}
-            >
-              <MenuItem value="">Todas</MenuItem>
-              {filteredDifficulties.map((d) => (
-                <MenuItem key={d.id} value={d.id}>
-                  {d.nombre}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 100 }}>
-            <InputLabel>Grado</InputLabel>
-            <Select
-              name="gradoDificultad"
-              value={filters.gradoDificultad}
-              label="Grado"
-              onChange={handleFilterChange}
-            >
-              <MenuItem value="">Todos</MenuItem>
-              {Object.values(grado_dificultad)
-                .filter((g) => g !== grado_dificultad.Ninguno)
-                .map((g) => (
-                  <MenuItem key={g} value={g}>
-                    {g}
-                  </MenuItem>
-                ))}
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 110 }}>
-            <InputLabel>Tipo</InputLabel>
-            <Select
-              name="tipo"
-              value={filters.tipo}
-              label="Tipo"
-              onChange={handleFilterChange}
-            >
-              <MenuItem value="">Todos</MenuItem>
-              <MenuItem value="sistema">Sistema</MenuItem>
-              <MenuItem value="docente">Docente</MenuItem>
-            </Select>
-          </FormControl>
-          <Box sx={{ flexGrow: 1 }} />
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => {
-              setPreguntaToEdit(null);
-              setIsFormModalOpen(true);
-            }}
-          >
-            Crear Pregunta
-          </Button>
-        </Stack>
-      </Paper>
-
-      {/* --- 2. Lista de Preguntas --- */}
-      {loading ? (
-        <CircularProgress sx={{ display: "block", margin: "auto", mt: 4 }} />
-      ) : error ? (
-        <Alert severity="error">{error}</Alert>
-      ) : (
-        <Box>
-          {preguntas.length === 0 ? (
-            <Alert severity="info" sx={{ mt: 2 }}>
-              No se encontraron preguntas con los filtros aplicados.
-            </Alert>
-          ) : (
-            <Stack spacing={1.5} sx={{ mt: 2 }}>
-              {preguntas.map((p) => (
-                <PreguntaAccordion
-                  key={p.id}
-                  pregunta={p}
-                  onEdit={() => {
-                    setPreguntaToEdit(p);
-                    setIsFormModalOpen(true);
-                  }}
-                  onDelete={() => setPreguntaToDelete(p)}
-                />
-              ))}
-            </Stack>
-          )}
-
-          {/* --- Paginación --- */}
-          {totalPages > 1 && (
-            <Stack alignItems="center" sx={{ mt: 3 }}>
-              <Pagination
-                count={totalPages}
-                page={page}
-                onChange={handlePageChange}
-                color="primary"
-                disabled={loading}
-              />
-            </Stack>
-          )}
-        </Box>
-      )}
-
-      {/* --- Modales --- */}
-      <PreguntaFormDialog
-        open={isFormModalOpen}
-        onClose={() => setIsFormModalOpen(false)}
-        onSave={handleSaveSuccess}
-        preguntaToEdit={preguntaToEdit}
-      />
-
-      {preguntaToDelete && (
-        <DeletePreguntaDialog
-          open={!!preguntaToDelete}
-          onClose={() => setPreguntaToDelete(null)}
-          onDeleteSuccess={handleDeleteSuccess}
-          preguntaToDelete={preguntaToDelete}
+    <Box
+      sx={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Stack spacing={2} sx={{ height: "100%" }}>
+        {/* --- 1. Filtros y Acción Principal --- */}
+        {/* --- TÍTULO --- */}
+        <HeaderPage
+          title={"Preguntas para sesiones de refuerzo"}
+          description="Gestiona las preguntas que desees agregar como extra a las sesiones de refuerzo"
+          icon={<Quiz />}
+          color="primary"
         />
-      )}
+        <Paper elevation={2} sx={{ pt: 1, pb: 2, pr: 2, pl: 2 }}>
+          <Typography variant="overline" sx={{ fontSize: "14px" }}>
+            Filtros de búsqueda
+          </Typography>
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            <TextField
+              label="Buscar por enunciado..."
+              variant="outlined"
+              size="small"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              sx={{ minWidth: 400 }}
+            />
+            <FormControl size="small" sx={{ minWidth: 160 }}>
+              <InputLabel>Tema</InputLabel>
+              <Select
+                name="tema"
+                value={filters.tema}
+                label="Tema"
+                onChange={handleFilterChange}
+              >
+                <MenuItem value="">Todos</MenuItem>
+                {Object.values(temas)
+                  .filter((t) => t !== temas.Ninguno)
+                  .map((t) => (
+                    <MenuItem key={t} value={t}>
+                      {TemasLabels[t]}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ width: 300 }}>
+              <InputLabel>Dificultad</InputLabel>
+              <Select
+                name="idDificultad"
+                value={filters.idDificultad}
+                label="Dificultad"
+                onChange={handleFilterChange}
+                disabled={allDifficulties.length === 0}
+              >
+                <MenuItem value="">Todas</MenuItem>
+                {filteredDifficulties.map((d) => (
+                  <MenuItem key={d.id} value={d.id}>
+                    {d.nombre}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 100 }}>
+              <InputLabel>Grado</InputLabel>
+              <Select
+                name="gradoDificultad"
+                value={filters.gradoDificultad}
+                label="Grado"
+                onChange={handleFilterChange}
+              >
+                <MenuItem value="">Todos</MenuItem>
+                {Object.values(grado_dificultad)
+                  .filter((g) => g !== grado_dificultad.Ninguno)
+                  .map((g) => (
+                    <MenuItem key={g} value={g}>
+                      {g}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 110 }}>
+              <InputLabel>Tipo</InputLabel>
+              <Select
+                name="tipo"
+                value={filters.tipo}
+                label="Tipo"
+                onChange={handleFilterChange}
+              >
+                <MenuItem value="">Todos</MenuItem>
+                <MenuItem value="sistema">Sistema</MenuItem>
+                <MenuItem value="docente">Docente</MenuItem>
+              </Select>
+            </FormControl>
+            <Box sx={{ flexGrow: 1 }} />
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => {
+                setPreguntaToEdit(null);
+                setIsFormModalOpen(true);
+              }}
+            >
+              Crear Pregunta
+            </Button>
+          </Stack>
+        </Paper>
+
+        {/* --- 2. Lista de Preguntas --- */}
+        {loading ? (
+          <CircularProgress sx={{ display: "block", margin: "auto", mt: 4 }} />
+        ) : error ? (
+          <Alert severity="error">{error}</Alert>
+        ) : (
+          <Box>
+            {preguntas.length === 0 ? (
+              <Alert severity="info">
+                No se encontraron preguntas con los filtros aplicados.
+              </Alert>
+            ) : (
+              <Stack spacing={1}>
+                {preguntas.map((p) => (
+                  <PreguntaAccordion
+                    key={p.id}
+                    pregunta={p}
+                    onEdit={() => {
+                      setPreguntaToEdit(p);
+                      setIsFormModalOpen(true);
+                    }}
+                    onDelete={() => setPreguntaToDelete(p)}
+                  />
+                ))}
+              </Stack>
+            )}
+
+            {/* --- Paginación --- */}
+            {totalPages > 1 && (
+              <Stack alignItems="center" sx={{ mt: 3 }}>
+                <Pagination
+                  count={totalPages}
+                  page={page}
+                  onChange={handlePageChange}
+                  color="primary"
+                  disabled={loading}
+                />
+              </Stack>
+            )}
+          </Box>
+        )}
+
+        {/* --- Modales --- */}
+        <PreguntaFormDialog
+          open={isFormModalOpen}
+          onClose={() => setIsFormModalOpen(false)}
+          onSave={handleSaveSuccess}
+          preguntaToEdit={preguntaToEdit}
+        />
+
+        {preguntaToDelete && (
+          <DeletePreguntaDialog
+            open={!!preguntaToDelete}
+            onClose={() => setPreguntaToDelete(null)}
+            onDeleteSuccess={handleDeleteSuccess}
+            preguntaToDelete={preguntaToDelete}
+          />
+        )}
+      </Stack>
     </Box>
   );
 }

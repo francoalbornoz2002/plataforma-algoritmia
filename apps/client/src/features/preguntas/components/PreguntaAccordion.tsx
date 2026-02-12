@@ -52,7 +52,7 @@ export default function PreguntaAccordion({
 
   return (
     <Accordion
-      variant="outlined"
+      variant="elevation"
       disabled={isDeleted}
       sx={{ opacity: isDeleted ? 0.6 : 1.0 }}
     >
@@ -65,17 +65,17 @@ export default function PreguntaAccordion({
           sx={{ width: "100%" }}
         >
           {/* Columna Izquierda: Enunciado y nombre de la dificultad */}
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="overline" color="text.secondary" noWrap>
+          <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="overline" color="text.secondary">
               {dificultad.nombre}
             </Typography>
-            <Typography variant="h6" noWrap>
+            <Typography variant="subtitle2" sx={{ wordBreak: "break-word" }}>
               {enunciado}
             </Typography>
-          </Box>
+          </Stack>
 
           {/* Columna Derecha: Chips de metadatos */}
-          <Box>
+          <Box sx={{ flexShrink: 0 }}>
             {isDeleted ? (
               <Chip
                 icon={<DeleteSweepIcon />}

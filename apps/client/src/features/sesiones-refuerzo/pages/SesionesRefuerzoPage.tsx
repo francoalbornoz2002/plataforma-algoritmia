@@ -215,7 +215,14 @@ export default function SesionesRefuerzoPage() {
           <Typography variant="overline" sx={{ fontSize: "14px" }}>
             Filtros de búsqueda
           </Typography>
-          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          <Stack
+            direction="row"
+            spacing={1}
+            flexWrap="wrap"
+            useFlexGap
+            rowGap={2}
+            alignItems="center"
+          >
             <DatePicker
               label="Desde"
               value={dateFilters.fechaDesde}
@@ -317,7 +324,7 @@ export default function SesionesRefuerzoPage() {
               </Select>
             </FormControl>
 
-            <FormControl size="small" sx={{ minWidth: 180 }}>
+            <FormControl size="small" sx={{ Width: 180 }}>
               <InputLabel>Ordenar por</InputLabel>
               <Select
                 value={sortOption}
@@ -326,11 +333,11 @@ export default function SesionesRefuerzoPage() {
               >
                 <MenuItem value="recent">Más recientes</MenuItem>
                 <MenuItem value="old">Más antiguas</MenuItem>
-                <MenuItem value="nro_desc">N° Sesión (Mayor a menor)</MenuItem>
-                <MenuItem value="nro_asc">N° Sesión (Menor a mayor)</MenuItem>
+                <MenuItem value="nro_asc">N° Sesión (Asc.)</MenuItem>
+                <MenuItem value="nro_desc">N° Sesión (Dec.)</MenuItem>
               </Select>
             </FormControl>
-            <Tooltip title="Limpiar filtros" sx={{ flex: 1 }}>
+            <Tooltip title="Limpiar filtros">
               <IconButton
                 onClick={handleClearFilters}
                 size="small"
@@ -339,14 +346,13 @@ export default function SesionesRefuerzoPage() {
                 <FilterAltOffIcon />
               </IconButton>
             </Tooltip>
+            <Box sx={{ flex: 1 }}></Box>
             <Box>
               {!isReadOnly && (
                 <Button
                   variant="contained"
-                  size="small"
                   startIcon={<AddIcon />}
                   onClick={handleOpenCreate}
-                  sx={{ mr: 1 }}
                 >
                   Crear Sesión
                 </Button>

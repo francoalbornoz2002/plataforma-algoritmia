@@ -1,20 +1,18 @@
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import PeopleIcon from "@mui/icons-material/People";
-import SchoolIcon from "@mui/icons-material/School";
-import AssessmentIcon from "@mui/icons-material/Assessment";
-import SettingsIcon from "@mui/icons-material/Settings";
 import Sidebar from "./sidebar/Sidebar";
 import { Outlet } from "react-router";
 import {
+  Assessment,
   AssignmentLate,
   Class,
-  Insights,
+  Dashboard,
   LocationCity,
+  MarkUnreadChatAlt,
+  People,
   Quiz,
+  School,
   SwitchAccessShortcutAdd,
 } from "@mui/icons-material";
 import type { MenuItemType } from "../types";
-import MarkUnreadChatAltIcon from "@mui/icons-material/MarkUnreadChatAlt";
 
 import CourseContextLayout from "./CourseContextLayout";
 import { Box, CircularProgress } from "@mui/material"; // Para el 'loading'
@@ -26,12 +24,12 @@ export default function SidebarLayout() {
 
   // --- 1. LISTA DE ADMIN (prefijo /dashboard) ---
   const itemsAdmin: MenuItemType[] = [
-    { text: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
-    { text: "Usuarios", icon: <PeopleIcon />, path: "/dashboard/users" },
-    { text: "Cursos", icon: <SchoolIcon />, path: "/dashboard/courses" },
+    { text: "Dashboard", icon: <Dashboard />, path: "/dashboard" },
+    { text: "Usuarios", icon: <People />, path: "/dashboard/users" },
+    { text: "Cursos", icon: <School />, path: "/dashboard/courses" },
     {
       text: "Reportes y estadísticas",
-      icon: <AssessmentIcon />,
+      icon: <Assessment />,
       path: "/dashboard/reports",
     },
     {
@@ -46,8 +44,8 @@ export default function SidebarLayout() {
 
   // --- 2. LISTA DE DOCENTE (prefijo /course) ---
   const itemsDocente = [
-    { text: "Dashboard", icon: <DashboardIcon />, path: "/course/dashboard" },
-    { text: "Progreso", icon: <Insights />, path: "/course/progress" },
+    { text: "Dashboard", icon: <Dashboard />, path: "/course/dashboard" },
+    { text: "Progreso", icon: <Assessment />, path: "/course/progress" },
     {
       text: "Dificultades",
       icon: <AssignmentLate />,
@@ -56,7 +54,7 @@ export default function SidebarLayout() {
     {
       text: "Sesiones de refuerzo",
       icon: <SwitchAccessShortcutAdd />,
-      path: "/course/sessions", // (Ruta futura)
+      path: "/course/sessions",
     },
     {
       text: "Preguntas para sesiones",
@@ -64,48 +62,43 @@ export default function SidebarLayout() {
       path: "/course/questions",
     },
     {
-      text: "Consultas del curso",
-      icon: <MarkUnreadChatAltIcon />,
+      text: "Consultas",
+      icon: <MarkUnreadChatAlt />,
       path: "/course/consults",
     },
     {
-      text: "Clases de consulta del curso",
+      text: "Clases de consulta",
       icon: <Class />,
       path: "/course/consult-classes",
     },
     {
       text: "Reportes y estadísticas",
-      icon: <AssessmentIcon />,
+      icon: <Assessment />,
       path: "/course/reports",
-    },
-    {
-      text: "Configuración de curso",
-      icon: <SettingsIcon />,
-      path: "/course/settings-course",
     },
   ];
 
   // --- 3. LISTA DE ALUMNO (prefijo /my) ---
   const itemsAlumno = [
-    { text: "Dashboard", icon: <DashboardIcon />, path: "/my/dashboard" },
+    { text: "Dashboard", icon: <Dashboard />, path: "/my/dashboard" },
     {
-      text: "Mi progreso",
-      icon: <Insights />,
+      text: "Progreso",
+      icon: <Assessment />,
       path: "/my/progress",
     },
     {
-      text: "Mis dificultades",
+      text: "Dificultades",
       icon: <AssignmentLate />,
       path: "/my/difficulties",
     },
     {
-      text: "Mis sesiones de refuerzo",
+      text: "Sesiones de refuerzo",
       icon: <SwitchAccessShortcutAdd />,
       path: "/my/sessions", // (Ruta futura)
     },
     {
-      text: "Mis consultas",
-      icon: <MarkUnreadChatAltIcon />,
+      text: "Consultas",
+      icon: <MarkUnreadChatAlt />,
       path: "/my/consults",
     },
   ];

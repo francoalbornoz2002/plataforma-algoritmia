@@ -40,6 +40,8 @@ import DeleteConsultaDialog from "../components/DeleteConsultaDialog";
 import ConsultaAccordionAlumno from "../components/ConsultaAccordionAlumno";
 import ConsultaPublicaAccordion from "../components/ConsultaPublicaAccordion";
 import { EstadoConsultaLabels, TemasLabels } from "../../../types/traducciones";
+import HeaderPage from "../../../components/HeaderPage";
+import { MarkUnreadChatAlt } from "@mui/icons-material";
 
 const PAGE_SIZE = 5;
 
@@ -180,152 +182,150 @@ export default function MyConsultsPage() {
   }
 
   return (
-    <Stack spacing={2} sx={{ width: "100%" }}>
-      {/* --- 1. Filtros --- */}
-      <Paper elevation={3} sx={{ p: 2 }}>
-        <Stack spacing={2}>
-          <Stack>
-            <Typography
-              variant="h5"
-              gutterBottom
-              color="primary"
-              fontWeight="bold"
-            >
-              {filters.scope === "mine"
-                ? "Mis Consultas"
-                : "Consultas del Curso"}
+    <Box
+      sx={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Stack spacing={2} sx={{ width: "100%" }}>
+        <HeaderPage
+          title={`${
+            filters.scope === "mine"
+              ? "Mis Consultas en"
+              : "Consultas del Curso"
+          } ${selectedCourse.nombre}`}
+          description="Gestiona tus consultas y revisa las realizadas por tus
+                compañeros de curso."
+          icon={<MarkUnreadChatAlt />}
+          color="primary"
+        />
+        {/* --- 1. Filtros --- */}
+        <Paper elevation={2} sx={{ pt: 1, pb: 2, pr: 2, pl: 2 }}>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Typography variant="overline" sx={{ fontSize: "14px" }}>
+              Filtros de búsqueda
             </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Gestiona tus consultas y revisa las realizadas por tus compañeros
-              de curso.
-            </Typography>
+            <Chip
+              label="Mis Consultas"
+              color={filters.scope === "mine" ? "primary" : "default"}
+              onClick={() => {
+                setFilters((prev) => ({ ...prev, scope: "mine" }));
+                setPage(1);
+              }}
+              variant={filters.scope === "mine" ? "filled" : "outlined"}
+              clickable
+              size="small"
+            />
+            <Chip
+              label="Consultas del Curso"
+              color={filters.scope === "public" ? "primary" : "default"}
+              onClick={() => {
+                setFilters((prev) => ({ ...prev, scope: "public" }));
+                setPage(1);
+              }}
+              variant={filters.scope === "public" ? "filled" : "outlined"}
+              clickable
+              size="small"
+            />
           </Stack>
-          <Paper elevation={2} sx={{ p: 2 }}>
-            <Stack
-              direction="row"
-              alignItems="center"
-              spacing={1.5}
-              sx={{ mb: 2 }}
-            >
-              <Typography variant="h6">Filtros de búsqueda</Typography>
-              <Chip
-                label="Mis Consultas"
-                color={filters.scope === "mine" ? "primary" : "default"}
-                onClick={() => {
-                  setFilters((prev) => ({ ...prev, scope: "mine" }));
-                  setPage(1);
-                }}
-                variant={filters.scope === "mine" ? "filled" : "outlined"}
-                clickable
-              />
-              <Chip
-                label="Consultas del Curso"
-                color={filters.scope === "public" ? "primary" : "default"}
-                onClick={() => {
-                  setFilters((prev) => ({ ...prev, scope: "public" }));
-                  setPage(1);
-                }}
-                variant={filters.scope === "public" ? "filled" : "outlined"}
-                clickable
-              />
-            </Stack>
-            <Stack
-              direction="row"
-              spacing={1}
-              flexWrap="wrap"
-              useFlexGap
-              sx={{ mb: 2 }}
-            >
-              <TextField
-                label="Buscar por título o descripción..."
-                variant="outlined"
-                size="small"
-                value={searchTerm}
-                onChange={handleSearchChange}
-                sx={{ width: 260 }}
-              />
-              <DatePicker
-                label="Desde"
-                value={filters.fechaDesde}
-                onChange={(newValue) => {
-                  setFilters((prev) => ({ ...prev, fechaDesde: newValue }));
-                  setPage(1);
-                }}
-                slotProps={{ textField: { size: "small", sx: { width: 165 } } }}
-              />
-              <DatePicker
-                label="Hasta"
-                value={filters.fechaHasta}
-                onChange={(newValue) => {
-                  setFilters((prev) => ({ ...prev, fechaHasta: newValue }));
-                  setPage(1);
-                }}
-                slotProps={{ textField: { size: "small", sx: { width: 165 } } }}
-              />
-              <FormControl size="small" sx={{ width: 220 }}>
-                <InputLabel>Tema</InputLabel>
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            <TextField
+              label="Buscar por título o descripción..."
+              variant="outlined"
+              size="small"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              sx={{ width: 260 }}
+            />
+            <DatePicker
+              label="Desde"
+              value={filters.fechaDesde}
+              onChange={(newValue) => {
+                setFilters((prev) => ({ ...prev, fechaDesde: newValue }));
+                setPage(1);
+              }}
+              slotProps={{
+                textField: { size: "small", sx: { width: 165 } },
+              }}
+            />
+            <DatePicker
+              label="Hasta"
+              value={filters.fechaHasta}
+              onChange={(newValue) => {
+                setFilters((prev) => ({ ...prev, fechaHasta: newValue }));
+                setPage(1);
+              }}
+              slotProps={{
+                textField: { size: "small", sx: { width: 165 } },
+              }}
+            />
+            <FormControl size="small" sx={{ width: 220 }}>
+              <InputLabel>Tema</InputLabel>
+              <Select
+                name="tema"
+                value={filters.tema}
+                label="Tema"
+                onChange={handleFilterChange}
+              >
+                <MenuItem value="">Todos</MenuItem>
+                {Object.values(temas)
+                  .filter((t) => t !== temas.Ninguno)
+                  .map((t) => (
+                    <MenuItem key={t} value={t}>
+                      {TemasLabels[t]}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel>Ordenar por</InputLabel>
+              <Select
+                value={sortOption}
+                label="Ordenar por"
+                onChange={(e) => setSortOption(e.target.value)}
+              >
+                <MenuItem value="recent">Más recientes</MenuItem>
+                <MenuItem value="old">Más antiguas</MenuItem>
+                <MenuItem value="az">Título (A-Z)</MenuItem>
+                <MenuItem value="za">Título (Z-A)</MenuItem>
+              </Select>
+            </FormControl>
+            {filters.scope === "mine" && (
+              <FormControl size="small" sx={{ minWidth: 140 }}>
+                <InputLabel>Estado</InputLabel>
                 <Select
-                  name="tema"
-                  value={filters.tema}
-                  label="Tema"
+                  name="estado"
+                  value={filters.estado}
+                  label="Estado"
                   onChange={handleFilterChange}
                 >
                   <MenuItem value="">Todos</MenuItem>
-                  {Object.values(temas)
-                    .filter((t) => t !== temas.Ninguno)
-                    .map((t) => (
-                      <MenuItem key={t} value={t}>
-                        {TemasLabels[t]}
-                      </MenuItem>
-                    ))}
+                  {Object.values(estado_consulta).map((e) => (
+                    <MenuItem key={e} value={e}>
+                      {EstadoConsultaLabels[e]}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
-              <FormControl size="small" sx={{ minWidth: 150 }}>
-                <InputLabel>Ordenar por</InputLabel>
-                <Select
-                  value={sortOption}
-                  label="Ordenar por"
-                  onChange={(e) => setSortOption(e.target.value)}
-                >
-                  <MenuItem value="recent">Más recientes</MenuItem>
-                  <MenuItem value="old">Más antiguas</MenuItem>
-                  <MenuItem value="az">Título (A-Z)</MenuItem>
-                  <MenuItem value="za">Título (Z-A)</MenuItem>
-                </Select>
-              </FormControl>
-              {filters.scope === "mine" && (
-                <FormControl size="small" sx={{ minWidth: 140 }}>
-                  <InputLabel>Estado</InputLabel>
-                  <Select
-                    name="estado"
-                    value={filters.estado}
-                    label="Estado"
-                    onChange={handleFilterChange}
-                  >
-                    <MenuItem value="">Todos</MenuItem>
-                    {Object.values(estado_consulta).map((e) => (
-                      <MenuItem key={e} value={e}>
-                        {EstadoConsultaLabels[e]}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              )}
-              <Box sx={{ flexGrow: 1 }} />
-              {!isReadOnly && (
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={() => {
-                    setEditingConsulta(null);
-                    setIsFormModalOpen(true);
-                  }}
-                >
-                  Nueva Consulta
-                </Button>
-              )}
-            </Stack>
-          </Paper>
+            )}
+            <Box sx={{ flexGrow: 1 }} />
+            {!isReadOnly && (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => {
+                  setEditingConsulta(null);
+                  setIsFormModalOpen(true);
+                }}
+              >
+                Nueva Consulta
+              </Button>
+            )}
+          </Stack>
+        </Paper>
+        <Stack spacing={2}>
           {/* --- 2. Lista de Consultas (Cards) --- */}
           {loading ? (
             <CircularProgress
@@ -430,7 +430,7 @@ export default function MyConsultsPage() {
             consultaToDelete={consultaToDelete}
           />
         )}
-      </Paper>
-    </Stack>
+      </Stack>
+    </Box>
   );
 }
