@@ -1,6 +1,7 @@
 // src/services/user.service.ts
 import apiClient from "../../../lib/axios";
 import type {
+  AdminDashboardStats,
   BaseFilterParams,
   CreateUserData,
   estado_simple,
@@ -116,13 +117,17 @@ export const getUserById = async (userId: string): Promise<UserData> => {
   }
 };
 
-// --- Función para obtener estadísticas del dashboard de ADMIN ---
-export const getAdminDashboardStats = async () => {
-  try {
-    const response = await apiClient.get("/users/admin/dashboard");
-    return response.data;
-  } catch (error) {
-    console.error("Error al obtener stats de admin:", error);
-    throw error;
-  }
-};
+// --- Función para obtener estadísticas del dashboard de ADMINISTRADOR ---
+export const getAdminDashboardStats =
+  async (): Promise<AdminDashboardStats> => {
+    try {
+      const response = await apiClient.get("/users/admin-dashboard-stats");
+      return response.data;
+    } catch (err: any) {
+      console.error("Error fetching admin dashboard stats:", err);
+      throw (
+        err.response?.data ||
+        new Error("Error al obtener estadísticas del administrador.")
+      );
+    }
+  };

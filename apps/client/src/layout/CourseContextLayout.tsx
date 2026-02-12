@@ -58,6 +58,9 @@ function ContextLayout({
           filter: isModalOpen ? "blur(5px)" : "none",
           transition: "filter 0.3s ease-out",
           pointerEvents: isModalOpen ? "none" : "auto", // Evita clics en el fondo
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
         <Sidebar

@@ -1,5 +1,4 @@
 import {
-  Card,
   CardContent,
   Typography,
   Box,
@@ -8,12 +7,13 @@ import {
   CircularProgress,
   ListItemIcon,
   ListItemText,
+  Button,
 } from "@mui/material";
 import BusinessIcon from "@mui/icons-material/Business";
 import PlaceIcon from "@mui/icons-material/Place";
 import EmailIcon from "@mui/icons-material/Email";
 import PhoneIcon from "@mui/icons-material/Phone";
-import type { Institucion } from "../../../types";
+import type { Institucion } from "../../../types"; // Mantener la importación
 
 interface InstitutionInfoProps {
   institucion: Institucion | null;
@@ -27,12 +27,11 @@ export default function InstitutionInfo({
   isLoading,
 }: InstitutionInfoProps) {
   return (
-    <Card elevation={5} sx={{ maxWidth: 800, height: "100%", p: 1 }}>
+    <Box sx={{ height: "100%" }}>
+      {" "}
+      {/* Cambiado de Card a Box, ya que Paper es el padre */}
       <CardContent>
-        <Typography variant="h5" align="center" gutterBottom>
-          Datos actuales de la Institución
-        </Typography>
-        <Divider sx={{ mb: 3 }} />
+        {/* El título y el botón de edición ahora los maneja el componente padre (AdminDashboardPage) */}
 
         {isLoading ? (
           <CircularProgress />
@@ -42,73 +41,56 @@ export default function InstitutionInfo({
           </Typography>
         ) : (
           <Stack spacing={2.5}>
-            <Stack direction="row" spacing={2} alignItems="center">
-              <ListItemIcon sx={{ minWidth: "auto" }}>
-                <BusinessIcon color="primary" />
-              </ListItemIcon>
-              <ListItemText
-                primary="Nombre de la Institución"
-                secondary={institucion.nombre}
-                slotProps={{
-                  primary: { variant: "body2", color: "textSecondary" },
-                  secondary: { variant: "body1", color: "textPrimary" },
-                }}
+            {/* Nombre de la Institución */}
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <BusinessIcon
+                fontSize="small"
+                sx={{ mr: 1, color: "text.secondary" }}
               />
-            </Stack>
+              <Typography variant="body2">
+                <strong>Nombre:</strong> {institucion.nombre}
+              </Typography>
+            </Box>
 
-            <Stack direction="row" spacing={2} alignItems="center">
-              <ListItemIcon sx={{ minWidth: "auto" }}>
-                <PlaceIcon color="primary" />
-              </ListItemIcon>
-              <ListItemText
-                primary="Ubicación"
-                secondary={`${institucion.direccion}, ${institucion.localidad.localidad}, ${institucion.localidad.provincia.provincia}`}
-                slotProps={{
-                  primary: { variant: "body2", color: "textSecondary" },
-                  secondary: { variant: "body1", color: "textPrimary" },
-                }}
+            {/* Ubicación */}
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <PlaceIcon
+                fontSize="small"
+                sx={{ mr: 1, color: "text.secondary" }}
               />
-            </Stack>
+              <Typography variant="body2">
+                <strong>Ubicación:</strong> {institucion.direccion},{" "}
+                {institucion.localidad.localidad},{" "}
+                {institucion.localidad.provincia.provincia}
+              </Typography>
+            </Box>
 
-            <Stack direction="row" spacing={2} alignItems="center">
-              <ListItemIcon sx={{ minWidth: "auto" }}>
-                <EmailIcon color="primary" />
-              </ListItemIcon>
-              <ListItemText
-                primary="Email de Contacto"
-                secondary={institucion.email}
-                slotProps={{
-                  primary: { variant: "body2", color: "textSecondary" },
-                  secondary: { variant: "body1", color: "textPrimary" },
-                }}
+            {/* Email */}
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <EmailIcon
+                fontSize="small"
+                sx={{ mr: 1, color: "text.secondary" }}
               />
-            </Stack>
+              <Typography variant="body2">
+                <strong>Email:</strong> {institucion.email}
+              </Typography>
+            </Box>
 
-            <Stack direction="row" spacing={2} alignItems="center">
-              <ListItemIcon sx={{ minWidth: "auto" }}>
-                <PhoneIcon color="primary" />
-              </ListItemIcon>
-              <ListItemText
-                primary="Teléfono de Contacto"
-                secondary={institucion.telefono}
-                slotProps={{
-                  primary: { variant: "body2", color: "textSecondary" },
-                  secondary: { variant: "body1", color: "textPrimary" },
-                }}
+            {/* Teléfono */}
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <PhoneIcon
+                fontSize="small"
+                sx={{ mr: 1, color: "text.secondary" }}
               />
-            </Stack>
+              <Typography variant="body2">
+                <strong>Teléfono:</strong> {institucion.telefono}
+              </Typography>
+            </Box>
 
-            <Stack direction="row" spacing={2} alignItems="center">
-              <ListItemIcon sx={{ minWidth: "auto" }}>
-                <PhoneIcon color="primary" />
-              </ListItemIcon>
-              <ListItemText
-                primary="Logo o imagen de la institución"
-                slotProps={{
-                  primary: { variant: "body2", color: "textSecondary" },
-                }}
-              />
-            </Stack>
+            {/* Título para el Logo */}
+            <Typography variant="body2" fontWeight="bold" sx={{ mt: 2, mb: 1 }}>
+              Logo de la Institución:
+            </Typography>
 
             {/* --- Logo --- */}
             {institucion.logoUrl && (
@@ -134,6 +116,6 @@ export default function InstitutionInfo({
           </Stack>
         )}
       </CardContent>
-    </Card>
+    </Box>
   );
 }

@@ -751,7 +751,7 @@ export interface ConsultaSimple {
 export interface DashboardStats {
   misionesCompletadas: number;
   consultasRealizadas: number;
-  misionMasDificil: string | null; // Nombre de la misión
+  misionMasDificil: Mision | null;
   alumnoMasActivo: string | null; // Nombre del alumno
   dificultadMasDetectada: string | null; // Nombre de la dificultad
 }
@@ -760,4 +760,32 @@ export interface CourseDashboardData {
   today: DashboardStats;
   week: DashboardStats;
   nextClass: ClaseConsulta | null;
+  progresoPct: number;
+}
+
+// ---------- DASHBOARD ADMIN ---------- //
+export interface AdminDashboardStats {
+  users: {
+    total: number;
+    active: number;
+    inactive: number;
+    admins: number;
+    docentes: number;
+    alumnos: number;
+  };
+  courses: {
+    total: number;
+    active: number;
+    inactive: number;
+    finalized: number;
+  };
+  classes: {
+    week: { total: number; pctRealizadas: number; pctCanceladas: number };
+    month: { total: number; pctRealizadas: number; pctCanceladas: number };
+  };
+  sessions: {
+    week: { total: number; pctCompletadas: number; pctPendientes: number };
+    month: { total: number; pctCompletadas: number; pctPendientes: number };
+  };
+  institution: Institucion | null;
 }

@@ -1,5 +1,5 @@
-import { MailerService } from '@nestjs-modules/mailer';
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { MailerService, ISendMailOptions } from '@nestjs-modules/mailer';
+import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import { DiaClase, dias_semana } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import * as fs from 'fs/promises';
@@ -9,6 +9,8 @@ import { calcularFechaProximaClase } from '../../helpers';
 
 @Injectable()
 export class MailService implements OnModuleInit {
+  private readonly logger = new Logger(MailService.name);
+
   constructor(
     private readonly mailerService: MailerService,
     private readonly prisma: PrismaService,
@@ -55,6 +57,21 @@ export class MailService implements OnModuleInit {
   }
 
   /**
+   * Método privado para realizar el envío de forma segura.
+   * Evita que el servidor se caiga si el servicio de correos no está disponible.
+   */
+  private async safeSendMail(options: ISendMailOptions) {
+    try {
+      await this.mailerService.sendMail(options);
+    } catch (error) {
+      this.logger.error(
+        `No se pudo enviar el correo a ${options.to}. ¿Está Mailpit/Docker activo?`,
+        error.stack,
+      );
+    }
+  }
+
+  /**
    * Obtiene el contexto común para todos los correos (Institución, Año, etc.)
    */
   private async getBaseContext() {
@@ -90,7 +107,7 @@ export class MailService implements OnModuleInit {
     const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const baseContext = await this.getBaseContext();
 
-    await this.mailerService.sendMail({
+    await this.safeSendMail({
       to: email,
       subject: '¡Bienvenido a Algoritmia! 🎮',
       template: 'bienvenida', // Nombre del archivo .hbs sin extensión
@@ -114,7 +131,7 @@ export class MailService implements OnModuleInit {
     const baseContext = await this.getBaseContext();
     const resetUrl = `${baseUrl}/reset-password?token=${token}`;
 
-    await this.mailerService.sendMail({
+    await this.safeSendMail({
       to: email,
       subject: 'Restablecer Contraseña - Algoritmia 🔐',
       template: 'restablecer-contrasena',
@@ -166,7 +183,7 @@ export class MailService implements OnModuleInit {
       // Construimos links con Query Params para el Frontend
       const baseLink = `${baseUrl}/course/consult-classes?id=${datos.idClase}`;
 
-      await this.mailerService.sendMail({
+      await this.safeSendMail({
         to: docente.email,
         subject: `🔔 Acción Requerida: Clase Automática en ${datos.nombreCurso}`,
         template: 'clase-automatica',
@@ -206,7 +223,7 @@ export class MailService implements OnModuleInit {
       minute: '2-digit',
     });
 
-    await this.mailerService.sendMail({
+    await this.safeSendMail({
       to: datos.email,
       subject: `📚 Nueva Sesión de Refuerzo: ${datos.nombreDificultad}`,
       template: 'sesion-automatica',
@@ -237,7 +254,7 @@ export class MailService implements OnModuleInit {
     const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const baseContext = await this.getBaseContext();
 
-    await this.mailerService.sendMail({
+    await this.safeSendMail({
       to: email,
       subject: `Asignación al curso: ${datosCurso.nombre}`,
       template: 'bienvenida-curso-docente',
@@ -271,7 +288,7 @@ export class MailService implements OnModuleInit {
     const linkResponder = `${baseUrl}/course/consults`; // Link a la lista de consultas
 
     for (const docente of destinatarios) {
-      await this.mailerService.sendMail({
+      await this.safeSendMail({
         to: docente.email,
         subject: `Nueva Consulta en ${datos.nombreCurso}: ${datos.titulo}`,
         template: 'nueva-consulta-docente',
@@ -303,7 +320,7 @@ export class MailService implements OnModuleInit {
     const baseContext = await this.getBaseContext();
     const linkValorar = `${baseUrl}/my/consults`;
 
-    await this.mailerService.sendMail({
+    await this.safeSendMail({
       to: datos.email,
       subject: `Respuesta a tu consulta: ${datos.tituloConsulta}`,
       template: 'consulta-respondida-alumno',
@@ -334,7 +351,7 @@ export class MailService implements OnModuleInit {
     const baseContext = await this.getBaseContext();
     const linkSesion = `${baseUrl}/my/sessions`;
 
-    await this.mailerService.sendMail({
+    await this.safeSendMail({
       to: datos.email,
       subject: `Sesión de Refuerzo Asignada: ${datos.dificultad}`,
       template: 'sesion-asignada',
@@ -381,7 +398,7 @@ export class MailService implements OnModuleInit {
     });
 
     for (const alumno of destinatarios) {
-      await this.mailerService.sendMail({
+      await this.safeSendMail({
         to: alumno.email,
         subject: `📅 Clase de Consulta Programada: ${datosClase.nombreClase}`,
         template: 'clase-consulta-alumno',

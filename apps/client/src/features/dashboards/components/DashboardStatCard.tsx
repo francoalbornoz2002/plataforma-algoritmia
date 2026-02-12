@@ -9,6 +9,7 @@ interface DashboardStatCardProps {
   subtitle?: string;
   color?: "primary" | "secondary" | "error" | "info" | "success" | "warning";
   small?: boolean;
+  week?: boolean;
 }
 
 export default function DashboardStatCard({
@@ -18,6 +19,7 @@ export default function DashboardStatCard({
   subtitle,
   color = "primary",
   small = false,
+  week = false,
 }: DashboardStatCardProps) {
   return (
     <Paper
@@ -65,13 +67,46 @@ export default function DashboardStatCard({
             {subtitle}
           </Typography>
         )}
-        <Typography
-          variant={small ? "h6" : "h5"}
-          fontWeight="bold"
-          color={`${color}.main`}
-        >
-          {value}
-        </Typography>
+
+        {week && typeof value === "string" && value.includes(" / ") ? (
+          <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.5 }}>
+            <Typography
+              variant={small ? "h6" : "h5"}
+              fontWeight="bold"
+              color={`${color}.main`}
+            >
+              {value.split(" / ")[0]}
+            </Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              fontWeight="medium"
+            >
+              hoy
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mx: 0.2 }}>
+              /
+            </Typography>
+            <Typography variant={small ? "subtitle1" : "h6"} fontWeight="bold">
+              {value.split(" / ")[1]}
+            </Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              fontWeight="medium"
+            >
+              sem.
+            </Typography>
+          </Box>
+        ) : (
+          <Typography
+            variant={small ? "h6" : "h5"}
+            fontWeight="bold"
+            color={`${color}.main`}
+          >
+            {value}
+          </Typography>
+        )}
       </Stack>
     </Paper>
   );

@@ -11,6 +11,7 @@ import {
   Req,
   UseInterceptors,
   UploadedFile,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { UsersService } from '../services/users.service';
 import { CreateUserDto } from '../dto/create-user.dto';
@@ -50,7 +51,7 @@ export class UsersController {
 
   @UseGuards(RolesGuard)
   @Roles(roles.Administrador)
-  @Get('admin/dashboard')
+  @Get('admin-dashboard-stats')
   getAdminDashboardStats() {
     return this.usersService.getAdminDashboardStats();
   }
@@ -64,7 +65,7 @@ export class UsersController {
 
   @Get(':id')
   @ApiCreatedResponse({ type: UserEntity })
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.usersService.findOne(id);
   }
 

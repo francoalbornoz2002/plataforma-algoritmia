@@ -760,21 +760,8 @@ export class CoursesService {
   async getDashboardStats(idCurso: string) {
     const now = new Date();
 
-    // Rango: HOY
-    const todayStart = new Date(now);
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date(now);
-    todayEnd.setHours(23, 59, 59, 999);
-
-    // Rango: SEMANA ACTUAL (Lunes a Domingo)
-    const day = now.getDay(); // 0 (Dom) - 6 (Sab)
-    const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Ajuste al Lunes
-    const weekStart = new Date(now);
-    weekStart.setDate(diff);
-    weekStart.setHours(0, 0, 0, 0);
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
-    weekEnd.setHours(23, 59, 59, 999);
+    const { start: todayStart, end: todayEnd } = this.getDayRange(now);
+    const { start: weekStart, end: weekEnd } = this.getWeekRange(now);
 
     // Función auxiliar para calcular stats en un rango
     const getStats = async (start: Date, end: Date) => {
@@ -805,13 +792,11 @@ export class CoursesService {
         orderBy: { _avg: { intentos: 'desc' } },
         take: 1,
       });
-      let misionMasDificil: string | null = null;
+      let misionMasDificil: any = null;
       if (topMissionGroup.length > 0) {
-        const m = await this.prisma.mision.findUnique({
+        misionMasDificil = await this.prisma.mision.findUnique({
           where: { id: topMissionGroup[0].idMision },
-          select: { nombre: true },
         });
-        misionMasDificil = m?.nombre || null;
       }
 
       // 4. Alumno más activo (Más misiones completadas en el rango)
@@ -866,7 +851,7 @@ export class CoursesService {
       };
     };
 
-    const [todayStats, weekStats, nextClass] = await Promise.all([
+    const [todayStats, weekStats, nextClass, course] = await Promise.all([
       getStats(todayStart, todayEnd),
       getStats(weekStart, weekEnd),
       this.prisma.claseConsulta.findFirst({
@@ -877,12 +862,23 @@ export class CoursesService {
         },
         orderBy: { fechaInicio: 'asc' },
       }),
+      this.prisma.curso.findUnique({
+        where: { id: idCurso },
+        select: {
+          progresoCurso: {
+            select: { pctMisionesCompletadas: true },
+          },
+        },
+      }),
     ]);
 
     return {
       today: todayStats,
       week: weekStats,
       nextClass,
+      progresoPct: course?.progresoCurso?.pctMisionesCompletadas
+        ? Number(course.progresoCurso.pctMisionesCompletadas)
+        : 0,
     };
   }
 
@@ -891,19 +887,12 @@ export class CoursesService {
    */
   async getStudentDashboardStats(idCurso: string, idAlumno: string) {
     const now = new Date();
-    const startOfDay = new Date(now);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(now);
-    endOfDay.setHours(23, 59, 59, 999);
 
-    const startOfWeek = new Date(now);
-    const day = startOfWeek.getDay();
-    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
-    startOfWeek.setDate(diff);
-    startOfWeek.setHours(0, 0, 0, 0);
+    const { start: startOfDay, end: endOfDay } = this.getDayRange(now);
+    const { start: startOfWeek, end: endOfWeek } = this.getWeekRange(now);
 
-    // 1. Misiones Completadas (Hoy y Semana)
-    const [misionesHoy, misionesSemana] = await Promise.all([
+    // 1. Misiones Completadas (Hoy y Semana) + Progreso %
+    const [misionesHoy, misionesSemana, progreso] = await Promise.all([
       this.prisma.misionCompletada.count({
         where: {
           progresoAlumno: { alumnoCurso: { idAlumno, idCurso } },
@@ -913,7 +902,15 @@ export class CoursesService {
       this.prisma.misionCompletada.count({
         where: {
           progresoAlumno: { alumnoCurso: { idAlumno, idCurso } },
-          fechaCompletado: { gte: startOfWeek },
+          fechaCompletado: { gte: startOfWeek, lte: endOfWeek },
+        },
+      }),
+      this.prisma.alumnoCurso.findUnique({
+        where: { idAlumno_idCurso: { idAlumno, idCurso } },
+        select: {
+          progresoAlumno: {
+            select: { pctMisionesCompletadas: true },
+          },
         },
       }),
     ]);
@@ -951,11 +948,57 @@ export class CoursesService {
       select: { id: true, fechaInicio: true, modalidad: true },
     });
 
+    // 4. Dificultades
+    const [cantDificultadesActivas, ultimaDificultadAlta] = await Promise.all([
+      this.prisma.dificultadAlumno.count({
+        where: { idAlumno, idCurso, grado: { not: 'Ninguno' } },
+      }),
+      this.prisma.historialDificultadAlumno.findFirst({
+        where: { idAlumno, idCurso, gradoNuevo: 'Alto' },
+        orderBy: { fechaCambio: 'desc' },
+        select: { dificultad: { select: { nombre: true } }, fechaCambio: true },
+      }),
+    ]);
+
+    // 5. Consultas
+    const totalConsultas = await this.prisma.consulta.count({
+      where: { idAlumno, idCurso, deletedAt: null },
+    });
+
     return {
       misiones: { hoy: misionesHoy, semana: misionesSemana },
+      progresoPct: progreso?.progresoAlumno?.pctMisionesCompletadas
+        ? Number(progreso.progresoAlumno.pctMisionesCompletadas)
+        : 0,
       sesionPendiente,
       proximaClase,
+      dificultades: {
+        activas: cantDificultadesActivas,
+        ultimaAlta: ultimaDificultadAlta?.dificultad.nombre || null,
+      },
+      totalConsultas,
     };
+  }
+
+  private getDayRange(date: Date) {
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(date);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+  }
+
+  private getWeekRange(date: Date) {
+    const start = new Date(date);
+    const day = start.getDay();
+    const diff = start.getDate() - day + (day === 0 ? -6 : 1);
+    start.setDate(diff);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
   }
 
   // --- MÉTODO HELPER PARA SINCRONIZAR DÍAS ---

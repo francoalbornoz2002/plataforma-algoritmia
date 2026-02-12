@@ -19,6 +19,7 @@ import {
   VideogameAsset,
   Assessment,
   AssignmentLate,
+  QuestionAnswer,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router";
 import { useAuth } from "../authentication/context/AuthProvider";
@@ -27,6 +28,7 @@ import { getStudentDashboardStats } from "../courses/services/courses.service";
 import CourseInfoCard from "./components/CourseInfoCard";
 import DashboardStatCard from "./components/DashboardStatCard";
 import DashboardTextCard from "./components/DashboardTextCard";
+import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 
 export default function AlumnoDashboardPage() {
   const { profile } = useAuth();
@@ -85,166 +87,185 @@ export default function AlumnoDashboardPage() {
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      {/* 2. ALERTA DE SESIÓN PENDIENTE */}
-      {stats?.sesionPendiente && (
-        <Paper
-          elevation={3}
+      <Stack spacing={2} direction="row">
+        <Button
+          fullWidth
+          variant="outlined"
+          color="primary"
+          startIcon={<VideogameAsset />}
+          onClick={() => navigate("/my/download-game")}
+          sx={{ justifyContent: "flex-start", bgcolor: "background.paper" }}
+        >
+          Descargar Videojuego
+        </Button>
+        <Button
+          fullWidth
+          variant="outlined"
+          color="success"
+          startIcon={<Assessment />}
+          onClick={() => navigate("/my/progress")}
+          sx={{ justifyContent: "flex-start", bgcolor: "background.paper" }}
+        >
+          Ver mi Progreso
+        </Button>
+        <Button
+          fullWidth
+          variant="outlined"
+          color="error"
+          startIcon={<AssignmentLate />}
+          onClick={() => navigate("/my/difficulties")}
+          sx={{ justifyContent: "flex-start", bgcolor: "background.paper" }}
+        >
+          Ver mis Dificultades
+        </Button>
+        <Button
+          fullWidth
+          variant="outlined"
+          startIcon={<SwitchAccessShortcutAdd />}
+          onClick={() => navigate("/my/sessions")}
           sx={{
-            p: 2,
-            bgcolor: "warning.light",
-            color: "warning.contrastText",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
+            justifyContent: "flex-start",
+            color: "#9c27b0",
+            borderColor: "#9c27b0",
+            bgcolor: "background.paper",
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "anchor-center" }}>
-            <Warning sx={{ mr: 2 }} />
-            <Box>
-              <Typography variant="h6" fontWeight="bold">
-                ¡Tienes una Sesión de Refuerzo Pendiente!
-              </Typography>
-              <Typography variant="body2">
-                Vence el:{" "}
-                {new Date(
-                  stats.sesionPendiente.fechaHoraLimite,
-                ).toLocaleString()}
-              </Typography>
-            </Box>
-          </Box>
-          <Button
-            variant="contained"
-            color="warning"
-            startIcon={<PlayCircleFilled />}
-            onClick={() => navigate("/my/sessions")}
-          >
-            Resolver Ahora
-          </Button>
-        </Paper>
+          Ver mis Sesiones
+        </Button>
+        <Button
+          fullWidth
+          variant="outlined"
+          color="info"
+          startIcon={<MarkUnreadChatAlt />}
+          onClick={() => navigate("/my/consults")}
+          sx={{ justifyContent: "flex-start", bgcolor: "background.paper" }}
+        >
+          Realizar Consulta
+        </Button>
+      </Stack>
+
+      {/* 2. ALERTA DE SESIÓN PENDIENTE (Compacta) */}
+      {stats?.sesionPendiente && (
+        <Alert
+          severity="warning"
+          variant="standard"
+          icon={<Warning />}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              startIcon={<PlayCircleFilled />}
+              onClick={() => navigate("/my/sessions")}
+            >
+              Resolver
+            </Button>
+          }
+          sx={{ fontWeight: "bold", border: 1, borderColor: "warning.main" }}
+        >
+          Sesión de refuerzo pendiente:{" "}
+          {stats.sesionPendiente.dificultad.nombre} (Vence:{" "}
+          {new Date(stats.sesionPendiente.fechaHoraLimite).toLocaleDateString()}
+          )
+        </Alert>
       )}
 
+      {/* --- COLUMNA IZQUIERDA (Principal) --- */}
       <Grid container spacing={2}>
-        {/* --- COLUMNA IZQUIERDA (Principal) --- */}
-        <Grid size={{ xs: 12, md: 9 }}>
-          <Grid container spacing={2}>
-            {/* 1. INFO DEL CURSO */}
-            <Grid size={{ xs: 12, md: 8 }}>
-              <CourseInfoCard
-                course={selectedCourse}
-                studentCount={selectedCourse._count?.alumnos || 0}
-                isReadOnly={true}
-              />
-            </Grid>
-            {/* 2. ESTADÍSTICAS */}
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Stack spacing={2}>
-                <DashboardStatCard
-                  title="Misiones completadas hoy"
-                  value={stats?.misiones.hoy ?? 0}
-                  subtitle="Completadas hoy"
-                  icon={<TrendingUp />}
-                  color="success"
-                />
-                <DashboardStatCard
-                  title="Misiones completadas en la semana"
-                  value={stats?.misiones.semana ?? 0}
-                  subtitle="Completadas esta semana"
-                  icon={<TrendingUp />}
-                  color="primary"
-                />
-                <DashboardTextCard
-                  title="Próxima Clase de Consulta"
-                  value={
-                    stats?.proximaClase
-                      ? new Date(
-                          stats.proximaClase.fechaInicio,
-                        ).toLocaleString()
-                      : "No hay clases programadas"
-                  }
-                  description={
-                    stats?.proximaClase
-                      ? `Modalidad: ${stats.proximaClase.modalidad}`
-                      : "Estate atento a las próximas clases"
-                  }
-                  icon={<Event />}
-                  color="info"
-                />
-              </Stack>
-            </Grid>
-          </Grid>
+        {/* 1. INFO DEL CURSO */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <CourseInfoCard
+            course={selectedCourse}
+            studentCount={selectedCourse._count?.alumnos || 0}
+            isReadOnly={true}
+          />
         </Grid>
 
-        {/* --- COLUMNA DERECHA (Acciones) --- */}
+        {/* 2. GRÁFICO DE PROGRESO */}
         <Grid size={{ xs: 12, md: 3 }}>
-          <Paper
-            elevation={2}
-            sx={{
-              p: 2,
-              height: "100%",
-              borderTop: 4,
-              borderColor: "primary.main",
-            }}
-          >
-            <Typography variant="h6" gutterBottom color="primary">
-              Acciones Rápidas
-            </Typography>
-            <Stack spacing={2}>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<VideogameAsset />}
-                onClick={() => navigate("/my/download-game")}
-                sx={{ justifyContent: "flex-start" }}
+          <Stack spacing={2} sx={{ height: "100%" }}>
+            <Paper
+              elevation={2}
+              sx={{
+                p: 2,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                borderTop: "4px solid",
+                borderColor: "success.main",
+              }}
+            >
+              <Typography
+                variant="subtitle2"
+                color="text.secondary"
+                fontWeight="bold"
+                gutterBottom
               >
-                Descargar Videojuego
-              </Button>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<Assessment />}
-                onClick={() => navigate("/my/progress")}
-                sx={{ justifyContent: "flex-start" }}
-              >
-                Ver mi Progreso
-              </Button>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<AssignmentLate />}
-                onClick={() => navigate("/my/difficulties")}
-                sx={{ justifyContent: "flex-start" }}
-              >
-                Ver mis Dificultades
-              </Button>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<SwitchAccessShortcutAdd />}
-                onClick={() => navigate("/my/sessions")}
-                sx={{ justifyContent: "flex-start" }}
-              >
-                Ver mis Sesiones
-              </Button>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<MarkUnreadChatAlt />}
-                onClick={() => navigate("/my/consults")}
-                sx={{ justifyContent: "flex-start" }}
-              >
-                Realizar Consulta
-              </Button>
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<Event />}
-                onClick={() => navigate("/my/consult-classes")}
-                sx={{ justifyContent: "flex-start" }}
-              >
-                Clases de Consulta
-              </Button>
-            </Stack>
-          </Paper>
+                Mi Progreso General
+              </Typography>
+              <Gauge
+                value={stats?.progresoPct ?? 0}
+                cornerRadius="50%"
+                sx={{
+                  [`& .${gaugeClasses.valueText}`]: {
+                    fontSize: 28,
+                    fontWeight: "bold",
+                  },
+                  [`& .${gaugeClasses.valueArc}`]: {
+                    fill: "#4caf50",
+                  },
+                }}
+                text={({ value }) => `${value?.toFixed(1)}%`}
+              />
+            </Paper>
+            {/* 4. PRÓXIMA CLASE */}
+            <DashboardTextCard
+              title="Próxima Clase de Consulta"
+              value={
+                stats?.proximaClase
+                  ? new Date(stats.proximaClase.fechaInicio).toLocaleString()
+                  : "No hay clases programadas"
+              }
+              description={
+                stats?.proximaClase
+                  ? `Modalidad: ${stats.proximaClase.modalidad}`
+                  : "Estate atento a las próximas clases"
+              }
+              icon={<Event />}
+              color="primary"
+            />
+          </Stack>
+        </Grid>
+        {/* 3. ESTADÍSTICAS UNIFICADAS Y NUEVAS */}
+        <Grid size={{ xs: 12, md: 3 }}>
+          <Stack spacing={2}>
+            <DashboardStatCard
+              title="Misiones Completadas"
+              value={`${stats?.misiones.hoy ?? 0} / ${stats?.misiones.semana ?? 0}`}
+              subtitle="Hoy vs. Esta semana"
+              icon={<TrendingUp />}
+              color="success"
+              week
+            />
+            <DashboardStatCard
+              title="Dificultades Activas"
+              value={stats?.dificultades.activas ?? 0}
+              subtitle={
+                stats?.dificultades.ultimaAlta
+                  ? `Última alta: ${stats.dificultades.ultimaAlta}`
+                  : "Sin dificultades críticas"
+              }
+              icon={<AssignmentLate />}
+              color="error"
+            />
+            <DashboardStatCard
+              title="Consultas Realizadas"
+              value={stats?.totalConsultas ?? 0}
+              subtitle="Total acumulado"
+              icon={<QuestionAnswer />}
+              color="info"
+            />
+          </Stack>
         </Grid>
       </Grid>
     </Stack>

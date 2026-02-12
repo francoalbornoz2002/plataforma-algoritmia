@@ -181,258 +181,250 @@ export default function InstitutionForm({
   };
 
   return (
-    <Box>
-      <Paper elevation={5} sx={{ p: 3, maxWidth: 800, mx: "auto" }}>
-        <Typography variant="h5" align="center" gutterBottom>
-          Registrar datos de la Institución
-        </Typography>
-        <Divider sx={{ mb: 3 }} />
-        <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
-          <Stack spacing={1.5} sx={{ mb: 2 }}>
-            <Stack spacing={1.5} direction="row">
-              {/* --- 1. Provincia --- */}
-              <FormControl fullWidth error={!!errors.idProvincia}>
-                <InputLabel>Provincia</InputLabel>
-                <Controller
-                  name="idProvincia"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      {...field}
-                      label="Provincia"
-                      disabled={isSubmitting}
-                    >
-                      <MenuItem value={0} disabled>
-                        Seleccione una provincia...
+    <Box sx={{ p: 3 }}>
+      {" "}
+      {/* Añadimos padding para el contenido del modal */}
+      <Typography variant="h5" align="center" gutterBottom>
+        Registrar datos de la Institución
+      </Typography>
+      <Divider sx={{ mb: 3 }} />
+      <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
+        <Stack spacing={1.5} sx={{ mb: 2 }}>
+          <Stack spacing={1.5} direction="row">
+            {/* --- 1. Provincia --- */}
+            <FormControl fullWidth error={!!errors.idProvincia}>
+              <InputLabel>Provincia</InputLabel>
+              <Controller
+                name="idProvincia"
+                control={control}
+                render={({ field }) => (
+                  <Select {...field} label="Provincia" disabled={isSubmitting}>
+                    <MenuItem value={0} disabled>
+                      Seleccione una provincia...
+                    </MenuItem>
+                    {provincias.map((p) => (
+                      <MenuItem key={p.id} value={p.id}>
+                        {p.provincia}
                       </MenuItem>
-                      {provincias.map((p) => (
-                        <MenuItem key={p.id} value={p.id}>
-                          {p.provincia}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  )}
-                />
-                <FormHelperText sx={{ minHeight: "1.25em" }}>
-                  {(errors.idProvincia?.message as string) || " "}
-                </FormHelperText>
-              </FormControl>
+                    ))}
+                  </Select>
+                )}
+              />
+              <FormHelperText sx={{ minHeight: "1.25em" }}>
+                {(errors.idProvincia?.message as string) || " "}
+              </FormHelperText>
+            </FormControl>
 
-              {/* --- 2. Localidad --- */}
-              <FormControl fullWidth error={!!errors.idLocalidad}>
-                <InputLabel>Localidad</InputLabel>
-                <Controller
-                  name="idLocalidad"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      {...field}
-                      label="Localidad"
-                      disabled={
-                        !watchedProvinciaId ||
-                        isSubmitting ||
-                        localidades.length === 0
-                      }
-                    >
-                      <MenuItem value={0} disabled>
-                        Seleccione una localidad...
+            {/* --- 2. Localidad --- */}
+            <FormControl fullWidth error={!!errors.idLocalidad}>
+              <InputLabel>Localidad</InputLabel>
+              <Controller
+                name="idLocalidad"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    label="Localidad"
+                    disabled={
+                      !watchedProvinciaId ||
+                      isSubmitting ||
+                      localidades.length === 0
+                    }
+                  >
+                    <MenuItem value={0} disabled>
+                      Seleccione una localidad...
+                    </MenuItem>
+                    {localidades.map((l) => (
+                      <MenuItem key={l.id} value={l.id}>
+                        {l.localidad}
                       </MenuItem>
-                      {localidades.map((l) => (
-                        <MenuItem key={l.id} value={l.id}>
-                          {l.localidad}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  )}
-                />
-                <FormHelperText sx={{ minHeight: "1.25em" }}>
-                  {(errors.idLocalidad?.message as string) || " "}
-                </FormHelperText>
-              </FormControl>
-            </Stack>
-
-            <Stack spacing={1.5} direction="row">
-              {/* --- 3. Nombre --- */}
-              <Controller
-                name="nombre"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label="Nombre de la Institución"
-                    fullWidth
-                    required
-                    error={!!errors.nombre}
-                    helperText={errors.nombre?.message || " "}
-                    slotProps={{
-                      formHelperText: {
-                        style: { minHeight: "1.25em" },
-                      },
-                    }}
-                    disabled={isSubmitting}
-                  />
+                    ))}
+                  </Select>
                 )}
               />
-
-              {/* --- 4. Dirección --- */}
-              <Controller
-                name="direccion"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label="Dirección"
-                    fullWidth
-                    required
-                    error={!!errors.direccion}
-                    helperText={errors.direccion?.message || " "}
-                    slotProps={{
-                      formHelperText: {
-                        style: { minHeight: "1.25em" },
-                      },
-                    }}
-                    disabled={isSubmitting}
-                  />
-                )}
-              />
-            </Stack>
-
-            <Stack spacing={1.5} direction="row">
-              {/* --- 5. Email --- */}
-              <Controller
-                name="email"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label="Email de Contacto"
-                    type="email"
-                    fullWidth
-                    required
-                    error={!!errors.email}
-                    helperText={errors.email?.message || " "}
-                    slotProps={{
-                      formHelperText: {
-                        style: { minHeight: "1.25em" },
-                      },
-                    }}
-                    disabled={isSubmitting}
-                  />
-                )}
-              />
-
-              {/* --- 6. Teléfono --- */}
-              <Controller
-                name="telefono"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label="Teléfono de Contacto"
-                    fullWidth
-                    required
-                    error={!!errors.telefono}
-                    helperText={errors.telefono?.message || " "}
-                    inputMode="tel" // Mejora la experiencia en móviles
-                    onChange={(e) => {
-                      // Filtra la entrada para permitir solo números y los símbolos + y -
-                      const filteredValue = e.target.value.replace(
-                        /[^0-9+\-]/g,
-                        "",
-                      );
-                      field.onChange(filteredValue);
-                    }}
-                    slotProps={{
-                      formHelperText: {
-                        style: { minHeight: "1.25em" },
-                      },
-                    }}
-                    disabled={isSubmitting}
-                  />
-                )}
-              />
-            </Stack>
+              <FormHelperText sx={{ minHeight: "1.25em" }}>
+                {(errors.idLocalidad?.message as string) || " "}
+              </FormHelperText>
+            </FormControl>
           </Stack>
 
-          {/* --- Sección de Logo --- */}
+          <Stack spacing={1.5} direction="row">
+            {/* --- 3. Nombre --- */}
+            <Controller
+              name="nombre"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Nombre de la Institución"
+                  fullWidth
+                  required
+                  error={!!errors.nombre}
+                  helperText={errors.nombre?.message || " "}
+                  slotProps={{
+                    formHelperText: {
+                      style: { minHeight: "1.25em" },
+                    },
+                  }}
+                  disabled={isSubmitting}
+                />
+              )}
+            />
+
+            {/* --- 4. Dirección --- */}
+            <Controller
+              name="direccion"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Dirección"
+                  fullWidth
+                  required
+                  error={!!errors.direccion}
+                  helperText={errors.direccion?.message || " "}
+                  slotProps={{
+                    formHelperText: {
+                      style: { minHeight: "1.25em" },
+                    },
+                  }}
+                  disabled={isSubmitting}
+                />
+              )}
+            />
+          </Stack>
+
+          <Stack spacing={1.5} direction="row">
+            {/* --- 5. Email --- */}
+            <Controller
+              name="email"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Email de Contacto"
+                  type="email"
+                  fullWidth
+                  required
+                  error={!!errors.email}
+                  helperText={errors.email?.message || " "}
+                  slotProps={{
+                    formHelperText: {
+                      style: { minHeight: "1.25em" },
+                    },
+                  }}
+                  disabled={isSubmitting}
+                />
+              )}
+            />
+
+            {/* --- 6. Teléfono --- */}
+            <Controller
+              name="telefono"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Teléfono de Contacto"
+                  fullWidth
+                  required
+                  error={!!errors.telefono}
+                  helperText={errors.telefono?.message || " "}
+                  inputMode="tel" // Mejora la experiencia en móviles
+                  onChange={(e) => {
+                    // Filtra la entrada para permitir solo números y los símbolos + y -
+                    const filteredValue = e.target.value.replace(
+                      /[^0-9+\-]/g,
+                      "",
+                    );
+                    field.onChange(filteredValue);
+                  }}
+                  slotProps={{
+                    formHelperText: {
+                      style: { minHeight: "1.25em" },
+                    },
+                  }}
+                  disabled={isSubmitting}
+                />
+              )}
+            />
+          </Stack>
+        </Stack>
+
+        {/* --- Sección de Logo --- */}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            mb: 3,
+            width: "100%",
+          }}
+        >
           <Box
             sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              mb: 3,
               width: "100%",
+              height: 150,
+              border: "1px dashed grey",
+              borderRadius: 2,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              overflow: "hidden",
+              mb: 1,
+              bgcolor: "#f5f5f5",
             }}
           >
-            <Box
-              sx={{
-                width: "100%",
-                height: 150,
-                border: "1px dashed grey",
-                borderRadius: 2,
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                overflow: "hidden",
-                mb: 1,
-                bgcolor: "#f5f5f5",
-              }}
-            >
-              {previewImage ? (
-                <img
-                  src={previewImage}
-                  alt="Logo Preview"
-                  style={{
-                    maxWidth: "100%",
-                    maxHeight: "100%",
-                    objectFit: "contain",
-                  }}
-                />
-              ) : (
-                <Typography variant="caption" color="text.secondary">
-                  Vista previa del Logo
-                </Typography>
-              )}
-            </Box>
-            <Button
-              component="label"
-              fullWidth
-              variant="outlined"
-              startIcon={<CloudUploadIcon />}
-            >
-              Seleccionar Logo
-              <VisuallyHiddenInput
-                type="file"
-                onChange={handleFileChange}
-                accept="image/*"
+            {previewImage ? (
+              <img
+                src={previewImage}
+                alt="Logo Preview"
+                style={{
+                  maxWidth: "100%",
+                  maxHeight: "100%",
+                  objectFit: "contain",
+                }}
               />
-            </Button>
-          </Box>
-
-          {/* --- Botón y Error --- */}
-          <Box>
-            {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {error}
-              </Alert>
+            ) : (
+              <Typography variant="caption" color="text.secondary">
+                Vista previa del Logo
+              </Typography>
             )}
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              fullWidth
-              disabled={isSubmitting}
-              sx={{ py: 1.5 }}
-            >
-              {isSubmitting ? (
-                <CircularProgress size={24} />
-              ) : (
-                "Guardar Cambios"
-              )}
-            </Button>
           </Box>
+          <Button
+            component="label"
+            fullWidth
+            variant="outlined"
+            startIcon={<CloudUploadIcon />}
+          >
+            Seleccionar Logo
+            <VisuallyHiddenInput
+              type="file"
+              onChange={handleFileChange}
+              accept="image/*"
+            />
+          </Button>
         </Box>
-      </Paper>
+
+        {/* --- Botón y Error --- */}
+        <Box>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            fullWidth
+            disabled={isSubmitting}
+            sx={{ py: 1.5 }}
+          >
+            {isSubmitting ? <CircularProgress size={24} /> : "Guardar Cambios"}
+          </Button>
+        </Box>
+      </Box>
     </Box>
   );
 }

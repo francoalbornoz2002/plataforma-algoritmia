@@ -24,7 +24,6 @@ import {
   type GridPaginationModel,
   type GridSortModel,
 } from "@mui/x-data-grid";
-import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import StarIcon from "@mui/icons-material/Star";
@@ -349,7 +348,7 @@ export default function ProgressPage() {
             </Grid>
 
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 8 }}>
+              <Grid size={{ xs: 12 }}>
                 {/* --- B. Filtros --- */}
                 <Paper elevation={1} sx={{ pt: 1, pb: 2, pr: 2, pl: 2, mb: 1 }}>
                   <Typography variant="overline" sx={{ fontSize: "14px" }}>
@@ -469,39 +468,6 @@ export default function ProgressPage() {
                     }}
                   />
                 </Box>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 4 }}>
-                {/* Gráfico */}
-                <Paper
-                  elevation={2}
-                  sx={{
-                    p: 2,
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "flex-start",
-                  }}
-                >
-                  <Typography variant="h6" gutterBottom>
-                    Gráfico de progreso global
-                  </Typography>
-                  <Gauge
-                    value={overview.pctMisionesCompletadas}
-                    cornerRadius="50%"
-                    sx={{
-                      [`& .${gaugeClasses.valueText}`]: {
-                        fontSize: 35,
-                        fontWeight: "bold",
-                      },
-                      [`& .${gaugeClasses.valueArc}`]: {
-                        fill: "#4caf50",
-                      },
-                    }}
-                    text={({ value }) => `${value?.toFixed(1)}%`}
-                    height={185}
-                  />
-                </Paper>
               </Grid>
             </Grid>
           </Stack>

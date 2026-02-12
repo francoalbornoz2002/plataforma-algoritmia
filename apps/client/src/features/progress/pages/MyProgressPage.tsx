@@ -251,37 +251,6 @@ export default function MyProgressPage() {
               />
             </Grid>
           </Grid>
-          {/* Gráfico */}
-          <Paper
-            elevation={3}
-            sx={{
-              p: 2,
-              height: "100%",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Typography variant="h6" gutterBottom>
-              Gráfico de mi progreso
-            </Typography>
-            <Gauge
-              value={progress.pctMisionesCompletadas}
-              cornerRadius="50%"
-              sx={{
-                [`& .${gaugeClasses.valueText}`]: {
-                  fontSize: 35,
-                  fontWeight: "bold",
-                },
-                [`& .${gaugeClasses.valueArc}`]: {
-                  fill: "#4caf50",
-                },
-              }}
-              text={({ value }) => `${value?.toFixed(1)}%`}
-              height={250}
-            />
-          </Paper>
 
           {/* --- SECCIÓN 1: MISIONES DE CAMPAÑA (Normales) --- */}
           <Paper elevation={2} sx={{ p: 2 }}>

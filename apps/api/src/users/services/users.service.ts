@@ -25,6 +25,7 @@ import { unlink } from 'fs';
 import { basename, join } from 'path';
 import { ProgressService } from 'src/progress/services/progress.service';
 import { DifficultiesService } from 'src/difficulties/services/difficulties.service';
+import { Institucion } from '@prisma/client';
 
 // Defino el tipo de usuario sin password a devolver
 type SafeUser = Omit<Usuario, 'password'>;
@@ -35,6 +36,32 @@ export interface PaginatedUsersResponse {
   total: number;
   page: number;
   totalPages: number;
+}
+
+export interface AdminDashboardStatsResponse {
+  users: {
+    total: number;
+    active: number;
+    inactive: number;
+    admins: number;
+    docentes: number;
+    alumnos: number;
+  };
+  courses: {
+    total: number;
+    active: number;
+    inactive: number;
+    finalized: number;
+  };
+  classes: {
+    week: { total: number; pctRealizadas: number; pctCanceladas: number };
+    month: { total: number; pctRealizadas: number; pctCanceladas: number };
+  };
+  sessions: {
+    week: { total: number; pctCompletadas: number; pctPendientes: number };
+    month: { total: number; pctCompletadas: number; pctPendientes: number };
+  };
+  institution: Institucion | null;
 }
 
 @Injectable()
@@ -548,7 +575,7 @@ export class UsersService {
   /**
    * Obtiene estadísticas globales para el Dashboard del Administrador.
    */
-  async getAdminDashboardStats() {
+  async getAdminDashboardStats(): Promise<AdminDashboardStatsResponse> {
     const now = new Date();
 
     // Fechas para Semana y Mes
@@ -654,6 +681,16 @@ export class UsersService {
         week: await getSessionsStats(startOfWeek),
         month: await getSessionsStats(startOfMonth),
       },
+      // 5. INSTITUCION
+      institution: await this.prisma.institucion.findFirst({
+        include: {
+          localidad: {
+            include: {
+              provincia: true,
+            },
+          },
+        },
+      }),
     };
   }
 }

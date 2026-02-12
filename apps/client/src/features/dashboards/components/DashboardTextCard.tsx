@@ -8,6 +8,8 @@ interface DashboardTextCardProps {
   value: string;
   description?: string;
   color?: "primary" | "secondary" | "error" | "info" | "success" | "warning";
+  small?: boolean;
+  onClick?: () => void;
 }
 
 export default function DashboardTextCard({
@@ -16,27 +18,39 @@ export default function DashboardTextCard({
   value,
   description,
   color = "primary",
+  small = false,
+  onClick,
 }: DashboardTextCardProps) {
   return (
     <Paper
       elevation={2}
+      onClick={onClick}
       sx={{
-        p: 2,
+        p: small ? 1.5 : 2,
         height: "100%",
         borderLeft: "4px solid",
         borderColor: `${color}.main`,
         transition: "transform 0.2s",
+        cursor: onClick ? "pointer" : "default",
         "&:hover": {
           transform: "translateY(-2px)",
           boxShadow: 4,
         },
       }}
     >
-      <Stack spacing={0.5}>
-        <Stack direction="row" alignItems="center" spacing={1} mb={1}>
-          <Box sx={{ color: `${color}.main`, display: "flex" }}>{icon}</Box>
+      <Stack spacing={small ? 0.25 : 0.5}>
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <Box
+            sx={{
+              color: `${color}.main`,
+              display: "flex",
+              "& svg": { fontSize: small ? "1.2rem" : "1.5rem" },
+            }}
+          >
+            {icon}
+          </Box>
           <Typography
-            variant="subtitle2"
+            variant={small ? "body2" : "subtitle2"}
             color="text.secondary"
             fontWeight="bold"
           >
@@ -47,12 +61,15 @@ export default function DashboardTextCard({
           <Typography
             variant="caption"
             color="text.secondary"
-            sx={{ lineHeight: 1.2 }}
+            sx={{
+              lineHeight: 1.2,
+              fontSize: small ? "0.7rem" : undefined,
+            }}
           >
             {description}
           </Typography>
         )}
-        <Typography variant="h6" fontWeight="bold">
+        <Typography variant={small ? "subtitle1" : "h6"} fontWeight="bold">
           {value}
         </Typography>
       </Stack>

@@ -32,11 +32,6 @@ export default function SidebarLayout() {
       icon: <Assessment />,
       path: "/dashboard/reports",
     },
-    {
-      text: "Datos de la Institución",
-      icon: <LocationCity />,
-      path: "/dashboard/settings",
-    },
     // (La ruta de AccountPage está separada en tu Router,
     // pero si la quieres en el sidebar, añádela aquí)
     // { text: "Mi Cuenta", icon: <AccountCircle />, path: "/dashboard/account" },

@@ -79,7 +79,11 @@ export default function CourseInfoCard({
               <Typography variant="body2">
                 <strong>Días:</strong>{" "}
                 {course.diasClase && course.diasClase.length > 0
-                  ? course.diasClase.map((d: any) => d.dia).join(", ")
+                  ? course.diasClase
+                      .map(
+                        (d: any) => `${d.dia} (${d.horaInicio} - ${d.horaFin})`,
+                      )
+                      .join(", ")
                   : "Sin definir"}
               </Typography>
             </Box>
