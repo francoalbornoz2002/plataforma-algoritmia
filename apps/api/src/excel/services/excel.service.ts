@@ -1854,12 +1854,13 @@ export class ExcelService {
     const headers = [
       'Dificultad',
       'Tema',
+      'Grado Ninguno',
       'Grado Bajo',
       'Grado Medio',
       'Grado Alto',
       'Total Alumnos',
     ];
-    ['A', 'C', 'E', 'F', 'G', 'H'].forEach((col, idx) => {
+    ['A', 'C', 'E', 'F', 'G', 'H', 'I'].forEach((col, idx) => {
       worksheet.getCell(`${col}${currentRow}`).value = headers[idx];
     });
     worksheet.mergeCells(`A${currentRow}:B${currentRow}`);
@@ -1878,10 +1879,11 @@ export class ExcelService {
       }; // Ajuste de texto
       worksheet.mergeCells(`C${currentRow}:D${currentRow}`);
       worksheet.getCell(`C${currentRow}`).value = d.tema;
-      worksheet.getCell(`E${currentRow}`).value = d.grados.Bajo;
-      worksheet.getCell(`F${currentRow}`).value = d.grados.Medio;
-      worksheet.getCell(`G${currentRow}`).value = d.grados.Alto;
-      worksheet.getCell(`H${currentRow}`).value = d.total;
+      worksheet.getCell(`E${currentRow}`).value = d.grados.Ninguno || 0;
+      worksheet.getCell(`F${currentRow}`).value = d.grados.Bajo;
+      worksheet.getCell(`G${currentRow}`).value = d.grados.Medio;
+      worksheet.getCell(`H${currentRow}`).value = d.grados.Alto;
+      worksheet.getCell(`I${currentRow}`).value = d.total;
       currentRow++;
     });
 
@@ -2239,7 +2241,9 @@ export class ExcelService {
             ? 'FFD32F2F'
             : d.grado === 'Medio'
               ? 'FFED6C02'
-              : 'FF2E7D32';
+              : d.grado === 'Bajo'
+                ? 'FF2E7D32'
+                : 'FF9E9E9E'; // Gris para Ninguno
         worksheet.getCell(`G${currentRow}`).font = {
           color: { argb: color },
           bold: true,

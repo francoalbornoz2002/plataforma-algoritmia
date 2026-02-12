@@ -2144,6 +2144,25 @@ export class PdfService {
     // 4. Configurar Gráficos
     const chartJsContent = await this.getChartJsContent();
 
+    // Paleta de colores consistente con el frontend
+    const DISTINCT_COLORS = [
+      '#d32f2f', // Rojo
+      '#1976d2', // Azul
+      '#388e3c', // Verde
+      '#f57c00', // Naranja
+      '#7b1fa2', // Púrpura
+      '#0097a7', // Cian
+      '#c2185b', // Rosa fuerte
+      '#5d4037', // Marrón
+      '#afb42b', // Lima oscuro
+      '#0288d1', // Azul claro
+      '#689f38', // Verde claro
+      '#e64a19', // Naranja oscuro
+      '#512da8', // Violeta oscuro
+      '#455a64', // Gris azulado
+      '#fbc02d', // Amarillo oscuro
+    ];
+
     // Gráfico 1: Distribución por Dificultad (Pie)
     const chartConfigDificultad = {
       type: 'pie',
@@ -2154,26 +2173,24 @@ export class PdfService {
         datasets: [
           {
             data: data.graficos.porDificultad.map((d) => d.value),
-            backgroundColor: [
-              '#3f51b5',
-              '#e91e63',
-              '#009688',
-              '#ffc107',
-              '#607d8b',
-              '#ff5722',
-              '#795548',
-              '#9e9e9e',
-            ],
+            backgroundColor: data.graficos.porDificultad.map(
+              (_, i) => DISTINCT_COLORS[i % DISTINCT_COLORS.length],
+            ),
           },
         ],
       },
       options: {
-        layout: { padding: 20 },
+        layout: { padding: { top: 20, bottom: 20, left: 20, right: 20 } },
         scales: { x: { display: false }, y: { display: false } },
         plugins: {
-          title: { display: true, text: 'Alumnos afectados por Dificultad' },
+          title: {
+            display: true,
+            text: 'Alumnos afectados por Dificultad',
+            padding: 20,
+          },
           legend: { position: 'right' },
         },
+        maintainAspectRatio: false, // Permite que el gráfico se estire verticalmente
       },
     };
 
@@ -2230,6 +2247,9 @@ export class PdfService {
 
     // Gráfico 4: Detalle por Grado (Barra Apilada Horizontal)
     const labels = data.distribucionGrados.map((d) => d.nombre);
+    const datasetNinguno = data.distribucionGrados.map(
+      (d) => d.grados.Ninguno || 0,
+    );
     const datasetBajo = data.distribucionGrados.map((d) => d.grados.Bajo);
     const datasetMedio = data.distribucionGrados.map((d) => d.grados.Medio);
     const datasetAlto = data.distribucionGrados.map((d) => d.grados.Alto);
@@ -2239,6 +2259,12 @@ export class PdfService {
       data: {
         labels,
         datasets: [
+          {
+            label: 'Ninguno (Superada)',
+            data: datasetNinguno,
+            backgroundColor: '#9e9e9e',
+            stack: 'Stack 0',
+          },
           {
             label: 'Bajo',
             data: datasetBajo,
@@ -2275,6 +2301,7 @@ export class PdfService {
           title: { display: true, text: 'Detalle de Grados por Dificultad' },
           legend: { position: 'bottom' },
         },
+        maintainAspectRatio: false,
       },
     };
 

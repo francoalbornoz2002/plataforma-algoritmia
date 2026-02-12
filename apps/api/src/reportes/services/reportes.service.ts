@@ -1189,18 +1189,15 @@ export class ReportesService {
       });
     }
 
-    // Filtramos las que tengan grado 'Ninguno' si consideramos que eso significa "sin dificultad"
-    // Opcional: Depende de tu lógica de negocio. Asumiremos que 'Ninguno' no cuenta como dificultad activa.
-    const activeDifficulties = rawDifficulties.filter(
-      (d) => d.grado !== grado_dificultad.Ninguno,
-    );
+    // No filtramos 'Ninguno' para mostrar también las superadas en los reportes
+    const activeDifficulties = rawDifficulties;
 
     // --- PROCESAMIENTO DE DATOS ---
 
     // Estructuras auxiliares
     const byTopic = new Map<string, Set<string>>(); // Tema -> Set(idAlumnos)
     const byDifficulty = new Map<string, Set<string>>(); // IdDificultad -> Set(idAlumnos)
-    const byGrade = { Bajo: 0, Medio: 0, Alto: 0 };
+    const byGrade = { Ninguno: 0, Bajo: 0, Medio: 0, Alto: 0 };
     const difficultyDetails = new Map<string, any>(); // IdDificultad -> Stats
     const studentsWithHighGrade = new Set<string>();
     const highGradeDifficultiesCount = new Map<string, number>(); // IdDificultad -> Count (solo grado Alto)
@@ -1208,13 +1205,18 @@ export class ReportesService {
     activeDifficulties.forEach((d) => {
       // 1. Por Tema
       const tema = d.dificultad.tema;
-      if (!byTopic.has(tema)) byTopic.set(tema, new Set());
-      byTopic.get(tema)!.add(d.idAlumno);
+      // Solo contamos si la dificultad está activa (Grado != Ninguno)
+      if (d.grado !== grado_dificultad.Ninguno) {
+        if (!byTopic.has(tema)) byTopic.set(tema, new Set());
+        byTopic.get(tema)!.add(d.idAlumno);
+      }
 
       // 2. Por Dificultad
       const difId = d.idDificultad;
-      if (!byDifficulty.has(difId)) byDifficulty.set(difId, new Set());
-      byDifficulty.get(difId)!.add(d.idAlumno);
+      if (d.grado !== grado_dificultad.Ninguno) {
+        if (!byDifficulty.has(difId)) byDifficulty.set(difId, new Set());
+        byDifficulty.get(difId)!.add(d.idAlumno);
+      }
 
       // 4. Detalle por Dificultad (Tabla)
       if (!difficultyDetails.has(difId)) {
@@ -1223,7 +1225,7 @@ export class ReportesService {
           nombre: d.dificultad.nombre,
           tema: d.dificultad.tema,
           total: 0,
-          grados: { Bajo: 0, Medio: 0, Alto: 0 },
+          grados: { Ninguno: 0, Bajo: 0, Medio: 0, Alto: 0 },
         });
       }
       const detail = difficultyDetails.get(difId)!;
@@ -1263,6 +1265,7 @@ export class ReportesService {
     );
 
     const graficoGrados = [
+      { label: 'Ninguno', value: byGrade.Ninguno, color: '#9e9e9e' },
       { label: 'Bajo', value: byGrade.Bajo, color: '#4caf50' },
       { label: 'Medio', value: byGrade.Medio, color: '#ff9800' },
       { label: 'Alto', value: byGrade.Alto, color: '#f44336' },
@@ -1475,13 +1478,12 @@ export class ReportesService {
       where: {
         idCurso,
         idAlumno: studentId,
-        grado: { not: grado_dificultad.Ninguno }, // Solo activas
       },
       include: { dificultad: true },
     });
 
     // Agrupaciones para gráficos del resumen
-    const byGrade = { Bajo: 0, Medio: 0, Alto: 0 };
+    const byGrade = { Ninguno: 0, Bajo: 0, Medio: 0, Alto: 0 };
     const byTopic: Record<string, number> = {};
 
     currentDifficulties.forEach((d) => {
@@ -1498,6 +1500,7 @@ export class ReportesService {
       })),
       graficos: {
         porGrado: [
+          { label: 'Ninguno', value: byGrade.Ninguno, color: '#9e9e9e' },
           { label: 'Bajo', value: byGrade.Bajo, color: '#4caf50' },
           { label: 'Medio', value: byGrade.Medio, color: '#ff9800' },
           { label: 'Alto', value: byGrade.Alto, color: '#f44336' },

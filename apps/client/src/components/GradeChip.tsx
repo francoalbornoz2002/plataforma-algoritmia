@@ -47,17 +47,7 @@ export default function GradeChip({ texto, grado, small }: GradeChipProps) {
       color={color}
       icon={icon}
       size={small ? "small" : "medium"}
-      variant="filled" // 'filled' resalta más que 'outlined' para el grado
-      sx={{
-        ml: 1,
-        flexShrink: 0,
-        ...(color === "warning" && {
-          color: "#fff", // Esto cambia el color del texto (label)
-          "& .MuiChip-icon": {
-            color: "#fff", // Esto cambia el color del ícono (svg)
-          },
-        }),
-      }}
+      variant="filled"
     />
   );
 }

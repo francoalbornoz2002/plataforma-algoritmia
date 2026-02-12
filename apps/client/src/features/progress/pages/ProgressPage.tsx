@@ -3,9 +3,6 @@ import {
   Box,
   Typography,
   Alert,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Stack,
   TextField,
   FormControl,
@@ -26,7 +23,6 @@ import {
   type GridSortModel,
 } from "@mui/x-data-grid";
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import StarIcon from "@mui/icons-material/Star";
@@ -56,7 +52,6 @@ import {
 } from "../../../types/progress-filters";
 import StudentProgressDetailModal from "../components/StudentProgressDetailModal";
 import DashboardStatCard from "../../dashboards/components/DashboardStatCard";
-import DashboardTextCard from "../../dashboards/components/DashboardTextCard";
 import HeaderPage from "client/src/components/HeaderPage";
 
 type StudentRow = ProgresoAlumnoDetallado;
@@ -129,11 +124,14 @@ export default function ProgressPage() {
 
   // Efecto para conectar el buscador con (debounce) a los filtros
   useEffect(() => {
-    setQueryOptions((prev) => ({
-      ...prev,
-      search: debouncedSearchTerm,
-      page: 1, // Resetea a la pág 1 al buscar
-    }));
+    setQueryOptions((prev) => {
+      if (prev.search === debouncedSearchTerm) return prev;
+      return {
+        ...prev,
+        search: debouncedSearchTerm,
+        page: 1,
+      };
+    });
   }, [debouncedSearchTerm]);
 
   // --- 4. HANDLERS (para la DataGrid y Filtros) ---

@@ -26,6 +26,8 @@ import { useOptionalCourseContext } from "../../../../context/CourseContext";
 import ReportTextualCard from "../common/ReportTextualCard";
 import PdfExportButton from "../common/PdfExportButton";
 import ExcelExportButton from "../common/ExcelExportButton";
+import { temas } from "../../../../types";
+import { TemasLabels } from "../../../../types/traducciones";
 
 interface Props {
   courseId: string;
@@ -70,15 +72,42 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
   const barChartData =
     data?.distribucionGrados?.map((item: any) => ({
       nombre: item.nombre,
+      ninguno: item.grados.Ninguno || 0,
       bajo: item.grados.Bajo,
       medio: item.grados.Medio,
       alto: item.grados.Alto,
     })) || [];
 
+  // Paleta de 15 colores bien diferenciados para las dificultades
+  const DISTINCT_COLORS = [
+    "#d32f2f", // Rojo
+    "#1976d2", // Azul
+    "#388e3c", // Verde
+    "#f57c00", // Naranja
+    "#7b1fa2", // Púrpura
+    "#0097a7", // Cian
+    "#c2185b", // Rosa fuerte
+    "#5d4037", // Marrón
+    "#afb42b", // Lima oscuro
+    "#0288d1", // Azul claro
+    "#689f38", // Verde claro
+    "#e64a19", // Naranja oscuro
+    "#512da8", // Violeta oscuro
+    "#455a64", // Gris azulado
+    "#fbc02d", // Amarillo oscuro
+  ];
+
+  // Generar colores únicos para el gráfico de torta de dificultades
+  const difficultiesPieData =
+    data?.graficos?.porDificultad?.map((item: any, index: number) => ({
+      ...item,
+      color: DISTINCT_COLORS[index % DISTINCT_COLORS.length],
+    })) || [];
+
   // Calcular el máximo valor para el eje X para que las barras sean proporcionales al total de alumnos
   const maxBarValue = barChartData.reduce(
     (acc: number, item: any) =>
-      Math.max(acc, item.bajo + item.medio + item.alto),
+      Math.max(acc, item.ninguno + item.bajo + item.medio + item.alto),
     0,
   );
   const xMax =
@@ -166,7 +195,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
               <ReportTextualCard
                 icon={<TopicIcon />}
                 title="Tema Más Frecuente"
-                value={data.kpis.temaFrecuente.nombre}
+                value={TemasLabels[data.kpis.temaFrecuente.nombre as temas]}
                 description={
                   <>
                     El <b>{data.kpis.temaFrecuente.pctAlumnos.toFixed(1)}%</b>{" "}
@@ -230,7 +259,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                 <PieChart
                   series={[
                     {
-                      data: data.graficos.porDificultad,
+                      data: difficultiesPieData,
                       innerRadius: 30,
                       paddingAngle: 2,
                       cornerRadius: 4,
@@ -293,7 +322,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                   }}
                 >
                   <Typography variant="h6" align="center" gutterBottom>
-                    Cantidad de alumnos con dificultades activas por Grado
+                    Distribución de alumnos por Grado de Dificultad
                   </Typography>
                   <PieChart
                     series={[
@@ -353,6 +382,12 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                   },
                 ]}
                 series={[
+                  {
+                    dataKey: "ninguno",
+                    label: "Ninguno (Superada)",
+                    stack: "total",
+                    color: "#9e9e9e",
+                  },
                   {
                     dataKey: "bajo",
                     label: "Bajo",
