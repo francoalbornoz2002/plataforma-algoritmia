@@ -15,10 +15,13 @@ import {
   Pagination,
   Paper,
   Chip,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
 import AddIcon from "@mui/icons-material/Add";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 import {
   temas,
   estado_consulta,
@@ -154,6 +157,19 @@ export default function MyConsultsPage() {
       ...prev,
       [e.target.name]: e.target.value,
     }));
+    setPage(1);
+  };
+
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setFilters((prev) => ({
+      ...prev,
+      tema: "",
+      estado: "",
+      fechaDesde: null,
+      fechaHasta: null,
+    }));
+    setSortOption("recent");
     setPage(1);
   };
 
@@ -310,6 +326,15 @@ export default function MyConsultsPage() {
                 </Select>
               </FormControl>
             )}
+            <Tooltip title="Limpiar filtros">
+              <IconButton
+                onClick={handleClearFilters}
+                size="small"
+                color="primary"
+              >
+                <FilterAltOffIcon />
+              </IconButton>
+            </Tooltip>
             <Box sx={{ flexGrow: 1 }} />
             {!isReadOnly && (
               <Button

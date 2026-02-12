@@ -13,6 +13,8 @@ import {
   Paper,
   Stack,
   Divider,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
@@ -24,6 +26,7 @@ import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
 // 1. Hooks y Servicios
 import { format } from "date-fns";
@@ -134,6 +137,16 @@ export default function MyProgressPage() {
       ...prev,
       [e.target.name]: e.target.value,
     }));
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      fechaDesde: "",
+      fechaHasta: "",
+      dificultad: "",
+      estado: "",
+      estrellas: "",
+    });
   };
 
   // --- 4. RENDERIZADO ---
@@ -366,6 +379,15 @@ export default function MyProgressPage() {
                       <MenuItem value={3}>3</MenuItem>
                     </Select>
                   </FormControl>
+                  <Tooltip title="Limpiar filtros">
+                    <IconButton
+                      onClick={handleClearFilters}
+                      size="small"
+                      color="primary"
+                    >
+                      <FilterAltOffIcon />
+                    </IconButton>
+                  </Tooltip>
                 </Stack>
               </Paper>
 

@@ -15,6 +15,7 @@ import {
   Tooltip,
   type SelectChangeEvent,
   Button,
+  IconButton,
 } from "@mui/material";
 import {
   DataGrid,
@@ -28,6 +29,7 @@ import CategoryIcon from "@mui/icons-material/Category";
 import TopicIcon from "@mui/icons-material/Topic";
 import SpeedIcon from "@mui/icons-material/Speed";
 import GroupIcon from "@mui/icons-material/Group";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
 // 1. Hooks y Servicios
 import { useCourseContext } from "../../../context/CourseContext";
@@ -186,6 +188,20 @@ export default function DifficultiesPage() {
         newOptions.dificultadId = "";
       }
       return newOptions;
+    });
+  };
+
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setQueryOptions({
+      page: 1,
+      limit: 10,
+      sort: "apellido",
+      order: "asc",
+      search: "",
+      tema: "",
+      dificultadId: "",
+      grado: "",
     });
   };
 
@@ -427,6 +443,15 @@ export default function DifficultiesPage() {
                   ))}
               </Select>
             </FormControl>
+            <Tooltip title="Limpiar filtros">
+              <IconButton
+                onClick={handleClearFilters}
+                size="small"
+                color="primary"
+              >
+                <FilterAltOffIcon />
+              </IconButton>
+            </Tooltip>
           </Stack>
         </Paper>
 

@@ -14,8 +14,11 @@ import {
   type SelectChangeEvent,
   Pagination,
   Paper,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
 import {
   temas,
@@ -143,6 +146,17 @@ export default function PreguntasPage() {
     setPage(1);
   };
 
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setFilters({
+      tema: "",
+      gradoDificultad: "",
+      tipo: "",
+      idDificultad: "",
+    });
+    setPage(1);
+  };
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
     setPage(1);
@@ -263,6 +277,15 @@ export default function PreguntasPage() {
                 <MenuItem value="docente">Docente</MenuItem>
               </Select>
             </FormControl>
+            <Tooltip title="Limpiar filtros">
+              <IconButton
+                onClick={handleClearFilters}
+                size="small"
+                color="primary"
+              >
+                <FilterAltOffIcon />
+              </IconButton>
+            </Tooltip>
             <Box sx={{ flexGrow: 1 }} />
             <Button
               variant="contained"

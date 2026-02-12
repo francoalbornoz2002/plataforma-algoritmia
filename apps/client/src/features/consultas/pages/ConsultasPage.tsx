@@ -12,7 +12,9 @@ import {
   MenuItem,
   type SelectChangeEvent,
   Pagination,
-  Paper, // <-- Usaremos paginación
+  Paper,
+  Tooltip,
+  IconButton, // <-- Usaremos paginación
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
@@ -29,6 +31,8 @@ import {
 // Importamos el acordeón que acabamos de crear
 import ConsultaAccordion from "../components/ConsultaAccordion";
 import { EstadoConsultaLabels, TemasLabels } from "../../../types/traducciones";
+import HeaderPage from "../../../components/HeaderPage";
+import { FilterAltOff, MarkUnreadChatAlt } from "@mui/icons-material";
 
 // Constante para la paginación
 const PAGE_SIZE = 10;
@@ -119,6 +123,18 @@ export default function ConsultasPage() {
     setPage(1); // Resetea a la pág 1
   };
 
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setFilters({
+      tema: "",
+      estado: "",
+      fechaDesde: null,
+      fechaHasta: null,
+    });
+    setSortOption("recent");
+    setPage(1);
+  };
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
     setPage(1); // Resetea a la pág 1
@@ -145,129 +161,156 @@ export default function ConsultasPage() {
   }
 
   return (
-    <Box>
-      {/* --- 1. Filtros y Orden --- */}
-      <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
-        <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
-          Filtros de búsqueda
-        </Typography>
-        <Stack direction="row" spacing={2} flexWrap="wrap" sx={{ mb: 2 }}>
-          <TextField
-            label="Buscar por título o descripción..."
-            variant="outlined"
-            size="small"
-            value={searchTerm}
-            onChange={handleSearchChange}
-            sx={{ minWidth: 200, flexGrow: 1 }}
-          />
-          <FormControl size="small" sx={{ width: 220 }}>
-            <InputLabel>Tema</InputLabel>
-            <Select
-              name="tema"
-              value={filters.tema}
-              label="Tema"
-              onChange={handleFilterChange}
-            >
-              <MenuItem value="">Todos</MenuItem>
-              {Object.values(temas)
-                .filter((t) => t !== temas.Ninguno)
-                .map((t) => (
-                  <MenuItem key={t} value={t}>
-                    {TemasLabels[t]}
+    <Box
+      sx={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Stack spacing={2} sx={{ height: "100%" }}>
+        {/* --- TÍTULO --- */}
+        <HeaderPage
+          title={`Consultas en ${selectedCourse.nombre}`}
+          description="Gestiona y responde las dudas planteadas por los alumnos del curso."
+          icon={<MarkUnreadChatAlt />}
+          color="primary"
+        />
+
+        {/* --- 1. Filtros y Orden --- */}
+        <Paper elevation={2} sx={{ pt: 1, pb: 2, pr: 2, pl: 2 }}>
+          <Typography variant="overline" sx={{ fontSize: "14px" }}>
+            Filtros de búsqueda
+          </Typography>
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            <TextField
+              label="Buscar por título o descripción..."
+              variant="outlined"
+              size="small"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              sx={{ minWidth: 200, flexGrow: 1 }}
+            />
+            <FormControl size="small" sx={{ width: 220 }}>
+              <InputLabel>Tema</InputLabel>
+              <Select
+                name="tema"
+                value={filters.tema}
+                label="Tema"
+                onChange={handleFilterChange}
+              >
+                <MenuItem value="">Todos</MenuItem>
+                {Object.values(temas)
+                  .filter((t) => t !== temas.Ninguno)
+                  .map((t) => (
+                    <MenuItem key={t} value={t}>
+                      {TemasLabels[t]}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 180 }}>
+              <InputLabel>Estado</InputLabel>
+              <Select
+                name="estado"
+                value={filters.estado}
+                label="Estado"
+                onChange={handleFilterChange}
+              >
+                <MenuItem value="">Todos</MenuItem>
+                {Object.values(estado_consulta).map((e) => (
+                  <MenuItem key={e} value={e}>
+                    {EstadoConsultaLabels[e]}
                   </MenuItem>
                 ))}
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 180 }}>
-            <InputLabel>Estado</InputLabel>
-            <Select
-              name="estado"
-              value={filters.estado}
-              label="Estado"
-              onChange={handleFilterChange}
-            >
-              <MenuItem value="">Todos</MenuItem>
-              {Object.values(estado_consulta).map((e) => (
-                <MenuItem key={e} value={e}>
-                  {EstadoConsultaLabels[e]}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <DatePicker
-            label="Desde"
-            value={filters.fechaDesde}
-            onChange={(newValue) => {
-              setFilters((prev) => ({ ...prev, fechaDesde: newValue }));
-              setPage(1);
-            }}
-            slotProps={{ textField: { size: "small", sx: { width: 170 } } }}
-          />
-          <DatePicker
-            label="Hasta"
-            value={filters.fechaHasta}
-            onChange={(newValue) => {
-              setFilters((prev) => ({ ...prev, fechaHasta: newValue }));
-              setPage(1);
-            }}
-            slotProps={{ textField: { size: "small", sx: { width: 170 } } }}
-          />
-
-          <Box sx={{ flexGrow: 1 }} />
-
-          <FormControl size="small" sx={{ minWidth: 180 }}>
-            <InputLabel>Ordenar por</InputLabel>
-            <Select
-              value={sortOption}
-              label="Ordenar por"
-              onChange={(e) => setSortOption(e.target.value)}
-            >
-              <MenuItem value="recent">Más recientes</MenuItem>
-              <MenuItem value="old">Más antiguas</MenuItem>
-              <MenuItem value="az">Título (A-Z)</MenuItem>
-              <MenuItem value="za">Título (Z-A)</MenuItem>
-            </Select>
-          </FormControl>
-        </Stack>
-      </Paper>
-      {/* --- 2. Lista de Consultas (Acordeones) --- */}
-      {loading ? (
-        <CircularProgress sx={{ display: "block", margin: "auto", mt: 4 }} />
-      ) : error ? (
-        <Alert severity="error">{error}</Alert>
-      ) : (
-        <Box>
-          {consultas.length === 0 ? (
-            <Alert severity="info" sx={{ mt: 2 }}>
-              No se encontraron consultas con esos filtros.
-            </Alert>
-          ) : (
-            <Stack spacing={1} sx={{ mt: 2 }}>
-              {/* --- ¡AQUÍ RENDERIZAMOS LOS ACORDEONES! --- */}
-              {consultas.map((c) => (
-                <ConsultaAccordion
-                  key={c.id}
-                  consulta={c}
-                  onResponseSuccess={
-                    !isReadOnly ? handleResponseSuccess : undefined
-                  }
-                />
-              ))}
-            </Stack>
-          )}
-
-          {/* --- 3. Paginación --- */}
-          <Stack alignItems="center" sx={{ mt: 3 }}>
-            <Pagination
-              count={totalPages}
-              page={page}
-              onChange={handlePageChange}
-              color="primary"
-              disabled={loading}
+              </Select>
+            </FormControl>
+            <DatePicker
+              label="Desde"
+              value={filters.fechaDesde}
+              onChange={(newValue) => {
+                setFilters((prev) => ({ ...prev, fechaDesde: newValue }));
+                setPage(1);
+              }}
+              slotProps={{ textField: { size: "small", sx: { width: 170 } } }}
             />
+            <DatePicker
+              label="Hasta"
+              value={filters.fechaHasta}
+              onChange={(newValue) => {
+                setFilters((prev) => ({ ...prev, fechaHasta: newValue }));
+                setPage(1);
+              }}
+              slotProps={{ textField: { size: "small", sx: { width: 170 } } }}
+            />
+
+            <Tooltip title="Limpiar filtros">
+              <IconButton
+                onClick={handleClearFilters}
+                size="small"
+                color="primary"
+              >
+                <FilterAltOff />
+              </IconButton>
+            </Tooltip>
+
+            <Box sx={{ flexGrow: 1 }} />
+
+            <FormControl size="small" sx={{ minWidth: 180 }}>
+              <InputLabel>Ordenar por</InputLabel>
+              <Select
+                value={sortOption}
+                label="Ordenar por"
+                onChange={(e) => setSortOption(e.target.value)}
+              >
+                <MenuItem value="recent">Más recientes</MenuItem>
+                <MenuItem value="old">Más antiguas</MenuItem>
+                <MenuItem value="az">Título (A-Z)</MenuItem>
+                <MenuItem value="za">Título (Z-A)</MenuItem>
+              </Select>
+            </FormControl>
           </Stack>
-        </Box>
-      )}
+        </Paper>
+
+        {/* --- 2. Lista de Consultas (Acordeones) --- */}
+        {loading ? (
+          <CircularProgress sx={{ display: "block", margin: "auto", mt: 4 }} />
+        ) : error ? (
+          <Alert severity="error">{error}</Alert>
+        ) : (
+          <Box>
+            {consultas.length === 0 ? (
+              <Alert severity="info">
+                No se encontraron consultas con esos filtros.
+              </Alert>
+            ) : (
+              <Stack spacing={1}>
+                {/* --- ¡AQUÍ RENDERIZAMOS LOS ACORDEONES! --- */}
+                {consultas.map((c) => (
+                  <ConsultaAccordion
+                    key={c.id}
+                    consulta={c}
+                    onResponseSuccess={
+                      !isReadOnly ? handleResponseSuccess : undefined
+                    }
+                  />
+                ))}
+              </Stack>
+            )}
+
+            {/* --- 3. Paginación --- */}
+            <Stack alignItems="center" sx={{ mt: 3 }}>
+              <Pagination
+                count={totalPages}
+                page={page}
+                onChange={handlePageChange}
+                color="primary"
+                disabled={loading}
+              />
+            </Stack>
+          </Box>
+        )}
+      </Stack>
     </Box>
   );
 }

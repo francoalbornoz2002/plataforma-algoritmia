@@ -12,7 +12,10 @@ import {
   MenuItem,
   type SelectChangeEvent,
   Paper,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 import { useCourseContext } from "../../../context/CourseContext";
 import {
   grado_dificultad,
@@ -78,6 +81,11 @@ export default function MyDifficultiesPage() {
 
   const handleGradoChange = (e: SelectChangeEvent<string>) => {
     setGradoFilter(e.target.value);
+  };
+
+  const handleClearFilters = () => {
+    setTemaFilter("");
+    setGradoFilter("");
   };
 
   // --- RENDERIZADO ---
@@ -162,6 +170,15 @@ export default function MyDifficultiesPage() {
                   ))}
               </Select>
             </FormControl>
+            <Tooltip title="Limpiar filtros">
+              <IconButton
+                onClick={handleClearFilters}
+                size="small"
+                color="primary"
+              >
+                <FilterAltOffIcon />
+              </IconButton>
+            </Tooltip>
           </Stack>
         </Paper>
 

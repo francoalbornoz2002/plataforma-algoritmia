@@ -12,8 +12,12 @@ import {
   Button,
   Grid,
   Paper,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
+import { School } from "@mui/icons-material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 // 1. Hooks, Servicios y Tipos
@@ -44,6 +48,7 @@ import AceptarManualModal from "../components/AceptarManualModal";
 import { enqueueSnackbar } from "notistack";
 import ActionConfirmationDialog from "../components/ActionConfirmationDialog";
 import { FinalizarClaseModal } from "../components/FinalizarClaseModal";
+import HeaderPage from "../../../components/HeaderPage";
 
 // Tipos para los filtros
 type OrdenFiltro =
@@ -300,6 +305,14 @@ export default function ClasesConsultaPage() {
     setIsFormModalOpen(true);
   };
 
+  const handleClearFilters = () => {
+    setFechaDesde(null);
+    setFechaHasta(null);
+    setDocenteFiltro("Todos");
+    setEstadoFiltro("Todos");
+    setOrden("fecha-desc");
+  };
+
   const handleSaveSuccess = () => {
     fetchData(); // Refresca toda la data
   };
@@ -354,116 +367,153 @@ export default function ClasesConsultaPage() {
   }
 
   return (
-    <Box>
-      {/* --- 1. Filtros y Orden --- */}
-      <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
-        <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
-          Filtros de búsqueda
-        </Typography>
-        <Stack direction="row" spacing={2}>
-          <DatePicker
-            label="Fecha Desde"
-            value={fechaDesde}
-            onChange={setFechaDesde}
-            slotProps={{ textField: { size: "small" } }}
-            sx={{ minWidth: 175, maxWidth: 175 }}
-          />
+    <Box
+      sx={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Stack spacing={2} sx={{ height: "100%" }}>
+        {/* --- TÍTULO --- */}
+        <HeaderPage
+          title={`Clases de Consulta en ${selectedCourse.nombre}`}
+          description="Gestiona las clases de consulta programadas para resolver dudas de los alumnos."
+          icon={<School />}
+          color="primary"
+        />
 
-          <DatePicker
-            label="Fecha Hasta"
-            value={fechaHasta}
-            onChange={setFechaHasta}
-            slotProps={{ textField: { size: "small" } }}
-            sx={{ minWidth: 175, maxWidth: 175 }}
-          />
+        {/* --- 1. Filtros y Orden --- */}
+        <Paper elevation={2} sx={{ pt: 1, pb: 2, pr: 2, pl: 2 }}>
+          <Typography variant="overline" sx={{ fontSize: "14px" }}>
+            Filtros de búsqueda
+          </Typography>
+          <Stack
+            direction="row"
+            spacing={1}
+            flexWrap="wrap"
+            useFlexGap
+            alignItems="center"
+          >
+            <DatePicker
+              label="Fecha Desde"
+              value={fechaDesde}
+              onChange={setFechaDesde}
+              slotProps={{ textField: { size: "small" } }}
+              sx={{ minWidth: 165 }}
+            />
 
-          <FormControl size="small" sx={{ minWidth: 180 }}>
-            <InputLabel>Docente</InputLabel>
-            <Select
-              value={docenteFiltro}
-              label="Docente"
-              onChange={(e) => setDocenteFiltro(e.target.value)}
-            >
-              <MenuItem value="Todos">Todos</MenuItem>
-              {docentesList.map((d) => (
-                <MenuItem key={d.id} value={d.id}>
-                  {d.nombre} {d.apellido}
+            <DatePicker
+              label="Fecha Hasta"
+              value={fechaHasta}
+              onChange={setFechaHasta}
+              slotProps={{ textField: { size: "small" } }}
+              sx={{ minWidth: 165 }}
+            />
+
+            <FormControl size="small" sx={{ minWidth: 180 }}>
+              <InputLabel>Docente</InputLabel>
+              <Select
+                value={docenteFiltro}
+                label="Docente"
+                onChange={(e) => setDocenteFiltro(e.target.value)}
+              >
+                <MenuItem value="Todos">Todos</MenuItem>
+                {docentesList.map((d) => (
+                  <MenuItem key={d.id} value={d.id}>
+                    {d.nombre} {d.apellido}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+              <InputLabel>Estado</InputLabel>
+              <Select
+                value={estadoFiltro}
+                label="Estado"
+                onChange={(e) => setEstadoFiltro(e.target.value)}
+              >
+                <MenuItem value="Todos">Todos</MenuItem>
+                {Object.values(estado_clase_consulta).map((e) => (
+                  <MenuItem key={e} value={e}>
+                    {e.replace("_", " ")}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+              <InputLabel>Ordenar por</InputLabel>
+              <Select
+                value={orden}
+                label="Ordenar por"
+                onChange={(e) => setOrden(e.target.value as OrdenFiltro)}
+              >
+                <MenuItem value="fecha-desc">Más Recientes</MenuItem>
+                <MenuItem value="fecha-asc">Más Antiguas</MenuItem>
+                <MenuItem value="consultas-desc">
+                  Cant. Consultas (Mayor)
                 </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl size="small" sx={{ minWidth: 230 }}>
-            <InputLabel>Ordenar por</InputLabel>
-            <Select
-              value={orden}
-              label="Ordenar por"
-              onChange={(e) => setOrden(e.target.value as OrdenFiltro)}
-            >
-              <MenuItem value="fecha-desc">Más Recientes</MenuItem>
-              <MenuItem value="fecha-asc">Más Antiguas</MenuItem>
-              <MenuItem value="consultas-desc">
-                Cant. Consultas (Mayor)
-              </MenuItem>
-              <MenuItem value="consultas-asc">Cant. Consultas (Menor)</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 180 }}>
-            <InputLabel>Estado</InputLabel>
-            <Select
-              value={estadoFiltro}
-              label="Estado"
-              onChange={(e) => setEstadoFiltro(e.target.value)}
-            >
-              <MenuItem value="Todos">Todos</MenuItem>
-              {Object.values(estado_clase_consulta).map((e) => (
-                <MenuItem key={e} value={e}>
-                  {e.replace("_", " ")}
+                <MenuItem value="consultas-asc">
+                  Cant. Consultas (Menor)
                 </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <Box sx={{ flexGrow: 1 }} />
-          {!isReadOnly && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleOpenCreate}
-            >
-              Crear Clase
-            </Button>
-          )}
-        </Stack>
-      </Paper>
-      {/* --- 2. Lista de Clases (Cards) --- */}
-      {loading ? (
-        <CircularProgress sx={{ display: "block", margin: "auto", mt: 4 }} />
-      ) : error ? (
-        <Alert severity="error">{error}</Alert>
-      ) : (
-        <Box>
-          {clasesFiltradasYOrdenadas.length === 0 ? (
-            <Alert severity="info" sx={{ mt: 2 }}>
-              No se encontraron clases de consulta.
-            </Alert>
-          ) : (
-            <Grid container spacing={2}>
-              {clasesFiltradasYOrdenadas.map((clase) => (
-                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={clase.id}>
-                  <ClaseConsultaCard
-                    clase={clase}
-                    onEdit={!isReadOnly ? handleOpenEdit : () => {}}
-                    onDelete={!isReadOnly ? setClaseToDelete : () => {}}
-                    onViewDetails={setClaseToView}
-                    onAccept={!isReadOnly ? handleAcceptClass : undefined}
-                    onFinalize={!isReadOnly ? handleOpenFinalize : undefined}
-                  />
-                </Grid>
-              ))}
-            </Grid>
-          )}
-        </Box>
-      )}
+              </Select>
+            </FormControl>
+
+            <Tooltip title="Limpiar filtros">
+              <IconButton
+                onClick={handleClearFilters}
+                size="small"
+                color="primary"
+              >
+                <FilterAltOffIcon />
+              </IconButton>
+            </Tooltip>
+
+            <Box sx={{ flexGrow: 1 }} />
+            {!isReadOnly && (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={handleOpenCreate}
+              >
+                Crear Clase
+              </Button>
+            )}
+          </Stack>
+        </Paper>
+
+        {/* --- 2. Lista de Clases (Cards) --- */}
+        {loading ? (
+          <CircularProgress sx={{ display: "block", margin: "auto", mt: 4 }} />
+        ) : error ? (
+          <Alert severity="error">{error}</Alert>
+        ) : (
+          <Box>
+            {clasesFiltradasYOrdenadas.length === 0 ? (
+              <Alert severity="info">
+                No se encontraron clases de consulta con los filtros aplicados.
+              </Alert>
+            ) : (
+              <Grid container spacing={2}>
+                {clasesFiltradasYOrdenadas.map((clase) => (
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={clase.id}>
+                    <ClaseConsultaCard
+                      clase={clase}
+                      onEdit={!isReadOnly ? handleOpenEdit : () => {}}
+                      onDelete={!isReadOnly ? setClaseToDelete : () => {}}
+                      onViewDetails={setClaseToView}
+                      onAccept={!isReadOnly ? handleAcceptClass : undefined}
+                      onFinalize={!isReadOnly ? handleOpenFinalize : undefined}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
+            )}
+          </Box>
+        )}
+      </Stack>
 
       {/* --- 3. Modales --- */}
       {/* (El modal de Crear/Editar se renderiza solo cuando 'isModalOpen' es true) */}

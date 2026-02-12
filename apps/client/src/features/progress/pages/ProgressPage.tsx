@@ -15,7 +15,9 @@ import {
   Paper,
   CircularProgress,
   Grid,
+  IconButton,
 } from "@mui/material";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 import {
   DataGrid,
   type GridColDef,
@@ -150,6 +152,21 @@ export default function ProgressPage() {
       sort: model[0]?.field || "nombre",
       order: model[0]?.sort || "asc",
     }));
+  };
+
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setQueryOptions({
+      page: 1,
+      limit: 10,
+      sort: "nombre",
+      order: "asc",
+      search: "",
+      progressRange: "",
+      starsRange: "",
+      attemptsRange: "",
+      activityRange: "",
+    });
   };
 
   const handleFilterChange = (
@@ -402,6 +419,15 @@ export default function ProgressPage() {
                         </MenuItem>
                       </Select>
                     </FormControl>
+                    <Tooltip title="Limpiar filtros">
+                      <IconButton
+                        onClick={handleClearFilters}
+                        size="small"
+                        color="primary"
+                      >
+                        <FilterAltOffIcon />
+                      </IconButton>
+                    </Tooltip>
                   </Stack>
                 </Paper>
                 {/* --- C. DataGrid --- */}
