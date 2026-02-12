@@ -7,7 +7,7 @@ import {
   Alert,
   Paper,
   Stack,
-  LinearProgress,
+  Divider,
 } from "@mui/material";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
@@ -16,13 +16,18 @@ import BoltIcon from "@mui/icons-material/Bolt";
 import ReplayIcon from "@mui/icons-material/Replay";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
 // 1. Hooks y Servicios
 import { useCourseContext } from "../../../context/CourseContext";
-import { getMyProgress } from "../../users/services/alumnos.service";
+import {
+  getMyProgress,
+  getMyMissions,
+} from "../../users/services/alumnos.service";
 
 // 2. Tipos
-import type { ProgresoAlumno } from "../../../types";
+import type { ProgresoAlumno, MisionConEstado } from "../../../types";
 import MissionCard from "../components/MissionCard";
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 import DashboardStatCard from "../../dashboards/components/DashboardStatCard";
@@ -36,23 +41,25 @@ export default function MyProgressPage() {
 
   // --- 2. ESTADOS ---
   const [progress, setProgress] = useState<ProgresoAlumno | null>(null);
-  const [loadingProgress, setLoadingProgress] = useState(true);
-  const [errorProgress, setErrorProgress] = useState<string | null>(null);
-
-  //const [missions, setMissions] = useState<MisionConEstado[]>([]);
-  //const [loadingMissions, setLoadingMissions] = useState(true);
-  //const [errorMissions, setErrorMissions] = useState<string | null>(null);
+  const [missions, setMissions] = useState<MisionConEstado[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // --- 3. DATA FETCHING ---
   useEffect(() => {
     if (!selectedCourse) return;
 
-    setLoadingProgress(true);
-    // Solo llamamos a getMyProgress
-    getMyProgress(selectedCourse.id)
-      .then((data) => setProgress(data))
-      .catch((err) => setErrorProgress(err.message))
-      .finally(() => setLoadingProgress(false));
+    setLoading(true);
+    Promise.all([
+      getMyProgress(selectedCourse.id),
+      getMyMissions(selectedCourse.id),
+    ])
+      .then(([progressData, missionsData]) => {
+        setProgress(progressData);
+        setMissions(missionsData);
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
   }, [selectedCourse]);
 
   // --- 4. RENDERIZADO ---
@@ -65,7 +72,7 @@ export default function MyProgressPage() {
     );
   }
 
-  const isLoading = loadingProgress;
+  const isLoading = loading;
 
   // Formateamos el valor de "Última Actividad"
   const ultimaActividadFormateada = progress?.ultimaActividad
@@ -76,24 +83,22 @@ export default function MyProgressPage() {
     : "Nunca";
 
   return (
-    <Box
-      sx={{
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <Box sx={{ width: "100%" }}>
       {isLoading ? (
-        <CircularProgress sx={{ mb: 3 }} />
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : error ? (
+        <Alert severity="error">{error}</Alert>
       ) : progress ? (
-        <Stack spacing={2} sx={{ height: "100%" }}>
+        <Stack spacing={3} sx={{ pb: 4 }}>
           <HeaderPage
             title={`Mi Progreso en ${selectedCourse.nombre}`}
             description="Consulta tu avance y estadísticas de progreso en el curso"
             icon={<Assessment />}
             color="primary"
           />
-          <Paper elevation={5} component="section" sx={{ p: 2, mb: 4 }}>
+          <Paper elevation={2} component="section" sx={{ p: 2 }}>
             <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
               {/* KPIs */}
               <Box sx={{ flex: 2 }}>
@@ -186,64 +191,71 @@ export default function MyProgressPage() {
               </Box>
             </Stack>
           </Paper>
+
+          {/* --- SECCIÓN 1: MISIONES DE CAMPAÑA (Normales) --- */}
+          <Paper elevation={2} sx={{ p: 3 }}>
+            <Stack direction="row" alignItems="center" spacing={1} mb={2}>
+              <Box sx={{ color: "primary.main", display: "flex" }}>
+                <SportsEsportsIcon fontSize="large" />
+              </Box>
+              <Typography variant="h6" fontWeight="bold">
+                Misiones de Campaña
+              </Typography>
+            </Stack>
+            <Divider sx={{ mb: 3 }} />
+
+            <Grid container spacing={2}>
+              {missions.map((m) => (
+                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={m.mision.id}>
+                  <MissionCard missionData={m} />
+                </Grid>
+              ))}
+              {!missions.length && (
+                <Grid size={{ xs: 12 }}>
+                  <Alert severity="info" sx={{ width: "100%" }}>
+                    No hay misiones completadas aún.
+                  </Alert>
+                </Grid>
+              )}
+            </Grid>
+          </Paper>
+
+          {/* --- SECCIÓN 2: MISIONES ESPECIALES --- */}
+          <Paper elevation={2} sx={{ p: 3, borderLeft: "6px solid #9c27b0" }}>
+            <Stack direction="row" alignItems="center" spacing={1} mb={2}>
+              <Box sx={{ color: "secondary.main", display: "flex" }}>
+                <AutoAwesomeIcon fontSize="large" />
+              </Box>
+              <Typography variant="h6" fontWeight="bold" color="secondary.main">
+                Misiones Especiales
+              </Typography>
+            </Stack>
+            <Divider sx={{ mb: 3 }} />
+
+            <Grid container spacing={2}>
+              {progress.misionesEspeciales?.map((m) => (
+                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={m.id}>
+                  <MissionCard missionData={m} />
+                </Grid>
+              ))}
+              {!progress.misionesEspeciales?.length && (
+                <Grid size={{ xs: 12 }}>
+                  <Alert
+                    severity="info"
+                    sx={{
+                      width: "100%",
+                      bgcolor: "#f3e5f5",
+                      color: "#6a1b9a",
+                    }}
+                  >
+                    No tienes misiones especiales registradas.
+                  </Alert>
+                </Grid>
+              )}
+            </Grid>
+          </Paper>
         </Stack>
       ) : null}
-
-      {/* --- SECCIÓN 1: MISIONES DE CAMPAÑA (Normales) --- */}
-      <Typography
-        variant="h5"
-        gutterBottom
-        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-      >
-        🎮 Misiones de Campaña
-      </Typography>
-
-      {isLoading ? (
-        <CircularProgress />
-      ) : (
-        <Grid container spacing={2} sx={{ mt: 2, mb: 4 }}>
-          {progress?.misionesCompletadas?.map((m) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={m.idMision}>
-              {/* Pasamos el objeto directamente, MissionCard lo detectará como Caso C */}
-              <MissionCard missionData={m} />
-            </Grid>
-          ))}
-          {!progress?.misionesCompletadas?.length && (
-            <Alert severity="info" sx={{ width: "100%" }}>
-              No hay misiones completadas aún.
-            </Alert>
-          )}
-        </Grid>
-      )}
-      {/* --- SECCIÓN 2: MISIONES ESPECIALES --- */}
-      <Typography
-        variant="h5"
-        gutterBottom
-        sx={{ display: "flex", alignItems: "center", gap: 1, color: "purple" }}
-      >
-        🌟 Misiones Especiales
-      </Typography>
-
-      {isLoading ? (
-        <CircularProgress />
-      ) : (
-        <Grid container spacing={2} sx={{ mt: 2 }}>
-          {progress?.misionesEspeciales?.map((m) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={m.id}>
-              {/* Pasamos el objeto, MissionCard lo detectará como Caso A */}
-              <MissionCard missionData={m} />
-            </Grid>
-          ))}
-          {!progress?.misionesEspeciales?.length && (
-            <Alert
-              severity="info"
-              sx={{ width: "100%", bgcolor: "#f3e5f5", color: "#6a1b9a" }}
-            >
-              No tienes misiones especiales registradas.
-            </Alert>
-          )}
-        </Grid>
-      )}
     </Box>
   );
 }
