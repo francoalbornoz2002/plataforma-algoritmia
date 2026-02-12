@@ -34,7 +34,12 @@ import ConfirmationDialog from "../../components/ConfirmationDialog";
 import CourseFormDialog from "../courses/components/CourseFormDialog";
 import { enqueueSnackbar } from "notistack";
 import { useNavigate } from "react-router";
-import type { CourseDashboardData, Mision } from "../../types";
+import {
+  type CourseDashboardData,
+  type Mision,
+  estado_consulta,
+  estado_sesion,
+} from "../../types";
 import { useAuth } from "../authentication/context/AuthProvider";
 import {
   Assessment,
@@ -51,6 +56,10 @@ import {
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 import { PieChart } from "@mui/x-charts/PieChart";
 import MissionCard from "../progress/components/MissionCard";
+import {
+  EstadoConsultaLabels,
+  EstadoSesionLabels,
+} from "../../types/traducciones";
 
 export default function DocenteDashboardPage() {
   const { selectedCourse, isReadOnly, refreshCourse } = useCourseContext();
@@ -457,7 +466,18 @@ export default function DocenteDashboardPage() {
                 <PieChart
                   series={[
                     {
-                      data: stats?.dificultadesPorGrado ?? [],
+                      data:
+                        stats?.dificultadesPorGrado?.map((d) => ({
+                          ...d,
+                          color:
+                            d.label === "Bajo"
+                              ? "#4caf50"
+                              : d.label === "Medio"
+                                ? "#ff9800"
+                                : d.label === "Alto"
+                                  ? "#f44336"
+                                  : "#9e9e9e",
+                        })) ?? [],
                       innerRadius: 30,
                     },
                   ]}
@@ -509,7 +529,17 @@ export default function DocenteDashboardPage() {
                   Por Estado
                 </Typography>
                 <PieChart
-                  series={[{ data: stats?.sesionesPorEstado ?? [] }]}
+                  series={[
+                    {
+                      data:
+                        stats?.sesionesPorEstado?.map((s) => ({
+                          ...s,
+                          label:
+                            EstadoSesionLabels[s.label as estado_sesion] ||
+                            s.label,
+                        })) ?? [],
+                    },
+                  ]}
                   height={170}
                 />
               </Grid>
@@ -561,7 +591,13 @@ export default function DocenteDashboardPage() {
                 <PieChart
                   series={[
                     {
-                      data: stats?.consultasPorEstado ?? [],
+                      data:
+                        stats?.consultasPorEstado?.map((c) => ({
+                          ...c,
+                          label:
+                            EstadoConsultaLabels[c.label as estado_consulta] ||
+                            c.label,
+                        })) ?? [],
                       innerRadius: 30,
                       paddingAngle: 2,
                     },
