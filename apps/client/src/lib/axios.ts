@@ -57,6 +57,15 @@ apiClient.interceptors.response.use(
         return Promise.reject(error);
       }
 
+      // Si la petición original era LOGIN o LOGOUT, no intentamos refrescar.
+      // Dejamos que el error pase para que el componente UI lo maneje (ej: mostrar "Contraseña incorrecta").
+      if (
+        originalRequest.url.includes("/auth/login") ||
+        originalRequest.url.includes("/auth/logout")
+      ) {
+        return Promise.reject(error);
+      }
+
       if (isRefreshing) {
         // Si ya se está refrescando, encolamos la petición
         return new Promise(function (resolve, reject) {

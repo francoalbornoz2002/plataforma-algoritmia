@@ -851,7 +851,17 @@ export class CoursesService {
       };
     };
 
-    const [todayStats, weekStats, nextClass, course] = await Promise.all([
+    // 6. Distribuciones y nuevos KPIs
+    const [
+      todayStats,
+      weekStats,
+      nextClass,
+      course,
+      consultasPorEstado,
+      dificultadesPorGrado,
+      topStudentDiff,
+      sesionesData,
+    ] = await Promise.all([
       getStats(todayStart, todayEnd),
       getStats(weekStart, weekEnd),
       this.prisma.claseConsulta.findFirst({
@@ -870,7 +880,46 @@ export class CoursesService {
           },
         },
       }),
+      this.prisma.consulta.groupBy({
+        by: ['estado'],
+        where: { idCurso, deletedAt: null },
+        _count: { id: true },
+      }),
+      this.prisma.dificultadAlumno.groupBy({
+        by: ['grado'],
+        where: { idCurso, grado: { not: 'Ninguno' } },
+        _count: { idAlumno: true },
+      }),
+      this.prisma.dificultadAlumno.groupBy({
+        by: ['idAlumno'],
+        where: { idCurso, grado: { not: 'Ninguno' } },
+        _count: { idDificultad: true },
+        orderBy: { _count: { idDificultad: 'desc' } },
+        take: 1,
+      }),
+      this.prisma.sesionRefuerzo.findMany({
+        where: { idCurso, deletedAt: null },
+        select: { idDocente: true, estado: true },
+      }),
     ]);
+
+    let alumnoMasDificultades: string | null = null;
+    if (topStudentDiff.length > 0) {
+      const u = await this.prisma.usuario.findUnique({
+        where: { id: topStudentDiff[0].idAlumno },
+        select: { nombre: true, apellido: true },
+      });
+      alumnoMasDificultades = u ? `${u.nombre} ${u.apellido}` : null;
+    }
+
+    // Procesar sesiones en memoria
+    const sesionesPorEstado = sesionesData.reduce((acc, s) => {
+      acc[s.estado] = (acc[s.estado] || 0) + 1;
+      return acc;
+    }, {});
+
+    const sistema = sesionesData.filter((s) => !s.idDocente).length;
+    const docente = sesionesData.length - sistema;
 
     return {
       today: todayStats,
@@ -879,6 +928,22 @@ export class CoursesService {
       progresoPct: course?.progresoCurso?.pctMisionesCompletadas
         ? Number(course.progresoCurso.pctMisionesCompletadas)
         : 0,
+      consultasPorEstado: consultasPorEstado.map((c) => ({
+        label: c.estado,
+        value: c._count.id,
+      })),
+      dificultadesPorGrado: dificultadesPorGrado.map((d) => ({
+        label: d.grado,
+        value: d._count.idAlumno,
+      })),
+      alumnoMasDificultades,
+      sesionesPorEstado: Object.entries(sesionesPorEstado).map(
+        ([label, value]) => ({
+          label,
+          value,
+        }),
+      ),
+      sesionesPorOrigen: { sistema, docente },
     };
   }
 

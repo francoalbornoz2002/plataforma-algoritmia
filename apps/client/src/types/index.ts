@@ -761,6 +761,11 @@ export interface CourseDashboardData {
   week: DashboardStats;
   nextClass: ClaseConsulta | null;
   progresoPct: number;
+  consultasPorEstado: { label: string; value: number }[];
+  dificultadesPorGrado: { label: string; value: number }[];
+  alumnoMasDificultades: string | null;
+  sesionesPorEstado: { label: string; value: number }[];
+  sesionesPorOrigen: { sistema: number; docente: number };
 }
 
 // ---------- DASHBOARD ADMIN ---------- //

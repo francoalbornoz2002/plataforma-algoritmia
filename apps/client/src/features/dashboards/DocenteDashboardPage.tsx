@@ -49,6 +49,7 @@ import {
   Warning,
 } from "@mui/icons-material";
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
+import { PieChart } from "@mui/x-charts/PieChart";
 import MissionCard from "../progress/components/MissionCard";
 
 export default function DocenteDashboardPage() {
@@ -167,7 +168,7 @@ export default function DocenteDashboardPage() {
   }
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={3}>
       {/* HEADER */}
       <Paper
         elevation={2}
@@ -252,150 +253,22 @@ export default function DocenteDashboardPage() {
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      <Grid container spacing={2}>
-        {/* --- COLUMNA IZQUIERDA (Principal) --- */}
+      <Grid container spacing={2} sx={{ height: "100%" }}>
+        {/* 1. INFO DEL CURSO */}
         <Grid size={{ xs: 12, md: 8.5 }}>
-          <Grid container spacing={2}>
-            {/* 1. INFORMACIÓN DEL CURSO */}
-            <Grid size={{ xs: 12, md: 5.5 }}>
-              <CourseInfoCard
-                course={selectedCourse}
-                studentCount={students.length}
-                isReadOnly={isReadOnly}
-                onEdit={() => setIsEditModalOpen(true)}
-              />
-            </Grid>
-
-            {/* 2. PROGRESO GLOBAL + PRÓXIMA CLASE */}
-            <Grid size={{ xs: 12, md: 3.5 }}>
-              <Paper
-                elevation={2}
-                sx={{
-                  p: 2,
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderTop: "4px solid",
-                  borderColor: "success.main",
-                }}
-              >
-                <Typography
-                  variant="subtitle2"
-                  color="text.secondary"
-                  fontWeight="bold"
-                  gutterBottom
-                >
-                  Progreso Global del Curso
-                </Typography>
-                <Gauge
-                  value={stats?.progresoPct ?? 0}
-                  cornerRadius="50%"
-                  sx={{
-                    [`& .${gaugeClasses.valueText}`]: {
-                      fontSize: 28,
-                      fontWeight: "bold",
-                    },
-                    [`& .${gaugeClasses.valueArc}`]: {
-                      fill: "#4caf50",
-                    },
-                  }}
-                  text={({ value }) => `${value?.toFixed(1)}%`}
-                  height={140}
-                />
-              </Paper>
-            </Grid>
-
-            {/* 3. ESTADÍSTICAS UNIFICADAS DE PROGRESO */}
-            <Grid size={{ xs: 12, md: 3 }}>
-              <Stack spacing={2}>
-                <DashboardStatCard
-                  title="Misiones Completadas"
-                  value={`${stats?.today.misionesCompletadas ?? 0} / ${stats?.week.misionesCompletadas ?? 0}`}
-                  subtitle="Hoy vs. Esta semana"
-                  icon={<TrendingUp />}
-                  color="success"
-                  small
-                  week
-                />
-                <DashboardTextCard
-                  title="Misión más difícil"
-                  value={
-                    stats?.week.misionMasDificil
-                      ? `Misión N° ${stats.week.misionMasDificil.numero}`
-                      : "Ninguna"
-                  }
-                  description="Mayor tasa de intentos (Semana)"
-                  icon={<Warning />}
-                  color="warning"
-                  onClick={() =>
-                    stats?.week.misionMasDificil &&
-                    setSelectedMission(stats.week.misionMasDificil)
-                  }
-                  small
-                />
-                <DashboardTextCard
-                  title="Alumno más activo"
-                  value={stats?.week.alumnoMasActivo || "Ninguno"}
-                  description="Más misiones (Semana)"
-                  icon={<School />}
-                  color="secondary"
-                  small
-                />
-              </Stack>
-            </Grid>
-
-            {/* 4. ESTADÍSTICAS DE TEXTO */}
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <DashboardStatCard
-                title="Consultas Realizadas"
-                value={`${stats?.today.consultasRealizadas ?? 0} / ${stats?.week.consultasRealizadas ?? 0}`}
-                subtitle="Hoy vs. Esta semana"
-                icon={<MarkUnreadChatAlt />}
-                color="info"
-                small
-                week
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <DashboardTextCard
-                title="Dificultad frecuente"
-                value={stats?.week.dificultadMasDetectada || "Ninguna"}
-                description="La más detectada (Semana)"
-                icon={<Warning />}
-                color="error"
-                small
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <DashboardTextCard
-                title="Próxima Clase de Consulta"
-                value={
-                  stats?.nextClass
-                    ? new Date(stats.nextClass.fechaInicio).toLocaleString()
-                    : "No hay clases programadas"
-                }
-                description={
-                  stats?.nextClass
-                    ? `Modalidad: ${stats.nextClass.modalidad}`
-                    : "Sin programación"
-                }
-                icon={<Event />}
-                color="primary"
-                small
-              />
-            </Grid>
-          </Grid>
+          <CourseInfoCard
+            course={selectedCourse}
+            studentCount={students.length}
+            isReadOnly={isReadOnly}
+            onEdit={() => setIsEditModalOpen(true)}
+          />
         </Grid>
-
-        {/* --- COLUMNA DERECHA (Sidebar Alumnos) --- */}
+        {/* --- 2 SIDEBAR ALUMNOS --- */}
         <Grid size={{ xs: 12, md: 3.5 }}>
           <Stack
             spacing={2}
             sx={{
-              maxHeight: { md: "calc(100vh - 297px)" }, // Altura máxima para permitir scroll sin forzar espacio
-              position: { md: "sticky" }, // Se mantiene visible al scrollear
+              maxHeight: { md: "calc(100vh - 324px)" }, // Altura máxima para permitir scroll sin forzar espacio
               top: { md: 16 },
             }}
           >
@@ -500,6 +373,232 @@ export default function DocenteDashboardPage() {
           </Stack>
         </Grid>
       </Grid>
+      <Grid container spacing={2}>
+        {/* GRUPO: PROGRESO */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Paper
+            elevation={2}
+            sx={{
+              p: 2,
+              borderTop: "4px solid",
+              borderColor: "success.main",
+              height: "100%",
+            }}
+          >
+            <Typography variant="h6" gutterBottom color="success.main">
+              Progreso del Curso
+            </Typography>
+            <Grid container spacing={2} alignItems="center">
+              <Grid size={{ xs: 12, sm: 5 }}>
+                <Gauge
+                  value={stats?.progresoPct ?? 0}
+                  height={200}
+                  text={({ value }) => `${value?.toFixed(0)}%`}
+                  sx={{
+                    [`& .${gaugeClasses.valueArc}`]: { fill: "#4caf50" },
+                  }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 7 }}>
+                <Stack spacing={1}>
+                  <DashboardStatCard
+                    title="Misiones"
+                    value={`${stats?.today.misionesCompletadas ?? 0} / ${stats?.week.misionesCompletadas ?? 0}`}
+                    subtitle="Hoy vs Semana"
+                    icon={<TrendingUp />}
+                    color="success"
+                    small
+                  />
+                  <DashboardTextCard
+                    title="Misión más difícil"
+                    value={
+                      stats?.week.misionMasDificil
+                        ? `Misión N° ${stats.week.misionMasDificil.numero}`
+                        : "Ninguna"
+                    }
+                    icon={<Warning />}
+                    color="warning"
+                    small
+                    onClick={() =>
+                      stats?.week.misionMasDificil &&
+                      setSelectedMission(stats.week.misionMasDificil)
+                    }
+                  />
+                  <DashboardTextCard
+                    title="Alumno más activo"
+                    value={stats?.week.alumnoMasActivo || "Ninguno"}
+                    icon={<School />}
+                    color="secondary"
+                    small
+                  />
+                </Stack>
+              </Grid>
+            </Grid>
+          </Paper>
+        </Grid>
+        {/* GRUPO: DIFICULTADES */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Paper
+            elevation={2}
+            sx={{
+              p: 2,
+              borderTop: "4px solid",
+              borderColor: "error.main",
+              height: "100%",
+              alignItems: "center",
+              alignContent: "center",
+            }}
+          >
+            <Typography variant="h6" gutterBottom color="error.main">
+              Dificultades Detectadas
+            </Typography>
+            <Grid container spacing={2} alignItems="center">
+              <Grid size={{ xs: 12, sm: 5 }}>
+                <PieChart
+                  series={[
+                    {
+                      data: stats?.dificultadesPorGrado ?? [],
+                      innerRadius: 30,
+                    },
+                  ]}
+                  height={200}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 7 }}>
+                <Stack spacing={1}>
+                  <DashboardTextCard
+                    title="Frecuente"
+                    value={stats?.week.dificultadMasDetectada || "Ninguna"}
+                    icon={<Warning />}
+                    color="error"
+                    small
+                  />
+                  <DashboardTextCard
+                    title="Alumno con más dificultades"
+                    value={stats?.alumnoMasDificultades || "Ninguno"}
+                    icon={<School />}
+                    color="warning"
+                    small
+                  />
+                </Stack>
+              </Grid>
+            </Grid>
+          </Paper>
+        </Grid>
+      </Grid>
+      <Grid container spacing={2}>
+        {/* GRUPO: SESIONES DE REFUERZO */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Paper
+            elevation={2}
+            sx={{
+              p: 2,
+              borderTop: "4px solid",
+              borderColor: "#9c27b0",
+              height: "100%",
+              alignItems: "center",
+              alignContent: "center",
+            }}
+          >
+            <Typography variant="h6" gutterBottom color="#9c27b0">
+              Sesiones de Refuerzo
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="caption" align="center" display="block">
+                  Por Estado
+                </Typography>
+                <PieChart
+                  series={[{ data: stats?.sesionesPorEstado ?? [] }]}
+                  height={170}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="caption" align="center" display="block">
+                  Por Origen
+                </Typography>
+                <PieChart
+                  series={[
+                    {
+                      data: [
+                        {
+                          label: "Sistema",
+                          value: stats?.sesionesPorOrigen.sistema ?? 0,
+                          color: "#9c27b0",
+                        },
+                        {
+                          label: "Docente",
+                          value: stats?.sesionesPorOrigen.docente ?? 0,
+                          color: "#ff9800",
+                        },
+                      ],
+                    },
+                  ]}
+                  height={170}
+                />
+              </Grid>
+            </Grid>
+          </Paper>
+        </Grid>
+        {/* GRUPO: CONSULTAS */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Paper
+            elevation={2}
+            sx={{
+              p: 2,
+              borderTop: "4px solid",
+              borderColor: "info.main",
+              height: "100%",
+              alignItems: "center",
+              alignContent: "center",
+            }}
+          >
+            <Typography variant="h6" gutterBottom color="info.main">
+              Consultas y Clases
+            </Typography>
+            <Grid container spacing={2} alignItems="center">
+              <Grid size={{ xs: 12, sm: 5 }}>
+                <PieChart
+                  series={[
+                    {
+                      data: stats?.consultasPorEstado ?? [],
+                      innerRadius: 30,
+                      paddingAngle: 2,
+                    },
+                  ]}
+                  height={200}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 7 }}>
+                <Stack spacing={1}>
+                  <DashboardStatCard
+                    title="Consultas"
+                    value={`${stats?.today.consultasRealizadas ?? 0} / ${stats?.week.consultasRealizadas ?? 0}`}
+                    subtitle="Hoy vs Semana"
+                    icon={<MarkUnreadChatAlt />}
+                    color="info"
+                    small
+                  />
+                  <DashboardTextCard
+                    title="Próxima Clase"
+                    value={
+                      stats?.nextClass
+                        ? new Date(
+                            stats.nextClass.fechaInicio,
+                          ).toLocaleDateString()
+                        : "Sin programar"
+                    }
+                    description={stats?.nextClass?.modalidad}
+                    icon={<Event />}
+                    color="primary"
+                    small
+                  />
+                </Stack>
+              </Grid>
+            </Grid>
+          </Paper>
+        </Grid>
+      </Grid>
 
       {/* --- MODALES --- */}
       <CourseFormDialog
@@ -520,21 +619,6 @@ export default function DocenteDashboardPage() {
         confirmText="Dar de baja"
       />
 
-      {/* MODAL DETALLE DE MISIÓN */}
-      <Dialog
-        open={!!selectedMission}
-        onClose={() => setSelectedMission(null)}
-        maxWidth="xs"
-        fullWidth
-      >
-        <Box sx={{ p: 1 }}>
-          {selectedMission && (
-            <MissionCard
-              missionData={{ mision: selectedMission, completada: null }}
-            />
-          )}
-        </Box>
-      </Dialog>
       {/* MODAL DETALLE DE MISIÓN */}
       <Dialog
         open={!!selectedMission}

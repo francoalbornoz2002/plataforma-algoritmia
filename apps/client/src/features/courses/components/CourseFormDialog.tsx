@@ -209,9 +209,9 @@ export default function CourseFormDialog({
 
     // Validar imagen si se seleccionó una nueva
     if (selectedFile) {
-      const allowedTypes = ["image/jpeg", "image/png"];
+      const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
       if (!allowedTypes.includes(selectedFile.type)) {
-        enqueueSnackbar("Solo se permiten archivos JPG, JPEG o PNG.", {
+        enqueueSnackbar("Solo se permiten archivos JPG, JPEG, PNG o GIF.", {
           variant: "error",
           anchorOrigin: { vertical: "top", horizontal: "center" },
         });
@@ -457,7 +457,7 @@ export default function CourseFormDialog({
                       {...register("imagen")}
                       onChange={handleFileChange}
                       inputProps={{
-                        accept: ".jpg,.jpeg,.png",
+                        accept: ".jpg,.jpeg,.png,.gif",
                       }}
                     />
                   </Button>
@@ -466,7 +466,7 @@ export default function CourseFormDialog({
                     color="text.secondary"
                     sx={{ mt: 0.5, textAlign: "center", display: "block" }}
                   >
-                    Tamaño máximo: 2 MB. Formatos: JPG, PNG.
+                    Tamaño máximo: 2 MB. Formatos: JPG, PNG, GIF.
                   </Typography>
                   <FormHelperText error={!!errors.imagen}>
                     {errors.imagen?.message as string}

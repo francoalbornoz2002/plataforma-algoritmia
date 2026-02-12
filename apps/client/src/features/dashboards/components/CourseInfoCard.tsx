@@ -1,4 +1,13 @@
-import { Paper, Stack, Box, Typography, Button } from "@mui/material";
+import {
+  Card,
+  CardContent,
+  CardMedia,
+  CardActions,
+  Stack,
+  Box,
+  Typography,
+  Button,
+} from "@mui/material";
 import {
   School,
   CalendarToday,
@@ -14,6 +23,9 @@ interface CourseInfoCardProps {
   onEdit?: () => void;
 }
 
+const baseUrl = import.meta.env.VITE_API_URL_WITHOUT_PREFIX;
+const FOTO_DEFAULT = "https://placehold.co/345x140.png?text=Curso";
+
 export default function CourseInfoCard({
   course,
   studentCount,
@@ -26,39 +38,30 @@ export default function CourseInfoCard({
     return `${d.nombre} ${d.apellido}`;
   };
 
+  const fullImageUrl = course.imagenUrl
+    ? `${baseUrl}${course.imagenUrl}`
+    : FOTO_DEFAULT;
+
   return (
-    <Paper
+    <Card
       elevation={2}
       sx={{
-        p: 2,
         height: "100%",
-        borderTop: "5px solid",
-        borderColor: "primary.main",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
-      <Stack spacing={2}>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            mb: 1,
-          }}
-        >
-          <Typography variant="h6" color="primary">
-            Información del Curso
-          </Typography>
-          {!isReadOnly && onEdit && (
-            <Button
-              startIcon={<Edit />}
-              size="small"
-              variant="outlined"
-              onClick={onEdit}
-            >
-              Editar Info
-            </Button>
-          )}
-        </Box>
+      <CardMedia
+        component="img"
+        sx={{ height: 140, objectFit: "cover" }}
+        image={fullImageUrl}
+        alt={`Imagen del curso ${course.nombre}`}
+      />
 
+      <CardContent sx={{ flexGrow: 1 }}>
+        <Typography variant="h6" color="primary" gutterBottom>
+          Información del Curso
+        </Typography>
         <Stack spacing={2}>
           <Stack spacing={1}>
             <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -107,7 +110,20 @@ export default function CourseInfoCard({
             </Box>
           </Stack>
         </Stack>
-      </Stack>
-    </Paper>
+      </CardContent>
+
+      {!isReadOnly && onEdit && (
+        <CardActions sx={{ justifyContent: "flex-end", p: 2, pt: 0 }}>
+          <Button
+            startIcon={<Edit />}
+            size="small"
+            variant="outlined"
+            onClick={onEdit}
+          >
+            Editar Info
+          </Button>
+        </CardActions>
+      )}
+    </Card>
   );
 }
