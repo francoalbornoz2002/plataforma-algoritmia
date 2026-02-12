@@ -910,6 +910,7 @@ export class ReportesService {
       if (!missionStats[c.idMision]) {
         missionStats[c.idMision] = {
           id: c.idMision,
+          numero: c.mision.numero,
           nombre: c.mision.nombre,
           dificultad: c.mision.dificultadMision,
           count: 0,
@@ -931,6 +932,7 @@ export class ReportesService {
       const uniqueCount = stat.uniqueStudents.size;
       return {
         id: stat.id,
+        numero: stat.numero,
         nombre: stat.nombre,
         dificultad: stat.dificultad,
         completadoPor: uniqueCount,
@@ -941,6 +943,9 @@ export class ReportesService {
         promIntentos: stat.totalIntentos / stat.count,
       };
     });
+
+    // Ordenar por número de misión
+    tableData.sort((a, b) => a.numero - b.numero);
 
     // 2. Gráfico de tiempo (Total de misiones completadas por fecha)
     const chartMap: Record<string, number> = {};
@@ -1004,7 +1009,13 @@ export class ReportesService {
 
       const misiones = await this.prisma.mision.findMany({
         where: whereMision,
-        select: { id: true, nombre: true, dificultadMision: true },
+        select: {
+          id: true,
+          numero: true,
+          nombre: true,
+          dificultadMision: true,
+        },
+        orderBy: { numero: 'asc' },
       });
       return { misionesDisponibles: misiones, detalle: null };
     }

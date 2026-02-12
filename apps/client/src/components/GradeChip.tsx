@@ -48,6 +48,9 @@ export default function GradeChip({ texto, grado, small }: GradeChipProps) {
       icon={icon}
       size={small ? "small" : "medium"}
       variant="filled"
+      sx={{
+        fontWeight: "bold",
+      }}
     />
   );
 }

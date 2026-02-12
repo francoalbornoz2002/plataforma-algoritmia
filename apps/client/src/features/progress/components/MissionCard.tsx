@@ -61,6 +61,7 @@ export default function MissionCard({ missionData }: MissionCardProps) {
   let nombre = "";
   let descripcion = "";
   let dificultad = null;
+  let numero: number | undefined;
 
   // Definimos explícitamente el tipo de la variable para que TS no se queje
   let completedData: MisionCompletada | MisionEspecial | null = null;
@@ -81,6 +82,7 @@ export default function MissionCard({ missionData }: MissionCardProps) {
     nombre = m.mision.nombre;
     descripcion = m.mision.descripcion;
     dificultad = m.mision.dificultadMision;
+    numero = m.mision.numero;
     completedData = m.completada;
   }
   // CASO C: MisionCompletada (Tiene objeto 'mision' y stats en la raíz)
@@ -89,6 +91,7 @@ export default function MissionCard({ missionData }: MissionCardProps) {
     nombre = m.mision.nombre;
     descripcion = m.mision.descripcion;
     dificultad = m.mision.dificultadMision;
+    numero = m.mision.numero;
     completedData = m;
   }
 
@@ -127,6 +130,25 @@ export default function MissionCard({ missionData }: MissionCardProps) {
               gap: 1,
             }}
           >
+            {numero !== undefined && (
+              <Box
+                component="span"
+                sx={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minWidth: 24,
+                  height: 24,
+                  borderRadius: "50%",
+                  bgcolor: "primary.main",
+                  color: "white",
+                  fontSize: "0.85rem",
+                  fontWeight: "bold",
+                }}
+              >
+                {numero}
+              </Box>
+            )}
             {nombre}
             {isSpecial && (
               <Chip label="Especial" color="secondary" size="small" />

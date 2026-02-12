@@ -604,7 +604,7 @@ export class ProgressService {
       // 2. Buscar TODAS las misiones maestras (ej: las 10 misiones)
       const allMissions = await this.prisma.mision.findMany({
         orderBy: {
-          dificultadMision: 'asc', // Opcional: ordenar Facil -> Dificil
+          numero: 'asc', // Ordenamos por número de misión para la secuencia narrativa
         },
         include: {
           // 3. Incluir el registro de "misionCompletada" SÓLO

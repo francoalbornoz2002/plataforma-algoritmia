@@ -4,6 +4,11 @@ import {
   Typography,
   Grid,
   CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  type SelectChangeEvent,
   Alert,
   Paper,
   Stack,
@@ -12,6 +17,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import StarIcon from "@mui/icons-material/Star";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import BoltIcon from "@mui/icons-material/Bolt";
 import ReplayIcon from "@mui/icons-material/Replay";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
@@ -20,6 +26,7 @@ import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
 // 1. Hooks y Servicios
+import { format } from "date-fns";
 import { useCourseContext } from "../../../context/CourseContext";
 import {
   getMyProgress,
@@ -27,7 +34,11 @@ import {
 } from "../../users/services/alumnos.service";
 
 // 2. Tipos
-import type { ProgresoAlumno, MisionConEstado } from "../../../types";
+import {
+  type ProgresoAlumno,
+  type MisionConEstado,
+  dificultad_mision,
+} from "../../../types";
 import MissionCard from "../components/MissionCard";
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 import DashboardStatCard from "../../dashboards/components/DashboardStatCard";
@@ -43,6 +54,18 @@ export default function MyProgressPage() {
   const [progress, setProgress] = useState<ProgresoAlumno | null>(null);
   const [missions, setMissions] = useState<MisionConEstado[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [filters, setFilters] = useState({
+    fechaDesde: "",
+    fechaHasta: "",
+    dificultad: "",
+    estado: "",
+    estrellas: "",
+  });
+  const [filteredMissions, setFilteredMissions] = useState<MisionConEstado[]>(
+    [],
+  );
+
   const [error, setError] = useState<string | null>(null);
 
   // --- 3. DATA FETCHING ---
@@ -58,9 +81,60 @@ export default function MyProgressPage() {
         setProgress(progressData);
         setMissions(missionsData);
       })
-      .catch((err) => setError(err.message))
+      .catch((error) => setError(error.message))
       .finally(() => setLoading(false));
   }, [selectedCourse]);
+
+  useEffect(() => {
+    let result = [...missions];
+
+    if (filters.fechaDesde) {
+      result = result.filter(
+        (m) =>
+          m.completada?.fechaCompletado &&
+          new Date(m.completada.fechaCompletado) >=
+            new Date(filters.fechaDesde + "T00:00:00"),
+      );
+    }
+
+    if (filters.fechaHasta) {
+      result = result.filter(
+        (m) =>
+          m.completada?.fechaCompletado &&
+          new Date(m.completada.fechaCompletado) <=
+            new Date(filters.fechaHasta + "T23:59:59"),
+      );
+    }
+
+    if (filters.dificultad) {
+      result = result.filter(
+        (m) => m.mision.dificultadMision === filters.dificultad,
+      );
+    }
+
+    if (filters.estado) {
+      result = result.filter((m) =>
+        filters.estado === "completada" ? m.completada : !m.completada,
+      );
+    }
+
+    if (filters.estrellas) {
+      result = result.filter(
+        (m) => m.completada?.estrellas === Number(filters.estrellas),
+      );
+    }
+
+    setFilteredMissions(result);
+  }, [filters, missions]);
+
+  const handleFilterChange = (
+    e: SelectChangeEvent<string> | React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setFilters((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
 
   // --- 4. RENDERIZADO ---
 
@@ -74,6 +148,9 @@ export default function MyProgressPage() {
 
   const isLoading = loading;
 
+  const TOTAL_MISIONES = missions.length;
+  const TOTAL_ESTRELLAS = TOTAL_MISIONES * 3;
+
   // Formateamos el valor de "Última Actividad"
   const ultimaActividadFormateada = progress?.ultimaActividad
     ? `hace ${formatDistanceToNow(new Date(progress.ultimaActividad), {
@@ -83,7 +160,13 @@ export default function MyProgressPage() {
     : "Nunca";
 
   return (
-    <Box sx={{ width: "100%" }}>
+    <Box
+      sx={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       {isLoading ? (
         <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
           <CircularProgress />
@@ -91,142 +174,232 @@ export default function MyProgressPage() {
       ) : error ? (
         <Alert severity="error">{error}</Alert>
       ) : progress ? (
-        <Stack spacing={3} sx={{ pb: 4 }}>
+        <Stack spacing={2} sx={{ height: "100%" }}>
           <HeaderPage
             title={`Mi Progreso en ${selectedCourse.nombre}`}
             description="Consulta tu avance y estadísticas de progreso en el curso"
             icon={<Assessment />}
             color="primary"
           />
-          <Paper elevation={2} component="section" sx={{ p: 2 }}>
-            <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
-              {/* KPIs */}
-              <Box sx={{ flex: 2 }}>
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <DashboardStatCard
-                      title="Misiones Completadas"
-                      value={progress.cantMisionesCompletadas}
-                      icon={<TaskAltIcon />}
-                      color="success"
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <DashboardTextCard
-                      title="Última Actividad"
-                      value={ultimaActividadFormateada}
-                      icon={<AccessTimeIcon />}
-                      color="info"
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <DashboardStatCard
-                      title="Estrellas Totales"
-                      value={progress.totalEstrellas}
-                      icon={<StarIcon />}
-                      color="warning"
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <DashboardStatCard
-                      title="Experiencia Total"
-                      value={progress.totalExp}
-                      icon={<BoltIcon />}
-                      color="primary"
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <DashboardStatCard
-                      title="Promedio Estrellas"
-                      value={progress.promEstrellas.toFixed(1)}
-                      icon={<StarIcon />}
-                      color="warning"
-                      subtitle="Por misión"
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <DashboardStatCard
-                      title="Promedio Intentos"
-                      value={progress.promIntentos.toFixed(1)}
-                      icon={<ReplayIcon />}
-                      color="info"
-                      subtitle="Por misión"
-                    />
-                  </Grid>
-                </Grid>
-              </Box>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, sm: 2 }}>
+              <DashboardStatCard
+                title="Misiones Completadas"
+                subtitle="Acumuladas en el curso"
+                value={`${progress.cantMisionesCompletadas} / ${TOTAL_MISIONES}`}
+                icon={<TaskAltIcon />}
+                color="success"
+              />
+            </Grid>
 
-              {/* Gráfico */}
-              <Box sx={{ flex: 1, minHeight: 300 }}>
-                <Paper
-                  elevation={3}
-                  sx={{
-                    p: 2,
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Typography variant="h6" gutterBottom>
-                    Gráfico de mi progreso
-                  </Typography>
-                  <Gauge
-                    value={progress.pctMisionesCompletadas}
-                    cornerRadius="50%"
-                    sx={{
-                      [`& .${gaugeClasses.valueText}`]: {
-                        fontSize: 35,
-                        fontWeight: "bold",
-                      },
-                      [`& .${gaugeClasses.valueArc}`]: {
-                        fill: "#4caf50",
-                      },
-                    }}
-                    text={({ value }) => `${value?.toFixed(1)}%`}
-                    height={250}
-                  />
-                </Paper>
-              </Box>
-            </Stack>
+            <Grid size={{ xs: 12, sm: 2 }}>
+              <DashboardStatCard
+                title="Estrellas Totales"
+                subtitle="Acumuladas en el curso"
+                value={`${progress.totalEstrellas} / ${TOTAL_ESTRELLAS}`}
+                icon={<StarIcon />}
+                color="warning"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 2 }}>
+              <DashboardStatCard
+                title="Experiencia Total"
+                subtitle="Acumuladas en el curso"
+                value={progress.totalExp}
+                icon={<BoltIcon />}
+                color="primary"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 2 }}>
+              <DashboardStatCard
+                title="Promedio Estrellas"
+                value={progress.promEstrellas.toFixed(1)}
+                icon={<StarIcon />}
+                color="warning"
+                subtitle="Por misión"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 2 }}>
+              <DashboardStatCard
+                title="Promedio Intentos"
+                value={progress.promIntentos.toFixed(1)}
+                icon={<ReplayIcon />}
+                color="info"
+                subtitle="Por misión"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 2 }}>
+              <DashboardTextCard
+                title="Última Actividad"
+                description="Completando una misión"
+                value={ultimaActividadFormateada}
+                icon={<AccessTimeIcon />}
+                color="info"
+              />
+            </Grid>
+          </Grid>
+          {/* Gráfico */}
+          <Paper
+            elevation={3}
+            sx={{
+              p: 2,
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Typography variant="h6" gutterBottom>
+              Gráfico de mi progreso
+            </Typography>
+            <Gauge
+              value={progress.pctMisionesCompletadas}
+              cornerRadius="50%"
+              sx={{
+                [`& .${gaugeClasses.valueText}`]: {
+                  fontSize: 35,
+                  fontWeight: "bold",
+                },
+                [`& .${gaugeClasses.valueArc}`]: {
+                  fill: "#4caf50",
+                },
+              }}
+              text={({ value }) => `${value?.toFixed(1)}%`}
+              height={250}
+            />
           </Paper>
 
           {/* --- SECCIÓN 1: MISIONES DE CAMPAÑA (Normales) --- */}
-          <Paper elevation={2} sx={{ p: 3 }}>
-            <Stack direction="row" alignItems="center" spacing={1} mb={2}>
-              <Box sx={{ color: "primary.main", display: "flex" }}>
+          <Paper elevation={2} sx={{ p: 2 }}>
+            <Stack spacing={2}>
+              <Stack
+                direction="row"
+                spacing={1}
+                alignItems="center"
+                color="primary.main"
+              >
                 <SportsEsportsIcon fontSize="large" />
-              </Box>
-              <Typography variant="h6" fontWeight="bold">
-                Misiones de Campaña
-              </Typography>
-            </Stack>
-            <Divider sx={{ mb: 3 }} />
+                <Typography variant="h6" fontWeight="bold">
+                  Misiones de Campaña
+                </Typography>
+              </Stack>
+              <Divider />
 
-            <Grid container spacing={2}>
-              {missions.map((m) => (
-                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={m.mision.id}>
-                  <MissionCard missionData={m} />
-                </Grid>
-              ))}
-              {!missions.length && (
-                <Grid size={{ xs: 12 }}>
-                  <Alert severity="info" sx={{ width: "100%" }}>
-                    No hay misiones completadas aún.
-                  </Alert>
-                </Grid>
-              )}
-            </Grid>
+              <Paper elevation={1} sx={{ pt: 1, pb: 2, pr: 2, pl: 2, mb: 2 }}>
+                <Typography variant="overline" sx={{ fontSize: "14px" }}>
+                  Filtros de búsqueda
+                </Typography>
+                <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+                  <DatePicker
+                    label="Fecha de inicio"
+                    value={
+                      filters.fechaDesde
+                        ? new Date(filters.fechaDesde + "T00:00:00")
+                        : null
+                    }
+                    onChange={(val) =>
+                      setFilters({
+                        ...filters,
+                        fechaDesde: val ? format(val, "yyyy-MM-dd") : "",
+                      })
+                    }
+                    slotProps={{ textField: { size: "small" } }}
+                    disableFuture
+                  />
+                  <DatePicker
+                    label="Fecha de fin"
+                    value={
+                      filters.fechaHasta
+                        ? new Date(filters.fechaHasta + "T00:00:00")
+                        : null
+                    }
+                    onChange={(val) =>
+                      setFilters({
+                        ...filters,
+                        fechaHasta: val ? format(val, "yyyy-MM-dd") : "",
+                      })
+                    }
+                    slotProps={{ textField: { size: "small" } }}
+                    disableFuture
+                  />
+                  <FormControl size="small" sx={{ minWidth: 160 }}>
+                    <InputLabel>Dificultad</InputLabel>
+                    <Select
+                      name="dificultad"
+                      value={filters.dificultad}
+                      label="Dificultad"
+                      onChange={handleFilterChange}
+                    >
+                      <MenuItem value="">Todos</MenuItem>
+                      <MenuItem value={dificultad_mision.Facil}>Fácil</MenuItem>
+                      <MenuItem value={dificultad_mision.Medio}>Medio</MenuItem>
+                      <MenuItem value={dificultad_mision.Dificil}>
+                        Difícil
+                      </MenuItem>
+                    </Select>
+                  </FormControl>
+                  <FormControl size="small" sx={{ minWidth: 160 }}>
+                    <InputLabel>Estado</InputLabel>
+                    <Select
+                      name="estado"
+                      value={filters.estado}
+                      label="Estado"
+                      onChange={handleFilterChange}
+                    >
+                      <MenuItem value="">Todos</MenuItem>
+                      <MenuItem value="completada">Completada</MenuItem>
+                      <MenuItem value="pendiente">Pendiente</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <FormControl size="small" sx={{ minWidth: 160 }}>
+                    <InputLabel>Estrellas</InputLabel>
+                    <Select
+                      name="estrellas"
+                      value={filters.estrellas}
+                      label="Estrellas"
+                      onChange={handleFilterChange}
+                    >
+                      <MenuItem value="">Todos</MenuItem>
+                      <MenuItem value={1}>1</MenuItem>
+                      <MenuItem value={2}>2</MenuItem>
+                      <MenuItem value={3}>3</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Stack>
+              </Paper>
+
+              <Grid container spacing={2}>
+                {filteredMissions.map((m) => (
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={m.mision.id}>
+                    <MissionCard missionData={m} />
+                  </Grid>
+                ))}
+                {filteredMissions.length === 0 && missions.length > 0 && (
+                  <Grid size={{ xs: 12 }}>
+                    <Alert severity="info" sx={{ width: "100%" }}>
+                      No se encontraron misiones con los filtros aplicados.
+                    </Alert>
+                  </Grid>
+                )}
+                {missions.length === 0 && !loading && (
+                  <Grid size={{ xs: 12 }}>
+                    <Alert severity="info" sx={{ width: "100%" }}>
+                      No hay misiones de campaña en este curso.
+                    </Alert>
+                  </Grid>
+                )}
+              </Grid>
+            </Stack>
           </Paper>
 
           {/* --- SECCIÓN 2: MISIONES ESPECIALES --- */}
           <Paper elevation={2} sx={{ p: 3, borderLeft: "6px solid #9c27b0" }}>
             <Stack direction="row" alignItems="center" spacing={1} mb={2}>
-              <Box sx={{ color: "secondary.main", display: "flex" }}>
+              <Box sx={{ color: "#9c27b0", display: "flex" }}>
                 <AutoAwesomeIcon fontSize="large" />
               </Box>
-              <Typography variant="h6" fontWeight="bold" color="secondary.main">
+              <Typography variant="h6" fontWeight="bold" color="#9c27b0">
                 Misiones Especiales
               </Typography>
             </Stack>
@@ -240,14 +413,7 @@ export default function MyProgressPage() {
               ))}
               {!progress.misionesEspeciales?.length && (
                 <Grid size={{ xs: 12 }}>
-                  <Alert
-                    severity="info"
-                    sx={{
-                      width: "100%",
-                      bgcolor: "#f3e5f5",
-                      color: "#6a1b9a",
-                    }}
-                  >
+                  <Alert severity="info">
                     No tienes misiones especiales registradas.
                   </Alert>
                 </Grid>

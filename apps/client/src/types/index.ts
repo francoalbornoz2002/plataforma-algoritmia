@@ -351,6 +351,7 @@ export interface DificultadConTema extends DificultadSimple {
 // 1. Tipo para la Misión Maestra (de la tabla 'misiones')
 export interface Mision {
   id: string;
+  numero: number;
   nombre: string;
   descripcion: string;
   dificultadMision: dificultad_mision;

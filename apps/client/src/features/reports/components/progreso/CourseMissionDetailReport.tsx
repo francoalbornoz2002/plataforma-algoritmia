@@ -178,7 +178,7 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
               <MenuItem value="">-- Seleccione --</MenuItem>
               {missionsList.map((m) => (
                 <MenuItem key={m.id} value={m.id}>
-                  {m.nombre} ({m.dificultadMision})
+                  {m.numero}. {m.nombre} ({m.dificultadMision})
                 </MenuItem>
               ))}
             </Select>

@@ -182,8 +182,14 @@ export default function MisSesionesPage() {
   }
 
   return (
-    <Box>
-      <Stack spacing={1} sx={{ height: "100%" }}>
+    <Box
+      sx={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Stack spacing={2} sx={{ height: "100%" }}>
         {/* --- TÍTULO --- */}
         <HeaderPage
           title={`Mis Sesiones en ${selectedCourse.nombre}`}

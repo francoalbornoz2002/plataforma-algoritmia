@@ -38,19 +38,17 @@ export default function DifficultyCard({ dificultad }: DificultadCardProps) {
     >
       <CardContent>
         {/* Fila 1: Título y Grado */}
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            mb: 1,
-          }}
+        <Stack
+          direction="row"
+          spacing={0.5}
+          justifyContent="space-between"
+          alignItems="flex-start"
         >
           <Typography variant="h6" component="div" sx={{ lineHeight: 1.3 }}>
             {nombre}
           </Typography>
-          <GradeChip grado={grado} />
-        </Box>
+          <GradeChip grado={grado} small />
+        </Stack>
 
         {/* Fila 2: Tema */}
         <Stack direction="row" spacing={1} sx={{ mt: 1, mb: 2 }}>

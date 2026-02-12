@@ -80,6 +80,13 @@ export default function CourseMissionsReport({ courseId }: Props) {
   };
 
   const columns: GridColDef[] = [
+    {
+      field: "numero",
+      headerName: "#",
+      width: 50,
+      align: "center",
+      headerAlign: "center",
+    },
     { field: "nombre", headerName: "Misión", flex: 1 },
     { field: "dificultad", headerName: "Dificultad", width: 120 },
     {
