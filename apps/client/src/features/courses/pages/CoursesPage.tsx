@@ -40,6 +40,8 @@ import {
 import ConfirmationDialog from "../../../components/ConfirmationDialog";
 import CourseFormDialog from "../components/CourseFormDialog";
 import { enqueueSnackbar } from "notistack";
+import HeaderPage from "../../../components/HeaderPage";
+import { School } from "@mui/icons-material";
 
 // Definimos opciones de ordenamiento
 const sortOptions = [
@@ -330,11 +332,15 @@ export default function CoursesPage() {
         flexDirection: "column",
       }}
     >
-      {/* --- Filtros y botón de añadir curso --- */}
-      <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
-        <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
-          Filtros de búsqueda
-        </Typography>
+      <Stack spacing={2} sx={{ height: "100%" }}>
+        {/* --- ENCABEZADO --- */}
+        <HeaderPage
+          title="Usuarios del sistema"
+          description="Gestiona y administra los usuarios de la plataforma."
+          icon={<School />}
+          color="primary"
+        />
+        {/* --- FILTROS Y ORDEN --- */}
         <Stack direction="row" spacing={2} alignItems="center">
           <TextField
             size="small"
@@ -347,7 +353,10 @@ export default function CoursesPage() {
           {/* --- Filtro por ordenamiento --- */}
           <FormControl
             size="small"
-            sx={{ minWidth: 200, width: { xs: "100%", sm: "auto" } }}
+            sx={{
+              minWidth: 200,
+              width: { xs: "100%", sm: "auto" },
+            }}
           >
             <InputLabel>Ordenar por</InputLabel>
             <Select
@@ -388,7 +397,9 @@ export default function CoursesPage() {
               );
             }}
             style={{ minWidth: 250 }}
-            sx={{ width: { xs: "100%", sm: "auto" } }}
+            sx={{
+              width: { xs: "100%", sm: "auto" },
+            }}
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -410,7 +421,12 @@ export default function CoursesPage() {
             )}
           />
           {/* --- Filtro de Estado --- */}
-          <FormControl size="small" sx={{ minWidth: 150 }}>
+          <FormControl
+            size="small"
+            sx={{
+              minWidth: 150,
+            }}
+          >
             <InputLabel>Estado</InputLabel>
             <Select value={estado} label="Estado" onChange={handleEstadoChange}>
               <MenuItem value="">
@@ -437,99 +453,99 @@ export default function CoursesPage() {
             Crear Curso
           </Button>
         </Stack>
-      </Paper>
 
-      {/* --- Loading / Error / Content --- */}
-      {isLoading ? (
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            flexGrow: 1,
-          }}
-        >
-          <CircularProgress />
-        </Box>
-      ) : error ? (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {error}
-        </Alert>
-      ) : (
-        <>
-          {/* --- Grid for Cards --- */}
-          <Box sx={{ flexGrow: 1 }}>
-            <Grid container spacing={3}>
-              {cursos.length > 0 ? (
-                cursos.map((curso) => (
-                  // --- Grid Item ---
-                  <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={curso.id}>
-                    <CourseCard
-                      course={curso}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                      onFinalize={handleFinalize}
-                    />
-                  </Grid>
-                ))
-              ) : (
-                // --- Y AQUÍ TAMBIÉN ---
-                <Grid size={12}>
-                  {" "}
-                  <Typography sx={{ textAlign: "center", mt: 4 }}>
-                    No se encontraron cursos.
-                  </Typography>
-                </Grid>
-              )}
-            </Grid>
+        {/* --- Loading / Error / Content --- */}
+        {isLoading ? (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              flexGrow: 1,
+            }}
+          >
+            <CircularProgress />
           </Box>
-
-          {/* --- Pagination --- */}
-          {totalPages > 1 && (
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                py: 2,
-                mt: "auto",
-              }}
-            >
-              <Pagination
-                count={totalPages}
-                page={page}
-                onChange={handlePageChange}
-                color="primary"
-              />
+        ) : error ? (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {error}
+          </Alert>
+        ) : (
+          <>
+            {/* --- Grid for Cards --- */}
+            <Box sx={{ flexGrow: 1 }}>
+              <Grid container spacing={3}>
+                {cursos.length > 0 ? (
+                  cursos.map((curso) => (
+                    // --- Grid Item ---
+                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={curso.id}>
+                      <CourseCard
+                        course={curso}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                        onFinalize={handleFinalize}
+                      />
+                    </Grid>
+                  ))
+                ) : (
+                  // --- Y AQUÍ TAMBIÉN ---
+                  <Grid size={12}>
+                    {" "}
+                    <Typography sx={{ textAlign: "center", mt: 4 }}>
+                      No se encontraron cursos.
+                    </Typography>
+                  </Grid>
+                )}
+              </Grid>
             </Box>
-          )}
-        </>
-      )}
 
-      {/* --- Modals --- */}
-      <CourseFormDialog
-        open={isModalOpen}
-        onClose={handleCloseModal}
-        courseToEditId={editingCourseId}
-        onSave={handleSaveCourse}
-      />
+            {/* --- Pagination --- */}
+            {totalPages > 1 && (
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  py: 2,
+                  mt: "auto",
+                }}
+              >
+                <Pagination
+                  count={totalPages}
+                  page={page}
+                  onChange={handlePageChange}
+                  color="primary"
+                />
+              </Box>
+            )}
+          </>
+        )}
 
-      <ConfirmationDialog
-        open={isDeleteDialogOpen}
-        onClose={handleCloseDeleteDialog}
-        onConfirm={confirmDelete}
-        title="Confirmar Baja de Curso"
-        description="¿Estás seguro de que quieres dar de baja este curso? Esta acción es reversible."
-        isLoading={isDeleting}
-      />
+        {/* --- Modals --- */}
+        <CourseFormDialog
+          open={isModalOpen}
+          onClose={handleCloseModal}
+          courseToEditId={editingCourseId}
+          onSave={handleSaveCourse}
+        />
 
-      <ConfirmationDialog
-        open={isFinalizeDialogOpen}
-        onClose={handleCloseFinalizeDialog}
-        onConfirm={confirmFinalize}
-        title="Confirmar Finalización de Curso"
-        description="¿Estás seguro de finalizar este curso? Se cerrarán las actas, se cancelarán clases pendientes y pasará a modo 'Solo Lectura' para el historial. Esta acción marca el fin del ciclo lectivo."
-        isLoading={isDeleting}
-      />
+        <ConfirmationDialog
+          open={isDeleteDialogOpen}
+          onClose={handleCloseDeleteDialog}
+          onConfirm={confirmDelete}
+          title="Confirmar Baja de Curso"
+          description="¿Estás seguro de que quieres dar de baja este curso? Esta acción es reversible."
+          isLoading={isDeleting}
+        />
+
+        <ConfirmationDialog
+          open={isFinalizeDialogOpen}
+          onClose={handleCloseFinalizeDialog}
+          onConfirm={confirmFinalize}
+          title="Confirmar Finalización de Curso"
+          description="¿Estás seguro de finalizar este curso? Se cerrarán las actas, se cancelarán clases pendientes y pasará a modo 'Solo Lectura' para el historial. Esta acción marca el fin del ciclo lectivo."
+          isLoading={isDeleting}
+        />
+      </Stack>
     </Box>
   );
 }

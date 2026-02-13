@@ -29,6 +29,7 @@ import {
 } from "../../../types";
 import MissionCard from "./MissionCard";
 import { AutoAwesome, SportsEsports } from "@mui/icons-material";
+import { datePickerConfig } from "../../../config/theme.config";
 
 interface StudentProgressDetailModalProps {
   open: boolean;
@@ -167,7 +168,7 @@ export default function StudentProgressDetailModal({
                         fechaDesde: val ? format(val, "yyyy-MM-dd") : "",
                       })
                     }
-                    slotProps={{ textField: { size: "small" } }}
+                    {...datePickerConfig}
                     disableFuture
                   />
                   <DatePicker
@@ -183,7 +184,7 @@ export default function StudentProgressDetailModal({
                         fechaHasta: val ? format(val, "yyyy-MM-dd") : "",
                       })
                     }
-                    slotProps={{ textField: { size: "small" } }}
+                    {...datePickerConfig}
                     disableFuture
                   />
                   <FormControl size="small" sx={{ minWidth: 160 }}>

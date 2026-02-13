@@ -43,11 +43,11 @@ import {
   dificultad_mision,
 } from "../../../types";
 import MissionCard from "../components/MissionCard";
-import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 import DashboardStatCard from "../../dashboards/components/DashboardStatCard";
 import DashboardTextCard from "../../dashboards/components/DashboardTextCard";
 import { Assessment } from "@mui/icons-material";
 import HeaderPage from "client/src/components/HeaderPage";
+import { datePickerConfig } from "../../../config/theme.config";
 
 export default function MyProgressPage() {
   // --- 1. CONTEXTO ---
@@ -253,136 +253,121 @@ export default function MyProgressPage() {
           </Grid>
 
           {/* --- SECCIÓN 1: MISIONES DE CAMPAÑA (Normales) --- */}
-          <Paper elevation={2} sx={{ p: 2 }}>
-            <Stack spacing={2}>
-              <Stack
-                direction="row"
-                spacing={1}
-                alignItems="center"
-                color="primary.main"
-              >
-                <SportsEsportsIcon fontSize="large" />
-                <Typography variant="h6" fontWeight="bold">
-                  Misiones de Campaña
-                </Typography>
-              </Stack>
-              <Divider />
+          <Stack spacing={2}>
+            <HeaderPage
+              title="Misiones de campaña"
+              icon={<SportsEsportsIcon />}
+              description="Revisa el estado de tus misiones completadas en el videojuego"
+              color="primary"
+            />
 
-              <Paper elevation={1} sx={{ pt: 1, pb: 2, pr: 2, pl: 2, mb: 2 }}>
-                <Typography variant="overline" sx={{ fontSize: "14px" }}>
-                  Filtros de búsqueda
-                </Typography>
-                <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
-                  <DatePicker
-                    label="Fecha de inicio"
-                    value={
-                      filters.fechaDesde
-                        ? new Date(filters.fechaDesde + "T00:00:00")
-                        : null
-                    }
-                    onChange={(val) =>
-                      setFilters({
-                        ...filters,
-                        fechaDesde: val ? format(val, "yyyy-MM-dd") : "",
-                      })
-                    }
-                    slotProps={{ textField: { size: "small" } }}
-                    disableFuture
-                  />
-                  <DatePicker
-                    label="Fecha de fin"
-                    value={
-                      filters.fechaHasta
-                        ? new Date(filters.fechaHasta + "T00:00:00")
-                        : null
-                    }
-                    onChange={(val) =>
-                      setFilters({
-                        ...filters,
-                        fechaHasta: val ? format(val, "yyyy-MM-dd") : "",
-                      })
-                    }
-                    slotProps={{ textField: { size: "small" } }}
-                    disableFuture
-                  />
-                  <FormControl size="small" sx={{ minWidth: 160 }}>
-                    <InputLabel>Dificultad</InputLabel>
-                    <Select
-                      name="dificultad"
-                      value={filters.dificultad}
-                      label="Dificultad"
-                      onChange={handleFilterChange}
-                    >
-                      <MenuItem value="">Todos</MenuItem>
-                      <MenuItem value={dificultad_mision.Facil}>Fácil</MenuItem>
-                      <MenuItem value={dificultad_mision.Medio}>Medio</MenuItem>
-                      <MenuItem value={dificultad_mision.Dificil}>
-                        Difícil
-                      </MenuItem>
-                    </Select>
-                  </FormControl>
-                  <FormControl size="small" sx={{ minWidth: 160 }}>
-                    <InputLabel>Estado</InputLabel>
-                    <Select
-                      name="estado"
-                      value={filters.estado}
-                      label="Estado"
-                      onChange={handleFilterChange}
-                    >
-                      <MenuItem value="">Todos</MenuItem>
-                      <MenuItem value="completada">Completada</MenuItem>
-                      <MenuItem value="pendiente">Pendiente</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <FormControl size="small" sx={{ minWidth: 160 }}>
-                    <InputLabel>Estrellas</InputLabel>
-                    <Select
-                      name="estrellas"
-                      value={filters.estrellas}
-                      label="Estrellas"
-                      onChange={handleFilterChange}
-                    >
-                      <MenuItem value="">Todos</MenuItem>
-                      <MenuItem value={1}>1</MenuItem>
-                      <MenuItem value={2}>2</MenuItem>
-                      <MenuItem value={3}>3</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <Tooltip title="Limpiar filtros">
-                    <IconButton
-                      onClick={handleClearFilters}
-                      size="small"
-                      color="primary"
-                    >
-                      <FilterAltOffIcon />
-                    </IconButton>
-                  </Tooltip>
-                </Stack>
-              </Paper>
-
-              <Grid container spacing={2}>
-                {filteredMissions.map((m) => (
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={m.mision.id}>
-                    <MissionCard missionData={m} />
-                  </Grid>
-                ))}
-                {filteredMissions.length === 0 && missions.length > 0 && (
-                  <Grid size={{ xs: 12 }}>
-                    <Alert severity="info" sx={{ width: "100%" }}>
-                      No se encontraron misiones con los filtros aplicados.
-                    </Alert>
-                  </Grid>
-                )}
-                {missions.length === 0 && !loading && (
-                  <Grid size={{ xs: 12 }}>
-                    <Alert severity="info" sx={{ width: "100%" }}>
-                      No hay misiones de campaña en este curso.
-                    </Alert>
-                  </Grid>
-                )}
-              </Grid>
+            <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+              <DatePicker
+                label="Fecha de inicio"
+                value={
+                  filters.fechaDesde
+                    ? new Date(filters.fechaDesde + "T00:00:00")
+                    : null
+                }
+                onChange={(val) =>
+                  setFilters({
+                    ...filters,
+                    fechaDesde: val ? format(val, "yyyy-MM-dd") : "",
+                  })
+                }
+                {...datePickerConfig}
+                disableFuture
+              />
+              <DatePicker
+                label="Fecha de fin"
+                value={
+                  filters.fechaHasta
+                    ? new Date(filters.fechaHasta + "T00:00:00")
+                    : null
+                }
+                onChange={(val) =>
+                  setFilters({
+                    ...filters,
+                    fechaHasta: val ? format(val, "yyyy-MM-dd") : "",
+                  })
+                }
+                {...datePickerConfig}
+                disableFuture
+              />
+              <FormControl size="small" sx={{ minWidth: 160 }}>
+                <InputLabel>Dificultad</InputLabel>
+                <Select
+                  name="dificultad"
+                  value={filters.dificultad}
+                  label="Dificultad"
+                  onChange={handleFilterChange}
+                >
+                  <MenuItem value="">Todos</MenuItem>
+                  <MenuItem value={dificultad_mision.Facil}>Fácil</MenuItem>
+                  <MenuItem value={dificultad_mision.Medio}>Medio</MenuItem>
+                  <MenuItem value={dificultad_mision.Dificil}>Difícil</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 160 }}>
+                <InputLabel>Estado</InputLabel>
+                <Select
+                  name="estado"
+                  value={filters.estado}
+                  label="Estado"
+                  onChange={handleFilterChange}
+                >
+                  <MenuItem value="">Todos</MenuItem>
+                  <MenuItem value="completada">Completada</MenuItem>
+                  <MenuItem value="pendiente">Pendiente</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 160 }}>
+                <InputLabel>Estrellas</InputLabel>
+                <Select
+                  name="estrellas"
+                  value={filters.estrellas}
+                  label="Estrellas"
+                  onChange={handleFilterChange}
+                >
+                  <MenuItem value="">Todos</MenuItem>
+                  <MenuItem value={1}>1</MenuItem>
+                  <MenuItem value={2}>2</MenuItem>
+                  <MenuItem value={3}>3</MenuItem>
+                </Select>
+              </FormControl>
+              <Tooltip title="Limpiar filtros">
+                <IconButton
+                  onClick={handleClearFilters}
+                  size="small"
+                  color="primary"
+                >
+                  <FilterAltOffIcon />
+                </IconButton>
+              </Tooltip>
             </Stack>
-          </Paper>
+
+            <Grid container spacing={2}>
+              {filteredMissions.map((m) => (
+                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={m.mision.id}>
+                  <MissionCard missionData={m} />
+                </Grid>
+              ))}
+              {filteredMissions.length === 0 && missions.length > 0 && (
+                <Grid size={{ xs: 12 }}>
+                  <Alert severity="info" sx={{ width: "100%" }}>
+                    No se encontraron misiones con los filtros aplicados.
+                  </Alert>
+                </Grid>
+              )}
+              {missions.length === 0 && !loading && (
+                <Grid size={{ xs: 12 }}>
+                  <Alert severity="info" sx={{ width: "100%" }}>
+                    No hay misiones de campaña en este curso.
+                  </Alert>
+                </Grid>
+              )}
+            </Grid>
+          </Stack>
 
           {/* --- SECCIÓN 2: MISIONES ESPECIALES --- */}
           <Paper elevation={2} sx={{ p: 3, borderLeft: "6px solid #9c27b0" }}>

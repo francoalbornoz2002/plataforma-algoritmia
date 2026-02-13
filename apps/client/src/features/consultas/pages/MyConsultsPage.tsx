@@ -45,6 +45,7 @@ import ConsultaPublicaAccordion from "../components/ConsultaPublicaAccordion";
 import { EstadoConsultaLabels, TemasLabels } from "../../../types/traducciones";
 import HeaderPage from "../../../components/HeaderPage";
 import { MarkUnreadChatAlt } from "@mui/icons-material";
+import { datePickerConfig } from "../../../config/theme.config";
 
 const PAGE_SIZE = 5;
 
@@ -262,8 +263,18 @@ export default function MyConsultsPage() {
                 setFilters((prev) => ({ ...prev, fechaDesde: newValue }));
                 setPage(1);
               }}
+              {...datePickerConfig}
               slotProps={{
-                textField: { size: "small", sx: { width: 165 } },
+                textField: {
+                  ...datePickerConfig.slotProps.textField,
+                  InputProps: {
+                    sx: {
+                      ...datePickerConfig.slotProps.textField.InputProps.sx,
+                      width: 165,
+                    },
+                  },
+                  sx: { width: 165 },
+                },
               }}
             />
             <DatePicker
@@ -273,8 +284,18 @@ export default function MyConsultsPage() {
                 setFilters((prev) => ({ ...prev, fechaHasta: newValue }));
                 setPage(1);
               }}
+              {...datePickerConfig}
               slotProps={{
-                textField: { size: "small", sx: { width: 165 } },
+                textField: {
+                  ...datePickerConfig.slotProps.textField,
+                  InputProps: {
+                    sx: {
+                      ...datePickerConfig.slotProps.textField.InputProps.sx,
+                      width: 165,
+                    },
+                  },
+                  sx: { width: 165 },
+                },
               }}
             />
             <FormControl size="small" sx={{ width: 220 }}>

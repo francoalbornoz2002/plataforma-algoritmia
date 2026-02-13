@@ -42,6 +42,7 @@ import InfoIcon from "@mui/icons-material/Info";
 import UserDetailModal from "../components/UserDetailModal";
 import PdfExportButton from "../../reports/components/common/PdfExportButton";
 import CsvExportButton from "../../reports/components/common/CsvExportButton";
+import { datePickerConfig } from "../../../config/theme.config";
 
 // 1. Hooks y Servicios
 
@@ -476,11 +477,15 @@ export default function AuditPage() {
             label="Fecha Desde"
             value={filters.fechaDesde ? parseISO(filters.fechaDesde) : null}
             onChange={(newDate) => handleDateChange("fechaDesde", newDate)}
+            {...datePickerConfig}
             slotProps={{
               textField: {
-                size: "small",
+                ...datePickerConfig.slotProps.textField,
                 InputProps: {
-                  sx: { borderRadius: "0.7em", width: 170 },
+                  sx: {
+                    ...datePickerConfig.slotProps.textField.InputProps.sx,
+                    width: 170,
+                  },
                 },
                 sx: { width: 170 },
               },
@@ -490,11 +495,15 @@ export default function AuditPage() {
             label="Fecha Hasta"
             value={filters.fechaHasta ? parseISO(filters.fechaHasta) : null}
             onChange={(newDate) => handleDateChange("fechaHasta", newDate)}
+            {...datePickerConfig}
             slotProps={{
               textField: {
-                size: "small",
+                ...datePickerConfig.slotProps.textField,
                 InputProps: {
-                  sx: { borderRadius: "0.7em", width: 170 },
+                  sx: {
+                    ...datePickerConfig.slotProps.textField.InputProps.sx,
+                    width: 170,
+                  },
                 },
                 sx: { width: 170 },
               },

@@ -30,6 +30,7 @@ import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import PersonIcon from "@mui/icons-material/Person";
 import StarIcon from "@mui/icons-material/Star";
 import ReplayIcon from "@mui/icons-material/Replay";
+import { datePickerConfig } from "../../../../config/theme.config";
 
 interface Props {
   courseId: string;
@@ -197,7 +198,7 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
                 fechaDesde: val ? format(val, "yyyy-MM-dd") : "",
               })
             }
-            slotProps={{ textField: { size: "small" } }}
+            {...datePickerConfig}
             disableFuture
             minDate={courseCreatedAt ? new Date(courseCreatedAt) : undefined}
           />
@@ -214,7 +215,7 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
                 fechaHasta: val ? format(val, "yyyy-MM-dd") : "",
               })
             }
-            slotProps={{ textField: { size: "small" } }}
+            {...datePickerConfig}
             disableFuture
             minDate={courseCreatedAt ? new Date(courseCreatedAt) : undefined}
           />

@@ -40,6 +40,7 @@ import {
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import PdfExportButton from "../common/PdfExportButton";
 import ExcelExportButton from "../common/ExcelExportButton";
+import { datePickerConfig } from "../../../../config/theme.config";
 
 interface Props {
   courseId: string;
@@ -349,7 +350,19 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
                   fechaDesde: val ? format(val, "yyyy-MM-dd") : "",
                 })
               }
-              slotProps={{ textField: { size: "small", sx: { width: 170 } } }}
+              {...datePickerConfig}
+              slotProps={{
+                textField: {
+                  ...datePickerConfig.slotProps.textField,
+                  InputProps: {
+                    sx: {
+                      ...datePickerConfig.slotProps.textField.InputProps.sx,
+                      width: 170,
+                    },
+                  },
+                  sx: { width: 170 },
+                },
+              }}
             />
             <DatePicker
               label="Fecha Hasta"
@@ -364,7 +377,19 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
                   fechaHasta: val ? format(val, "yyyy-MM-dd") : "",
                 })
               }
-              slotProps={{ textField: { size: "small", sx: { width: 170 } } }}
+              {...datePickerConfig}
+              slotProps={{
+                textField: {
+                  ...datePickerConfig.slotProps.textField,
+                  InputProps: {
+                    sx: {
+                      ...datePickerConfig.slotProps.textField.InputProps.sx,
+                      width: 170,
+                    },
+                  },
+                  sx: { width: 170 },
+                },
+              }}
             />
 
             <FormControl size="small" sx={{ minWidth: 190 }}>

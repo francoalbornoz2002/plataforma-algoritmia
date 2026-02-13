@@ -49,6 +49,8 @@ import {
   findUsers,
   type FindUsersParams,
 } from "../services/user.service";
+import HeaderPage from "../../../components/HeaderPage";
+import { People } from "@mui/icons-material";
 
 // --- 2. DEFINE LA LISTA DE ROLES DISPONIBLES ---
 // (Usamos los valores del enum)
@@ -87,7 +89,7 @@ export default function UsersPage() {
 
   // ----- ESTADO PARA ORDENAMIENTO ----- //
   const [sortModel, setSortModel] = useState<GridSortModel>([
-    { field: "nombre", sort: "asc" }, // Campo a filtrar, por defecto apellido.
+    { field: "apellido", sort: "asc" },
   ]);
 
   // ----- ESTADOs PARA LOS MODALES (para crear, editar y eliminar) ----- //
@@ -145,7 +147,7 @@ export default function UsersPage() {
         setError(
           err?.response?.data?.message ||
             err.message ||
-            "Error al cargar los usuarios."
+            "Error al cargar los usuarios.",
         );
         setData({ rows: [], total: 0 }); // Limpia los datos en caso de error
       } finally {
@@ -202,7 +204,7 @@ export default function UsersPage() {
       setError(
         err?.response?.data?.message ||
           err.message ||
-          "Error al dar de baja al usuario."
+          "Error al dar de baja al usuario.",
       );
       // Keep dialog open on error? Or close? User decision.
       // handleCloseDeleteDialog(); // Close even on error?
@@ -230,7 +232,7 @@ export default function UsersPage() {
       setError(
         err?.response?.data?.message ||
           err.message ||
-          "Error al guardar el usuario."
+          "Error al guardar el usuario.",
       );
     }
   };
@@ -241,10 +243,8 @@ export default function UsersPage() {
 
   // --- Definición de Columnas para DataGrid ---
   const columns: GridColDef<UserData>[] = [
-    // ID (generalmente se oculta o se usa para lógica interna)
-    // { field: 'id', headerName: 'ID', width: 90 },
-    { field: "nombre", headerName: "Nombre", width: 150, editable: false }, // Editable: false si no usas edición inline
     { field: "apellido", headerName: "Apellido", width: 150 },
+    { field: "nombre", headerName: "Nombre", width: 150, editable: false }, // Editable: false si no usas edición inline
     {
       field: "dni",
       headerName: "DNI",
@@ -285,7 +285,7 @@ export default function UsersPage() {
       },
       // Renderiza un Chip de color según el estado
       renderCell: (
-        params: GridRenderCellParams<UserData, "Activo" | "Inactivo">
+        params: GridRenderCellParams<UserData, "Activo" | "Inactivo">,
       ) => (
         <Chip
           label={params.value}
@@ -341,7 +341,7 @@ export default function UsersPage() {
     } = event;
     setRoles(
       // On autofill we get a stringified value.
-      typeof value === "string" ? value.split(",") : value
+      typeof value === "string" ? value.split(",") : value,
     );
   };
 
@@ -353,10 +353,16 @@ export default function UsersPage() {
         flexDirection: "column",
       }}
     >
-      <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
-        <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
-          Filtros de búsqueda
-        </Typography>
+      <Stack spacing={2} sx={{ height: "100%" }}>
+        {/* --- ENCABEZADO --- */}
+        <HeaderPage
+          title="Usuarios del sistema"
+          description="Gestiona y administra los usuarios de la plataforma."
+          icon={<People />}
+          color="primary"
+        />
+
+        {/* --- FILTROS Y ORDEN --- */}
         <Stack direction="row" spacing={2} alignItems="center">
           <TextField
             size="small"
@@ -408,104 +414,105 @@ export default function UsersPage() {
             Crear Usuario
           </Button>
         </Stack>
-      </Paper>
 
-      {/* Muestra un error si falló la carga */}
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
-          {" "}
-          {/* Allow closing the error */}
-          {error}
-        </Alert>
-      )}
+        {/* Muestra un error si falló la carga */}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+            {" "}
+            {/* Allow closing the error */}
+            {error}
+          </Alert>
+        )}
 
-      {/* --- Tabla de Datos --- */}
-      <Box sx={{ flexGrow: 1, width: "100%" }}>
-        <DataGrid
-          rows={data.rows}
-          columns={columns}
-          loading={isLoading}
-          getRowId={(row) => row.id}
-          // --- 1. CONEXIÓN CON EL SERVIDOR ---
-          rowCount={data.total} // El total de filas en la BD
-          paginationMode="server" // Le dice que la paginación es en el backend
-          sortingMode="server" // Le dice que el orden es en el backend
-          // --- 2. CONEXIÓN CON EL ESTADO DE PAGINACIÓN ---
-          pageSizeOptions={[7, 10, 20]}
-          paginationModel={paginationModel} // <-- Lee el estado
-          onPaginationModelChange={setPaginationModel} // <-- Actualiza el estado
-          // --- 3. CONEXIÓN CON EL ESTADO DE ORDENAMIENTO ---
-          sortModel={sortModel} // <-- Lee el estado
-          onSortModelChange={setSortModel} // <-- Lee el modelo de ordenamiento
-          disableRowSelectionOnClick
-          disableColumnResize={true}
-          sx={{
-            height: 476,
-            "& .MuiDataGrid-cell:focus": {
-              outline: "none",
-            },
-            "& .MuiDataGrid-cell:focus-within": {
-              outline: "none",
-            },
-            "& .MuiDataGrid-columnHeader:focus": {
-              outline: "none",
-            },
-            "& .MuiDataGrid-columnHeader:focus-within": {
-              outline: "none",
-            },
-          }}
-        />
-      </Box>
-      {/* --- Dialog/Modal para Crear/Editar Usuario --- */}
-      {
-        <UserFormDialog
-          open={isModalOpen}
-          onClose={handleCloseModal}
-          userToEdit={editingUser}
-          onSave={handleSaveUser} // Pasamos la función de guardado/refresco
-        />
-      }
+        {/* --- Tabla de Datos --- */}
+        <Box sx={{ flexGrow: 1, width: "100%" }}>
+          <DataGrid
+            rows={data.rows}
+            columns={columns}
+            loading={isLoading}
+            getRowId={(row) => row.id}
+            // --- 1. CONEXIÓN CON EL SERVIDOR ---
+            rowCount={data.total} // El total de filas en la BD
+            paginationMode="server" // Le dice que la paginación es en el backend
+            sortingMode="server" // Le dice que el orden es en el backend
+            // --- 2. CONEXIÓN CON EL ESTADO DE PAGINACIÓN ---
+            pageSizeOptions={[7, 10, 20]}
+            paginationModel={paginationModel} // <-- Lee el estado
+            onPaginationModelChange={setPaginationModel} // <-- Actualiza el estado
+            // --- 3. CONEXIÓN CON EL ESTADO DE ORDENAMIENTO ---
+            sortModel={sortModel} // <-- Lee el estado
+            onSortModelChange={setSortModel} // <-- Lee el modelo de ordenamiento
+            disableRowSelectionOnClick
+            disableColumnResize={true}
+            sx={{
+              height: 476,
+              borderRadius: "14px",
+              "& .MuiDataGrid-cell:focus": {
+                outline: "none",
+              },
+              "& .MuiDataGrid-cell:focus-within": {
+                outline: "none",
+              },
+              "& .MuiDataGrid-columnHeader:focus": {
+                outline: "none",
+              },
+              "& .MuiDataGrid-columnHeader:focus-within": {
+                outline: "none",
+              },
+            }}
+          />
+        </Box>
+        {/* --- Dialog/Modal para Crear/Editar Usuario --- */}
+        {
+          <UserFormDialog
+            open={isModalOpen}
+            onClose={handleCloseModal}
+            userToEdit={editingUser}
+            onSave={handleSaveUser} // Pasamos la función de guardado/refresco
+          />
+        }
 
-      {/* --- Dialogo de Confirmación de Borrado --- */}
-      <Dialog
-        open={isDeleteDialogOpen}
-        onClose={handleCloseDeleteDialog}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">
-          Confirmar Baja de Usuario
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            ¿Estás seguro de que quieres dar de baja a este usuario? Esta acción
-            marcará al usuario como inactivo.
-          </DialogContentText>
-          {/* Muestra error específico del borrado si ocurre */}
-          {error && (
-            <Alert severity="error" sx={{ mt: 2 }}>
-              {error}
-            </Alert>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDeleteDialog} disabled={isDeleting}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={confirmDelete}
-            color="error"
-            disabled={isDeleting}
-            autoFocus
-          >
-            {isDeleting ? (
-              <CircularProgress size={20} color="inherit" />
-            ) : (
-              "Confirmar Baja"
+        {/* --- Dialogo de Confirmación de Borrado --- */}
+        <Dialog
+          open={isDeleteDialogOpen}
+          onClose={handleCloseDeleteDialog}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title">
+            Confirmar Baja de Usuario
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              ¿Estás seguro de que quieres dar de baja a este usuario? Esta
+              acción marcará al usuario como inactivo.
+            </DialogContentText>
+            {/* Muestra error específico del borrado si ocurre */}
+            {error && (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                {error}
+              </Alert>
             )}
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDeleteDialog} disabled={isDeleting}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={confirmDelete}
+              color="error"
+              disabled={isDeleting}
+              autoFocus
+            >
+              {isDeleting ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                "Confirmar Baja"
+              )}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Stack>
     </Box>
   );
 }

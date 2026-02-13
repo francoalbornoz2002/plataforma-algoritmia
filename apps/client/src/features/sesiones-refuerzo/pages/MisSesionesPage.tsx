@@ -44,6 +44,7 @@ import {
 import ResultadoSesionModal from "../components/ResultadoSesionModal";
 import HeaderPage from "../../../components/HeaderPage";
 import { SwitchAccessShortcutAdd } from "@mui/icons-material";
+import { datePickerConfig } from "../../../config/theme.config";
 
 export default function MisSesionesPage() {
   const { selectedCourse, isReadOnly } = useCourseContext();
@@ -280,7 +281,19 @@ export default function MisSesionesPage() {
                 setDateFilters((prev) => ({ ...prev, fechaDesde: newValue }));
                 setPagination((prev) => ({ ...prev, page: 1 }));
               }}
-              slotProps={{ textField: { size: "small", sx: { width: 165 } } }}
+              {...datePickerConfig}
+              slotProps={{
+                textField: {
+                  ...datePickerConfig.slotProps.textField,
+                  InputProps: {
+                    sx: {
+                      ...datePickerConfig.slotProps.textField.InputProps.sx,
+                      width: 165,
+                    },
+                  },
+                  sx: { width: 165 },
+                },
+              }}
             />
             <DatePicker
               label="Hasta"
@@ -289,7 +302,19 @@ export default function MisSesionesPage() {
                 setDateFilters((prev) => ({ ...prev, fechaHasta: newValue }));
                 setPagination((prev) => ({ ...prev, page: 1 }));
               }}
-              slotProps={{ textField: { size: "small", sx: { width: 165 } } }}
+              {...datePickerConfig}
+              slotProps={{
+                textField: {
+                  ...datePickerConfig.slotProps.textField,
+                  InputProps: {
+                    sx: {
+                      ...datePickerConfig.slotProps.textField.InputProps.sx,
+                      width: 165,
+                    },
+                  },
+                  sx: { width: 165 },
+                },
+              }}
             />
 
             <FormControl size="small" sx={{ minWidth: 180 }}>

@@ -21,6 +21,7 @@ import {
 import PdfExportButton from "../common/PdfExportButton";
 import ExcelExportButton from "../common/ExcelExportButton";
 import EstadoCursoChip from "../../../../components/EstadoCursoChip";
+import { datePickerConfig } from "../../../../config/theme.config";
 
 export default function CoursesSummarySection() {
   const [filters, setFilters] = useState<CoursesSummaryFilters>({
@@ -204,8 +205,19 @@ export default function CoursesSummarySection() {
                 fechaCorte: value ? format(value, "yyyy-MM-dd") : "",
               })
             }
-            slotProps={{ textField: { size: "small" } }}
-            sx={{ minWidth: 200 }}
+            {...datePickerConfig}
+            slotProps={{
+              textField: {
+                ...datePickerConfig.slotProps.textField,
+                InputProps: {
+                  sx: {
+                    ...datePickerConfig.slotProps.textField.InputProps.sx,
+                    minWidth: 200,
+                  },
+                },
+                sx: { minWidth: 200 },
+              },
+            }}
           />
         </Stack>
       </Paper>

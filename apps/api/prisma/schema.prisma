@@ -177,7 +177,7 @@ model DificultadesCurso {
   id               String                       @id @default(uuid()) @db.Uuid
   temaModa         temas                        @default(Ninguno) @map("tema_moda")
   idDificultadModa String?                      @map("dificultad_moda") @db.Uuid
-  promDificultades Decimal                      @default(0.0) @map("prom_dificultades") @db.Decimal(3, 1)
+  promDificultades Decimal                      @default(0.0) @map("prom_dificultades") @db.Decimal(5, 2)
   promGrado        grado_dificultad             @default(Ninguno) @map("prom_grado")
   estado           estado_simple                @default(Activo)
   cursos           Curso[]
@@ -226,7 +226,7 @@ model HistorialDificultadesCurso {
   idDificultadesCurso String           @map("id_dificultades_curso") @db.Uuid
   temaModa            temas            @map("tema_moda")
   idDificultadModa    String?          @map("dificultad_moda") @db.Uuid
-  promDificultades    Decimal          @map("prom_dificultades") @db.Decimal(3, 1)
+  promDificultades    Decimal          @map("prom_dificultades") @db.Decimal(5, 2)
   promGrado           grado_dificultad @map("prom_grado")
   fechaRegistro       DateTime         @default(now()) @map("fecha_registro") @db.Timestamptz(6)
 
@@ -398,8 +398,8 @@ model ProgresoAlumno {
   totalExp                Int                        @default(0) @map("total_exp")
   totalIntentos           Int                        @default(0) @map("total_intentos")
   pctMisionesCompletadas  Decimal                    @default(0.00) @map("pct_misiones_completadas") @db.Decimal(5, 2)
-  promEstrellas           Decimal                    @default(0.0) @map("prom_estrellas") @db.Decimal(2, 1)
-  promIntentos            Decimal                    @default(0.0) @map("prom_intentos") @db.Decimal(3, 1)
+  promEstrellas           Decimal                    @default(0.0) @map("prom_estrellas") @db.Decimal(5, 2)
+  promIntentos            Decimal                    @default(0.0) @map("prom_intentos") @db.Decimal(5, 2)
   ultimaActividad         DateTime?                  @map("ultima_actividad") @db.Timestamptz(6)
   estado                  estado_simple              @default(Activo)
   alumnoCurso             AlumnoCurso?
@@ -423,8 +423,8 @@ model HistorialProgresoAlumno {
   totalExp                Int      @map("total_exp")
   totalIntentos           Int      @map("total_intentos")
   pctMisionesCompletadas  Decimal  @map("pct_misiones_completadas") @db.Decimal(5, 2)
-  promEstrellas           Decimal  @map("prom_estrellas") @db.Decimal(2, 1)
-  promIntentos            Decimal  @map("prom_intentos") @db.Decimal(3, 1)
+  promEstrellas           Decimal  @map("prom_estrellas") @db.Decimal(5, 2)
+  promIntentos            Decimal  @map("prom_intentos") @db.Decimal(5, 2)
   fechaRegistro           DateTime @default(now()) @map("fecha_registro") @db.Timestamptz(6)
 
   progresoAlumno ProgresoAlumno @relation(fields: [idProgreso], references: [id], onDelete: Cascade)
@@ -440,8 +440,8 @@ model ProgresoCurso {
   totalExp               Int                      @default(0) @map("total_exp")
   totalIntentos          Int                      @default(0) @map("total_intentos")
   pctMisionesCompletadas Decimal                  @default(0.00) @map("pct_misiones_completadas") @db.Decimal(5, 2)
-  promEstrellas          Decimal                  @default(0.0) @map("prom_estrellas") @db.Decimal(2, 1)
-  promIntentos           Decimal                  @default(0.0) @map("prom_intentos") @db.Decimal(3, 1)
+  promEstrellas          Decimal                  @default(0.0) @map("prom_estrellas") @db.Decimal(5, 2)
+  promIntentos           Decimal                  @default(0.0) @map("prom_intentos") @db.Decimal(5, 2)
   estado                 estado_simple            @default(Activo)
   cursos                 Curso[]
   historial              HistorialProgresoCurso[]
@@ -458,8 +458,8 @@ model HistorialProgresoCurso {
   totalExp               Int      @map("total_exp")
   totalIntentos          Int      @map("total_intentos")
   pctMisionesCompletadas Decimal  @map("pct_misiones_completadas") @db.Decimal(5, 2)
-  promEstrellas          Decimal  @map("prom_estrellas") @db.Decimal(2, 1)
-  promIntentos           Decimal  @map("prom_intentos") @db.Decimal(3, 1)
+  promEstrellas          Decimal  @map("prom_estrellas") @db.Decimal(5, 2)
+  promIntentos           Decimal  @map("prom_intentos") @db.Decimal(5, 2)
   fechaRegistro          DateTime @default(now()) @map("fecha_registro") @db.Timestamptz(6)
 
   progresoCurso ProgresoCurso @relation(fields: [idProgresoCurso], references: [id], onDelete: Cascade)

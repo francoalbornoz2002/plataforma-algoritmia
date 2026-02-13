@@ -33,6 +33,7 @@ import ConsultaAccordion from "../components/ConsultaAccordion";
 import { EstadoConsultaLabels, TemasLabels } from "../../../types/traducciones";
 import HeaderPage from "../../../components/HeaderPage";
 import { FilterAltOff, MarkUnreadChatAlt } from "@mui/icons-material";
+import { datePickerConfig } from "../../../config/theme.config";
 
 // Constante para la paginación
 const PAGE_SIZE = 10;
@@ -232,7 +233,19 @@ export default function ConsultasPage() {
                 setFilters((prev) => ({ ...prev, fechaDesde: newValue }));
                 setPage(1);
               }}
-              slotProps={{ textField: { size: "small", sx: { width: 170 } } }}
+              {...datePickerConfig}
+              slotProps={{
+                textField: {
+                  ...datePickerConfig.slotProps.textField,
+                  InputProps: {
+                    sx: {
+                      ...datePickerConfig.slotProps.textField.InputProps.sx,
+                      width: 170,
+                    },
+                  },
+                  sx: { width: 170 },
+                },
+              }}
             />
             <DatePicker
               label="Hasta"
@@ -241,7 +254,19 @@ export default function ConsultasPage() {
                 setFilters((prev) => ({ ...prev, fechaHasta: newValue }));
                 setPage(1);
               }}
-              slotProps={{ textField: { size: "small", sx: { width: 170 } } }}
+              {...datePickerConfig}
+              slotProps={{
+                textField: {
+                  ...datePickerConfig.slotProps.textField,
+                  InputProps: {
+                    sx: {
+                      ...datePickerConfig.slotProps.textField.InputProps.sx,
+                      width: 170,
+                    },
+                  },
+                  sx: { width: 170 },
+                },
+              }}
             />
 
             <Tooltip title="Limpiar filtros">

@@ -28,6 +28,7 @@ import PdfExportButton from "../common/PdfExportButton";
 import ExcelExportButton from "../common/ExcelExportButton";
 import { temas } from "../../../../types";
 import { TemasLabels } from "../../../../types/traducciones";
+import { datePickerConfig } from "../../../../config/theme.config";
 
 interface Props {
   courseId: string;
@@ -161,7 +162,19 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                 fechaCorte: val ? format(val, "yyyy-MM-dd") : "",
               })
             }
-            slotProps={{ textField: { size: "small", sx: { width: 250 } } }}
+            {...datePickerConfig}
+            slotProps={{
+              textField: {
+                ...datePickerConfig.slotProps.textField,
+                InputProps: {
+                  sx: {
+                    ...datePickerConfig.slotProps.textField.InputProps.sx,
+                    width: 250,
+                  },
+                },
+                sx: { width: 250 },
+              },
+            }}
             disableFuture
             minDate={courseCreatedAt ? new Date(courseCreatedAt) : undefined}
           />

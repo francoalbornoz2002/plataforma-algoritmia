@@ -34,6 +34,7 @@ import ReportTextualCard from "../common/ReportTextualCard";
 import ReportStatCard from "../common/ReportStatCard";
 import PdfExportButton from "../common/PdfExportButton";
 import ExcelExportButton from "../common/ExcelExportButton";
+import { datePickerConfig } from "../../../../config/theme.config";
 
 interface Props {
   courseId: string;
@@ -132,7 +133,19 @@ export default function CourseClassesSummary({ courseId }: Props) {
                 fechaDesde: val ? format(val, "yyyy-MM-dd") : "",
               })
             }
-            slotProps={{ textField: { size: "small", sx: { width: 200 } } }}
+            {...datePickerConfig}
+            slotProps={{
+              textField: {
+                ...datePickerConfig.slotProps.textField,
+                InputProps: {
+                  sx: {
+                    ...datePickerConfig.slotProps.textField.InputProps.sx,
+                    width: 200,
+                  },
+                },
+                sx: { width: 200 },
+              },
+            }}
           />
           <DatePicker
             label="Fecha Hasta"
@@ -147,7 +160,19 @@ export default function CourseClassesSummary({ courseId }: Props) {
                 fechaHasta: val ? format(val, "yyyy-MM-dd") : "",
               })
             }
-            slotProps={{ textField: { size: "small", sx: { width: 200 } } }}
+            {...datePickerConfig}
+            slotProps={{
+              textField: {
+                ...datePickerConfig.slotProps.textField,
+                InputProps: {
+                  sx: {
+                    ...datePickerConfig.slotProps.textField.InputProps.sx,
+                    width: 200,
+                  },
+                },
+                sx: { width: 200 },
+              },
+            }}
           />
           <Button variant="text" onClick={handleClearFilters}>
             Limpiar

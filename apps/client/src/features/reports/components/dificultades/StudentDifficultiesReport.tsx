@@ -49,6 +49,7 @@ import QuickDateFilter from "../../../../components/QuickDateFilter";
 import StudentChartDetailModal from "./StudentChartDetailModal";
 import PdfExportButton from "../common/PdfExportButton";
 import ExcelExportButton from "../common/ExcelExportButton";
+import { datePickerConfig } from "../../../../config/theme.config";
 
 interface Props {
   courseId: string;
@@ -442,8 +443,19 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
                         fechaDesde: val ? format(val, "yyyy-MM-dd") : "",
                       })
                     }
+                    {...datePickerConfig}
                     slotProps={{
-                      textField: { size: "small", sx: { width: 150 } },
+                      textField: {
+                        ...datePickerConfig.slotProps.textField,
+                        InputProps: {
+                          sx: {
+                            ...datePickerConfig.slotProps.textField.InputProps
+                              .sx,
+                            width: 150,
+                          },
+                        },
+                        sx: { width: 150 },
+                      },
                     }}
                   />
                   <DatePicker
@@ -459,8 +471,19 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
                         fechaHasta: val ? format(val, "yyyy-MM-dd") : "",
                       })
                     }
+                    {...datePickerConfig}
                     slotProps={{
-                      textField: { size: "small", sx: { width: 150 } },
+                      textField: {
+                        ...datePickerConfig.slotProps.textField,
+                        InputProps: {
+                          sx: {
+                            ...datePickerConfig.slotProps.textField.InputProps
+                              .sx,
+                            width: 150,
+                          },
+                        },
+                        sx: { width: 150 },
+                      },
                     }}
                   />
                   <FormControl size="small" sx={{ width: 200 }}>

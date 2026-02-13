@@ -48,6 +48,7 @@ import {
 } from "../service/sesiones-refuerzo.service";
 import PreguntaSesionAccordion from "./PreguntaSesionAccordion";
 import SelectStudentModal from "./SelectStudentModal";
+import { datePickerConfig } from "../../../config/theme.config";
 
 interface SesionFormModalProps {
   open: boolean;
@@ -376,8 +377,10 @@ export default function SesionFormModal({
                         label="Fecha y Hora Límite"
                         minDate={new Date()}
                         disablePast
+                        {...datePickerConfig}
                         slotProps={{
                           textField: {
+                            ...datePickerConfig.slotProps.textField,
                             error: !!errors.fechaHoraLimite,
                             helperText: errors.fechaHoraLimite?.message,
                             fullWidth: true,

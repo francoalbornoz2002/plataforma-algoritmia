@@ -28,6 +28,7 @@ import ClaseDetailModal from "../../../clases-consulta/components/ClaseDetailMod
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import PdfExportButton from "../common/PdfExportButton";
 import ExcelExportButton from "../common/ExcelExportButton";
+import { datePickerConfig } from "../../../../config/theme.config";
 
 interface Props {
   courseId: string;
@@ -246,7 +247,19 @@ export default function CourseClassesHistory({ courseId }: Props) {
                   fechaDesde: val ? format(val, "yyyy-MM-dd") : "",
                 })
               }
-              slotProps={{ textField: { size: "small", sx: { width: 170 } } }}
+              {...datePickerConfig}
+              slotProps={{
+                textField: {
+                  ...datePickerConfig.slotProps.textField,
+                  InputProps: {
+                    sx: {
+                      ...datePickerConfig.slotProps.textField.InputProps.sx,
+                      width: 170,
+                    },
+                  },
+                  sx: { width: 170 },
+                },
+              }}
             />
             <DatePicker
               label="Hasta"
@@ -262,7 +275,19 @@ export default function CourseClassesHistory({ courseId }: Props) {
                   fechaHasta: val ? format(val, "yyyy-MM-dd") : "",
                 })
               }
-              slotProps={{ textField: { size: "small", sx: { width: 170 } } }}
+              {...datePickerConfig}
+              slotProps={{
+                textField: {
+                  ...datePickerConfig.slotProps.textField,
+                  InputProps: {
+                    sx: {
+                      ...datePickerConfig.slotProps.textField.InputProps.sx,
+                      width: 170,
+                    },
+                  },
+                  sx: { width: 170 },
+                },
+              }}
             />
             <Autocomplete
               options={data?.docentesDisponibles || []}

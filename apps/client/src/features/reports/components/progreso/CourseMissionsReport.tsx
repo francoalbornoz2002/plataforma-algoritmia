@@ -27,6 +27,7 @@ import ReportStatCard from "../common/ReportStatCard";
 import ReportTextualCard from "../common/ReportTextualCard";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import { datePickerConfig } from "../../../../config/theme.config";
 
 interface Props {
   courseId: string;
@@ -174,7 +175,7 @@ export default function CourseMissionsReport({ courseId }: Props) {
                 fechaDesde: val ? format(val, "yyyy-MM-dd") : "",
               })
             }
-            slotProps={{ textField: { size: "small" } }}
+            {...datePickerConfig}
             disableFuture
             minDate={courseCreatedAt ? new Date(courseCreatedAt) : undefined}
           />
@@ -191,7 +192,7 @@ export default function CourseMissionsReport({ courseId }: Props) {
                 fechaHasta: val ? format(val, "yyyy-MM-dd") : "",
               })
             }
-            slotProps={{ textField: { size: "small" } }}
+            {...datePickerConfig}
             disableFuture
             minDate={courseCreatedAt ? new Date(courseCreatedAt) : undefined}
           />

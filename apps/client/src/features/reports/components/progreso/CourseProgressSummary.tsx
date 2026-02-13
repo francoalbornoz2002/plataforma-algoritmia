@@ -36,6 +36,7 @@ import ReportTotalCard from "../common/ReportTotalCard";
 import ReportStatCard from "../common/ReportStatCard";
 import PdfExportButton from "../common/PdfExportButton";
 import ExcelExportButton from "../common/ExcelExportButton";
+import { datePickerConfig } from "../../../../config/theme.config";
 
 interface Props {
   courseId: string;
@@ -120,7 +121,19 @@ export default function CourseProgressSummary({ courseId }: Props) {
             onChange={(val) =>
               setFilters({ fechaCorte: val ? format(val, "yyyy-MM-dd") : "" })
             }
-            slotProps={{ textField: { size: "small", sx: { width: 250 } } }}
+            {...datePickerConfig}
+            slotProps={{
+              textField: {
+                ...datePickerConfig.slotProps.textField,
+                InputProps: {
+                  sx: {
+                    ...datePickerConfig.slotProps.textField.InputProps.sx,
+                    width: 250,
+                  },
+                },
+                sx: { width: 250 },
+              },
+            }}
             disableFuture
             minDate={courseCreatedAt ? new Date(courseCreatedAt) : undefined}
           />

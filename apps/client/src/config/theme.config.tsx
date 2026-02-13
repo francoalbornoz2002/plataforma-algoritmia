@@ -27,36 +27,50 @@ export const theme = createTheme({
   },
   components: {
     MuiButton: {
-      defaultProps: {
-        style: {
+      styleOverrides: {
+        root: {
           textTransform: "none",
           borderRadius: "0.7em",
         },
       },
     },
-    MuiAlert: {
-      defaultProps: {
-        style: {
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
           borderRadius: "0.7em",
-        },
-      },
-    },
-    MuiInputBase: {
-      defaultProps: {
-        style: {
-          borderRadius: "0.7em",
+          backgroundColor: "#ffffff",
+          "&.Mui-disabled": {
+            backgroundColor: "#f5f5f5", // Color gris claro para el estado deshabilitado
+          },
         },
       },
     },
     MuiPaper: {
-      defaultProps: {
-        style: {
+      styleOverrides: {
+        root: {
           borderRadius: "0.7em",
         },
       },
     },
   },
 });
+
+export const datePickerConfig = {
+  slotProps: {
+    textField: {
+      size: "small" as const,
+      InputProps: {
+        sx: {
+          borderRadius: "0.7em",
+          backgroundColor: "#ffffff",
+          "&.Mui-disabled": {
+            backgroundColor: "#f5f5f5",
+          },
+        },
+      },
+    },
+  },
+};
 
 export const ThemeConfig: React.FC<ThemeProp> = ({ children }) => {
   return (
