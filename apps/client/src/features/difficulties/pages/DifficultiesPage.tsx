@@ -451,7 +451,7 @@ export default function DifficultiesPage() {
         </Stack>
         {/* --- C. DataGrid --- */}
         {gridError && <Alert severity="error">{gridError}</Alert>}
-        <Box sx={{ height: 600, width: "100%" }}>
+        <Paper elevation={2} sx={{ height: 600, width: "100%" }}>
           <DataGrid
             rows={rows}
             columns={columns}
@@ -482,9 +482,10 @@ export default function DifficultiesPage() {
               "& .MuiDataGrid-columnHeader:focus-within": {
                 outline: "none",
               },
+              borderRadius: "0.7em",
             }}
           />
-        </Box>
+        </Paper>
       </Stack>
 
       {/* --- D. El Modal de Detalle --- */}

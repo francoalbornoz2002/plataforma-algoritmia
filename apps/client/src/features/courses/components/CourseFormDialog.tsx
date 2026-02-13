@@ -26,10 +26,13 @@ import {
   FormHelperText,
   styled,
   Divider, // Para el layout de diasClase
+  InputAdornment,
 } from "@mui/material";
 import {
   CloudUpload as CloudUploadIcon,
   Delete as DeleteIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
 } from "@mui/icons-material";
 import {
   createCourse,
@@ -108,6 +111,7 @@ export default function CourseFormDialog({
   // (Estados para el archivo y su previsualización)
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   // --- INICIALIZACIÓN DE REACT HOOK FORM ---
   const {
@@ -336,9 +340,28 @@ export default function CourseFormDialog({
                     fullWidth
                     required
                     disabled={isSubmitting}
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     error={!!errors.contrasenaAcceso}
                     helperText={errors.contrasenaAcceso?.message}
+                    slotProps={{
+                      input: {
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              aria-label="toggle password visibility"
+                              onClick={() => setShowPassword(!showPassword)}
+                              edge="end"
+                            >
+                              {showPassword ? (
+                                <VisibilityOffIcon />
+                              ) : (
+                                <VisibilityIcon />
+                              )}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
                   />
                   {/* --- CAMPO 'docentes' (con RHF Controller) --- */}
                   <Controller

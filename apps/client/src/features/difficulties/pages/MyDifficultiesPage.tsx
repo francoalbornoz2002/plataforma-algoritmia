@@ -127,60 +127,55 @@ export default function MyDifficultiesPage() {
           color="primary"
         />
         {/* --- SECCIÓN DE FILTROS --- */}
-        <Paper elevation={2} sx={{ pt: 1, pb: 2, pr: 2, pl: 2 }}>
-          <Typography variant="overline" sx={{ fontSize: "14px" }}>
-            Filtros de búsqueda
-          </Typography>
-          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-            <FormControl size="small" sx={{ width: 250 }}>
-              <InputLabel>Tema</InputLabel>
-              <Select
-                name="tema"
-                value={temaFilter}
-                label="Tema"
-                onChange={handleTemaChange}
-              >
-                <MenuItem value="">Todos</MenuItem>
-                {/* Iteramos sobre el enum 'temas', omitimos el "Ninguno" */}
-                {Object.values(temas)
-                  .filter((tema) => tema !== temas.Ninguno)
-                  .map((tema) => (
-                    <MenuItem key={tema} value={tema}>
-                      {TemasLabels[tema]}
-                    </MenuItem>
-                  ))}
-              </Select>
-            </FormControl>
+        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          <FormControl size="small" sx={{ width: 250 }}>
+            <InputLabel>Tema</InputLabel>
+            <Select
+              name="tema"
+              value={temaFilter}
+              label="Tema"
+              onChange={handleTemaChange}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {/* Iteramos sobre el enum 'temas', omitimos el "Ninguno" */}
+              {Object.values(temas)
+                .filter((tema) => tema !== temas.Ninguno)
+                .map((tema) => (
+                  <MenuItem key={tema} value={tema}>
+                    {TemasLabels[tema]}
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
 
-            <FormControl size="small" sx={{ minWidth: 200 }}>
-              <InputLabel>Filtrar por Grado</InputLabel>
-              <Select
-                value={gradoFilter}
-                label="Filtrar por Grado"
-                onChange={handleGradoChange}
-              >
-                <MenuItem value="">Todos los Grados</MenuItem>
-                {/* Iteramos sobre el enum 'grado_dificultad' */}
-                {Object.values(grado_dificultad)
-                  .filter((grado) => grado !== grado_dificultad.Ninguno)
-                  .map((grado) => (
-                    <MenuItem key={grado} value={grado}>
-                      {grado}
-                    </MenuItem>
-                  ))}
-              </Select>
-            </FormControl>
-            <Tooltip title="Limpiar filtros">
-              <IconButton
-                onClick={handleClearFilters}
-                size="small"
-                color="primary"
-              >
-                <FilterAltOffIcon />
-              </IconButton>
-            </Tooltip>
-          </Stack>
-        </Paper>
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <InputLabel>Filtrar por Grado</InputLabel>
+            <Select
+              value={gradoFilter}
+              label="Filtrar por Grado"
+              onChange={handleGradoChange}
+            >
+              <MenuItem value="">Todos los Grados</MenuItem>
+              {/* Iteramos sobre el enum 'grado_dificultad' */}
+              {Object.values(grado_dificultad)
+                .filter((grado) => grado !== grado_dificultad.Ninguno)
+                .map((grado) => (
+                  <MenuItem key={grado} value={grado}>
+                    {grado}
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
+          <Tooltip title="Limpiar filtros">
+            <IconButton
+              onClick={handleClearFilters}
+              size="small"
+              color="primary"
+            >
+              <FilterAltOffIcon />
+            </IconButton>
+          </Tooltip>
+        </Stack>
 
         {/* --- SECCIÓN DE CONTENIDO (GRID) --- */}
         {filteredDifficulties.length === 0 ? (

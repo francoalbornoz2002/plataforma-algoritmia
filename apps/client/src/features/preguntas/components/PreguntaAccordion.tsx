@@ -52,7 +52,7 @@ export default function PreguntaAccordion({
 
   return (
     <Accordion
-      variant="elevation"
+      variant="outlined"
       disabled={isDeleted}
       sx={{ opacity: isDeleted ? 0.6 : 1.0 }}
     >

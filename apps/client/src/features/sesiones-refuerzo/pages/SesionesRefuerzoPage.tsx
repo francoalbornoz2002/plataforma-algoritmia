@@ -291,7 +291,7 @@ export default function SesionesRefuerzoPage() {
               ))}
             </Select>
           </FormControl>
-          <FormControl sx={{ width: 300 }} size="small">
+          <FormControl sx={{ minWidth: 300, flex: 1 }} size="small">
             <InputLabel>Dificultad</InputLabel>
             <Select
               name="idDificultad"

@@ -89,13 +89,16 @@ export default function LoginPage() {
       await login(data.email, data.password, data.remember);
     } catch (error: any) {
       console.error("Error en LoginPage onSubmit:", error);
-      const message =
+      let message =
         error?.response?.data?.message ||
         error?.message ||
         "Error al iniciar sesión.";
 
+      // Si el mensaje es un array (típico de validaciones de NestJS), tomamos el primero
+      if (Array.isArray(message)) message = message[0];
+
       // Llamamos al snackbar directamente
-      enqueueSnackbar(message, {
+      enqueueSnackbar(String(message), {
         variant: "error",
         anchorOrigin: {
           vertical: "top",
@@ -144,7 +147,7 @@ export default function LoginPage() {
           component="form"
           onSubmit={handleSubmit(onSubmit)}
           noValidate
-          spacing={1.5} // Usamos 'spacing' de Stack
+          spacing={1}
         >
           <Typography
             variant="h5"
@@ -155,7 +158,7 @@ export default function LoginPage() {
             Iniciar sesión
           </Typography>
 
-          {/* --- Campos (actualizados con Zod) --- */}
+          {/* --- EMAIL --- */}
           <TextField
             required
             fullWidth
@@ -177,10 +180,9 @@ export default function LoginPage() {
               },
             }}
           />
-
+          {/* --- CONTRASEÑA --- */}
           <TextField
             required
-            sx={{ mb: -2 }}
             fullWidth
             label="Contraseña"
             type={showPassword ? "text" : "password"}
@@ -242,7 +244,7 @@ export default function LoginPage() {
             <Link
               component="button"
               type="button"
-              variant="body2"
+              variant="body1"
               onClick={handleOpenForgotDialog}
             >
               Olvidé mi contraseña
@@ -254,7 +256,7 @@ export default function LoginPage() {
             fullWidth
             variant="contained"
             disabled={isSubmitting}
-            sx={{ mt: 2, py: 1.5, fontWeight: "bold", fontSize: "1.1rem" }}
+            sx={{ mt: 2, py: 1.5, fontWeight: "bold", fontSize: "14px" }}
           >
             {isSubmitting ? <CircularProgress size={24} /> : "Ingresar"}
           </Button>
@@ -281,8 +283,8 @@ export default function LoginPage() {
         <DialogContent>
           <DialogContentText>
             Para obtener un usuario en la plataforma Algoritmia, por favor,
-            contacta al administrador de la institución o al docente a cargo de
-            la materia.
+            contacta al administrador de la institución encargado del sistema o
+            tu docente responsable de tu materia o asignatura.
           </DialogContentText>
         </DialogContent>
         <DialogActions>

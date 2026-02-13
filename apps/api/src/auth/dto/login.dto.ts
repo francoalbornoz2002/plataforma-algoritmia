@@ -21,7 +21,6 @@ export class LoginDto {
     // Esto garantiza que siempre retornes un string.
     return value ? String(value).trim() : '';
   })
-  @MinLength(6)
   @IsString()
   password: string;
 

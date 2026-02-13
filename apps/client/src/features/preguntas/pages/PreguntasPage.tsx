@@ -198,107 +198,102 @@ export default function PreguntasPage() {
           icon={<Quiz />}
           color="primary"
         />
-        <Paper elevation={2} sx={{ pt: 1, pb: 2, pr: 2, pl: 2 }}>
-          <Typography variant="overline" sx={{ fontSize: "14px" }}>
-            Filtros de búsqueda
-          </Typography>
-          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-            <TextField
-              label="Buscar por enunciado..."
-              variant="outlined"
-              size="small"
-              value={searchTerm}
-              onChange={handleSearchChange}
-              sx={{ minWidth: 400 }}
-            />
-            <FormControl size="small" sx={{ minWidth: 160 }}>
-              <InputLabel>Tema</InputLabel>
-              <Select
-                name="tema"
-                value={filters.tema}
-                label="Tema"
-                onChange={handleFilterChange}
-              >
-                <MenuItem value="">Todos</MenuItem>
-                {Object.values(temas)
-                  .filter((t) => t !== temas.Ninguno)
-                  .map((t) => (
-                    <MenuItem key={t} value={t}>
-                      {TemasLabels[t]}
-                    </MenuItem>
-                  ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ width: 300 }}>
-              <InputLabel>Dificultad</InputLabel>
-              <Select
-                name="idDificultad"
-                value={filters.idDificultad}
-                label="Dificultad"
-                onChange={handleFilterChange}
-                disabled={allDifficulties.length === 0}
-              >
-                <MenuItem value="">Todas</MenuItem>
-                {filteredDifficulties.map((d) => (
-                  <MenuItem key={d.id} value={d.id}>
-                    {d.nombre}
+        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          <TextField
+            label="Buscar por enunciado..."
+            variant="outlined"
+            size="small"
+            value={searchTerm}
+            onChange={handleSearchChange}
+            sx={{ minWidth: 400 }}
+          />
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <InputLabel>Tema</InputLabel>
+            <Select
+              name="tema"
+              value={filters.tema}
+              label="Tema"
+              onChange={handleFilterChange}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {Object.values(temas)
+                .filter((t) => t !== temas.Ninguno)
+                .map((t) => (
+                  <MenuItem key={t} value={t}>
+                    {TemasLabels[t]}
                   </MenuItem>
                 ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 100 }}>
-              <InputLabel>Grado</InputLabel>
-              <Select
-                name="gradoDificultad"
-                value={filters.gradoDificultad}
-                label="Grado"
-                onChange={handleFilterChange}
-              >
-                <MenuItem value="">Todos</MenuItem>
-                {Object.values(grado_dificultad)
-                  .filter((g) => g !== grado_dificultad.Ninguno)
-                  .map((g) => (
-                    <MenuItem key={g} value={g}>
-                      {g}
-                    </MenuItem>
-                  ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 110 }}>
-              <InputLabel>Tipo</InputLabel>
-              <Select
-                name="tipo"
-                value={filters.tipo}
-                label="Tipo"
-                onChange={handleFilterChange}
-              >
-                <MenuItem value="">Todos</MenuItem>
-                <MenuItem value="sistema">Sistema</MenuItem>
-                <MenuItem value="docente">Docente</MenuItem>
-              </Select>
-            </FormControl>
-            <Tooltip title="Limpiar filtros">
-              <IconButton
-                onClick={handleClearFilters}
-                size="small"
-                color="primary"
-              >
-                <FilterAltOffIcon />
-              </IconButton>
-            </Tooltip>
-            <Box sx={{ flexGrow: 1 }} />
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => {
-                setPreguntaToEdit(null);
-                setIsFormModalOpen(true);
-              }}
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ width: 300 }}>
+            <InputLabel>Dificultad</InputLabel>
+            <Select
+              name="idDificultad"
+              value={filters.idDificultad}
+              label="Dificultad"
+              onChange={handleFilterChange}
+              disabled={allDifficulties.length === 0}
             >
-              Crear Pregunta
-            </Button>
-          </Stack>
-        </Paper>
+              <MenuItem value="">Todas</MenuItem>
+              {filteredDifficulties.map((d) => (
+                <MenuItem key={d.id} value={d.id}>
+                  {d.nombre}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 100 }}>
+            <InputLabel>Grado</InputLabel>
+            <Select
+              name="gradoDificultad"
+              value={filters.gradoDificultad}
+              label="Grado"
+              onChange={handleFilterChange}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {Object.values(grado_dificultad)
+                .filter((g) => g !== grado_dificultad.Ninguno)
+                .map((g) => (
+                  <MenuItem key={g} value={g}>
+                    {g}
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 110 }}>
+            <InputLabel>Tipo</InputLabel>
+            <Select
+              name="tipo"
+              value={filters.tipo}
+              label="Tipo"
+              onChange={handleFilterChange}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              <MenuItem value="sistema">Sistema</MenuItem>
+              <MenuItem value="docente">Docente</MenuItem>
+            </Select>
+          </FormControl>
+          <Tooltip title="Limpiar filtros">
+            <IconButton
+              onClick={handleClearFilters}
+              size="small"
+              color="primary"
+            >
+              <FilterAltOffIcon />
+            </IconButton>
+          </Tooltip>
+          <Box sx={{ flexGrow: 1 }} />
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => {
+              setPreguntaToEdit(null);
+              setIsFormModalOpen(true);
+            }}
+          >
+            Crear Pregunta
+          </Button>
+        </Stack>
 
         {/* --- 2. Lista de Preguntas --- */}
         {loading ? (

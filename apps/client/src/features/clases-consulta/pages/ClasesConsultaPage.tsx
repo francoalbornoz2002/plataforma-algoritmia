@@ -49,6 +49,7 @@ import { enqueueSnackbar } from "notistack";
 import ActionConfirmationDialog from "../components/ActionConfirmationDialog";
 import { FinalizarClaseModal } from "../components/FinalizarClaseModal";
 import HeaderPage from "../../../components/HeaderPage";
+import { datePickerConfig } from "../../../config/theme.config";
 
 // Tipos para los filtros
 type OrdenFiltro =
@@ -384,105 +385,118 @@ export default function ClasesConsultaPage() {
         />
 
         {/* --- 1. Filtros y Orden --- */}
-        <Paper elevation={2} sx={{ pt: 1, pb: 2, pr: 2, pl: 2 }}>
-          <Typography variant="overline" sx={{ fontSize: "14px" }}>
-            Filtros de búsqueda
-          </Typography>
-          <Stack
-            direction="row"
-            spacing={1}
-            flexWrap="wrap"
-            useFlexGap
-            alignItems="center"
-          >
-            <DatePicker
-              label="Fecha Desde"
-              value={fechaDesde}
-              onChange={setFechaDesde}
-              slotProps={{ textField: { size: "small" } }}
-              sx={{ minWidth: 165 }}
-            />
+        <Stack
+          direction="row"
+          spacing={1}
+          flexWrap="wrap"
+          useFlexGap
+          alignItems="center"
+        >
+          <DatePicker
+            label="Fecha Desde"
+            value={fechaDesde}
+            onChange={setFechaDesde}
+            slotProps={{
+              textField: {
+                ...datePickerConfig.slotProps.textField,
+                InputProps: {
+                  sx: {
+                    ...datePickerConfig.slotProps.textField.InputProps.sx,
+                    width: 170,
+                  },
+                },
+                sx: { width: 170 },
+              },
+            }}
+          />
 
-            <DatePicker
-              label="Fecha Hasta"
-              value={fechaHasta}
-              onChange={setFechaHasta}
-              slotProps={{ textField: { size: "small" } }}
-              sx={{ minWidth: 165 }}
-            />
+          <DatePicker
+            label="Fecha Hasta"
+            value={fechaHasta}
+            onChange={setFechaHasta}
+            slotProps={{
+              textField: {
+                ...datePickerConfig.slotProps.textField,
+                InputProps: {
+                  sx: {
+                    ...datePickerConfig.slotProps.textField.InputProps.sx,
+                    width: 170,
+                  },
+                },
+                sx: { width: 170 },
+              },
+            }}
+          />
 
-            <FormControl size="small" sx={{ minWidth: 180 }}>
-              <InputLabel>Docente</InputLabel>
-              <Select
-                value={docenteFiltro}
-                label="Docente"
-                onChange={(e) => setDocenteFiltro(e.target.value)}
-              >
-                <MenuItem value="Todos">Todos</MenuItem>
-                {docentesList.map((d) => (
-                  <MenuItem key={d.id} value={d.id}>
-                    {d.nombre} {d.apellido}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl size="small" sx={{ minWidth: 200 }}>
-              <InputLabel>Estado</InputLabel>
-              <Select
-                value={estadoFiltro}
-                label="Estado"
-                onChange={(e) => setEstadoFiltro(e.target.value)}
-              >
-                <MenuItem value="Todos">Todos</MenuItem>
-                {Object.values(estado_clase_consulta).map((e) => (
-                  <MenuItem key={e} value={e}>
-                    {e.replace("_", " ")}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl size="small" sx={{ minWidth: 200 }}>
-              <InputLabel>Ordenar por</InputLabel>
-              <Select
-                value={orden}
-                label="Ordenar por"
-                onChange={(e) => setOrden(e.target.value as OrdenFiltro)}
-              >
-                <MenuItem value="fecha-desc">Más Recientes</MenuItem>
-                <MenuItem value="fecha-asc">Más Antiguas</MenuItem>
-                <MenuItem value="consultas-desc">
-                  Cant. Consultas (Mayor)
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel>Docente</InputLabel>
+            <Select
+              value={docenteFiltro}
+              label="Docente"
+              onChange={(e) => setDocenteFiltro(e.target.value)}
+            >
+              <MenuItem value="Todos">Todos</MenuItem>
+              {docentesList.map((d) => (
+                <MenuItem key={d.id} value={d.id}>
+                  {d.nombre} {d.apellido}
                 </MenuItem>
-                <MenuItem value="consultas-asc">
-                  Cant. Consultas (Menor)
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <InputLabel>Estado</InputLabel>
+            <Select
+              value={estadoFiltro}
+              label="Estado"
+              onChange={(e) => setEstadoFiltro(e.target.value)}
+            >
+              <MenuItem value="Todos">Todos</MenuItem>
+              {Object.values(estado_clase_consulta).map((e) => (
+                <MenuItem key={e} value={e}>
+                  {e.replace("_", " ")}
                 </MenuItem>
-              </Select>
-            </FormControl>
+              ))}
+            </Select>
+          </FormControl>
 
-            <Tooltip title="Limpiar filtros">
-              <IconButton
-                onClick={handleClearFilters}
-                size="small"
-                color="primary"
-              >
-                <FilterAltOffIcon />
-              </IconButton>
-            </Tooltip>
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <InputLabel>Ordenar por</InputLabel>
+            <Select
+              value={orden}
+              label="Ordenar por"
+              onChange={(e) => setOrden(e.target.value as OrdenFiltro)}
+            >
+              <MenuItem value="fecha-desc">Más Recientes</MenuItem>
+              <MenuItem value="fecha-asc">Más Antiguas</MenuItem>
+              <MenuItem value="consultas-desc">
+                Cant. Consultas (Mayor)
+              </MenuItem>
+              <MenuItem value="consultas-asc">Cant. Consultas (Menor)</MenuItem>
+            </Select>
+          </FormControl>
 
-            <Box sx={{ flexGrow: 1 }} />
-            {!isReadOnly && (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleOpenCreate}
-              >
-                Crear Clase
-              </Button>
-            )}
-          </Stack>
-        </Paper>
+          <Tooltip title="Limpiar filtros">
+            <IconButton
+              onClick={handleClearFilters}
+              size="small"
+              color="primary"
+            >
+              <FilterAltOffIcon />
+            </IconButton>
+          </Tooltip>
+
+          <Box sx={{ flexGrow: 1 }} />
+          {!isReadOnly && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleOpenCreate}
+            >
+              Crear Clase
+            </Button>
+          )}
+        </Stack>
 
         {/* --- 2. Lista de Clases (Cards) --- */}
         {loading ? (

@@ -193,7 +193,7 @@ export default function DocenteDashboardPage() {
         </Stack>
       </Paper>
       {/* ACCIONES RÁPIDAS */}
-      <Stack spacing={1} direction="row">
+      <Stack spacing={2} direction="row">
         <Button
           fullWidth
           variant="outlined"
@@ -262,7 +262,7 @@ export default function DocenteDashboardPage() {
 
       {error && <Alert severity="error">{error}</Alert>}
 
-      <Grid container spacing={2} sx={{ height: "100%" }}>
+      <Grid container spacing={3} sx={{ height: "100%" }}>
         {/* 1. INFO DEL CURSO */}
         <Grid size={{ xs: 12, md: 8.5 }}>
           <CourseInfoCard
@@ -274,115 +274,109 @@ export default function DocenteDashboardPage() {
         </Grid>
         {/* --- 2 SIDEBAR ALUMNOS --- */}
         <Grid size={{ xs: 12, md: 3.5 }}>
-          <Stack
-            spacing={2}
+          {/* LISTA DE ALUMNOS */}
+          <Paper
+            elevation={3}
             sx={{
+              flexGrow: 1,
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+              borderTop: 5,
+              borderColor: "primary.main",
               maxHeight: { md: "calc(100vh - 324px)" }, // Altura máxima para permitir scroll sin forzar espacio
               top: { md: 16 },
             }}
           >
-            {/* LISTA DE ALUMNOS */}
-            <Paper
-              elevation={3}
-              sx={{
-                flexGrow: 1,
-                display: "flex",
-                flexDirection: "column",
-                overflow: "hidden",
-                borderTop: 5,
-                borderColor: "primary.main",
-              }}
-            >
-              <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
-                <Typography variant="h6" color="primary.main" gutterBottom>
-                  Alumnos inscriptos
-                </Typography>
-                <TextField
-                  fullWidth
-                  size="small"
-                  placeholder="Buscar alumno..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Search fontSize="small" />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Box>
-              <List sx={{ flexGrow: 1, overflowY: "auto", p: 0 }}>
-                {filteredStudents.length > 0 ? (
-                  filteredStudents.map((student) => (
-                    <ListItem
-                      key={student.idAlumno}
-                      divider
-                      secondaryAction={
-                        <Stack direction="row" spacing={0.5}>
-                          <Tooltip title="Ver información">
+            <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
+              <Typography variant="h6" color="primary.main" gutterBottom>
+                Alumnos inscriptos
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="Buscar alumno..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search fontSize="small" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Box>
+            <List sx={{ flexGrow: 1, overflowY: "auto", p: 0 }}>
+              {filteredStudents.length > 0 ? (
+                filteredStudents.map((student) => (
+                  <ListItem
+                    key={student.idAlumno}
+                    divider
+                    secondaryAction={
+                      <Stack direction="row" spacing={0.5}>
+                        <Tooltip title="Ver información">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => {
+                              // Aquí podrías abrir un modal rápido con info del alumno
+                              // O navegar a su detalle
+                              console.log("Ver info de", student.nombre);
+                            }}
+                          >
+                            <Info fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        {!isReadOnly && (
+                          <Tooltip title="Dar de baja">
                             <IconButton
+                              edge="end"
                               size="small"
-                              color="primary"
-                              onClick={() => {
-                                // Aquí podrías abrir un modal rápido con info del alumno
-                                // O navegar a su detalle
-                                console.log("Ver info de", student.nombre);
-                              }}
+                              color="error"
+                              onClick={() => handleRemoveClick(student)}
                             >
-                              <Info fontSize="small" />
+                              <Delete fontSize="small" />
                             </IconButton>
                           </Tooltip>
-                          {!isReadOnly && (
-                            <Tooltip title="Dar de baja">
-                              <IconButton
-                                edge="end"
-                                size="small"
-                                color="error"
-                                onClick={() => handleRemoveClick(student)}
-                              >
-                                <Delete fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-                        </Stack>
-                      }
-                    >
-                      <ListItemAvatar>
-                        <Avatar
-                          src={
-                            student.fotoPerfilUrl
-                              ? `${baseUrl}${student.fotoPerfilUrl}`
-                              : undefined
-                          }
-                          sx={{ width: 32, height: 32, border: 1 }}
-                        >
-                          {student.apellido[0]?.toUpperCase()}
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={`${student.apellido}, ${student.nombre}`}
-                        primaryTypographyProps={{
-                          variant: "body2",
-                          fontWeight: "medium",
-                        }}
-                        sx={{ ml: -1.5 }}
-                      />
-                    </ListItem>
-                  ))
-                ) : (
-                  <Box sx={{ p: 2, textAlign: "center" }}>
-                    <Typography variant="body2" color="text.secondary">
-                      No se encontraron alumnos.
-                    </Typography>
-                  </Box>
-                )}
-              </List>
-            </Paper>
-          </Stack>
+                        )}
+                      </Stack>
+                    }
+                  >
+                    <ListItemAvatar>
+                      <Avatar
+                        src={
+                          student.fotoPerfilUrl
+                            ? `${baseUrl}${student.fotoPerfilUrl}`
+                            : undefined
+                        }
+                        sx={{ width: 32, height: 32, border: 1 }}
+                      >
+                        {student.apellido[0]?.toUpperCase()}
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={`${student.apellido}, ${student.nombre}`}
+                      primaryTypographyProps={{
+                        variant: "body2",
+                        fontWeight: "medium",
+                      }}
+                      sx={{ ml: -1.5 }}
+                    />
+                  </ListItem>
+                ))
+              ) : (
+                <Box sx={{ p: 2, textAlign: "center" }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No se encontraron alumnos.
+                  </Typography>
+                </Box>
+              )}
+            </List>
+          </Paper>
         </Grid>
       </Grid>
-      <Grid container spacing={2}>
+      <Grid container spacing={3}>
         {/* GRUPO: PROGRESO */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Paper
@@ -506,7 +500,7 @@ export default function DocenteDashboardPage() {
           </Paper>
         </Grid>
       </Grid>
-      <Grid container spacing={2}>
+      <Grid container spacing={3}>
         {/* GRUPO: SESIONES DE REFUERZO */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Paper

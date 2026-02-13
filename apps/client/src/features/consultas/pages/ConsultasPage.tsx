@@ -179,123 +179,119 @@ export default function ConsultasPage() {
         />
 
         {/* --- 1. Filtros y Orden --- */}
-        <Paper elevation={2} sx={{ pt: 1, pb: 2, pr: 2, pl: 2 }}>
-          <Typography variant="overline" sx={{ fontSize: "14px" }}>
-            Filtros de búsqueda
-          </Typography>
-          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-            <TextField
-              label="Buscar por título o descripción..."
-              variant="outlined"
-              size="small"
-              value={searchTerm}
-              onChange={handleSearchChange}
-              sx={{ minWidth: 200, flexGrow: 1 }}
-            />
-            <FormControl size="small" sx={{ width: 220 }}>
-              <InputLabel>Tema</InputLabel>
-              <Select
-                name="tema"
-                value={filters.tema}
-                label="Tema"
-                onChange={handleFilterChange}
-              >
-                <MenuItem value="">Todos</MenuItem>
-                {Object.values(temas)
-                  .filter((t) => t !== temas.Ninguno)
-                  .map((t) => (
-                    <MenuItem key={t} value={t}>
-                      {TemasLabels[t]}
-                    </MenuItem>
-                  ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 180 }}>
-              <InputLabel>Estado</InputLabel>
-              <Select
-                name="estado"
-                value={filters.estado}
-                label="Estado"
-                onChange={handleFilterChange}
-              >
-                <MenuItem value="">Todos</MenuItem>
-                {Object.values(estado_consulta).map((e) => (
-                  <MenuItem key={e} value={e}>
-                    {EstadoConsultaLabels[e]}
+
+        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          <TextField
+            label="Buscar por título o descripción..."
+            variant="outlined"
+            size="small"
+            value={searchTerm}
+            onChange={handleSearchChange}
+            sx={{ minWidth: 200, flexGrow: 1 }}
+          />
+          <FormControl size="small" sx={{ width: 220 }}>
+            <InputLabel>Tema</InputLabel>
+            <Select
+              name="tema"
+              value={filters.tema}
+              label="Tema"
+              onChange={handleFilterChange}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {Object.values(temas)
+                .filter((t) => t !== temas.Ninguno)
+                .map((t) => (
+                  <MenuItem key={t} value={t}>
+                    {TemasLabels[t]}
                   </MenuItem>
                 ))}
-              </Select>
-            </FormControl>
-            <DatePicker
-              label="Desde"
-              value={filters.fechaDesde}
-              onChange={(newValue) => {
-                setFilters((prev) => ({ ...prev, fechaDesde: newValue }));
-                setPage(1);
-              }}
-              {...datePickerConfig}
-              slotProps={{
-                textField: {
-                  ...datePickerConfig.slotProps.textField,
-                  InputProps: {
-                    sx: {
-                      ...datePickerConfig.slotProps.textField.InputProps.sx,
-                      width: 170,
-                    },
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel>Estado</InputLabel>
+            <Select
+              name="estado"
+              value={filters.estado}
+              label="Estado"
+              onChange={handleFilterChange}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {Object.values(estado_consulta).map((e) => (
+                <MenuItem key={e} value={e}>
+                  {EstadoConsultaLabels[e]}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <DatePicker
+            label="Desde"
+            value={filters.fechaDesde}
+            onChange={(newValue) => {
+              setFilters((prev) => ({ ...prev, fechaDesde: newValue }));
+              setPage(1);
+            }}
+            {...datePickerConfig}
+            slotProps={{
+              textField: {
+                ...datePickerConfig.slotProps.textField,
+                InputProps: {
+                  sx: {
+                    ...datePickerConfig.slotProps.textField.InputProps.sx,
+                    width: 170,
                   },
-                  sx: { width: 170 },
                 },
-              }}
-            />
-            <DatePicker
-              label="Hasta"
-              value={filters.fechaHasta}
-              onChange={(newValue) => {
-                setFilters((prev) => ({ ...prev, fechaHasta: newValue }));
-                setPage(1);
-              }}
-              {...datePickerConfig}
-              slotProps={{
-                textField: {
-                  ...datePickerConfig.slotProps.textField,
-                  InputProps: {
-                    sx: {
-                      ...datePickerConfig.slotProps.textField.InputProps.sx,
-                      width: 170,
-                    },
+                sx: { width: 170 },
+              },
+            }}
+          />
+          <DatePicker
+            label="Hasta"
+            value={filters.fechaHasta}
+            onChange={(newValue) => {
+              setFilters((prev) => ({ ...prev, fechaHasta: newValue }));
+              setPage(1);
+            }}
+            {...datePickerConfig}
+            slotProps={{
+              textField: {
+                ...datePickerConfig.slotProps.textField,
+                InputProps: {
+                  sx: {
+                    ...datePickerConfig.slotProps.textField.InputProps.sx,
+                    width: 170,
                   },
-                  sx: { width: 170 },
                 },
-              }}
-            />
+                sx: { width: 170 },
+              },
+            }}
+          />
 
-            <Tooltip title="Limpiar filtros">
-              <IconButton
-                onClick={handleClearFilters}
-                size="small"
-                color="primary"
-              >
-                <FilterAltOff />
-              </IconButton>
-            </Tooltip>
+          <Tooltip title="Limpiar filtros">
+            <IconButton
+              onClick={handleClearFilters}
+              size="small"
+              color="primary"
+            >
+              <FilterAltOff />
+            </IconButton>
+          </Tooltip>
 
-            <Box sx={{ flexGrow: 1 }} />
+          <Box sx={{ flexGrow: 1 }} />
 
-            <FormControl size="small" sx={{ minWidth: 180 }}>
-              <InputLabel>Ordenar por</InputLabel>
-              <Select
-                value={sortOption}
-                label="Ordenar por"
-                onChange={(e) => setSortOption(e.target.value)}
-              >
-                <MenuItem value="recent">Más recientes</MenuItem>
-                <MenuItem value="old">Más antiguas</MenuItem>
-                <MenuItem value="az">Título (A-Z)</MenuItem>
-                <MenuItem value="za">Título (Z-A)</MenuItem>
-              </Select>
-            </FormControl>
-          </Stack>
-        </Paper>
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel>Ordenar por</InputLabel>
+            <Select
+              value={sortOption}
+              label="Ordenar por"
+              onChange={(e) => setSortOption(e.target.value)}
+            >
+              <MenuItem value="recent">Más recientes</MenuItem>
+              <MenuItem value="old">Más antiguas</MenuItem>
+              <MenuItem value="az">Título (A-Z)</MenuItem>
+              <MenuItem value="za">Título (Z-A)</MenuItem>
+            </Select>
+          </FormControl>
+        </Stack>
 
         {/* --- 2. Lista de Consultas (Acordeones) --- */}
         {loading ? (

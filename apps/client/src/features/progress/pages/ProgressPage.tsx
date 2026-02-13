@@ -14,6 +14,7 @@ import {
   CircularProgress,
   Grid,
   IconButton,
+  Paper,
 } from "@mui/material";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 import {
@@ -430,7 +431,7 @@ export default function ProgressPage() {
             </Stack>
             {/* --- C. DataGrid --- */}
             {gridError && <Alert severity="error">{gridError}</Alert>}
-            <Box sx={{ height: 400, width: "100%" }}>
+            <Paper elevation={2} sx={{ height: 600, width: "100%" }}>
               <DataGrid
                 rows={rows}
                 columns={columns}
@@ -452,7 +453,7 @@ export default function ProgressPage() {
                 disableRowSelectionOnClick
                 disableColumnResize={true}
                 sx={{
-                  borderRadius: "14px",
+                  borderRadius: "0.7em",
                   "& .MuiDataGrid-cell:focus": {
                     outline: "none",
                   },
@@ -467,7 +468,7 @@ export default function ProgressPage() {
                   },
                 }}
               />
-            </Box>
+            </Paper>
           </Stack>
         ) : null}
 
