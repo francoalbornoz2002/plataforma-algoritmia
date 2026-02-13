@@ -34,9 +34,9 @@ import {
 import { useOptionalCourseContext } from "../../../../context/CourseContext";
 import ReportTotalCard from "../common/ReportTotalCard";
 import ReportStatCard from "../common/ReportStatCard";
-import PdfExportButton from "../common/PdfExportButton";
-import ExcelExportButton from "../common/ExcelExportButton";
 import { datePickerConfig } from "../../../../config/theme.config";
+import HeaderReportPage from "../../../../components/HeaderReportPage";
+import { Assessment } from "@mui/icons-material";
 
 interface Props {
   courseId: string;
@@ -82,34 +82,27 @@ export default function CourseProgressSummary({ courseId }: Props) {
   const showLoading = loading && !data;
 
   return (
-    <Paper elevation={5} component="section" sx={{ p: 2 }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography
-          variant="h5"
-          gutterBottom
-          sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}
-        >
-          Resumen de Progreso del Curso
-        </Typography>
-        <Box
-          sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
-        >
-          <PdfExportButton
-            filters={filters}
-            endpointPath={`/reportes/cursos/${courseId}/progreso/resumen/pdf`}
-            disabled={!data}
-          />
-          <ExcelExportButton
-            filters={filters}
-            endpointPath={`/reportes/cursos/${courseId}/progreso/resumen/excel`}
-            disabled={!data}
-            filename="resumen_progreso.xlsx"
-          />
-        </Box>
-      </Stack>
+    <Box
+      component="section"
+      sx={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Stack spacing={2} sx={{ height: "100%" }}>
+        <HeaderReportPage
+          title="Resumen de Progreso"
+          description="Consulta el reporte resumen de progreso del curso hasta una fecha en específico"
+          icon={<Assessment />}
+          filters={filters}
+          endpointPathPdf={`/reportes/cursos/${courseId}/progreso/resumen/pdf`}
+          endpointPathExcel={`/reportes/cursos/${courseId}/progreso/resumen/excel`}
+          filenameExcel="resumen_progreso.xlsx"
+          disabled={!data}
+        />
 
-      {/* Filtros */}
-      <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
+        {/* Filtros */}
         <Stack direction="row" spacing={2} alignItems="center">
           <DatePicker
             label="Fecha de Corte (Histórico)"
@@ -143,21 +136,15 @@ export default function CourseProgressSummary({ courseId }: Props) {
             </Button>
           )}
         </Stack>
-      </Paper>
 
-      {showLoading && (
-        <CircularProgress sx={{ display: "block", mx: "auto", my: 4 }} />
-      )}
-      {error && <Alert severity="error">{error}</Alert>}
+        {showLoading && (
+          <CircularProgress sx={{ display: "block", mx: "auto", my: 4 }} />
+        )}
+        {error && <Alert severity="error">{error}</Alert>}
 
-      {data && !showLoading && (
-        <Stack spacing={2}>
-          {/* Fila 1: Tarjetas de Resumen */}
-          <Paper elevation={3} sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Estadísticas generales
-            </Typography>
-
+        {data && !showLoading && (
+          <Stack spacing={2}>
+            {/* Fila 1: Tarjetas de Resumen */}
             <Grid container spacing={2}>
               {/* Progreso Total */}
               <Grid size={{ xs: 12, md: 3 }}>
@@ -215,286 +202,310 @@ export default function CourseProgressSummary({ courseId }: Props) {
                 />
               </Grid>
             </Grid>
-          </Paper>
 
-          {/* Fila 2: Gráfico y Estadísticas Detalladas */}
-          <Grid container spacing={2}>
-            {/* Gráfico */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Paper
-                elevation={3}
-                sx={{
-                  p: 2,
-                  display: "flex",
-                  flexDirection: "column",
-                  height: "100%",
-                }}
-              >
-                <Typography variant="h6" gutterBottom>
-                  Evolución del Progreso
-                </Typography>
-
-                <Box
+            {/* Fila 2: Gráfico y Estadísticas Detalladas */}
+            <Grid container spacing={2}>
+              {/* Gráfico */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Paper
+                  elevation={3}
                   sx={{
-                    flex: 1,
+                    p: 2,
                     display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    width: "100%",
-                    minHeight: 250,
+                    flexDirection: "column",
+                    height: "100%",
                   }}
                 >
-                  {data.evolucion && data.evolucion.length > 0 ? (
-                    <LineChart
-                      xAxis={[
-                        {
-                          dataKey: "fecha",
-                          label: "Fecha",
-                          scaleType: "point",
-                          valueFormatter: (date) =>
-                            format(new Date(date), "dd/MM"),
-                        },
-                      ]}
-                      yAxis={[
-                        {
-                          label: "Progreso (%)",
-                          min: 0,
-                          max: 100,
-                          tickNumber: 11,
-                        },
-                      ]}
-                      series={[
-                        {
-                          dataKey: "progreso",
-                          label: "Progreso (%)",
-                          color: "#4caf50",
-                          area: true,
-                          showMark: true,
-                        },
-                      ]}
-                      dataset={data.evolucion.map((e: any) => ({
-                        ...e,
-                        fecha: new Date(e.fecha),
-                      }))}
-                    />
-                  ) : (
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      align="center"
-                      display="block"
-                      sx={{ py: 4 }}
-                    >
-                      No hay datos históricos suficientes.
-                    </Typography>
-                  )}
-                </Box>
-              </Paper>
-            </Grid>
+                  <Typography variant="h6" gutterBottom>
+                    Evolución del Progreso
+                  </Typography>
 
-            {/* Estadísticas de Alumnos */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-                <Typography variant="h6" gutterBottom>
-                  Estadísticas de Alumnos
-                </Typography>
+                  <Box
+                    sx={{
+                      flex: 1,
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      width: "100%",
+                      minHeight: 250,
+                    }}
+                  >
+                    {data.evolucion && data.evolucion.length > 0 ? (
+                      <LineChart
+                        xAxis={[
+                          {
+                            dataKey: "fecha",
+                            label: "Fecha",
+                            scaleType: "point",
+                            valueFormatter: (date) =>
+                              format(new Date(date), "dd/MM"),
+                          },
+                        ]}
+                        yAxis={[
+                          {
+                            label: "Progreso (%)",
+                            min: 0,
+                            max: 100,
+                            tickNumber: 11,
+                          },
+                        ]}
+                        series={[
+                          {
+                            dataKey: "progreso",
+                            label: "Progreso (%)",
+                            color: "#4caf50",
+                            area: true,
+                            showMark: true,
+                          },
+                        ]}
+                        dataset={data.evolucion.map((e: any) => ({
+                          ...e,
+                          fecha: new Date(e.fecha),
+                        }))}
+                      />
+                    ) : (
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        align="center"
+                        display="block"
+                        sx={{ py: 4 }}
+                      >
+                        No hay datos históricos suficientes.
+                      </Typography>
+                    )}
+                  </Box>
+                </Paper>
+              </Grid>
 
-                <Stack spacing={3}>
+              {/* Estadísticas de Alumnos */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Stack spacing={2}>
                   {/* Promedios */}
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 6 }}>
-                      <ReportStatCard
-                        icon={<StarIcon fontSize="small" />}
-                        title="Estrellas"
-                        subtitle="Promedio por alumno"
-                        count={data.resumen.promEstrellas.toFixed(1)}
-                        color="warning"
-                        small
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 6 }}>
-                      <ReportStatCard
-                        icon={<ReplayIcon fontSize="small" />}
-                        title="Intentos"
-                        subtitle="Promedio por alumno"
-                        count={data.resumen.promIntentos.toFixed(1)}
-                        color="info"
-                        small
-                      />
-                    </Grid>
-                  </Grid>
-
-                  <Divider />
-
+                  <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
+                    <Stack spacing={2}>
+                      <Typography variant="h6" gutterBottom>
+                        Estadísticas por alumno
+                      </Typography>
+                      <Grid container spacing={2}>
+                        <Grid size={{ xs: 6 }}>
+                          <ReportStatCard
+                            icon={<StarIcon fontSize="small" />}
+                            title="Estrellas"
+                            subtitle="Promedio por alumno"
+                            count={data.resumen.promEstrellas.toFixed(1)}
+                            color="warning"
+                            small
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 6 }}>
+                          <ReportStatCard
+                            icon={<ReplayIcon fontSize="small" />}
+                            title="Intentos"
+                            subtitle="Promedio por alumno"
+                            count={data.resumen.promIntentos.toFixed(1)}
+                            color="info"
+                            small
+                          />
+                        </Grid>
+                      </Grid>
+                    </Stack>
+                  </Paper>
                   {/* Tops */}
-                  <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                    {/* Top Activos */}
-                    <Box sx={{ flex: 1 }}>
-                      <Stack
-                        direction="row"
-                        alignItems="center"
-                        spacing={1}
-                        mb={1}
-                      >
-                        <TrendingUpIcon color="success" fontSize="small" />
-                        <Typography
-                          variant="subtitle2"
-                          color="success.main"
-                          fontWeight="bold"
-                        >
-                          Top 5 Más Activos
+                  <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
+                    <Stack spacing={2}>
+                      <Stack>
+                        <Typography variant="h6">
+                          Alumnos más activos e inactivos
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Con porcentaje de diferencia respecto al promedio
                         </Typography>
                       </Stack>
-                      <List dense disablePadding>
-                        {data.tops?.activos.map(
-                          (student: any, index: number) => (
-                            <ListItem key={index} sx={{ py: 0.5, px: 0 }}>
-                              <ListItemAvatar sx={{ minWidth: 36 }}>
-                                <Avatar
-                                  sx={{
-                                    bgcolor: "success.light",
-                                    width: 24,
-                                    height: 24,
-                                  }}
-                                >
-                                  <PersonIcon sx={{ fontSize: 16 }} />
-                                </Avatar>
-                              </ListItemAvatar>
-                              <ListItemText
-                                primary={student.nombre}
-                                primaryTypographyProps={{
-                                  variant: "body2",
-                                  fontWeight: 500,
-                                }}
-                                secondary={
-                                  <Typography
-                                    variant="caption"
-                                    component="span"
-                                    sx={{ fontSize: "0.7rem", lineHeight: 1 }}
-                                  >
-                                    <strong>{student.misiones}</strong> misiones
-                                    completadas
-                                    <Typography
-                                      component="span"
-                                      variant="caption"
-                                      color="success.main"
+                      <Stack
+                        direction={{ xs: "column", sm: "row" }}
+                        spacing={2}
+                      >
+                        {/* Top Activos */}
+                        <Box sx={{ flex: 1 }}>
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            spacing={1}
+                            mb={1}
+                          >
+                            <TrendingUpIcon color="success" fontSize="small" />
+                            <Typography
+                              variant="subtitle2"
+                              color="success.main"
+                              fontWeight="bold"
+                            >
+                              Top 5 Más Activos
+                            </Typography>
+                          </Stack>
+                          <List dense disablePadding>
+                            {data.tops?.activos.map(
+                              (student: any, index: number) => (
+                                <ListItem key={index} sx={{ py: 0.5, px: 0 }}>
+                                  <ListItemAvatar sx={{ minWidth: 36 }}>
+                                    <Avatar
                                       sx={{
-                                        ml: 0.5,
-                                        fontWeight: "bold",
-                                        fontSize: "0.7rem",
+                                        bgcolor: "success.light",
+                                        width: 24,
+                                        height: 24,
                                       }}
                                     >
-                                      (+
-                                      {student.diferenciaPorcentual.toFixed(0)}%
-                                      vs prom)
-                                    </Typography>
-                                  </Typography>
-                                }
-                                sx={{ m: 0 }}
-                              />
-                            </ListItem>
-                          ),
-                        )}
-                        {data.tops?.activos.length === 0 && (
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            align="center"
-                            display="block"
-                            sx={{ mt: 1 }}
-                          >
-                            Sin datos
-                          </Typography>
-                        )}
-                      </List>
-                    </Box>
+                                      <PersonIcon sx={{ fontSize: 16 }} />
+                                    </Avatar>
+                                  </ListItemAvatar>
+                                  <ListItemText
+                                    primary={student.nombre}
+                                    primaryTypographyProps={{
+                                      variant: "body2",
+                                      fontWeight: 500,
+                                    }}
+                                    secondary={
+                                      <Typography
+                                        variant="caption"
+                                        component="span"
+                                        sx={{
+                                          fontSize: "0.7rem",
+                                          lineHeight: 1,
+                                        }}
+                                      >
+                                        <strong>{student.misiones}</strong>{" "}
+                                        misiones completadas
+                                        <Typography
+                                          component="span"
+                                          variant="caption"
+                                          color="success.main"
+                                          sx={{
+                                            ml: 0.5,
+                                            fontWeight: "bold",
+                                            fontSize: "0.7rem",
+                                          }}
+                                        >
+                                          (+
+                                          {student.diferenciaPorcentual.toFixed(
+                                            0,
+                                          )}
+                                          % vs prom)
+                                        </Typography>
+                                      </Typography>
+                                    }
+                                    sx={{ m: 0 }}
+                                  />
+                                </ListItem>
+                              ),
+                            )}
+                            {data.tops?.activos.length === 0 && (
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                align="center"
+                                display="block"
+                                sx={{ mt: 1 }}
+                              >
+                                Sin datos
+                              </Typography>
+                            )}
+                          </List>
+                        </Box>
 
-                    {/* Top Inactivos */}
-                    <Box sx={{ flex: 1 }}>
-                      <Stack
-                        direction="row"
-                        alignItems="center"
-                        spacing={1}
-                        mb={1}
-                      >
-                        <TrendingDownIcon color="error" fontSize="small" />
-                        <Typography
-                          variant="subtitle2"
-                          color="error.main"
-                          fontWeight="bold"
-                        >
-                          Top 5 Menos Activos
-                        </Typography>
-                      </Stack>
-                      <List dense disablePadding>
-                        {data.tops?.inactivos.map(
-                          (student: any, index: number) => (
-                            <ListItem key={index} sx={{ py: 0.5, px: 0 }}>
-                              <ListItemAvatar sx={{ minWidth: 36 }}>
-                                <Avatar
-                                  sx={{
-                                    bgcolor: "error.light",
-                                    width: 24,
-                                    height: 24,
-                                  }}
-                                >
-                                  <PersonIcon sx={{ fontSize: 16 }} />
-                                </Avatar>
-                              </ListItemAvatar>
-                              <ListItemText
-                                primary={student.nombre}
-                                primaryTypographyProps={{
-                                  variant: "body2",
-                                  fontWeight: 500,
-                                }}
-                                secondary={
-                                  <Typography
-                                    variant="caption"
-                                    component="span"
-                                    sx={{ fontSize: "0.7rem", lineHeight: 1 }}
-                                  >
-                                    <strong>{student.misiones}</strong> misiones
-                                    completadas
-                                    <Typography
-                                      component="span"
-                                      variant="caption"
-                                      color="error.main"
+                        {/* Top Inactivos */}
+                        <Box sx={{ flex: 1 }}>
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            spacing={1}
+                            mb={1}
+                          >
+                            <TrendingDownIcon color="error" fontSize="small" />
+                            <Typography
+                              variant="subtitle2"
+                              color="error.main"
+                              fontWeight="bold"
+                            >
+                              Top 5 Menos Activos
+                            </Typography>
+                          </Stack>
+                          <List dense disablePadding>
+                            {data.tops?.inactivos.map(
+                              (student: any, index: number) => (
+                                <ListItem key={index} sx={{ py: 0.5, px: 0 }}>
+                                  <ListItemAvatar sx={{ minWidth: 36 }}>
+                                    <Avatar
                                       sx={{
-                                        ml: 0.5,
-                                        fontWeight: "bold",
-                                        fontSize: "0.7rem",
+                                        bgcolor: "error.light",
+                                        width: 24,
+                                        height: 24,
                                       }}
                                     >
-                                      ({student.diferenciaPorcentual.toFixed(0)}
-                                      % vs prom)
-                                    </Typography>
-                                  </Typography>
-                                }
-                                sx={{ m: 0 }}
-                              />
-                            </ListItem>
-                          ),
-                        )}
-                        {data.tops?.inactivos.length === 0 && (
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            align="center"
-                            display="block"
-                            sx={{ mt: 1 }}
-                          >
-                            Sin datos
-                          </Typography>
-                        )}
-                      </List>
-                    </Box>
-                  </Stack>
+                                      <PersonIcon sx={{ fontSize: 16 }} />
+                                    </Avatar>
+                                  </ListItemAvatar>
+                                  <ListItemText
+                                    primary={student.nombre}
+                                    primaryTypographyProps={{
+                                      variant: "body2",
+                                      fontWeight: 500,
+                                    }}
+                                    secondary={
+                                      <Typography
+                                        variant="caption"
+                                        component="span"
+                                        sx={{
+                                          fontSize: "0.7rem",
+                                          lineHeight: 1,
+                                        }}
+                                      >
+                                        <strong>{student.misiones}</strong>{" "}
+                                        misiones completadas
+                                        <Typography
+                                          component="span"
+                                          variant="caption"
+                                          color="error.main"
+                                          sx={{
+                                            ml: 0.5,
+                                            fontWeight: "bold",
+                                            fontSize: "0.7rem",
+                                          }}
+                                        >
+                                          (
+                                          {student.diferenciaPorcentual.toFixed(
+                                            0,
+                                          )}
+                                          % vs prom)
+                                        </Typography>
+                                      </Typography>
+                                    }
+                                    sx={{ m: 0 }}
+                                  />
+                                </ListItem>
+                              ),
+                            )}
+                            {data.tops?.inactivos.length === 0 && (
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                align="center"
+                                display="block"
+                                sx={{ mt: 1 }}
+                              >
+                                Sin datos
+                              </Typography>
+                            )}
+                          </List>
+                        </Box>
+                      </Stack>
+                    </Stack>
+                  </Paper>
                 </Stack>
-              </Paper>
+              </Grid>
             </Grid>
-          </Grid>
-        </Stack>
-      )}
-    </Paper>
+          </Stack>
+        )}
+      </Stack>
+    </Box>
   );
 }

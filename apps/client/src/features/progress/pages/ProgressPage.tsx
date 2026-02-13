@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import {
   Box,
-  Typography,
   Alert,
   Stack,
   TextField,
@@ -12,7 +11,6 @@ import {
   type SelectChangeEvent,
   Tooltip,
   Button,
-  Paper,
   CircularProgress,
   Grid,
   IconButton,
@@ -191,6 +189,8 @@ export default function ProgressPage() {
       {
         field: "pctMisionesCompletadas",
         headerName: "Progreso (%)",
+        align: "center",
+        headerAlign: "center",
         width: 100,
         valueFormatter: (value: number) => {
           if (typeof value !== "number") return "N/A";
@@ -200,6 +200,8 @@ export default function ProgressPage() {
       {
         field: "promEstrellas",
         headerName: "Estrellas (Prom.)",
+        align: "center",
+        headerAlign: "center",
         width: 125,
         valueFormatter: (value: number) => {
           if (typeof value !== "number") return "N/A";
@@ -209,6 +211,8 @@ export default function ProgressPage() {
       {
         field: "promIntentos",
         headerName: "Intentos (Prom.)",
+        align: "center",
+        headerAlign: "center",
         width: 125,
         valueFormatter: (value: number) => {
           if (typeof value !== "number") return "N/A";
@@ -218,6 +222,8 @@ export default function ProgressPage() {
       {
         field: "totalExp",
         headerName: "EXP Total",
+        align: "center",
+        headerAlign: "center",
       },
       {
         field: "ultimaActividad",
@@ -347,129 +353,121 @@ export default function ProgressPage() {
               </Grid>
             </Grid>
 
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 12 }}>
-                {/* --- B. Filtros --- */}
-                <Paper elevation={1} sx={{ pt: 1, pb: 2, pr: 2, pl: 2, mb: 1 }}>
-                  <Typography variant="overline" sx={{ fontSize: "14px" }}>
-                    Filtros
-                  </Typography>
-                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                    <TextField
-                      label="Buscar Alumno..."
-                      variant="outlined"
-                      size="small"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      sx={{ flexGrow: 1 }}
-                    />
-                    <FormControl size="small" sx={{ minWidth: 160 }}>
-                      <InputLabel>Progreso</InputLabel>
-                      <Select
-                        name="progressRange"
-                        value={queryOptions.progressRange}
-                        label="Progreso"
-                        onChange={handleFilterChange}
-                      >
-                        <MenuItem value="">Todos</MenuItem>
-                        {Object.entries(ProgressRange).map(([key, value]) => (
-                          <MenuItem key={key} value={value}>
-                            {value}%
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                    <FormControl size="small" sx={{ minWidth: 160 }}>
-                      <InputLabel>Estrellas</InputLabel>
-                      <Select
-                        name="starsRange"
-                        value={queryOptions.starsRange}
-                        label="Estrellas"
-                        onChange={handleFilterChange}
-                      >
-                        <MenuItem value="">Todas</MenuItem>
-                        {Object.entries(StarsRange).map(([key, value]) => (
-                          <MenuItem key={key} value={value}>
-                            {value} ⭐
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                    <FormControl size="small" sx={{ minWidth: 160 }}>
-                      <InputLabel>Últ. Actividad</InputLabel>
-                      <Select
-                        name="activityRange"
-                        value={queryOptions.activityRange}
-                        label="Últ. Actividad"
-                        onChange={handleFilterChange}
-                      >
-                        <MenuItem value="">Todos</MenuItem>
-                        <MenuItem value={ActivityRange.LAST_24H}>
-                          Últimas 24h
-                        </MenuItem>
-                        <MenuItem value={ActivityRange.LAST_3D}>
-                          Últimos 3 días
-                        </MenuItem>
-                        <MenuItem value={ActivityRange.LAST_7D}>
-                          Últimos 7 días
-                        </MenuItem>
-                        <MenuItem value={ActivityRange.INACTIVE}>
-                          Inactivo (+7d)
-                        </MenuItem>
-                      </Select>
-                    </FormControl>
-                    <Tooltip title="Limpiar filtros">
-                      <IconButton
-                        onClick={handleClearFilters}
-                        size="small"
-                        color="primary"
-                      >
-                        <FilterAltOffIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </Stack>
-                </Paper>
-                {/* --- C. DataGrid --- */}
-                {gridError && <Alert severity="error">{gridError}</Alert>}
-                <Box sx={{ height: 400, width: "100%" }}>
-                  <DataGrid
-                    rows={rows}
-                    columns={columns}
-                    rowCount={totalRows}
-                    loading={gridLoading}
-                    // Paginación
-                    paginationMode="server"
-                    paginationModel={{
-                      page: queryOptions.page - 1,
-                      pageSize: queryOptions.limit,
-                    }}
-                    onPaginationModelChange={handlePaginationChange}
-                    pageSizeOptions={[5, 10, 25]}
-                    sortingMode="server"
-                    sortModel={[
-                      { field: queryOptions.sort, sort: queryOptions.order },
-                    ]}
-                    onSortModelChange={handleSortChange}
-                    disableRowSelectionOnClick
-                    disableColumnResize={true}
-                    sx={{
-                      "& .MuiDataGrid-cell:focus": {
-                        outline: "none",
-                      },
-                      "& .MuiDataGrid-cell:focus-within": {
-                        outline: "none",
-                      },
-                      "& .MuiDataGrid-columnHeader:focus": {
-                        outline: "none",
-                      },
-                      "& .MuiDataGrid-columnHeader:focus-within": {
-                        outline: "none",
-                      },
-                    }}
-                  />
-                </Box>
-              </Grid>
-            </Grid>
+            {/* --- B. Filtros --- */}
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              <TextField
+                label="Buscar Alumno..."
+                variant="outlined"
+                size="small"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                sx={{ flexGrow: 1 }}
+              />
+              <FormControl size="small" sx={{ minWidth: 160 }}>
+                <InputLabel>Progreso</InputLabel>
+                <Select
+                  name="progressRange"
+                  value={queryOptions.progressRange}
+                  label="Progreso"
+                  onChange={handleFilterChange}
+                >
+                  <MenuItem value="">Todos</MenuItem>
+                  {Object.entries(ProgressRange).map(([key, value]) => (
+                    <MenuItem key={key} value={value}>
+                      {value}%
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 160 }}>
+                <InputLabel>Estrellas</InputLabel>
+                <Select
+                  name="starsRange"
+                  value={queryOptions.starsRange}
+                  label="Estrellas"
+                  onChange={handleFilterChange}
+                >
+                  <MenuItem value="">Todas</MenuItem>
+                  {Object.entries(StarsRange).map(([key, value]) => (
+                    <MenuItem key={key} value={value}>
+                      {value} ⭐
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 160 }}>
+                <InputLabel>Últ. Actividad</InputLabel>
+                <Select
+                  name="activityRange"
+                  value={queryOptions.activityRange}
+                  label="Últ. Actividad"
+                  onChange={handleFilterChange}
+                >
+                  <MenuItem value="">Todos</MenuItem>
+                  <MenuItem value={ActivityRange.LAST_24H}>
+                    Últimas 24h
+                  </MenuItem>
+                  <MenuItem value={ActivityRange.LAST_3D}>
+                    Últimos 3 días
+                  </MenuItem>
+                  <MenuItem value={ActivityRange.LAST_7D}>
+                    Últimos 7 días
+                  </MenuItem>
+                  <MenuItem value={ActivityRange.INACTIVE}>
+                    Inactivo (+7d)
+                  </MenuItem>
+                </Select>
+              </FormControl>
+              <Tooltip title="Limpiar filtros">
+                <IconButton
+                  onClick={handleClearFilters}
+                  size="small"
+                  color="primary"
+                >
+                  <FilterAltOffIcon />
+                </IconButton>
+              </Tooltip>
+            </Stack>
+            {/* --- C. DataGrid --- */}
+            {gridError && <Alert severity="error">{gridError}</Alert>}
+            <Box sx={{ height: 400, width: "100%" }}>
+              <DataGrid
+                rows={rows}
+                columns={columns}
+                rowCount={totalRows}
+                loading={gridLoading}
+                // Paginación
+                paginationMode="server"
+                paginationModel={{
+                  page: queryOptions.page - 1,
+                  pageSize: queryOptions.limit,
+                }}
+                onPaginationModelChange={handlePaginationChange}
+                pageSizeOptions={[5, 10, 25]}
+                sortingMode="server"
+                sortModel={[
+                  { field: queryOptions.sort, sort: queryOptions.order },
+                ]}
+                onSortModelChange={handleSortChange}
+                disableRowSelectionOnClick
+                disableColumnResize={true}
+                sx={{
+                  borderRadius: "14px",
+                  "& .MuiDataGrid-cell:focus": {
+                    outline: "none",
+                  },
+                  "& .MuiDataGrid-cell:focus-within": {
+                    outline: "none",
+                  },
+                  "& .MuiDataGrid-columnHeader:focus": {
+                    outline: "none",
+                  },
+                  "& .MuiDataGrid-columnHeader:focus-within": {
+                    outline: "none",
+                  },
+                }}
+              />
+            </Box>
           </Stack>
         ) : null}
 

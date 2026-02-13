@@ -42,7 +42,14 @@ export default function ProgressReportTab({ courseId }: Props) {
 
   return (
     <Box sx={{ width: "100%", mt: -3 }}>
-      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+      <Box
+        sx={{
+          borderBottom: 1,
+          borderColor: "divider",
+          mx: -3,
+          bgcolor: "background.paper",
+        }}
+      >
         <Tabs
           value={value}
           onChange={handleChange}

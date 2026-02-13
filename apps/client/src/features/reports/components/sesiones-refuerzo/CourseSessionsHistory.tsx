@@ -23,6 +23,7 @@ import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
 import InfoIcon from "@mui/icons-material/Info";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import HistoryIcon from "@mui/icons-material/History";
 
 import {
   getCourseSessionsHistory,
@@ -35,8 +36,8 @@ import {
 } from "../../../../types/traducciones";
 import SesionDetailModal from "./SesionDetailModal";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
-import PdfExportButton from "../common/PdfExportButton";
-import ExcelExportButton from "../common/ExcelExportButton";
+import { datePickerConfig } from "../../../../config/theme.config";
+import HeaderReportPage from "../../../../components/HeaderReportPage";
 
 interface Props {
   courseId: string;
@@ -246,60 +247,52 @@ export default function CourseSessionsHistory({ courseId }: Props) {
   const showLoading = loading && !data;
 
   return (
-    <Paper elevation={5} component="section" sx={{ p: 2 }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography
-          variant="h5"
-          gutterBottom
-          color="primary.main"
-          sx={{ mb: 2, fontWeight: "bold" }}
-        >
-          Historial de Sesiones Generadas
-        </Typography>
-        <Box
-          sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
-        >
-          <PdfExportButton
-            filters={{ ...filters, courseId }}
-            endpointPath={`/reportes/cursos/${courseId}/sesiones-refuerzo/historial/pdf`}
-            disabled={!data}
-          />
-          <ExcelExportButton
-            filters={filters}
-            endpointPath={`/reportes/cursos/${courseId}/sesiones-refuerzo/historial/excel`}
-            disabled={!data}
-            filename="historial_sesiones.xlsx"
-          />
-        </Box>
-      </Stack>
+    <Box
+      component="section"
+      sx={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Stack spacing={2} sx={{ height: "100%" }}>
+        <HeaderReportPage
+          title="Historial de Sesiones"
+          description="Revisa el detalle de todas las sesiones de refuerzo asignadas, completadas o vencidas."
+          icon={<HistoryIcon />}
+          filters={{ ...filters, courseId }}
+          endpointPathPdf={`/reportes/cursos/${courseId}/sesiones-refuerzo/historial/pdf`}
+          endpointPathExcel={`/reportes/cursos/${courseId}/sesiones-refuerzo/historial/excel`}
+          filenameExcel="historial_sesiones.xlsx"
+          disabled={!data}
+        />
 
-      {/* Alerta Informativa sobre Fechas */}
-      <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 3 }}>
-        <Typography variant="body2">
-          La <b>fecha mostrada</b> en el gráfico y la tabla varía según el
-          estado filtrado:
-        </Typography>
-        <ul
-          style={{
-            margin: "4px 0",
-            paddingLeft: "20px",
-            fontSize: "0.875rem",
-          }}
-        >
-          <li>
-            <b>Pendiente / Todos:</b> Fecha de asignación (creación).
-          </li>
-          <li>
-            <b>Completada:</b> Fecha en que el alumno completó la sesión.
-          </li>
-          <li>
-            <b>No realizada / Incompleta:</b> Fecha límite asignada.
-          </li>
-        </ul>
-      </Alert>
+        {/* Alerta Informativa sobre Fechas */}
+        <Alert severity="info" icon={<InfoIcon />}>
+          <Typography variant="body2">
+            La <b>fecha mostrada</b> en el gráfico y la tabla varía según el
+            estado filtrado:
+          </Typography>
+          <ul
+            style={{
+              margin: "4px 0",
+              paddingLeft: "20px",
+              fontSize: "0.875rem",
+            }}
+          >
+            <li>
+              <b>Pendiente / Todos:</b> Fecha de asignación (creación).
+            </li>
+            <li>
+              <b>Completada:</b> Fecha en que el alumno completó la sesión.
+            </li>
+            <li>
+              <b>No realizada / Incompleta:</b> Fecha límite asignada.
+            </li>
+          </ul>
+        </Alert>
 
-      {/* --- Filtros --- */}
-      <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
+        {/* --- Filtros --- */}
         <Stack spacing={2}>
           <QuickDateFilter onApply={handleQuickFilter} />
 
@@ -321,7 +314,19 @@ export default function CourseSessionsHistory({ courseId }: Props) {
                   fechaDesde: val ? format(val, "yyyy-MM-dd") : "",
                 })
               }
-              slotProps={{ textField: { size: "small", sx: { width: 160 } } }}
+              {...datePickerConfig}
+              slotProps={{
+                textField: {
+                  ...datePickerConfig.slotProps.textField,
+                  InputProps: {
+                    sx: {
+                      ...datePickerConfig.slotProps.textField.InputProps.sx,
+                      width: 160,
+                    },
+                  },
+                  sx: { width: 160 },
+                },
+              }}
             />
             <DatePicker
               label="Hasta"
@@ -336,7 +341,19 @@ export default function CourseSessionsHistory({ courseId }: Props) {
                   fechaHasta: val ? format(val, "yyyy-MM-dd") : "",
                 })
               }
-              slotProps={{ textField: { size: "small", sx: { width: 160 } } }}
+              {...datePickerConfig}
+              slotProps={{
+                textField: {
+                  ...datePickerConfig.slotProps.textField,
+                  InputProps: {
+                    sx: {
+                      ...datePickerConfig.slotProps.textField.InputProps.sx,
+                      width: 160,
+                    },
+                  },
+                  sx: { width: 160 },
+                },
+              }}
             />
 
             <FormControl size="small" sx={{ width: 150 }}>
@@ -473,7 +490,7 @@ export default function CourseSessionsHistory({ courseId }: Props) {
             </FormControl>
           </Stack>
         </Stack>
-      </Paper>
+      </Stack>
 
       {showLoading && (
         <CircularProgress sx={{ display: "block", mx: "auto", my: 4 }} />
@@ -549,6 +566,6 @@ export default function CourseSessionsHistory({ courseId }: Props) {
         onClose={() => setIsModalOpen(false)}
         sesion={selectedSession}
       />
-    </Paper>
+    </Box>
   );
 }

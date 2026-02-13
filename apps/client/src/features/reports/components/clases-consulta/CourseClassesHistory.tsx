@@ -13,6 +13,7 @@ import {
   IconButton,
   Tooltip,
 } from "@mui/material";
+import HistoryIcon from "@mui/icons-material/History";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format, parse } from "date-fns";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
@@ -26,9 +27,8 @@ import {
 import { estado_clase_consulta } from "../../../../types";
 import ClaseDetailModal from "../../../clases-consulta/components/ClaseDetailModal";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
-import PdfExportButton from "../common/PdfExportButton";
-import ExcelExportButton from "../common/ExcelExportButton";
 import { datePickerConfig } from "../../../../config/theme.config";
+import HeaderReportPage from "../../../../components/HeaderReportPage";
 
 interface Props {
   courseId: string;
@@ -196,35 +196,27 @@ export default function CourseClassesHistory({ courseId }: Props) {
   const showLoading = loading && !data;
 
   return (
-    <Paper elevation={5} component="section" sx={{ p: 2 }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography
-          variant="h5"
-          gutterBottom
-          color="primary.main"
-          sx={{ mb: 2, fontWeight: "bold" }}
-        >
-          Historial de Clases de Consulta
-        </Typography>
-        <Box
-          sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
-        >
-          <PdfExportButton
-            filters={filters}
-            endpointPath={`/reportes/cursos/${courseId}/clases-consulta/historial/pdf`}
-            disabled={!data}
-          />
-          <ExcelExportButton
-            filters={filters}
-            endpointPath={`/reportes/cursos/${courseId}/clases-consulta/historial/excel`}
-            disabled={!data}
-            filename="historial_clases.xlsx"
-          />
-        </Box>
-      </Stack>
+    <Box
+      component="section"
+      sx={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Stack spacing={2} sx={{ height: "100%" }}>
+        <HeaderReportPage
+          title="Historial de Clases de Consulta"
+          description="Revisa el detalle de todas las clases programadas, realizadas o canceladas."
+          icon={<HistoryIcon />}
+          filters={filters}
+          endpointPathPdf={`/reportes/cursos/${courseId}/clases-consulta/historial/pdf`}
+          endpointPathExcel={`/reportes/cursos/${courseId}/clases-consulta/historial/excel`}
+          filenameExcel="historial_clases.xlsx"
+          disabled={!data}
+        />
 
-      {/* --- Filtros --- */}
-      <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
+        {/* --- Filtros --- */}
         <Stack spacing={2}>
           <QuickDateFilter onApply={handleQuickFilter} />
           <Stack
@@ -313,108 +305,115 @@ export default function CourseClassesHistory({ courseId }: Props) {
             </Button>
           </Stack>
         </Stack>
-      </Paper>
 
-      {showLoading && (
-        <CircularProgress sx={{ display: "block", mx: "auto", my: 4 }} />
-      )}
-      {error && <Alert severity="error">{error}</Alert>}
+        {showLoading && (
+          <CircularProgress sx={{ display: "block", mx: "auto", my: 4 }} />
+        )}
+        {error && <Alert severity="error">{error}</Alert>}
 
-      {data && !showLoading && (
-        <Stack spacing={4}>
-          {/* --- Gráfico Apilado --- */}
-          <Paper elevation={3} sx={{ p: 2 }}>
-            <Typography variant="h6">
-              Evolución de Consultas por Clase
-            </Typography>
-            <Typography variant="caption" color="text.secondary" gutterBottom>
-              Estado de las consultas (Revisadas, Pendientes, A Revisar) según
-              el resultado de cada clase.
-            </Typography>
+        {data && !showLoading && (
+          <Stack spacing={2}>
+            {/* --- Gráfico Apilado --- */}
+            <Paper elevation={3} sx={{ p: 2 }}>
+              <Typography variant="h6">
+                Evolución de Consultas por Clase
+              </Typography>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                Estado de las consultas (Revisadas, Pendientes, A Revisar) según
+                el resultado de cada clase.
+              </Typography>
 
-            {data.chartData.length > 0 ? (
-              <BarChart
-                dataset={data.chartData}
-                yAxis={[
-                  {
-                    label: "Cantidad de consultas de la clase",
-                    labelStyle: { fontSize: 12 },
-                  },
-                ]}
-                xAxis={[
-                  {
-                    scaleType: "band",
-                    dataKey: "id", // Usamos ID para separar clases del mismo día
-                    label: "Fecha - Estado",
-                    valueFormatter: (id) => {
-                      // Buscamos la fecha correspondiente al ID de la clase
-                      const item = data.chartData.find((d: any) => d.id === id);
-                      if (!item) return "";
-                      const dateStr = format(item.fecha, "dd/MM");
-                      const statusStr = item.estado.replace(/_/g, " ");
-                      return `${dateStr} - ${statusStr}`;
+              {data.chartData.length > 0 ? (
+                <BarChart
+                  dataset={data.chartData}
+                  yAxis={[
+                    {
+                      label: "Cantidad de consultas de la clase",
+                      labelStyle: { fontSize: 12 },
                     },
-                  },
-                ]}
-                series={[
-                  {
-                    dataKey: "revisadas",
-                    label: "Revisadas",
-                    stack: "total",
-                    color: "#4caf50", // Verde
-                  },
-                  {
-                    dataKey: "noRevisadas",
-                    label: "No Revisadas",
-                    stack: "total",
-                    color: "#ff9800", // Naranja
-                  },
-                  {
-                    dataKey: "pendientes",
-                    label: "Pendientes (No Realizada)",
-                    stack: "total",
-                    color: "#9e9e9e", // Gris
-                  },
-                  {
-                    dataKey: "aRevisar",
-                    label: "A Revisar (Programada)",
-                    stack: "total",
-                    color: "#1976d2", // Azul
-                  },
-                ]}
-                height={500}
-                slotProps={{
-                  legend: {
-                    direction: "horizontal",
-                    position: { vertical: "bottom", horizontal: "center" },
+                  ]}
+                  xAxis={[
+                    {
+                      scaleType: "band",
+                      dataKey: "id", // Usamos ID para separar clases del mismo día
+                      label: "Fecha - Estado",
+                      valueFormatter: (id) => {
+                        // Buscamos la fecha correspondiente al ID de la clase
+                        const item = data.chartData.find(
+                          (d: any) => d.id === id,
+                        );
+                        if (!item) return "";
+                        const dateStr = format(item.fecha, "dd/MM");
+                        const statusStr = item.estado.replace(/_/g, " ");
+                        return `${dateStr} - ${statusStr}`;
+                      },
+                    },
+                  ]}
+                  series={[
+                    {
+                      dataKey: "revisadas",
+                      label: "Revisadas",
+                      stack: "total",
+                      color: "#4caf50", // Verde
+                    },
+                    {
+                      dataKey: "noRevisadas",
+                      label: "No Revisadas",
+                      stack: "total",
+                      color: "#ff9800", // Naranja
+                    },
+                    {
+                      dataKey: "pendientes",
+                      label: "Pendientes (No Realizada)",
+                      stack: "total",
+                      color: "#9e9e9e", // Gris
+                    },
+                    {
+                      dataKey: "aRevisar",
+                      label: "A Revisar (Programada)",
+                      stack: "total",
+                      color: "#1976d2", // Azul
+                    },
+                  ]}
+                  height={500}
+                  slotProps={{
+                    legend: {
+                      direction: "horizontal",
+                      position: { vertical: "bottom", horizontal: "center" },
+                    },
+                  }}
+                />
+              ) : (
+                <Typography
+                  align="center"
+                  color="text.secondary"
+                  sx={{ py: 4 }}
+                >
+                  No hay clases para mostrar en el gráfico.
+                </Typography>
+              )}
+            </Paper>
+
+            {/* --- Tabla Detallada --- */}
+            <Paper elevation={3} sx={{ height: 600, width: "100%" }}>
+              <DataGrid
+                rows={data.tableData}
+                columns={columns}
+                density="compact"
+                initialState={{
+                  pagination: { paginationModel: { pageSize: 10 } },
+                  sorting: {
+                    sortModel: [{ field: "fechaAgenda", sort: "desc" }],
                   },
                 }}
+                pageSizeOptions={[10, 25, 50]}
+                disableRowSelectionOnClick
+                sx={{ borderRadius: "0.7em" }}
               />
-            ) : (
-              <Typography align="center" color="text.secondary" sx={{ py: 4 }}>
-                No hay clases para mostrar en el gráfico.
-              </Typography>
-            )}
-          </Paper>
-
-          {/* --- Tabla Detallada --- */}
-          <Paper elevation={3} sx={{ height: 600, width: "100%" }}>
-            <DataGrid
-              rows={data.tableData}
-              columns={columns}
-              density="compact"
-              initialState={{
-                pagination: { paginationModel: { pageSize: 10 } },
-                sorting: {
-                  sortModel: [{ field: "fechaAgenda", sort: "desc" }],
-                },
-              }}
-              pageSizeOptions={[10, 25, 50]}
-              disableRowSelectionOnClick
-            />
-          </Paper>
-        </Stack>
-      )}
+            </Paper>
+          </Stack>
+        )}
+      </Stack>
 
       {/* Modal de Detalle */}
       {selectedClass && (
@@ -429,6 +428,6 @@ export default function CourseClassesHistory({ courseId }: Props) {
           }}
         />
       )}
-    </Paper>
+    </Box>
   );
 }

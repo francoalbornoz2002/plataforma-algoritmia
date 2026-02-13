@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   Box,
-  Typography,
   CircularProgress,
   Alert,
   Stack,
@@ -11,8 +10,6 @@ import {
   MenuItem,
   Button,
   Grid,
-  Paper,
-  TextField,
   Pagination,
   IconButton,
   Tooltip,
@@ -202,7 +199,7 @@ export default function SesionesRefuerzoPage() {
 
   return (
     <Box>
-      <Stack spacing={1} sx={{ height: "100%" }}>
+      <Stack spacing={2} sx={{ height: "100%" }}>
         {/* --- TÍTULO --- */}
         <HeaderPage
           title={`Sesiones de Refuerzo en ${selectedCourse.nombre}`}
@@ -212,179 +209,174 @@ export default function SesionesRefuerzoPage() {
         />
 
         {/* --- SECCIÓN DE FILTROS --- */}
-        <Paper elevation={2} sx={{ pt: 1, pb: 2, pr: 2, pl: 2 }}>
-          <Typography variant="overline" sx={{ fontSize: "14px" }}>
-            Filtros de búsqueda
-          </Typography>
-          <Stack
-            direction="row"
-            spacing={1}
-            flexWrap="wrap"
-            useFlexGap
-            rowGap={2}
-            alignItems="center"
-          >
-            <DatePicker
-              label="Desde"
-              value={dateFilters.fechaDesde}
-              onChange={(newValue) => {
-                setDateFilters((prev) => ({ ...prev, fechaDesde: newValue }));
-                setPagination((prev) => ({ ...prev, page: 1 }));
-              }}
-              {...datePickerConfig}
-              slotProps={{
-                textField: {
-                  ...datePickerConfig.slotProps.textField,
-                  InputProps: {
-                    sx: {
-                      ...datePickerConfig.slotProps.textField.InputProps.sx,
-                      width: 165,
-                    },
+        <Stack
+          direction="row"
+          spacing={1}
+          flexWrap="wrap"
+          useFlexGap
+          rowGap={2}
+          alignItems="center"
+        >
+          <DatePicker
+            label="Desde"
+            value={dateFilters.fechaDesde}
+            onChange={(newValue) => {
+              setDateFilters((prev) => ({ ...prev, fechaDesde: newValue }));
+              setPagination((prev) => ({ ...prev, page: 1 }));
+            }}
+            {...datePickerConfig}
+            slotProps={{
+              textField: {
+                ...datePickerConfig.slotProps.textField,
+                InputProps: {
+                  sx: {
+                    ...datePickerConfig.slotProps.textField.InputProps.sx,
+                    width: 165,
                   },
-                  sx: { width: 165 },
                 },
-              }}
-            />
-            <DatePicker
-              label="Hasta"
-              value={dateFilters.fechaHasta}
-              onChange={(newValue) => {
-                setDateFilters((prev) => ({ ...prev, fechaHasta: newValue }));
-                setPagination((prev) => ({ ...prev, page: 1 }));
-              }}
-              {...datePickerConfig}
-              slotProps={{
-                textField: {
-                  ...datePickerConfig.slotProps.textField,
-                  InputProps: {
-                    sx: {
-                      ...datePickerConfig.slotProps.textField.InputProps.sx,
-                      width: 165,
-                    },
+                sx: { width: 165 },
+              },
+            }}
+          />
+          <DatePicker
+            label="Hasta"
+            value={dateFilters.fechaHasta}
+            onChange={(newValue) => {
+              setDateFilters((prev) => ({ ...prev, fechaHasta: newValue }));
+              setPagination((prev) => ({ ...prev, page: 1 }));
+            }}
+            {...datePickerConfig}
+            slotProps={{
+              textField: {
+                ...datePickerConfig.slotProps.textField,
+                InputProps: {
+                  sx: {
+                    ...datePickerConfig.slotProps.textField.InputProps.sx,
+                    width: 165,
                   },
-                  sx: { width: 165 },
                 },
-              }}
-            />
-            <FormControl sx={{ width: 200 }} size="small">
-              <InputLabel>Alumno</InputLabel>
-              <Select
-                name="idAlumno"
-                label="Alumno"
-                value={filters.idAlumno || ""}
-                onChange={handleFilterChange}
-              >
-                <MenuItem value="">Todos</MenuItem>
-                {alumnosList.map((a) => (
-                  <MenuItem key={a.id} value={a.id}>
-                    {a.nombre} {a.apellido}
+                sx: { width: 165 },
+              },
+            }}
+          />
+          <FormControl sx={{ width: 200 }} size="small">
+            <InputLabel>Alumno</InputLabel>
+            <Select
+              name="idAlumno"
+              label="Alumno"
+              value={filters.idAlumno || ""}
+              onChange={handleFilterChange}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {alumnosList.map((a) => (
+                <MenuItem key={a.id} value={a.id}>
+                  {a.nombre} {a.apellido}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl sx={{ width: 200 }} size="small">
+            <InputLabel>Docente Creador</InputLabel>
+            <Select
+              name="idDocente"
+              label="Docente Creador"
+              value={filters.idDocente || ""}
+              onChange={handleFilterChange}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {docentesList.map((d) => (
+                <MenuItem key={d.id} value={d.id}>
+                  {d.nombre} {d.apellido}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl sx={{ width: 300 }} size="small">
+            <InputLabel>Dificultad</InputLabel>
+            <Select
+              name="idDificultad"
+              label="Dificultad"
+              value={filters.idDificultad || ""}
+              onChange={handleFilterChange}
+            >
+              <MenuItem value="">Todas</MenuItem>
+              {dificultadesList.map((d) => (
+                <MenuItem key={d.id} value={d.id}>
+                  {d.nombre}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl sx={{ width: 100 }} size="small">
+            <InputLabel>Grado</InputLabel>
+            <Select
+              name="gradoSesion"
+              label="Grado"
+              value={filters.gradoSesion || ""}
+              onChange={handleFilterChange}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {Object.values(grado_dificultad)
+                .filter((g) => g !== grado_dificultad.Ninguno)
+                .map((g) => (
+                  <MenuItem key={g} value={g}>
+                    {g}
                   </MenuItem>
                 ))}
-              </Select>
-            </FormControl>
-            <FormControl sx={{ width: 200 }} size="small">
-              <InputLabel>Docente Creador</InputLabel>
-              <Select
-                name="idDocente"
-                label="Docente Creador"
-                value={filters.idDocente || ""}
-                onChange={handleFilterChange}
-              >
-                <MenuItem value="">Todos</MenuItem>
-                {docentesList.map((d) => (
-                  <MenuItem key={d.id} value={d.id}>
-                    {d.nombre} {d.apellido}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl sx={{ width: 300 }} size="small">
-              <InputLabel>Dificultad</InputLabel>
-              <Select
-                name="idDificultad"
-                label="Dificultad"
-                value={filters.idDificultad || ""}
-                onChange={handleFilterChange}
-              >
-                <MenuItem value="">Todas</MenuItem>
-                {dificultadesList.map((d) => (
-                  <MenuItem key={d.id} value={d.id}>
-                    {d.nombre}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <FormControl sx={{ width: 100 }} size="small">
-              <InputLabel>Grado</InputLabel>
-              <Select
-                name="gradoSesion"
-                label="Grado"
-                value={filters.gradoSesion || ""}
-                onChange={handleFilterChange}
-              >
-                <MenuItem value="">Todos</MenuItem>
-                {Object.values(grado_dificultad)
-                  .filter((g) => g !== grado_dificultad.Ninguno)
-                  .map((g) => (
-                    <MenuItem key={g} value={g}>
-                      {g}
-                    </MenuItem>
-                  ))}
-              </Select>
-            </FormControl>
-            <FormControl sx={{ width: 140 }} size="small">
-              <InputLabel>Estado</InputLabel>
-              <Select
-                name="estado"
-                label="Estado"
-                value={filters.estado || ""}
-                onChange={handleFilterChange}
-              >
-                <MenuItem value="">Todos</MenuItem>
-                {Object.values(estado_sesion).map((e) => (
-                  <MenuItem key={e} value={e}>
-                    {EstadoSesionLabels[e]}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            </Select>
+          </FormControl>
+          <FormControl sx={{ width: 140 }} size="small">
+            <InputLabel>Estado</InputLabel>
+            <Select
+              name="estado"
+              label="Estado"
+              value={filters.estado || ""}
+              onChange={handleFilterChange}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {Object.values(estado_sesion).map((e) => (
+                <MenuItem key={e} value={e}>
+                  {EstadoSesionLabels[e]}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-            <FormControl size="small" sx={{ Width: 180 }}>
-              <InputLabel>Ordenar por</InputLabel>
-              <Select
-                value={sortOption}
-                label="Ordenar por"
-                onChange={(e) => setSortOption(e.target.value)}
+          <FormControl size="small" sx={{ Width: 180 }}>
+            <InputLabel>Ordenar por</InputLabel>
+            <Select
+              value={sortOption}
+              label="Ordenar por"
+              onChange={(e) => setSortOption(e.target.value)}
+            >
+              <MenuItem value="recent">Más recientes</MenuItem>
+              <MenuItem value="old">Más antiguas</MenuItem>
+              <MenuItem value="nro_asc">N° Sesión (Asc.)</MenuItem>
+              <MenuItem value="nro_desc">N° Sesión (Dec.)</MenuItem>
+            </Select>
+          </FormControl>
+          <Tooltip title="Limpiar filtros">
+            <IconButton
+              onClick={handleClearFilters}
+              size="small"
+              color="primary"
+            >
+              <FilterAltOffIcon />
+            </IconButton>
+          </Tooltip>
+          <Box sx={{ flex: 1 }}></Box>
+          <Box>
+            {!isReadOnly && (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={handleOpenCreate}
               >
-                <MenuItem value="recent">Más recientes</MenuItem>
-                <MenuItem value="old">Más antiguas</MenuItem>
-                <MenuItem value="nro_asc">N° Sesión (Asc.)</MenuItem>
-                <MenuItem value="nro_desc">N° Sesión (Dec.)</MenuItem>
-              </Select>
-            </FormControl>
-            <Tooltip title="Limpiar filtros">
-              <IconButton
-                onClick={handleClearFilters}
-                size="small"
-                color="primary"
-              >
-                <FilterAltOffIcon />
-              </IconButton>
-            </Tooltip>
-            <Box sx={{ flex: 1 }}></Box>
-            <Box>
-              {!isReadOnly && (
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={handleOpenCreate}
-                >
-                  Crear Sesión
-                </Button>
-              )}
-            </Box>
-          </Stack>
-        </Paper>
+                Crear Sesión
+              </Button>
+            )}
+          </Box>
+        </Stack>
 
         {/* --- 2. Lista de Sesiones (Cards) --- */}
         {loading ? (

@@ -21,13 +21,13 @@ import {
 import { dificultad_mision } from "../../../../types";
 import { useOptionalCourseContext } from "../../../../context/CourseContext";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
-import PdfExportButton from "../common/PdfExportButton";
-import ExcelExportButton from "../common/ExcelExportButton";
 import ReportStatCard from "../common/ReportStatCard";
 import ReportTextualCard from "../common/ReportTextualCard";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import ListAltIcon from "@mui/icons-material/ListAlt";
 import { datePickerConfig } from "../../../../config/theme.config";
+import HeaderReportPage from "../../../../components/HeaderReportPage";
 
 interface Props {
   courseId: string;
@@ -111,57 +111,34 @@ export default function CourseMissionsReport({ courseId }: Props) {
   ];
 
   return (
-    <Paper elevation={5} component="section" sx={{ p: 2 }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography
-          variant="h5"
-          gutterBottom
-          sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}
-        >
-          Misiones Completadas
-        </Typography>
-        <Box
-          sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
-        >
-          <PdfExportButton
-            filters={filters}
-            endpointPath={`/reportes/cursos/${courseId}/progreso/misiones/pdf`}
-            disabled={!data}
-          />
-          <ExcelExportButton
-            filters={filters}
-            endpointPath={`/reportes/cursos/${courseId}/progreso/misiones/excel`}
-            disabled={!data}
-            filename="misiones_completadas.xlsx"
-          />
-        </Box>
-      </Stack>
+    <Box
+      component="section"
+      sx={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Stack spacing={2} sx={{ height: "100%" }}>
+        <HeaderReportPage
+          title="Misiones Completadas"
+          description="Resumen del estado de completado y desempeño de todas las misiones del curso."
+          icon={<ListAltIcon />}
+          filters={filters}
+          endpointPathPdf={`/reportes/cursos/${courseId}/progreso/misiones/pdf`}
+          endpointPathExcel={`/reportes/cursos/${courseId}/progreso/misiones/excel`}
+          filenameExcel="misiones_completadas.xlsx"
+          disabled={!data}
+          sx={{ mb: 2 }}
+        />
 
-      {/* Filtros */}
-      <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
+        {/* Filtros */}
         <QuickDateFilter onApply={handleQuickFilter} />
-        <Box sx={{ mt: 2 }} />
         <Stack
           direction={{ xs: "column", md: "row" }}
           spacing={2}
           alignItems="center"
         >
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Dificultad</InputLabel>
-            <Select
-              value={filters.dificultad}
-              label="Dificultad"
-              onChange={(e) =>
-                setFilters({ ...filters, dificultad: e.target.value as any })
-              }
-            >
-              <MenuItem value="">Todas</MenuItem>
-              <MenuItem value={dificultad_mision.Facil}>Fácil</MenuItem>
-              <MenuItem value={dificultad_mision.Medio}>Medio</MenuItem>
-              <MenuItem value={dificultad_mision.Dificil}>Difícil</MenuItem>
-            </Select>
-          </FormControl>
-
           <DatePicker
             label="Desde"
             value={
@@ -196,94 +173,110 @@ export default function CourseMissionsReport({ courseId }: Props) {
             disableFuture
             minDate={courseCreatedAt ? new Date(courseCreatedAt) : undefined}
           />
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <InputLabel>Dificultad</InputLabel>
+            <Select
+              value={filters.dificultad}
+              label="Dificultad"
+              onChange={(e) =>
+                setFilters({ ...filters, dificultad: e.target.value as any })
+              }
+            >
+              <MenuItem value="">Todas</MenuItem>
+              <MenuItem value={dificultad_mision.Facil}>Fácil</MenuItem>
+              <MenuItem value={dificultad_mision.Medio}>Medio</MenuItem>
+              <MenuItem value={dificultad_mision.Dificil}>Difícil</MenuItem>
+            </Select>
+          </FormControl>
         </Stack>
-      </Paper>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-
-      <Stack spacing={3}>
-        {/* KPIs */}
-        {data && (
-          <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-            <Box sx={{ flex: 1 }}>
-              <ReportStatCard
-                icon={<TaskAltIcon />}
-                title="Misiones Completadas"
-                subtitle="Total en el período"
-                count={data.kpis.totalCompletions}
-                color="info"
-              />
-            </Box>
-            <Box sx={{ flex: 1 }}>
-              <ReportTextualCard
-                icon={<EmojiEventsIcon />}
-                title="Misión Destacada"
-                value={data.kpis.topMission.nombre}
-                description={`Mayor % completado (${data.kpis.topMission.porcentaje.toFixed(1)}%)`}
-                color="warning"
-              />
-            </Box>
-          </Stack>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
         )}
 
-        {/* Gráfico */}
-        <Paper elevation={3} sx={{ p: 2 }}>
-          <Typography variant="h6">Misiones completadas</Typography>
-          <Typography variant="caption" color="text.secondary" gutterBottom>
-            Cantidad de misiones completadas en el periodo seleccionado.
-          </Typography>
-          {data?.grafico && data.grafico.length > 0 ? (
-            <LineChart
-              dataset={data.grafico}
-              yAxis={[
-                {
-                  label: "Cantidad de misiones",
-                  valueFormatter: (value: number) =>
-                    Number.isInteger(value) ? value.toString() : "",
-                  min: 0,
-                  max: maxMisiones < 5 ? 5 : undefined,
-                },
-              ]}
-              xAxis={[
-                {
-                  scaleType: "point",
-                  dataKey: "fecha",
-                  label: "Fecha",
-                  valueFormatter: (date: string) =>
-                    format(parse(date, "yyyy-MM-dd", new Date()), "dd/MM"),
-                },
-              ]}
-              series={[
-                {
-                  dataKey: "cantidad",
-                  label: "Misiones Completadas",
-                  color: "#1976d2",
-                },
-              ]}
-              height={300}
-            />
-          ) : (
-            <Typography color="text.secondary" align="center" sx={{ py: 4 }}>
-              No hay datos para mostrar en el gráfico
-            </Typography>
+        <Stack spacing={3}>
+          {/* KPIs */}
+          {data && (
+            <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+              <Box sx={{ flex: 1 }}>
+                <ReportStatCard
+                  icon={<TaskAltIcon />}
+                  title="Misiones Completadas"
+                  subtitle="Total en el período"
+                  count={data.kpis.totalCompletions}
+                  color="info"
+                />
+              </Box>
+              <Box sx={{ flex: 1 }}>
+                <ReportTextualCard
+                  icon={<EmojiEventsIcon />}
+                  title="Misión Destacada"
+                  value={data.kpis.topMission.nombre}
+                  description={`Mayor % completado (${data.kpis.topMission.porcentaje.toFixed(1)}%)`}
+                  color="warning"
+                />
+              </Box>
+            </Stack>
           )}
-        </Paper>
 
-        {/* Tabla */}
-        <Paper elevation={3} sx={{ height: 400, width: "100%" }}>
-          <DataGrid
-            rows={data?.tabla || []}
-            columns={columns}
-            loading={loading}
-            density="compact"
-            disableRowSelectionOnClick
-          />
-        </Paper>
+          {/* Gráfico */}
+          <Paper elevation={3} sx={{ p: 2 }}>
+            <Typography variant="h6">Misiones completadas</Typography>
+            <Typography variant="caption" color="text.secondary" gutterBottom>
+              Cantidad de misiones completadas en el periodo seleccionado.
+            </Typography>
+            {data?.grafico && data.grafico.length > 0 ? (
+              <LineChart
+                dataset={data.grafico}
+                yAxis={[
+                  {
+                    label: "Cantidad de misiones",
+                    valueFormatter: (value: number) =>
+                      Number.isInteger(value) ? value.toString() : "",
+                    min: 0,
+                    max: maxMisiones < 5 ? 5 : undefined,
+                  },
+                ]}
+                xAxis={[
+                  {
+                    scaleType: "point",
+                    dataKey: "fecha",
+                    label: "Fecha",
+                    valueFormatter: (date: string) =>
+                      format(parse(date, "yyyy-MM-dd", new Date()), "dd/MM"),
+                  },
+                ]}
+                series={[
+                  {
+                    dataKey: "cantidad",
+                    label: "Misiones Completadas",
+                    color: "#1976d2",
+                  },
+                ]}
+                height={300}
+              />
+            ) : (
+              <Typography color="text.secondary" align="center" sx={{ py: 4 }}>
+                No hay datos para mostrar en el gráfico
+              </Typography>
+            )}
+          </Paper>
+
+          {/* Tabla */}
+          <Paper elevation={3} sx={{ height: 400, width: "100%" }}>
+            <DataGrid
+              rows={data?.tabla || []}
+              columns={columns}
+              loading={loading}
+              density="compact"
+              sx={{ borderRadius: "0.7em" }}
+              disableRowSelectionOnClick
+            />
+          </Paper>
+        </Stack>
       </Stack>
-    </Paper>
+    </Box>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button } from "@mui/material";
+import { Button, type SxProps } from "@mui/material";
 import TableViewIcon from "@mui/icons-material/TableView";
 import ReportExportDialog from "./ReportExportDialog";
 import apiClient from "../../../../lib/axios";
@@ -10,6 +10,7 @@ interface ExcelExportButtonProps {
   disabled?: boolean;
   label?: string;
   filename?: string;
+  sx?: SxProps;
 }
 
 export default function ExcelExportButton({
@@ -18,6 +19,7 @@ export default function ExcelExportButton({
   disabled = false,
   label = "Exportar Excel",
   filename = "reporte.xlsx",
+  sx,
 }: ExcelExportButtonProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -72,6 +74,7 @@ export default function ExcelExportButton({
         disabled={disabled || loading}
         color="success"
         onClick={() => setOpen(true)}
+        sx={sx}
       >
         {label}
       </Button>

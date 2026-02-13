@@ -377,84 +377,78 @@ export default function DifficultiesPage() {
         </Grid>
 
         {/* --- B. Filtros --- */}
-        <Paper elevation={1} sx={{ pt: 1, pb: 2, pr: 2, pl: 2 }}>
-          <Typography variant="overline" sx={{ fontSize: "14px" }}>
-            Filtros
-          </Typography>
-          <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
-            <TextField
-              label="Buscar Alumno..."
-              variant="outlined"
-              size="small"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              sx={{ flexGrow: 1, minWidth: 200 }}
-            />
-            <FormControl size="small" sx={{ minWidth: 160 }}>
-              <InputLabel>Tema</InputLabel>
-              <Select
-                name="tema"
-                value={queryOptions.tema}
-                label="Tema"
-                onChange={handleFilterChange}
-              >
-                <MenuItem value="">Todos</MenuItem>
-                {Object.values(temas)
-                  .filter((t) => t !== "Ninguno")
-                  .map((t) => (
-                    <MenuItem key={t} value={t}>
-                      {TemasLabels[t]}
-                    </MenuItem>
-                  ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 260 }}>
-              <InputLabel>Dificultad</InputLabel>
-              <Select
-                name="dificultadId"
-                value={queryOptions.dificultadId}
-                label="Dificultad"
-                onChange={handleFilterChange}
-                disabled={allDifficulties.length === 0} // Deshabilitar si aún no carga
-              >
-                <MenuItem value="">Todas</MenuItem>
-                {filteredDifficulties.map((d) => (
-                  <MenuItem key={d.id} value={d.id}>
-                    {d.nombre}
+        <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+          <TextField
+            label="Buscar Alumno..."
+            variant="outlined"
+            size="small"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{ flexGrow: 1, minWidth: 200 }}
+          />
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <InputLabel>Tema</InputLabel>
+            <Select
+              name="tema"
+              value={queryOptions.tema}
+              label="Tema"
+              onChange={handleFilterChange}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {Object.values(temas)
+                .filter((t) => t !== "Ninguno")
+                .map((t) => (
+                  <MenuItem key={t} value={t}>
+                    {TemasLabels[t]}
                   </MenuItem>
                 ))}
-              </Select>
-            </FormControl>
-            <FormControl size="small" sx={{ minWidth: 160 }}>
-              <InputLabel>Grado</InputLabel>
-              <Select
-                name="grado"
-                value={queryOptions.grado}
-                label="Grado"
-                onChange={handleFilterChange}
-              >
-                <MenuItem value="">Todos</MenuItem>
-                {Object.values(grado_dificultad)
-                  .filter((g) => g !== "Ninguno")
-                  .map((g) => (
-                    <MenuItem key={g} value={g}>
-                      {g}
-                    </MenuItem>
-                  ))}
-              </Select>
-            </FormControl>
-            <Tooltip title="Limpiar filtros">
-              <IconButton
-                onClick={handleClearFilters}
-                size="small"
-                color="primary"
-              >
-                <FilterAltOffIcon />
-              </IconButton>
-            </Tooltip>
-          </Stack>
-        </Paper>
-
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 260 }}>
+            <InputLabel>Dificultad</InputLabel>
+            <Select
+              name="dificultadId"
+              value={queryOptions.dificultadId}
+              label="Dificultad"
+              onChange={handleFilterChange}
+              disabled={allDifficulties.length === 0} // Deshabilitar si aún no carga
+            >
+              <MenuItem value="">Todas</MenuItem>
+              {filteredDifficulties.map((d) => (
+                <MenuItem key={d.id} value={d.id}>
+                  {d.nombre}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <InputLabel>Grado</InputLabel>
+            <Select
+              name="grado"
+              value={queryOptions.grado}
+              label="Grado"
+              onChange={handleFilterChange}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {Object.values(grado_dificultad)
+                .filter((g) => g !== "Ninguno")
+                .map((g) => (
+                  <MenuItem key={g} value={g}>
+                    {g}
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
+          <Tooltip title="Limpiar filtros">
+            <IconButton
+              onClick={handleClearFilters}
+              size="small"
+              color="primary"
+            >
+              <FilterAltOffIcon />
+            </IconButton>
+          </Tooltip>
+        </Stack>
         {/* --- C. DataGrid --- */}
         {gridError && <Alert severity="error">{gridError}</Alert>}
         <Box sx={{ height: 600, width: "100%" }}>

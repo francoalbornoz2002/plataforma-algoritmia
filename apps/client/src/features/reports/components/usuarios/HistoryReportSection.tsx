@@ -25,8 +25,9 @@ import {
   TipoMovimientoUsuario,
 } from "../../service/reports.service";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
-import PdfExportButton from "../common/PdfExportButton";
-import ExcelExportButton from "../common/ExcelExportButton";
+import HistoryIcon from "@mui/icons-material/History";
+import { datePickerConfig } from "../../../../config/theme.config";
+import HeaderReportPage from "../../../../components/HeaderReportPage";
 
 export default function HistoryReportSection() {
   const [type, setType] = useState<TipoMovimientoUsuario>(
@@ -136,32 +137,25 @@ export default function HistoryReportSection() {
   ];
 
   return (
-    <Paper elevation={5} component="section" sx={{ p: 2 }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography
-          variant="h5"
-          gutterBottom
-          sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}
-        >
-          Historial de Movimientos
-        </Typography>
-        <Box
-          sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
-        >
-          <PdfExportButton
-            filters={filters}
-            endpointPath="/reportes/usuarios/historial/pdf"
-            disabled={data.length === 0}
-          />
-          <ExcelExportButton
-            filters={filters}
-            endpointPath="/reportes/usuarios/historial/excel"
-            disabled={data.length === 0}
-            filename="historial_usuarios.xlsx"
-          />
-        </Box>
-      </Stack>
-      <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
+    <Box
+      component="section"
+      sx={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Stack spacing={2} sx={{ height: "100%" }}>
+        <HeaderReportPage
+          title="Historial de Movimientos"
+          description="Revisa el registro de altas y bajas de usuarios en el sistema."
+          icon={<HistoryIcon />}
+          filters={filters}
+          endpointPathPdf="/reportes/usuarios/historial/pdf"
+          endpointPathExcel="/reportes/usuarios/historial/excel"
+          filenameExcel="historial_usuarios.xlsx"
+          disabled={data.length === 0}
+        />
         <Stack spacing={2}>
           {/* Fila 1: Tipo de Movimiento */}
           <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
@@ -224,8 +218,19 @@ export default function HistoryReportSection() {
                   fechaDesde: value ? format(value, "yyyy-MM-dd") : "",
                 })
               }
-              slotProps={{ textField: { size: "small" } }}
-              sx={{ minWidth: 180 }}
+              {...datePickerConfig}
+              slotProps={{
+                textField: {
+                  ...datePickerConfig.slotProps.textField,
+                  InputProps: {
+                    sx: {
+                      ...datePickerConfig.slotProps.textField.InputProps.sx,
+                      minWidth: 180,
+                    },
+                  },
+                  sx: { minWidth: 180 },
+                },
+              }}
             />
             <DatePicker
               label="Fecha Hasta"
@@ -245,8 +250,18 @@ export default function HistoryReportSection() {
                   fechaHasta: value ? format(value, "yyyy-MM-dd") : "",
                 })
               }
-              slotProps={{ textField: { size: "small" } }}
-              sx={{ minWidth: 180 }}
+              slotProps={{
+                textField: {
+                  ...datePickerConfig.slotProps.textField,
+                  InputProps: {
+                    sx: {
+                      ...datePickerConfig.slotProps.textField.InputProps.sx,
+                      minWidth: 180,
+                    },
+                  },
+                  sx: { minWidth: 180 },
+                },
+              }}
             />
             <FormControl size="small" sx={{ minWidth: 180 }}>
               <InputLabel>Rol</InputLabel>
@@ -266,93 +281,93 @@ export default function HistoryReportSection() {
             </FormControl>
           </Stack>
         </Stack>
-      </Paper>
 
-      {error && <Alert severity="error">{error}</Alert>}
+        {error && <Alert severity="error">{error}</Alert>}
 
-      <Stack
-        direction={{ xs: "column", md: "row" }}
-        spacing={3}
-        sx={{ width: "100%" }}
-      >
-        {/* Tabla (Izquierda) */}
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Paper elevation={3} sx={{ height: 450, width: "100%" }}>
-            <DataGrid
-              rows={data}
-              columns={columns}
-              getRowId={(row) => row.rowId}
-              loading={loading}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 10 } },
-              }}
-              pageSizeOptions={[10, 25, 50]}
-              disableRowSelectionOnClick
-              density="compact"
-            />
-          </Paper>
-        </Box>
-
-        {/* Gráfico (Derecha) */}
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          {chartData && chartData.dates.length > 0 ? (
-            <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-              <Typography variant="h6" gutterBottom>
-                Evolución en el tiempo
-              </Typography>
-              <LineChart
-                xAxis={[
-                  {
-                    scaleType: "point",
-                    data: chartData.dates,
-                    label: "Fecha",
-                    valueFormatter: (date) =>
-                      new Date(date).toLocaleDateString(),
-                  },
-                ]}
-                series={[
-                  ...(type === TipoMovimientoUsuario.ALTA ||
-                  type === TipoMovimientoUsuario.TODOS
-                    ? [
-                        {
-                          data: chartData.altas,
-                          label: "Altas",
-                          color: "#1976d2",
-                        },
-                      ]
-                    : []),
-                  ...(type === TipoMovimientoUsuario.BAJA ||
-                  type === TipoMovimientoUsuario.TODOS
-                    ? [
-                        {
-                          data: chartData.bajas,
-                          label: "Bajas",
-                          color: "#d32f2f",
-                        },
-                      ]
-                    : []),
-                ]}
-                height={350}
-                margin={{ left: 30, right: 30, top: 30, bottom: 30 }}
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={3}
+          sx={{ width: "100%" }}
+        >
+          {/* Tabla (Izquierda) */}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Paper elevation={3} sx={{ height: 450, width: "100%" }}>
+              <DataGrid
+                rows={data}
+                columns={columns}
+                getRowId={(row) => row.rowId}
+                loading={loading}
+                initialState={{
+                  pagination: { paginationModel: { pageSize: 10 } },
+                }}
+                pageSizeOptions={[10, 25, 50]}
+                disableRowSelectionOnClick
+                density="compact"
               />
             </Paper>
-          ) : (
-            <Paper
-              elevation={2}
-              sx={{
-                p: 2,
-                height: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "text.secondary",
-              }}
-            >
-              <Typography>No hay datos para mostrar en el gráfico</Typography>
-            </Paper>
-          )}
-        </Box>
+          </Box>
+
+          {/* Gráfico (Derecha) */}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            {chartData && chartData.dates.length > 0 ? (
+              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
+                <Typography variant="h6" gutterBottom>
+                  Evolución en el tiempo
+                </Typography>
+                <LineChart
+                  xAxis={[
+                    {
+                      scaleType: "point",
+                      data: chartData.dates,
+                      label: "Fecha",
+                      valueFormatter: (date) =>
+                        new Date(date).toLocaleDateString(),
+                    },
+                  ]}
+                  series={[
+                    ...(type === TipoMovimientoUsuario.ALTA ||
+                    type === TipoMovimientoUsuario.TODOS
+                      ? [
+                          {
+                            data: chartData.altas,
+                            label: "Altas",
+                            color: "#1976d2",
+                          },
+                        ]
+                      : []),
+                    ...(type === TipoMovimientoUsuario.BAJA ||
+                    type === TipoMovimientoUsuario.TODOS
+                      ? [
+                          {
+                            data: chartData.bajas,
+                            label: "Bajas",
+                            color: "#d32f2f",
+                          },
+                        ]
+                      : []),
+                  ]}
+                  height={350}
+                  margin={{ left: 30, right: 30, top: 30, bottom: 30 }}
+                />
+              </Paper>
+            ) : (
+              <Paper
+                elevation={2}
+                sx={{
+                  p: 2,
+                  height: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "text.secondary",
+                }}
+              >
+                <Typography>No hay datos para mostrar en el gráfico</Typography>
+              </Paper>
+            )}
+          </Box>
+        </Stack>
       </Stack>
-    </Paper>
+    </Box>
   );
 }

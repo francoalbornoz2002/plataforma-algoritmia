@@ -2,12 +2,13 @@ import Sidebar from "./sidebar/Sidebar";
 import { Outlet } from "react-router";
 import {
   Assessment,
+  Assignment,
   AssignmentLate,
   Class,
   Dashboard,
-  LocationCity,
   MarkUnreadChatAlt,
   People,
+  QueryStats,
   Quiz,
   School,
   SwitchAccessShortcutAdd,
@@ -29,12 +30,9 @@ export default function SidebarLayout() {
     { text: "Cursos", icon: <School />, path: "/dashboard/courses" },
     {
       text: "Reportes y estadísticas",
-      icon: <Assessment />,
+      icon: <Assignment />,
       path: "/dashboard/reports",
     },
-    // (La ruta de AccountPage está separada en tu Router,
-    // pero si la quieres en el sidebar, añádela aquí)
-    // { text: "Mi Cuenta", icon: <AccountCircle />, path: "/dashboard/account" },
   ];
 
   // --- 2. LISTA DE DOCENTE (prefijo /course) ---
@@ -68,7 +66,7 @@ export default function SidebarLayout() {
     },
     {
       text: "Reportes y estadísticas",
-      icon: <Assessment />,
+      icon: <Assignment />,
       path: "/course/reports",
     },
   ];

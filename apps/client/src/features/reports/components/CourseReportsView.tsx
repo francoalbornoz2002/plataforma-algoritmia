@@ -12,6 +12,12 @@ import DifficultiesReportTab from "./dificultades/DifficultiesReportTab";
 import ConsultasReportTab from "./consultas/ConsultasReportTab";
 import ClassesReportTab from "./clases-consulta/ClassesReportTab";
 import SessionsReportTab from "./sesiones-refuerzo/SessionsReportTab";
+import {
+  Assessment,
+  AssignmentLate,
+  MarkUnreadChatAlt,
+  SwitchAccessShortcutAdd,
+} from "@mui/icons-material";
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -69,18 +75,14 @@ export default function CourseReportsView({
           scrollButtons="auto"
           aria-label="pestañas reportes curso"
         >
+          <Tab icon={<Assessment />} iconPosition="start" label="Progreso" />
           <Tab
-            icon={<TrendingUpIcon />}
-            iconPosition="start"
-            label="Progreso"
-          />
-          <Tab
-            icon={<WarningIcon />}
+            icon={<AssignmentLate />}
             iconPosition="start"
             label="Dificultades"
           />
           <Tab
-            icon={<QuestionAnswerIcon />}
+            icon={<MarkUnreadChatAlt />}
             iconPosition="start"
             label="Consultas"
           />
@@ -90,7 +92,7 @@ export default function CourseReportsView({
             label="Clases de Consulta"
           />
           <Tab
-            icon={<SchoolIcon />}
+            icon={<SwitchAccessShortcutAdd />}
             iconPosition="start"
             label="Sesiones de Refuerzo"
           />

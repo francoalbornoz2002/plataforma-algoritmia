@@ -38,9 +38,9 @@ import { useDebounce } from "../../../../hooks/useDebounce";
 import { temas, estado_consulta } from "../../../../types";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import ReportStatCard from "../common/ReportStatCard";
-import PdfExportButton from "../common/PdfExportButton";
-import ExcelExportButton from "../common/ExcelExportButton";
 import { datePickerConfig } from "../../../../config/theme.config";
+import HeaderReportPage from "../../../../components/HeaderReportPage";
+import { History } from "@mui/icons-material";
 
 interface Props {
   courseId: string;
@@ -189,8 +189,8 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
   const columns: GridColDef[] = [
     {
       field: "fecha",
-      headerName: "Fecha",
-      width: 120,
+      headerName: "Fecha de consulta",
+      width: 165,
       valueFormatter: (value: string) => {
         if (!value) return "-";
         // Parseamos la fecha como UTC para evitar el desfase de zona horaria
@@ -203,7 +203,7 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
     },
     { field: "titulo", headerName: "Título", flex: 1, minWidth: 150 },
     { field: "tema", headerName: "Tema", width: 130 },
-    { field: "alumno", headerName: "Alumno", width: 180 },
+    { field: "alumno", headerName: "Alumno", flex: 1, width: 180 },
     {
       field: "estado",
       headerName: "Estado",
@@ -227,7 +227,7 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
         );
       },
     },
-    { field: "docente", headerName: "Atendido por", width: 180 },
+    { field: "docente", headerName: "Atendido por", flex: 1, width: 180 },
     {
       field: "valoracion",
       headerName: "Valoración",
@@ -239,35 +239,27 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
   const showLoading = loading && !data;
 
   return (
-    <Paper elevation={5} component="section" sx={{ p: 2 }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography
-          variant="h5"
-          gutterBottom
-          color="primary.main"
-          sx={{ mb: 2, fontWeight: "bold" }}
-        >
-          Historial de Consultas Realizadas
-        </Typography>
-        <Box
-          sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
-        >
-          <PdfExportButton
-            filters={filters}
-            endpointPath={`/reportes/cursos/${courseId}/consultas/historial/pdf`}
-            disabled={!data}
-          />
-          <ExcelExportButton
-            filters={filters}
-            endpointPath={`/reportes/cursos/${courseId}/consultas/historial/excel`}
-            disabled={!data}
-            filename="historial_consultas.xlsx"
-          />
-        </Box>
-      </Stack>
+    <Box
+      component="section"
+      sx={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Stack spacing={2} sx={{ height: "100%" }}>
+        <HeaderReportPage
+          title="Historial de Consultas"
+          description="Revisa el detalle y la evolución de todas las consultas realizadas en el curso."
+          icon={<History />}
+          filters={filters}
+          endpointPathPdf={`/reportes/cursos/${courseId}/consultas/historial/pdf`}
+          endpointPathExcel={`/reportes/cursos/${courseId}/consultas/historial/excel`}
+          filenameExcel="historial_consultas.xlsx"
+          disabled={!data}
+        />
 
-      {/* --- Filtros --- */}
-      <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
+        {/* --- Filtros --- */}
         <Stack spacing={2}>
           <QuickDateFilter onApply={handleQuickFilter} />
           <Stack
@@ -393,106 +385,108 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
             </Button>
           </Stack>
         </Stack>
-      </Paper>
 
-      {showLoading && (
-        <CircularProgress sx={{ display: "block", mx: "auto", my: 4 }} />
-      )}
-      {error && <Alert severity="error">{error}</Alert>}
+        {showLoading && (
+          <CircularProgress sx={{ display: "block", mx: "auto", my: 4 }} />
+        )}
+        {error && <Alert severity="error">{error}</Alert>}
 
-      {data && !showLoading && (
-        <Stack spacing={4}>
-          {/* --- Stats Cards --- */}
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <ReportStatCard
-                icon={<FunctionsIcon fontSize="small" />}
-                title="Total de Consultas"
-                subtitle="Cantidad de consultas realizadas en el periodo indicado"
-                count={data.stats.total}
-                color="primary"
-              />
+        {data && !showLoading && (
+          <Stack spacing={2}>
+            {/* --- Stats Cards --- */}
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <ReportStatCard
+                  icon={<FunctionsIcon fontSize="small" />}
+                  title="Total de Consultas"
+                  subtitle="Cantidad de consultas realizadas en el periodo indicado"
+                  count={data.stats.total}
+                  color="primary"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <ReportStatCard
+                  icon={<CalendarTodayIcon fontSize="small" />}
+                  title="Promedio Diario"
+                  subtitle="Consultas realizadas por día en el periodo indicado"
+                  count={Number(data.stats.promedioDiario.toFixed(1))}
+                  color="info"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <ReportStatCard
+                  icon={<DateRangeIcon fontSize="small" />}
+                  title="Promedio Semanal"
+                  subtitle="Consultas realizadas por semana en el periodo indicado"
+                  count={Number(data.stats.promedioSemanal.toFixed(1))}
+                  color="success"
+                />
+              </Grid>
             </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <ReportStatCard
-                icon={<CalendarTodayIcon fontSize="small" />}
-                title="Promedio Diario"
-                subtitle="Consultas realizadas por día en el periodo indicado"
-                count={Number(data.stats.promedioDiario.toFixed(1))}
-                color="info"
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <ReportStatCard
-                icon={<DateRangeIcon fontSize="small" />}
-                title="Promedio Semanal"
-                subtitle="Consultas realizadas por semana en el periodo indicado"
-                count={Number(data.stats.promedioSemanal.toFixed(1))}
-                color="success"
-              />
-            </Grid>
-          </Grid>
-
-          <Divider />
-
-          {/* --- Timeline Chart --- */}
-          <Paper elevation={3} sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Evolución de Consultas en el Tiempo
-            </Typography>
-            {data.timeline.length > 0 ? (
-              <LineChart
-                dataset={data.timeline}
-                yAxis={[
-                  {
-                    label: "Consultas realizadas",
-                    min: 0,
-                    valueFormatter: (value: number) =>
-                      Number.isInteger(value) ? value.toString() : "",
-                  },
-                ]}
-                xAxis={[
-                  {
-                    scaleType: "point",
-                    dataKey: "fecha",
-                    valueFormatter: (date) => format(date, "dd/MM"),
-                    label: "Fecha",
-                  },
-                ]}
-                series={[
-                  {
-                    dataKey: "cantidad",
-                    label: "Cantidad de Consultas",
-                    color: "#1976d2",
-                  },
-                ]}
-                height={300}
-              />
-            ) : (
-              <Typography align="center" color="text.secondary" sx={{ py: 4 }}>
-                No hay datos para mostrar en este periodo.
+            {/* --- Timeline Chart --- */}
+            <Paper elevation={3} sx={{ p: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Evolución de Consultas en el Tiempo
               </Typography>
-            )}
-          </Paper>
+              {data.timeline.length > 0 ? (
+                <LineChart
+                  dataset={data.timeline}
+                  yAxis={[
+                    {
+                      label: "Consultas realizadas",
+                      min: 0,
+                      valueFormatter: (value: number) =>
+                        Number.isInteger(value) ? value.toString() : "",
+                    },
+                  ]}
+                  xAxis={[
+                    {
+                      scaleType: "point",
+                      dataKey: "fecha",
+                      valueFormatter: (date) => format(date, "dd/MM"),
+                      label: "Fecha",
+                    },
+                  ]}
+                  series={[
+                    {
+                      dataKey: "cantidad",
+                      label: "Cantidad de Consultas",
+                      color: "#1976d2",
+                    },
+                  ]}
+                  height={300}
+                />
+              ) : (
+                <Typography
+                  align="center"
+                  color="text.secondary"
+                  sx={{ py: 4 }}
+                >
+                  No hay datos para mostrar en este periodo.
+                </Typography>
+              )}
+            </Paper>
 
-          {/* --- Tabla Detallada --- */}
-          <Paper elevation={3} sx={{ height: 500, width: "100%" }}>
-            <DataGrid
-              rows={data.tabla}
-              columns={columns}
-              density="compact"
-              initialState={{
-                pagination: { paginationModel: { pageSize: 10 } },
-                sorting: {
-                  sortModel: [{ field: "fecha", sort: "desc" }],
-                },
-              }}
-              pageSizeOptions={[10, 25, 50]}
-              disableRowSelectionOnClick
-            />
-          </Paper>
-        </Stack>
-      )}
-    </Paper>
+            {/* --- Tabla Detallada --- */}
+            <Paper elevation={3} sx={{ height: 500, width: "100%" }}>
+              <DataGrid
+                rows={data.tabla}
+                columns={columns}
+                density="compact"
+                initialState={{
+                  pagination: { paginationModel: { pageSize: 10 } },
+                  sorting: {
+                    sortModel: [{ field: "fecha", sort: "desc" }],
+                  },
+                }}
+                pageSizeOptions={[10, 25, 50]}
+                disableRowSelectionOnClick
+                sx={{ borderRadius: "12px" }}
+              />
+            </Paper>
+          </Stack>
+        )}
+      </Stack>
+    </Box>
   );
 }

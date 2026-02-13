@@ -47,9 +47,8 @@ import {
 } from "../../../../types";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import StudentChartDetailModal from "./StudentChartDetailModal";
-import PdfExportButton from "../common/PdfExportButton";
-import ExcelExportButton from "../common/ExcelExportButton";
 import { datePickerConfig } from "../../../../config/theme.config";
+import HeaderReportPage from "../../../../components/HeaderReportPage";
 
 interface Props {
   courseId: string;
@@ -352,190 +351,179 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
   ];
 
   return (
-    <Paper elevation={5} component="section" sx={{ p: 2 }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography
-          variant="h5"
-          gutterBottom
-          sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}
-        >
-          Reporte por Alumno
-        </Typography>
-        <Box
-          sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
-        >
-          <PdfExportButton
-            filters={filters}
-            endpointPath={`/reportes/cursos/${courseId}/dificultades/alumno/pdf`}
-            disabled={!selectedStudent || !data}
-          />
-          <ExcelExportButton
-            filters={filters}
-            endpointPath={`/reportes/cursos/${courseId}/dificultades/alumno/excel`}
-            disabled={!selectedStudent || !data}
-            filename="dificultades_alumno.xlsx"
-          />
-        </Box>
-      </Stack>
+    <Box
+      component="section"
+      sx={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Stack spacing={2} sx={{ height: "100%" }}>
+        <HeaderReportPage
+          title="Reporte por Alumno"
+          description="Analiza el detalle individual de las dificultades y su evolución para un alumno específico."
+          icon={<PersonIcon />}
+          filters={filters}
+          endpointPathPdf={`/reportes/cursos/${courseId}/dificultades/alumno/pdf`}
+          endpointPathExcel={`/reportes/cursos/${courseId}/dificultades/alumno/excel`}
+          filenameExcel="dificultades_alumno.xlsx"
+          disabled={!selectedStudent || !data}
+        />
 
-      <Stack spacing={3}>
         {/* --- SECCIÓN DE FILTROS UNIFICADA --- */}
-        <Paper elevation={3} sx={{ p: 3 }}>
-          <Stack spacing={2}>
-            {/* 1. Selector de Alumno */}
-            <Stack direction="row" spacing={2} alignItems="center">
-              <PersonIcon color="primary" fontSize="large" />
-              <Autocomplete
-                options={students}
-                size="small"
-                getOptionLabel={(option) => option.nombre}
-                value={selectedStudent}
-                onChange={(_, newValue) => {
-                  setSelectedStudent(newValue);
-                  // Si cambiamos de alumno, limpiamos la data para forzar el spinner de carga inicial
-                  if (newValue?.id !== selectedStudent?.id) {
-                    setData(null);
-                  }
-                }}
-                onInputChange={(_, newInputValue) =>
-                  setStudentSearch(newInputValue)
+        <Stack spacing={2}>
+          {/* 1. Selector de Alumno */}
+          <Stack direction="row" spacing={0.5} alignItems="center">
+            <PersonIcon color="primary" fontSize="large" />
+            <Autocomplete
+              options={students}
+              size="small"
+              getOptionLabel={(option) => option.nombre}
+              value={selectedStudent}
+              onChange={(_, newValue) => {
+                setSelectedStudent(newValue);
+                // Si cambiamos de alumno, limpiamos la data para forzar el spinner de carga inicial
+                if (newValue?.id !== selectedStudent?.id) {
+                  setData(null);
                 }
-                filterOptions={(x) => x}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Seleccionar Alumno"
-                    placeholder="Buscar por nombre..."
-                  />
-                )}
-                sx={{ width: 400 }}
-              />
-            </Stack>
-
-            <Divider />
-
-            {/* 2. Filtros de Historial (Deshabilitados si no hay alumno) */}
-            <Box
-              sx={{
-                opacity: selectedStudent ? 1 : 0.5,
-                pointerEvents: selectedStudent ? "auto" : "none",
-                transition: "opacity 0.3s",
               }}
-            >
-              <Stack spacing={2}>
-                <QuickDateFilter onApply={handleQuickFilter} />
-                <Stack
-                  direction={{ xs: "column", md: "row" }}
-                  spacing={2}
-                  alignItems="center"
-                  flexWrap="wrap"
-                >
-                  <DatePicker
-                    label="Desde"
-                    value={
-                      filters.fechaDesde
-                        ? new Date(filters.fechaDesde + "T00:00:00")
-                        : null
-                    }
-                    onChange={(val) =>
-                      setFilters({
-                        ...filters,
-                        fechaDesde: val ? format(val, "yyyy-MM-dd") : "",
-                      })
-                    }
-                    {...datePickerConfig}
-                    slotProps={{
-                      textField: {
-                        ...datePickerConfig.slotProps.textField,
-                        InputProps: {
-                          sx: {
-                            ...datePickerConfig.slotProps.textField.InputProps
-                              .sx,
-                            width: 150,
-                          },
+              onInputChange={(_, newInputValue) =>
+                setStudentSearch(newInputValue)
+              }
+              filterOptions={(x) => x}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Seleccionar Alumno"
+                  placeholder="Buscar por nombre..."
+                />
+              )}
+              sx={{ width: 400 }}
+            />
+          </Stack>
+
+          <Divider />
+
+          {/* 2. Filtros de Historial (Deshabilitados si no hay alumno) */}
+          <Box
+            sx={{
+              opacity: selectedStudent ? 1 : 0.5,
+              pointerEvents: selectedStudent ? "auto" : "none",
+              transition: "opacity 0.3s",
+            }}
+          >
+            <Stack spacing={2}>
+              <QuickDateFilter onApply={handleQuickFilter} />
+              <Stack
+                direction={{ xs: "column", md: "row" }}
+                spacing={2}
+                alignItems="center"
+                flexWrap="wrap"
+              >
+                <DatePicker
+                  label="Desde"
+                  value={
+                    filters.fechaDesde
+                      ? new Date(filters.fechaDesde + "T00:00:00")
+                      : null
+                  }
+                  onChange={(val) =>
+                    setFilters({
+                      ...filters,
+                      fechaDesde: val ? format(val, "yyyy-MM-dd") : "",
+                    })
+                  }
+                  {...datePickerConfig}
+                  slotProps={{
+                    textField: {
+                      ...datePickerConfig.slotProps.textField,
+                      InputProps: {
+                        sx: {
+                          ...datePickerConfig.slotProps.textField.InputProps.sx,
+                          width: 150,
                         },
-                        sx: { width: 150 },
                       },
-                    }}
-                  />
-                  <DatePicker
-                    label="Hasta"
-                    value={
-                      filters.fechaHasta
-                        ? new Date(filters.fechaHasta + "T00:00:00")
-                        : null
-                    }
-                    onChange={(val) =>
-                      setFilters({
-                        ...filters,
-                        fechaHasta: val ? format(val, "yyyy-MM-dd") : "",
-                      })
-                    }
-                    {...datePickerConfig}
-                    slotProps={{
-                      textField: {
-                        ...datePickerConfig.slotProps.textField,
-                        InputProps: {
-                          sx: {
-                            ...datePickerConfig.slotProps.textField.InputProps
-                              .sx,
-                            width: 150,
-                          },
+                      sx: { width: 150 },
+                    },
+                  }}
+                />
+                <DatePicker
+                  label="Hasta"
+                  value={
+                    filters.fechaHasta
+                      ? new Date(filters.fechaHasta + "T00:00:00")
+                      : null
+                  }
+                  onChange={(val) =>
+                    setFilters({
+                      ...filters,
+                      fechaHasta: val ? format(val, "yyyy-MM-dd") : "",
+                    })
+                  }
+                  {...datePickerConfig}
+                  slotProps={{
+                    textField: {
+                      ...datePickerConfig.slotProps.textField,
+                      InputProps: {
+                        sx: {
+                          ...datePickerConfig.slotProps.textField.InputProps.sx,
+                          width: 150,
                         },
-                        sx: { width: 150 },
                       },
-                    }}
-                  />
-                  <FormControl size="small" sx={{ width: 200 }}>
-                    <InputLabel id="temas-label">Temas</InputLabel>
-                    <Select
-                      labelId="temas-label"
-                      multiple
-                      value={selectedTemas}
-                      onChange={handleTemasChange}
-                      input={<OutlinedInput label="Temas" />}
-                      renderValue={(selected) => selected.join(", ")}
-                      MenuProps={MenuProps}
-                    >
-                      {Object.values(temas)
-                        .filter((t) => t !== "Ninguno")
-                        .map((t) => (
-                          <MenuItem key={t} value={t}>
-                            <Checkbox checked={selectedTemas.indexOf(t) > -1} />
-                            <ListItemText primary={t} />
-                          </MenuItem>
-                        ))}
-                    </Select>
-                  </FormControl>
-                  <FormControl size="small" sx={{ width: 250 }}>
-                    <InputLabel id="diff-label">Dificultades</InputLabel>
-                    <Select
-                      labelId="diff-label"
-                      multiple
-                      value={selectedDificultadesIds}
-                      onChange={handleDificultadesChange}
-                      input={<OutlinedInput label="Dificultades" />}
-                      renderValue={(selected) =>
-                        selected.length + " seleccionadas"
-                      }
-                      MenuProps={MenuProps}
-                    >
-                      {availableDifficulties.map((d) => (
-                        <MenuItem key={d.id} value={d.id}>
-                          <Checkbox
-                            checked={selectedDificultadesIds.indexOf(d.id) > -1}
-                          />
-                          <ListItemText primary={d.nombre} />
+                      sx: { width: 150 },
+                    },
+                  }}
+                />
+                <FormControl size="small" sx={{ width: 200 }}>
+                  <InputLabel id="temas-label">Temas</InputLabel>
+                  <Select
+                    labelId="temas-label"
+                    multiple
+                    value={selectedTemas}
+                    onChange={handleTemasChange}
+                    input={<OutlinedInput label="Temas" />}
+                    renderValue={(selected) => selected.join(", ")}
+                    MenuProps={MenuProps}
+                  >
+                    {Object.values(temas)
+                      .filter((t) => t !== "Ninguno")
+                      .map((t) => (
+                        <MenuItem key={t} value={t}>
+                          <Checkbox checked={selectedTemas.indexOf(t) > -1} />
+                          <ListItemText primary={t} />
                         </MenuItem>
                       ))}
-                    </Select>
-                  </FormControl>
-                  <Button onClick={handleClearFilters}>Limpiar</Button>
-                </Stack>
+                  </Select>
+                </FormControl>
+                <FormControl size="small" sx={{ width: 250 }}>
+                  <InputLabel id="diff-label">Dificultades</InputLabel>
+                  <Select
+                    labelId="diff-label"
+                    multiple
+                    value={selectedDificultadesIds}
+                    onChange={handleDificultadesChange}
+                    input={<OutlinedInput label="Dificultades" />}
+                    renderValue={(selected) =>
+                      selected.length + " seleccionadas"
+                    }
+                    MenuProps={MenuProps}
+                  >
+                    {availableDifficulties.map((d) => (
+                      <MenuItem key={d.id} value={d.id}>
+                        <Checkbox
+                          checked={selectedDificultadesIds.indexOf(d.id) > -1}
+                        />
+                        <ListItemText primary={d.nombre} />
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <Button onClick={handleClearFilters}>Limpiar</Button>
               </Stack>
-            </Box>
-          </Stack>
-        </Paper>
+            </Stack>
+          </Box>
+        </Stack>
 
         {!selectedStudent && (
           <Typography
@@ -795,6 +783,7 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
                 initialState={{
                   pagination: { paginationModel: { pageSize: 10 } },
                 }}
+                sx={{ borderRadius: "0.7em" }}
               />
             </Paper>
           </Stack>
@@ -812,6 +801,6 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
           />
         )}
       </Stack>
-    </Paper>
+    </Box>
   );
 }

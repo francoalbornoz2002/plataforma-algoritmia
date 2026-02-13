@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button } from "@mui/material";
+import { Button, type SxProps } from "@mui/material";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import ReportExportDialog from "./ReportExportDialog";
 import apiClient from "../../../../lib/axios";
@@ -10,6 +10,7 @@ interface PdfExportButtonProps {
   disabled?: boolean;
   onError?: (message: string) => void;
   label?: string;
+  sx?: SxProps;
 }
 
 export default function PdfExportButton({
@@ -18,6 +19,7 @@ export default function PdfExportButton({
   disabled = false,
   label = "Exportar PDF",
   onError,
+  sx,
 }: PdfExportButtonProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -89,6 +91,7 @@ export default function PdfExportButton({
         disabled={disabled || loading}
         color="error"
         onClick={() => setOpen(true)}
+        sx={sx}
       >
         {label}
       </Button>

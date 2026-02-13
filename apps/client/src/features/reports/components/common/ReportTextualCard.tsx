@@ -20,7 +20,7 @@ export default function ReportTextualCard({
 }: ReportTextualCardProps) {
   return (
     <Paper
-      elevation={3}
+      elevation={2}
       sx={{
         p: small ? 1.5 : 2,
         height: "100%",

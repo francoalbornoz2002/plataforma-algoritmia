@@ -24,8 +24,9 @@ import {
   type TeacherAssignmentHistoryFilters,
 } from "../../service/reports.service";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
-import PdfExportButton from "../common/PdfExportButton";
-import ExcelExportButton from "../common/ExcelExportButton";
+import HistoryIcon from "@mui/icons-material/History";
+import HeaderReportPage from "../../../../components/HeaderReportPage";
+import { datePickerConfig } from "../../../../config/theme.config";
 
 export default function TeacherAssignmentHistorySection() {
   const [type, setType] = useState<TipoMovimientoAsignacion>(
@@ -147,16 +148,26 @@ export default function TeacherAssignmentHistorySection() {
   ];
 
   return (
-    <Paper elevation={5} component="section" sx={{ p: 2 }}>
-      <Typography
-        variant="h5"
-        gutterBottom
-        sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}
-      >
-        Historial de Asignaciones y Bajas de Docentes
-      </Typography>
+    <Box
+      component="section"
+      sx={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Stack spacing={2} sx={{ height: "100%" }}>
+        <HeaderReportPage
+          title="Historial de Asignaciones y Bajas de Docentes"
+          description="Revisa el registro de docentes asignados y bajas procesadas en los cursos."
+          icon={<HistoryIcon />}
+          filters={filters}
+          endpointPathPdf="/reportes/cursos/historial-asignaciones/pdf"
+          endpointPathExcel="/reportes/cursos/historial-asignaciones/excel"
+          filenameExcel="historial_asignaciones.xlsx"
+          disabled={data.length === 0}
+        />
 
-      <Paper elevation={3} sx={{ p: 2, mb: 3 }}>
         <Stack spacing={2}>
           {/* Fila 1: Tipo de Movimiento */}
           <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
@@ -223,8 +234,19 @@ export default function TeacherAssignmentHistorySection() {
                   fechaDesde: value ? format(value, "yyyy-MM-dd") : "",
                 })
               }
-              slotProps={{ textField: { size: "small" } }}
-              sx={{ minWidth: 180 }}
+              {...datePickerConfig}
+              slotProps={{
+                textField: {
+                  ...datePickerConfig.slotProps.textField,
+                  InputProps: {
+                    sx: {
+                      ...datePickerConfig.slotProps.textField.InputProps.sx,
+                      minWidth: 180,
+                    },
+                  },
+                  sx: { minWidth: 180 },
+                },
+              }}
             />
             <DatePicker
               label="Fecha Hasta"
@@ -244,8 +266,19 @@ export default function TeacherAssignmentHistorySection() {
                   fechaHasta: value ? format(value, "yyyy-MM-dd") : "",
                 })
               }
-              slotProps={{ textField: { size: "small" } }}
-              sx={{ minWidth: 180 }}
+              {...datePickerConfig}
+              slotProps={{
+                textField: {
+                  ...datePickerConfig.slotProps.textField,
+                  InputProps: {
+                    sx: {
+                      ...datePickerConfig.slotProps.textField.InputProps.sx,
+                      minWidth: 180,
+                    },
+                  },
+                  sx: { minWidth: 180 },
+                },
+              }}
             />
 
             <Autocomplete
@@ -265,107 +298,92 @@ export default function TeacherAssignmentHistorySection() {
             />
           </Stack>
         </Stack>
-      </Paper>
 
-      {/* Acciones */}
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}>
-        <PdfExportButton
-          filters={filters}
-          endpointPath="/reportes/cursos/historial-asignaciones/pdf"
-          disabled={data.length === 0}
-        />
-        <ExcelExportButton
-          filters={filters}
-          endpointPath="/reportes/cursos/historial-asignaciones/excel"
-          disabled={data.length === 0}
-          filename="historial_asignaciones.xlsx"
-        />
-      </Box>
+        {error && <Alert severity="error">{error}</Alert>}
 
-      {error && <Alert severity="error">{error}</Alert>}
-
-      <Stack
-        direction={{ xs: "column", md: "row" }}
-        spacing={3}
-        sx={{ width: "100%" }}
-      >
-        {/* Tabla */}
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Paper elevation={3} sx={{ height: 450, width: "100%" }}>
-            <DataGrid
-              rows={data}
-              columns={columns}
-              loading={loading}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 10 } },
-              }}
-              pageSizeOptions={[10, 25, 50]}
-              disableRowSelectionOnClick
-              density="compact"
-            />
-          </Paper>
-        </Box>
-
-        {/* Gráfico */}
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          {chartData && chartData.dates.length > 0 ? (
-            <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-              <Typography variant="h6" gutterBottom>
-                Evolución de Asignaciones
-              </Typography>
-              <LineChart
-                xAxis={[
-                  {
-                    scaleType: "point",
-                    data: chartData.dates,
-                    label: "Fecha",
-                    valueFormatter: (date) =>
-                      new Date(date).toLocaleDateString(),
-                  },
-                ]}
-                series={[
-                  ...(type === TipoMovimientoAsignacion.ASIGNACION ||
-                  type === TipoMovimientoAsignacion.TODOS
-                    ? [
-                        {
-                          data: chartData.asignaciones,
-                          label: "Asignaciones",
-                          color: "#2e7d32",
-                        },
-                      ]
-                    : []),
-                  ...(type === TipoMovimientoAsignacion.BAJA ||
-                  type === TipoMovimientoAsignacion.TODOS
-                    ? [
-                        {
-                          data: chartData.bajas,
-                          label: "Bajas",
-                          color: "#d32f2f",
-                        },
-                      ]
-                    : []),
-                ]}
-                height={350}
-                margin={{ left: 30, right: 30, top: 30, bottom: 30 }}
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={3}
+          sx={{ width: "100%" }}
+        >
+          {/* Tabla */}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Paper elevation={3} sx={{ height: 450, width: "100%" }}>
+              <DataGrid
+                rows={data}
+                columns={columns}
+                loading={loading}
+                initialState={{
+                  pagination: { paginationModel: { pageSize: 10 } },
+                }}
+                pageSizeOptions={[10, 25, 50]}
+                disableRowSelectionOnClick
+                density="compact"
               />
             </Paper>
-          ) : (
-            <Paper
-              elevation={2}
-              sx={{
-                p: 2,
-                height: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "text.secondary",
-              }}
-            >
-              <Typography>Genera el reporte para ver el gráfico</Typography>
-            </Paper>
-          )}
-        </Box>
+          </Box>
+
+          {/* Gráfico */}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            {chartData && chartData.dates.length > 0 ? (
+              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
+                <Typography variant="h6" gutterBottom>
+                  Evolución de Asignaciones
+                </Typography>
+                <LineChart
+                  xAxis={[
+                    {
+                      scaleType: "point",
+                      data: chartData.dates,
+                      label: "Fecha",
+                      valueFormatter: (date) =>
+                        new Date(date).toLocaleDateString(),
+                    },
+                  ]}
+                  series={[
+                    ...(type === TipoMovimientoAsignacion.ASIGNACION ||
+                    type === TipoMovimientoAsignacion.TODOS
+                      ? [
+                          {
+                            data: chartData.asignaciones,
+                            label: "Asignaciones",
+                            color: "#2e7d32",
+                          },
+                        ]
+                      : []),
+                    ...(type === TipoMovimientoAsignacion.BAJA ||
+                    type === TipoMovimientoAsignacion.TODOS
+                      ? [
+                          {
+                            data: chartData.bajas,
+                            label: "Bajas",
+                            color: "#d32f2f",
+                          },
+                        ]
+                      : []),
+                  ]}
+                  height={350}
+                  margin={{ left: 30, right: 30, top: 30, bottom: 30 }}
+                />
+              </Paper>
+            ) : (
+              <Paper
+                elevation={2}
+                sx={{
+                  p: 2,
+                  height: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "text.secondary",
+                }}
+              >
+                <Typography>Genera el reporte para ver el gráfico</Typography>
+              </Paper>
+            )}
+          </Box>
+        </Stack>
       </Stack>
-    </Paper>
+    </Box>
   );
 }

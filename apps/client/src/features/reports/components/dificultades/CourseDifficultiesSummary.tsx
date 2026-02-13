@@ -24,11 +24,10 @@ import {
 } from "../../service/reports.service";
 import { useOptionalCourseContext } from "../../../../context/CourseContext";
 import ReportTextualCard from "../common/ReportTextualCard";
-import PdfExportButton from "../common/PdfExportButton";
-import ExcelExportButton from "../common/ExcelExportButton";
 import { temas } from "../../../../types";
 import { TemasLabels } from "../../../../types/traducciones";
 import { datePickerConfig } from "../../../../config/theme.config";
+import HeaderReportPage from "../../../../components/HeaderReportPage";
 
 interface Props {
   courseId: string;
@@ -119,35 +118,27 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
   const showLoading = loading && !data;
 
   return (
-    <Paper elevation={5} component="section" sx={{ p: 2 }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography
-          variant="h5"
-          gutterBottom
-          color="primary.main"
-          sx={{ mb: 2, fontWeight: "bold" }}
-        >
-          Resumen de Dificultades del Curso
-        </Typography>
-        <Box
-          sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
-        >
-          <PdfExportButton
-            filters={filters}
-            endpointPath={`/reportes/cursos/${courseId}/dificultades/resumen/pdf`}
-            disabled={!data}
-          />
-          <ExcelExportButton
-            filters={filters}
-            endpointPath={`/reportes/cursos/${courseId}/dificultades/resumen/excel`}
-            disabled={!data}
-            filename="resumen_dificultades.xlsx"
-          />
-        </Box>
-      </Stack>
+    <Box
+      component="section"
+      sx={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Stack spacing={2} sx={{ height: "100%" }}>
+        <HeaderReportPage
+          title="Resumen de Dificultades"
+          description="Consulta el estado actual de las dificultades detectadas en el curso."
+          icon={<WarningIcon />}
+          filters={filters}
+          endpointPathPdf={`/reportes/cursos/${courseId}/dificultades/resumen/pdf`}
+          endpointPathExcel={`/reportes/cursos/${courseId}/dificultades/resumen/excel`}
+          filenameExcel="resumen_dificultades.xlsx"
+          disabled={!data}
+        />
 
-      {/* Filtros */}
-      <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
+        {/* Filtros */}
         <Stack direction="row" spacing={2} alignItems="center">
           <DatePicker
             label="Fecha de Corte (Histórico)"
@@ -184,116 +175,77 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
             </Button>
           )}
         </Stack>
-      </Paper>
 
-      {showLoading && (
-        <CircularProgress sx={{ display: "block", mx: "auto", my: 4 }} />
-      )}
-      {error && <Alert severity="error">{error}</Alert>}
+        {showLoading && (
+          <CircularProgress sx={{ display: "block", mx: "auto", my: 4 }} />
+        )}
+        {error && <Alert severity="error">{error}</Alert>}
 
-      {data && !showLoading && (
-        <Stack spacing={3}>
-          {/* KPIs */}
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 1.9 }}>
-              <ReportTextualCard
-                icon={<FunctionsIcon />}
-                title="Prom. Dificultades"
-                value={data.kpis.promDificultades.toFixed(1)}
-                description={`Por alumno. Total alumnos: ${data.kpis.totalAlumnos}`}
-                color="primary"
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 3.1 }}>
-              <ReportTextualCard
-                icon={<TopicIcon />}
-                title="Tema Más Frecuente"
-                value={TemasLabels[data.kpis.temaFrecuente.nombre as temas]}
-                description={
-                  <>
-                    El <b>{data.kpis.temaFrecuente.pctAlumnos.toFixed(1)}%</b>{" "}
-                    de alumnos poseen dificultades de este tema.
-                  </>
-                }
-                color="info"
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 4.5 }}>
-              <ReportTextualCard
-                icon={<WarningIcon />}
-                title="Dificultad Más Frecuente"
-                value={data.kpis.dificultadFrecuente.nombre}
-                description={
-                  <>
-                    El{" "}
-                    <b>
-                      {data.kpis.dificultadFrecuente.pctAlumnos.toFixed(1)}%
-                    </b>{" "}
-                    de alumnos del curso poseen esta dificultad.
-                  </>
-                }
-                color="warning"
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 2.5 }}>
-              <ReportTextualCard
-                icon={<TrendingUpIcon />}
-                title="Dificultades en Grado Alto"
-                value={`${data.kpis.gradoAlto.pctAlumnos.toFixed(1)}%`}
-                description={
-                  <>
-                    Más frecuente: <b>{data.kpis.gradoAlto.modaNombre}</b>
-                  </>
-                }
-                color="error"
-              />
-            </Grid>
-          </Grid>
-
-          <Divider />
-
-          {/* Gráficos de Distribución */}
-          <Grid container spacing={3}>
-            {/* Izquierda: Por Dificultad (Más grande) */}
-            <Grid size={6}>
-              <Paper
-                elevation={3}
-                sx={{
-                  p: 2,
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  height: "100%",
-                }}
-              >
-                <Typography variant="h6" align="center" gutterBottom>
-                  Cantidad de alumnos afectados de cada Dificultad
-                </Typography>
-                <PieChart
-                  series={[
-                    {
-                      data: difficultiesPieData,
-                      innerRadius: 30,
-                      paddingAngle: 2,
-                      cornerRadius: 4,
-                    },
-                  ]}
-                  height={400}
-                  sx={{ width: "100%" }}
-                  slotProps={{
-                    legend: {
-                      direction: "vertical",
-                      position: { vertical: "middle", horizontal: "end" },
-                      sx: { ml: 10 },
-                    },
-                  }}
+        {data && !showLoading && (
+          <Stack spacing={3}>
+            {/* KPIs */}
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, md: 1.9 }}>
+                <ReportTextualCard
+                  icon={<FunctionsIcon />}
+                  title="Prom. Dificultades"
+                  value={data.kpis.promDificultades.toFixed(1)}
+                  description={`Por alumno. Total alumnos: ${data.kpis.totalAlumnos}`}
+                  color="primary"
                 />
-              </Paper>
+              </Grid>
+              <Grid size={{ xs: 12, md: 3.1 }}>
+                <ReportTextualCard
+                  icon={<TopicIcon />}
+                  title="Tema Más Frecuente"
+                  value={TemasLabels[data.kpis.temaFrecuente.nombre as temas]}
+                  description={
+                    <>
+                      El <b>{data.kpis.temaFrecuente.pctAlumnos.toFixed(1)}%</b>{" "}
+                      de alumnos poseen dificultades de este tema.
+                    </>
+                  }
+                  color="info"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 4.5 }}>
+                <ReportTextualCard
+                  icon={<WarningIcon />}
+                  title="Dificultad Más Frecuente"
+                  value={data.kpis.dificultadFrecuente.nombre}
+                  description={
+                    <>
+                      El{" "}
+                      <b>
+                        {data.kpis.dificultadFrecuente.pctAlumnos.toFixed(1)}%
+                      </b>{" "}
+                      de alumnos del curso poseen esta dificultad.
+                    </>
+                  }
+                  color="warning"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 2.5 }}>
+                <ReportTextualCard
+                  icon={<TrendingUpIcon />}
+                  title="Dificultades en Grado Alto"
+                  value={`${data.kpis.gradoAlto.pctAlumnos.toFixed(1)}%`}
+                  description={
+                    <>
+                      Más frecuente: <b>{data.kpis.gradoAlto.modaNombre}</b>
+                    </>
+                  }
+                  color="error"
+                />
+              </Grid>
             </Grid>
 
-            {/* Derecha: Stack de Tema y Grado */}
-            <Grid size={6}>
-              <Stack spacing={3}>
+            <Divider />
+
+            {/* Gráficos de Distribución */}
+            <Grid container spacing={3}>
+              {/* Izquierda: Por Dificultad (Más grande) */}
+              <Grid size={6}>
                 <Paper
                   elevation={3}
                   sx={{
@@ -301,136 +253,185 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "center",
+                    height: "100%",
                   }}
                 >
                   <Typography variant="h6" align="center" gutterBottom>
-                    Cantidad de alumnos con dificultades activas por tema
+                    Cantidad de alumnos afectados de cada Dificultad
                   </Typography>
                   <PieChart
                     series={[
                       {
-                        data: data.graficos.porTema,
+                        data: difficultiesPieData,
                         innerRadius: 30,
                         paddingAngle: 2,
                         cornerRadius: 4,
                       },
                     ]}
-                    height={180}
+                    height={400}
+                    sx={{ width: "100%" }}
                     slotProps={{
                       legend: {
-                        direction: "horizontal",
-                        position: { vertical: "bottom", horizontal: "center" },
-                      },
-                    }}
-                    margin={{ bottom: 20 }}
-                  />
-                </Paper>
-                <Paper
-                  elevation={3}
-                  sx={{
-                    p: 2,
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Typography variant="h6" align="center" gutterBottom>
-                    Distribución de alumnos por Grado de Dificultad
-                  </Typography>
-                  <PieChart
-                    series={[
-                      {
-                        data: data.graficos.porGrado,
-                        innerRadius: 30,
-                        paddingAngle: 1,
-                        cornerRadius: 4,
-                      },
-                    ]}
-                    height={180}
-                    slotProps={{
-                      legend: {
-                        direction: "horizontal",
-                        position: { vertical: "bottom", horizontal: "center" },
+                        direction: "vertical",
+                        position: { vertical: "middle", horizontal: "end" },
+                        sx: { ml: 10 },
                       },
                     }}
                   />
                 </Paper>
-              </Stack>
-            </Grid>
-          </Grid>
+              </Grid>
 
-          {/* Gráfico Detallado (Barras Apiladas) */}
-          <Paper elevation={3} sx={{ p: 2, width: "100%" }}>
-            <Typography variant="h6">
-              Detalle de Alumnos afectados por Dificultad
-            </Typography>
-            <Typography variant="caption" color="text.secondary" gutterBottom>
-              Cantidad de alumnos que presentan cada dificultad, desglosado por
-              grado.
-            </Typography>
-            {barChartData.length > 0 ? (
-              <BarChart
-                dataset={barChartData}
-                layout="horizontal"
-                yAxis={[
-                  {
-                    scaleType: "band",
-                    categoryGapRatio: 0.9,
-                    dataKey: "nombre",
-                    label: "Dificultad",
-                    width: 280,
-                    tickLabelStyle: {
-                      fontSize: 10,
-                    },
-                  },
-                ]}
-                xAxis={[
-                  {
-                    label: "Cantidad de alumnos",
-                    dataKey: "total",
-                    tickMinStep: 1,
-                    max: xMax,
-                    valueFormatter: (value: number | null) =>
-                      value !== null ? value.toString() : "",
-                  },
-                ]}
-                series={[
-                  {
-                    dataKey: "ninguno",
-                    label: "Ninguno (Superada)",
-                    stack: "total",
-                    color: "#9e9e9e",
-                  },
-                  {
-                    dataKey: "bajo",
-                    label: "Bajo",
-                    stack: "total",
-                    color: "#4caf50",
-                  },
-                  {
-                    dataKey: "medio",
-                    label: "Medio",
-                    stack: "total",
-                    color: "#ff9800",
-                  },
-                  {
-                    dataKey: "alto",
-                    label: "Alto",
-                    stack: "total",
-                    color: "#f44336",
-                  },
-                ]}
-                height={500}
-                sx={{ width: "100%" }}
-              />
-            ) : (
-              <Typography color="text.secondary" align="center" sx={{ py: 4 }}>
-                No hay datos suficientes para mostrar el gráfico.
+              {/* Derecha: Stack de Tema y Grado */}
+              <Grid size={6}>
+                <Stack spacing={3}>
+                  <Paper
+                    elevation={3}
+                    sx={{
+                      p: 2,
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Typography variant="h6" align="center" gutterBottom>
+                      Cantidad de alumnos con dificultades activas por tema
+                    </Typography>
+                    <PieChart
+                      series={[
+                        {
+                          data: data.graficos.porTema,
+                          innerRadius: 30,
+                          paddingAngle: 2,
+                          cornerRadius: 4,
+                        },
+                      ]}
+                      height={180}
+                      slotProps={{
+                        legend: {
+                          direction: "horizontal",
+                          position: {
+                            vertical: "bottom",
+                            horizontal: "center",
+                          },
+                        },
+                      }}
+                      margin={{ bottom: 20 }}
+                    />
+                  </Paper>
+                  <Paper
+                    elevation={3}
+                    sx={{
+                      p: 2,
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Typography variant="h6" align="center" gutterBottom>
+                      Distribución de alumnos por Grado de Dificultad
+                    </Typography>
+                    <PieChart
+                      series={[
+                        {
+                          data: data.graficos.porGrado,
+                          innerRadius: 30,
+                          paddingAngle: 1,
+                          cornerRadius: 4,
+                        },
+                      ]}
+                      height={180}
+                      slotProps={{
+                        legend: {
+                          direction: "horizontal",
+                          position: {
+                            vertical: "bottom",
+                            horizontal: "center",
+                          },
+                        },
+                      }}
+                    />
+                  </Paper>
+                </Stack>
+              </Grid>
+            </Grid>
+
+            {/* Gráfico Detallado (Barras Apiladas) */}
+            <Paper elevation={3} sx={{ p: 2, width: "100%" }}>
+              <Typography variant="h6">
+                Detalle de Alumnos afectados por Dificultad
               </Typography>
-            )}
-          </Paper>
-        </Stack>
-      )}
-    </Paper>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                Cantidad de alumnos que presentan cada dificultad, desglosado
+                por grado.
+              </Typography>
+              {barChartData.length > 0 ? (
+                <BarChart
+                  dataset={barChartData}
+                  layout="horizontal"
+                  yAxis={[
+                    {
+                      scaleType: "band",
+                      categoryGapRatio: 0.9,
+                      dataKey: "nombre",
+                      label: "Dificultad",
+                      width: 280,
+                      tickLabelStyle: {
+                        fontSize: 10,
+                      },
+                    },
+                  ]}
+                  xAxis={[
+                    {
+                      label: "Cantidad de alumnos",
+                      dataKey: "total",
+                      tickMinStep: 1,
+                      max: xMax,
+                      valueFormatter: (value: number | null) =>
+                        value !== null ? value.toString() : "",
+                    },
+                  ]}
+                  series={[
+                    {
+                      dataKey: "ninguno",
+                      label: "Ninguno (Superada)",
+                      stack: "total",
+                      color: "#9e9e9e",
+                    },
+                    {
+                      dataKey: "bajo",
+                      label: "Bajo",
+                      stack: "total",
+                      color: "#4caf50",
+                    },
+                    {
+                      dataKey: "medio",
+                      label: "Medio",
+                      stack: "total",
+                      color: "#ff9800",
+                    },
+                    {
+                      dataKey: "alto",
+                      label: "Alto",
+                      stack: "total",
+                      color: "#f44336",
+                    },
+                  ]}
+                  height={500}
+                  sx={{ width: "100%" }}
+                />
+              ) : (
+                <Typography
+                  color="text.secondary"
+                  align="center"
+                  sx={{ py: 4 }}
+                >
+                  No hay datos suficientes para mostrar el gráfico.
+                </Typography>
+              )}
+            </Paper>
+          </Stack>
+        )}
+      </Stack>
+    </Box>
   );
 }

@@ -105,7 +105,7 @@ export default function CourseInfoCard({
                 <Typography variant="body2" fontWeight="bold">
                   Descripción del curso
                 </Typography>
-                <Typography variant="body1">{course.descripcion}</Typography>
+                <Typography variant="body2">{course.descripcion}</Typography>
               </Box>
             </Box>
           </Stack>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, CircularProgress } from "@mui/material";
+import { Button, CircularProgress, type SxProps } from "@mui/material";
 import TableViewIcon from "@mui/icons-material/TableView";
 import apiClient from "../../../../lib/axios";
 import { useSnackbar } from "notistack";
@@ -10,6 +10,7 @@ interface CsvExportButtonProps {
   disabled?: boolean;
   label?: string;
   filename?: string;
+  sx?: SxProps;
 }
 
 export default function CsvExportButton({
@@ -18,6 +19,7 @@ export default function CsvExportButton({
   disabled = false,
   label = "Exportar CSV",
   filename = "reporte.csv",
+  sx,
 }: CsvExportButtonProps) {
   const [loading, setLoading] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
@@ -82,6 +84,7 @@ export default function CsvExportButton({
       disabled={disabled || loading}
       color="success"
       onClick={handleExport}
+      sx={sx}
     >
       {label}
     </Button>

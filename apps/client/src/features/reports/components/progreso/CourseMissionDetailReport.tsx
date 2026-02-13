@@ -23,14 +23,14 @@ import {
 import { dificultad_mision } from "../../../../types";
 import { useOptionalCourseContext } from "../../../../context/CourseContext";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
-import PdfExportButton from "../common/PdfExportButton";
-import ExcelExportButton from "../common/ExcelExportButton";
 import ReportStatCard from "../common/ReportStatCard";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import PersonIcon from "@mui/icons-material/Person";
 import StarIcon from "@mui/icons-material/Star";
 import ReplayIcon from "@mui/icons-material/Replay";
+import AssignmentIcon from "@mui/icons-material/Assignment";
 import { datePickerConfig } from "../../../../config/theme.config";
+import HeaderReportPage from "../../../../components/HeaderReportPage";
 
 interface Props {
   courseId: string;
@@ -110,48 +110,43 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
   ];
 
   return (
-    <Paper elevation={5} component="section" sx={{ p: 2 }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography
-          variant="h5"
-          gutterBottom
-          sx={{ mb: 2, fontWeight: "bold", color: "primary.main" }}
-        >
-          {data
-            ? `Detalle por Misión: ${data.mision.nombre}`
-            : "Detalle por Misión"}
-        </Typography>
-        <Box
-          sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mb: 2 }}
-        >
-          <PdfExportButton
-            filters={filters}
-            endpointPath={`/reportes/cursos/${courseId}/progreso/detalle-mision/pdf`}
-            disabled={!data}
-          />
-          <ExcelExportButton
-            filters={filters}
-            endpointPath={`/reportes/cursos/${courseId}/progreso/detalle-mision/excel`}
-            disabled={!data}
-            filename="detalle_mision.xlsx"
-          />
-        </Box>
-      </Stack>
+    <Box
+      component="section"
+      sx={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <Stack spacing={2} sx={{ height: "100%" }}>
+        <HeaderReportPage
+          title={
+            data
+              ? `Detalle por Misión: ${data.mision.nombre}`
+              : "Detalle por Misión"
+          }
+          description="Analiza el rendimiento y estadísticas de los alumnos en una misión particular."
+          icon={<AssignmentIcon />}
+          filters={filters}
+          endpointPathPdf={`/reportes/cursos/${courseId}/progreso/detalle-mision/pdf`}
+          endpointPathExcel={`/reportes/cursos/${courseId}/progreso/detalle-mision/excel`}
+          filenameExcel="detalle_mision.xlsx"
+          disabled={!data}
+          sx={{ mb: 2 }}
+        />
 
-      {/* Filtros */}
-      <Paper elevation={2} sx={{ p: 2, mb: 3 }}>
+        {/* Filtros */}
         <QuickDateFilter onApply={handleQuickFilter} />
-        <Box sx={{ mt: 2 }} />
         <Stack
           direction={{ xs: "column", md: "row" }}
           spacing={2}
           alignItems="center"
         >
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Dificultad (Filtro)</InputLabel>
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <InputLabel>Dificultad de misión</InputLabel>
             <Select
               value={filters.dificultad}
-              label="Dificultad (Filtro)"
+              label="Dificultad de misión"
               onChange={(e) =>
                 setFilters({
                   ...filters,
@@ -167,7 +162,7 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
             </Select>
           </FormControl>
 
-          <FormControl size="small" sx={{ minWidth: 250 }}>
+          <FormControl size="small" sx={{ minWidth: 400 }}>
             <InputLabel>Seleccionar Misión</InputLabel>
             <Select
               value={filters.misionId}
@@ -220,147 +215,147 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
             minDate={courseCreatedAt ? new Date(courseCreatedAt) : undefined}
           />
         </Stack>
-      </Paper>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
 
-      {!filters.misionId && (
-        <Alert severity="info">
-          Seleccione una misión para ver los detalles.
-        </Alert>
-      )}
+        {!filters.misionId && (
+          <Alert severity="info">
+            Seleccione una misión para ver los detalles.
+          </Alert>
+        )}
 
-      {data && (
-        <Stack spacing={2}>
-          <Paper elevation={3} sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Estadísticas generales
-            </Typography>
+        {data && (
+          <Stack spacing={2}>
+            <Paper elevation={3} sx={{ p: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Estadísticas generales
+              </Typography>
+
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <ReportStatCard
+                    icon={<TaskAltIcon fontSize="small" />}
+                    title="Veces Completada"
+                    subtitle="Total de ejecuciones"
+                    count={data.stats.vecesCompletada}
+                    color="success"
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <ReportStatCard
+                    icon={<PersonIcon fontSize="small" />}
+                    title="Alumnos que completaron"
+                    subtitle="Total de alumnos distintos"
+                    count={data.stats.alumnosCompletaron}
+                    percentage={data.stats.pctAlumnos}
+                    color="primary"
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <ReportStatCard
+                    icon={<StarIcon fontSize="small" />}
+                    title="Prom. Estrellas"
+                    subtitle="Calificación promedio"
+                    count={data.stats.promEstrellas.toFixed(1)}
+                    color="warning"
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <ReportStatCard
+                    icon={<ReplayIcon fontSize="small" />}
+                    title="Prom. Intentos"
+                    subtitle="Intentos promedio"
+                    count={data.stats.promIntentos.toFixed(1)}
+                    color="info"
+                  />
+                </Grid>
+              </Grid>
+            </Paper>
 
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <ReportStatCard
-                  icon={<TaskAltIcon fontSize="small" />}
-                  title="Veces Completada"
-                  subtitle="Total de ejecuciones"
-                  count={data.stats.vecesCompletada}
-                  color="success"
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <ReportStatCard
-                  icon={<PersonIcon fontSize="small" />}
-                  title="Alumnos que completaron"
-                  subtitle="Total de alumnos distintos"
-                  count={data.stats.alumnosCompletaron}
-                  percentage={data.stats.pctAlumnos}
-                  color="primary"
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <ReportStatCard
-                  icon={<StarIcon fontSize="small" />}
-                  title="Prom. Estrellas"
-                  subtitle="Calificación promedio"
-                  count={data.stats.promEstrellas.toFixed(1)}
-                  color="warning"
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <ReportStatCard
-                  icon={<ReplayIcon fontSize="small" />}
-                  title="Prom. Intentos"
-                  subtitle="Intentos promedio"
-                  count={data.stats.promIntentos.toFixed(1)}
-                  color="info"
-                />
-              </Grid>
-            </Grid>
-          </Paper>
-
-          <Grid container spacing={2}>
-            {/* Gráfico */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-                <Typography variant="h6" gutterBottom>
-                  Frecuencia de Completado
-                </Typography>
-                {data.grafico.length > 0 ? (
-                  <LineChart
-                    yAxis={[
-                      {
-                        label: "Cantidad de misiones",
-                        valueFormatter: (value: number) =>
-                          Number.isInteger(value) ? value.toString() : "",
-                        min: 0,
-                        max: maxCantidad < 5 ? 5 : undefined,
-                      },
-                    ]}
-                    xAxis={[
-                      {
-                        scaleType: "point",
-                        dataKey: "fecha",
-                        label: "Fecha",
-                        valueFormatter: (date: string) =>
-                          format(
-                            parse(date, "yyyy-MM-dd", new Date()),
-                            "dd/MM",
-                          ),
-                      },
-                    ]}
-                    series={[
-                      {
-                        dataKey: "cantidad",
-                        label: "Completados",
-                        color: "#2e7d32",
-                      },
-                    ]}
-                    dataset={data.grafico}
-                    height={300}
-                  />
-                ) : (
-                  <Typography
-                    color="text.secondary"
-                    align="center"
-                    sx={{ py: 4 }}
-                  >
-                    Sin datos en el periodo seleccionado
+              {/* Gráfico */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
+                  <Typography variant="h6" gutterBottom>
+                    Frecuencia de Completado
                   </Typography>
-                )}
-              </Paper>
+                  {data.grafico.length > 0 ? (
+                    <LineChart
+                      yAxis={[
+                        {
+                          label: "Cantidad de misiones",
+                          valueFormatter: (value: number) =>
+                            Number.isInteger(value) ? value.toString() : "",
+                          min: 0,
+                          max: maxCantidad < 5 ? 5 : undefined,
+                        },
+                      ]}
+                      xAxis={[
+                        {
+                          scaleType: "point",
+                          dataKey: "fecha",
+                          label: "Fecha",
+                          valueFormatter: (date: string) =>
+                            format(
+                              parse(date, "yyyy-MM-dd", new Date()),
+                              "dd/MM",
+                            ),
+                        },
+                      ]}
+                      series={[
+                        {
+                          dataKey: "cantidad",
+                          label: "Completados",
+                          color: "#2e7d32",
+                        },
+                      ]}
+                      dataset={data.grafico}
+                      height={300}
+                    />
+                  ) : (
+                    <Typography
+                      color="text.secondary"
+                      align="center"
+                      sx={{ py: 4 }}
+                    >
+                      Sin datos en el periodo seleccionado
+                    </Typography>
+                  )}
+                </Paper>
+              </Grid>
+              {/* Tabla */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Paper
+                  elevation={3}
+                  sx={{
+                    p: 2,
+                    height: 400,
+                    width: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
+                  <Typography variant="h6" gutterBottom>
+                    Alumnos que la completaron
+                  </Typography>
+                  <DataGrid
+                    rows={data.tabla}
+                    columns={columns}
+                    loading={loading}
+                    density="compact"
+                    disableRowSelectionOnClick
+                    sx={{ flex: 1, borderRadius: "0.7em" }}
+                  />
+                </Paper>
+              </Grid>
             </Grid>
-            {/* Tabla */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Paper
-                elevation={3}
-                sx={{
-                  p: 2,
-                  height: 400,
-                  width: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-                <Typography variant="h6" gutterBottom>
-                  Alumnos que la completaron
-                </Typography>
-                <DataGrid
-                  rows={data.tabla}
-                  columns={columns}
-                  loading={loading}
-                  density="compact"
-                  disableRowSelectionOnClick
-                  sx={{ flex: 1 }}
-                />
-              </Paper>
-            </Grid>
-          </Grid>
-        </Stack>
-      )}
-    </Paper>
+          </Stack>
+        )}
+      </Stack>
+    </Box>
   );
 }

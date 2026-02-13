@@ -39,10 +39,10 @@ import { useDebounce } from "../../../hooks/useDebounce";
 import { findLogs } from "../services/audit.service";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import InfoIcon from "@mui/icons-material/Info";
+import HistoryIcon from "@mui/icons-material/History";
 import UserDetailModal from "../components/UserDetailModal";
-import PdfExportButton from "../../reports/components/common/PdfExportButton";
-import CsvExportButton from "../../reports/components/common/CsvExportButton";
 import { datePickerConfig } from "../../../config/theme.config";
+import HeaderReportPage from "../../../components/HeaderReportPage";
 
 // 1. Hooks y Servicios
 
@@ -428,49 +428,33 @@ export default function AuditPage() {
 
   return (
     <Box
+      component="section"
       sx={{
         width: "100%",
         display: "flex",
         flexDirection: "column",
       }}
     >
-      {/* --- A. Cabecera con Título y Botones --- */}
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ mb: 3 }}
-      >
-        <Typography variant="h5" fontWeight="bold" color="primary.main">
-          Reporte de Auditoría
-        </Typography>
-        <Box sx={{ display: "flex", gap: 2 }}>
-          <PdfExportButton
-            filters={pdfFilters}
-            endpointPath="/auditoria/pdf"
-            label="Exportar PDF"
-          />
-          <CsvExportButton
-            filters={pdfFilters}
-            endpointPath="/auditoria/csv"
-            label="Exportar CSV"
-            filename="auditoria.csv"
-          />
-        </Box>
-      </Stack>
+      <Stack spacing={2} sx={{ height: "100%" }}>
+        <HeaderReportPage
+          title="Reporte de Auditoría"
+          description="Monitorea todos los cambios realizados en la base de datos por usuarios o procesos automáticos."
+          icon={<HistoryIcon />}
+          filters={pdfFilters}
+          endpointPathPdf="/auditoria/pdf"
+          endpointPathCsv="/auditoria/csv"
+          filenameCsv="auditoria.csv"
+          disabled={rows.length === 0}
+        />
 
-      {/* --- B. Filtros --- */}
-      <Paper elevation={2} sx={{ p: 2, mb: 2 }}>
-        <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
-          Filtros de búsqueda
-        </Typography>
+        {/* Filtros */}
         <Stack
           direction="row"
           spacing={1}
           alignItems="center"
           sx={{
-            flexWrap: "wrap", // Permite que los filtros bajen si no hay espacio
-            gap: 1, // Espacio vertical si 'wrap' ocurre
+            flexWrap: "wrap",
+            gap: 1,
           }}
         >
           <DatePicker
@@ -516,7 +500,7 @@ export default function AuditPage() {
             size="small"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            sx={{ minWidth: 250, flexGrow: 1 }} // El buscador crece
+            sx={{ minWidth: 250, flexGrow: 1 }}
           />
           <FormControl size="small" sx={{ minWidth: 180 }}>
             <InputLabel>Tabla Afectada</InputLabel>
@@ -550,50 +534,50 @@ export default function AuditPage() {
             </Select>
           </FormControl>
         </Stack>
-      </Paper>
 
-      {/* --- C. DataGrid --- */}
-      {gridError && <Alert severity="error">{gridError}</Alert>}
-      <Box sx={{ height: 600, width: "100%" }}>
-        <DataGrid
-          rows={rows}
-          columns={columns}
-          rowCount={totalRows}
-          loading={gridLoading}
-          paginationMode="server"
-          paginationModel={paginationModel}
-          onPaginationModelChange={setPaginationModel}
-          pageSizeOptions={[10, 20, 30]}
-          sortingMode="server"
-          sortModel={sortModel}
-          onSortModelChange={setSortModel}
-          sx={{
-            // Desactivamos los 'outline' de foco
-            "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
-              outline: "none",
-            },
-            "& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within":
-              {
+        {/* --- C. DataGrid --- */}
+        {gridError && <Alert severity="error">{gridError}</Alert>}
+        <Box sx={{ height: 600, width: "100%" }}>
+          <DataGrid
+            rows={rows}
+            columns={columns}
+            rowCount={totalRows}
+            loading={gridLoading}
+            paginationMode="server"
+            paginationModel={paginationModel}
+            onPaginationModelChange={setPaginationModel}
+            pageSizeOptions={[10, 20, 30]}
+            sortingMode="server"
+            sortModel={sortModel}
+            onSortModelChange={setSortModel}
+            sx={{
+              // Desactivamos los 'outline' de foco
+              "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
                 outline: "none",
               },
-          }}
-          disableColumnResize
+              "& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within":
+                {
+                  outline: "none",
+                },
+            }}
+            disableColumnResize
+          />
+        </Box>
+
+        {/* --- D. El Modal de Detalle (JSON) --- */}
+        <AuditDetailModal
+          open={!!logToView}
+          onClose={() => setLogToView(null)}
+          log={logToView}
         />
-      </Box>
 
-      {/* --- D. El Modal de Detalle (JSON) --- */}
-      <AuditDetailModal
-        open={!!logToView}
-        onClose={() => setLogToView(null)}
-        log={logToView}
-      />
-
-      {/* --- E. Modal de Detalle de Usuario --- */}
-      <UserDetailModal
-        open={!!viewUserId}
-        onClose={() => setViewUserId(null)}
-        userId={viewUserId}
-      />
+        {/* --- E. Modal de Detalle de Usuario --- */}
+        <UserDetailModal
+          open={!!viewUserId}
+          onClose={() => setViewUserId(null)}
+          userId={viewUserId}
+        />
+      </Stack>
     </Box>
   );
 }
