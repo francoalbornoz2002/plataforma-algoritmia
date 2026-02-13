@@ -65,7 +65,16 @@ export default function ReportContextDialog({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog
+      open={open}
+      onClose={(_, reason) => {
+        if (reason === "backdropClick") return;
+        onClose();
+      }}
+      maxWidth="sm"
+      fullWidth
+      disableEscapeKeyDown
+    >
       <DialogTitle>
         {step === "type"
           ? "Selecciona el tipo de reporte"

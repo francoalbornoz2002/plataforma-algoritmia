@@ -36,7 +36,14 @@ export default function UsersReportTab() {
 
   return (
     <Box sx={{ width: "100%", mt: -3 }}>
-      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+      <Box
+        sx={{
+          borderBottom: 1,
+          borderColor: "divider",
+          bgcolor: "background.paper",
+          mx: -3,
+        }}
+      >
         <Tabs
           value={value}
           onChange={handleChange}

@@ -18,7 +18,14 @@ export default function DifficultiesReportTab({ courseId }: Props) {
 
   return (
     <Box sx={{ width: "100%", mt: -3 }}>
-      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 2 }}>
+      <Box
+        sx={{
+          borderBottom: 1,
+          borderColor: "divider",
+          bgcolor: "background.paper",
+          mx: -3,
+        }}
+      >
         <Tabs
           value={tabIndex}
           onChange={handleChange}
