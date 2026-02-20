@@ -14,6 +14,7 @@ import {
 import { AlumnosService } from '../services/alumnos.service';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
+import { Public } from 'src/auth/decorators/public.decorator';
 import { roles } from '@prisma/client';
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
 import { JoinCourseDto } from '../dto/join-course-dto';
@@ -163,5 +164,11 @@ export class AlumnosController {
     @Query('idCurso', ParseUUIDPipe) idCurso: string,
   ) {
     return this.alumnosService.findMyDifficulties(idAlumno, idCurso);
+  }
+
+  @Public()
+  @Get(':idAlumno/sync-difficulties')
+  syncDifficulties(@Param('idAlumno', ParseUUIDPipe) idAlumno: string) {
+    return this.alumnosService.findActiveCourseDifficulties(idAlumno);
   }
 }

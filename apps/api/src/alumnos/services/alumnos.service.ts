@@ -340,4 +340,25 @@ export class AlumnosService {
 
     return alumnosElegibles;
   }
+
+  async findActiveCourseDifficulties(idAlumno: string) {
+    // 1. Buscamos si el alumno tiene una inscripción activa
+    const inscripcion = await this.prisma.alumnoCurso.findFirst({
+      where: {
+        idAlumno: idAlumno,
+        estado: estado_simple.Activo,
+      },
+      select: { idCurso: true },
+    });
+
+    if (!inscripcion) {
+      return []; // No hay curso activo, devolvemos lista vacía
+    }
+
+    // 2. Reutilizamos el servicio de dificultades existente
+    return this.difficultiesService.getStudentDifficulties(
+      idAlumno,
+      inscripcion.idCurso,
+    );
+  }
 }
