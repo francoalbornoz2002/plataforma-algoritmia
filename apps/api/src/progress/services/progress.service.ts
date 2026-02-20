@@ -16,8 +16,6 @@ import { Prisma } from '@prisma/client';
 import { SubmitMissionDto } from '../dto/submit-mission.dto'; // (Importación existente)
 import { estado_simple } from '@prisma/client'; // Aseguramos importar el enum
 
-const TOTAL_MISIONES_JUEGO = 10; // (Hardcodeado por ahora)
-
 @Injectable()
 export class ProgressService {
   constructor(private prisma: PrismaService) {}
@@ -272,6 +270,7 @@ export class ProgressService {
   //          },
   //        });
   //
+  //        const totalMisiones = await tx.mision.count();
   //        // --- Paso C: Recalcular Promedios (Alumno) ---
   //        // (Esto es seguro porque ocurre DENTRO de la transacción)
   //        const nuevoPromEstrellas =
@@ -281,9 +280,9 @@ export class ProgressService {
   //          progAlumnoActualizado.totalIntentos /
   //          progAlumnoActualizado.cantMisionesCompletadas;
   //        const nuevoPctCompletadas =
-  //          (progAlumnoActualizado.cantMisionesCompletadas /
-  //            TOTAL_MISIONES_JUEGO) *
-  //          100;
+  //          totalMisiones > 0
+  //            ? (progAlumnoActualizado.cantMisionesCompletadas / totalMisiones) * 100
+  //            : 0;
   //
   //        await tx.progresoAlumno.update({
   //          where: { id: idProgreso },
@@ -515,10 +514,14 @@ export class ProgressService {
               progAlumnoActualizado.cantMisionesCompletadas;
           }
 
+          const totalMisiones = await tx.mision.count();
+
           const nuevoPctCompletadas =
-            (progAlumnoActualizado.cantMisionesCompletadas /
-              TOTAL_MISIONES_JUEGO) *
-            100;
+            totalMisiones > 0
+              ? (progAlumnoActualizado.cantMisionesCompletadas /
+                  totalMisiones) *
+                100
+              : 0;
 
           const progresoFinal = await tx.progresoAlumno.update({
             where: { id: idProgreso },
@@ -813,24 +816,36 @@ export class ProgressService {
     if (!curso) return; // El curso no existe
 
     // 2. AGREGACIÓN 1: Para TODOS los alumnos activos
-    // (Para las SUMAS totales y el PROMEDIO de PCT Completado)
-    const agregadosTodos = await tx.progresoAlumno.aggregate({
-      _sum: {
-        cantMisionesCompletadas: true,
-        totalEstrellas: true,
-        totalExp: true,
-        totalIntentos: true,
+    // (Para las SUMAS totales)
+    const whereTodos = {
+      alumnoCurso: {
+        idCurso: idCurso,
+        estado: { in: [estado_simple.Activo, estado_simple.Finalizado] },
       },
-      _avg: {
-        pctMisionesCompletadas: true, // <-- KPI #1
-      },
-      where: {
-        alumnoCurso: {
-          idCurso: idCurso,
-          estado: { in: [estado_simple.Activo, estado_simple.Finalizado] }, // <-- CORRECCIÓN: Incluir Finalizados
+    };
+
+    const [agregadosTodos, totalAlumnos, totalMisiones] = await Promise.all([
+      tx.progresoAlumno.aggregate({
+        _sum: {
+          cantMisionesCompletadas: true,
+          totalEstrellas: true,
+          totalExp: true,
+          totalIntentos: true,
         },
-      },
-    });
+        where: whereTodos,
+      }),
+      tx.alumnoCurso.count({
+        where: whereTodos.alumnoCurso,
+      }),
+      tx.mision.count(),
+    ]);
+
+    const pctMisionesCompletadas =
+      totalAlumnos > 0 && totalMisiones > 0
+        ? ((agregadosTodos._sum.cantMisionesCompletadas || 0) /
+            (totalAlumnos * totalMisiones)) *
+          100
+        : 0;
 
     // 3. AGREGACIÓN 2: Para alumnos que SÍ JUGARON
     // (Para los PROMEDIOS de Estrellas e Intentos)
@@ -860,7 +875,7 @@ export class ProgressService {
         totalEstrellas: agregadosTodos._sum.totalEstrellas || 0,
         totalExp: agregadosTodos._sum.totalExp || 0,
         totalIntentos: agregadosTodos._sum.totalIntentos || 0,
-        pctMisionesCompletadas: agregadosTodos._avg.pctMisionesCompletadas || 0,
+        pctMisionesCompletadas: pctMisionesCompletadas,
 
         // --- Datos de la Agregación 2 (Solo Jugadores) ---
         promEstrellas: agregadosJugadores._avg.promEstrellas || 0,
