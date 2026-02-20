@@ -7,8 +7,8 @@ import {
   Alert,
   Paper,
   Stack,
-  Divider,
   Chip,
+  Grid,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
@@ -22,6 +22,12 @@ import EstadoCursoChip from "../../../../components/EstadoCursoChip";
 import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
 import AssessmentIcon from "@mui/icons-material/Assessment";
+import SchoolIcon from "@mui/icons-material/School";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
+import TaskAltIcon from "@mui/icons-material/TaskAlt";
+import ReportTotalCard from "../common/ReportTotalCard";
+import ReportStatCard from "../common/ReportStatCard";
 
 export default function CoursesSummarySection() {
   const [filters, setFilters] = useState<CoursesSummaryFilters>({
@@ -133,11 +139,20 @@ export default function CoursesSummarySection() {
   };
 
   const columns: GridColDef[] = [
-    { field: "nombre", headerName: "Curso", flex: 1.5, minWidth: 150 },
+    {
+      field: "createdAt",
+      headerName: "Fecha de alta",
+      width: 150,
+      valueFormatter: (value: any) =>
+        value ? format(new Date(value), "dd/MM/yyyy") : "-",
+    },
+    { field: "nombre", headerName: "Nombre", flex: 1.5, minWidth: 150 },
     {
       field: "estado",
       headerName: "Estado",
-      width: 120,
+      headerAlign: "center",
+      align: "center",
+      width: 100,
       renderCell: (params) => <EstadoCursoChip estado={params.value} small />,
     },
     {
@@ -151,13 +166,6 @@ export default function CoursesSummarySection() {
       headerName: "Docentes (Act)",
       width: 120,
       valueGetter: (params, row) => row.docentes?.activos || 0,
-    },
-    {
-      field: "createdAt",
-      headerName: "Fecha Creación",
-      width: 150,
-      valueFormatter: (value: any) =>
-        value ? format(new Date(value), "dd/MM/yyyy") : "-",
     },
   ];
 
@@ -217,90 +225,73 @@ export default function CoursesSummarySection() {
         {error && <Alert severity="error">{error}</Alert>}
 
         {summaryData && (
-          <Stack
-            direction={{ xs: "column", md: "row" }}
-            spacing={3}
-            sx={{ width: "100%" }}
-          >
-            {/* Izquierda: KPIs y Gráfico */}
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Stack direction="row" spacing={2} sx={{ height: "100%" }}>
-                {/* Columna KPIs */}
-                <Paper elevation={3} sx={{ p: 2, minWidth: 140 }}>
-                  <Stack
-                    spacing={3}
-                    justifyContent="center"
-                    alignItems="center"
-                    sx={{ height: "100%" }}
-                  >
-                    <Box sx={{ textAlign: "center" }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Total
-                      </Typography>
-                      <Typography variant="h4" fontWeight="bold">
-                        {summaryData.total}
-                      </Typography>
-                    </Box>
-                    <Divider flexItem />
-                    <Box sx={{ textAlign: "center" }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Activos
-                      </Typography>
-                      <Typography
-                        variant="h4"
-                        color="success.main"
-                        fontWeight="bold"
-                      >
-                        {summaryData.activos}
-                      </Typography>
-                      <Typography variant="caption" color="success.main">
-                        {summaryData.total > 0
-                          ? `${((summaryData.activos / summaryData.total) * 100).toFixed(1)}%`
-                          : "0%"}
-                      </Typography>
-                    </Box>
-                    <Divider flexItem />
-                    <Box sx={{ textAlign: "center" }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Inactivos
-                      </Typography>
-                      <Typography
-                        variant="h4"
-                        color="error.main"
-                        fontWeight="bold"
-                      >
-                        {summaryData.inactivos}
-                      </Typography>
-                      <Typography variant="caption" color="error.main">
-                        {summaryData.total > 0
-                          ? `${((summaryData.inactivos / summaryData.total) * 100).toFixed(1)}%`
-                          : "0%"}
-                      </Typography>
-                    </Box>
-                    <Divider flexItem />
-                    <Box sx={{ textAlign: "center" }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Finalizados
-                      </Typography>
-                      <Typography
-                        variant="h4"
-                        color="info.main"
-                        fontWeight="bold"
-                      >
-                        {summaryData.finalizados}
-                      </Typography>
-                      <Typography variant="caption" color="info.main">
-                        {summaryData.total > 0
-                          ? `${((summaryData.finalizados / summaryData.total) * 100).toFixed(1)}%`
-                          : "0%"}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </Paper>
+          <Stack spacing={2}>
+            {/* Fila 1: KPIs Generales */}
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <ReportTotalCard
+                  resourceName="Cursos Totales"
+                  total={summaryData.total}
+                  icon={<SchoolIcon fontSize="small" />}
+                  small
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <ReportStatCard
+                  title="Cursos Activos"
+                  subtitle="En curso actualmente"
+                  count={summaryData.activos}
+                  percentage={
+                    summaryData.total > 0
+                      ? (summaryData.activos / summaryData.total) * 100
+                      : 0
+                  }
+                  color="success"
+                  icon={<CheckCircleIcon fontSize="small" />}
+                  small
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <ReportStatCard
+                  title="Cursos Inactivos"
+                  subtitle="Dados de baja"
+                  count={summaryData.inactivos}
+                  percentage={
+                    summaryData.total > 0
+                      ? (summaryData.inactivos / summaryData.total) * 100
+                      : 0
+                  }
+                  color="error"
+                  icon={<CancelIcon fontSize="small" />}
+                  small
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <ReportStatCard
+                  title="Cursos Finalizados"
+                  subtitle="Ciclo lectivo cerrado"
+                  count={summaryData.finalizados}
+                  percentage={
+                    summaryData.total > 0
+                      ? (summaryData.finalizados / summaryData.total) * 100
+                      : 0
+                  }
+                  color="info"
+                  icon={<TaskAltIcon fontSize="small" />}
+                  small
+                />
+              </Grid>
+            </Grid>
 
-                {/* Gráfico */}
+            <Stack
+              direction={{ xs: "column", md: "row" }}
+              spacing={3}
+              sx={{ width: "100%" }}
+            >
+              {/* Izquierda: Gráfico */}
+              <Box sx={{ flex: 1, minWidth: 0 }}>
                 {chartConfig && (
-                  <Paper elevation={3} sx={{ p: 2, flex: 1, minWidth: 0 }}>
+                  <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
                     <Typography variant="h6" gutterBottom>
                       Distribución
                     </Typography>
@@ -314,52 +305,55 @@ export default function CoursesSummarySection() {
                     />
                   </Paper>
                 )}
-              </Stack>
-            </Box>
+              </Box>
 
-            {/* Derecha: Tabla de Cursos */}
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Paper
-                elevation={3}
-                sx={{
-                  p: 2,
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                }}
-              >
-                <Stack
-                  direction="row"
-                  justifyContent="space-between"
-                  alignItems="center"
-                  sx={{ mb: 2 }}
+              {/* Derecha: Tabla de Cursos */}
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Paper
+                  elevation={3}
+                  sx={{
+                    p: 2,
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
                 >
-                  <Typography variant="h6">Detalle de Cursos</Typography>
-                  {chartFilter && (
-                    <Chip
-                      label={`Filtro: ${chartFilter.estado}`}
-                      onDelete={() => setChartFilter(null)}
-                      color="primary"
-                      size="small"
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    sx={{ mb: 2 }}
+                  >
+                    <Typography variant="h6">Detalle de Cursos</Typography>
+                    {chartFilter && (
+                      <Chip
+                        label={`Filtro: ${chartFilter.estado}`}
+                        onDelete={() => setChartFilter(null)}
+                        color="primary"
+                        size="small"
+                      />
+                    )}
+                  </Stack>
+                  <Box sx={{ flex: 1, width: "100%", minHeight: 400 }}>
+                    <DataGrid
+                      rows={filteredCourses}
+                      columns={columns}
+                      loading={loading}
+                      initialState={{
+                        pagination: { paginationModel: { pageSize: 10 } },
+                        sorting: {
+                          sortModel: [{ field: "createdAt", sort: "desc" }],
+                        },
+                      }}
+                      pageSizeOptions={[10, 25, 50]}
+                      disableRowSelectionOnClick
+                      density="compact"
+                      sx={{ height: "100%" }}
                     />
-                  )}
-                </Stack>
-                <Box sx={{ flex: 1, width: "100%", minHeight: 400 }}>
-                  <DataGrid
-                    rows={filteredCourses}
-                    columns={columns}
-                    loading={loading}
-                    initialState={{
-                      pagination: { paginationModel: { pageSize: 10 } },
-                    }}
-                    pageSizeOptions={[10, 25, 50]}
-                    disableRowSelectionOnClick
-                    density="compact"
-                    sx={{ height: "100%" }}
-                  />
-                </Box>
-              </Paper>
-            </Box>
+                  </Box>
+                </Paper>
+              </Box>
+            </Stack>
           </Stack>
         )}
       </Stack>

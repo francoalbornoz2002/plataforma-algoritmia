@@ -63,17 +63,17 @@ export default function CoursesReportTab() {
           <Tab
             icon={<HistoryEduIcon />}
             iconPosition="start"
-            label="Historial Cursos"
+            label="Historial de Movimientos"
           />
           <Tab
             icon={<PersonIcon />}
             iconPosition="start"
-            label="Historial Alumnos"
+            label="Historial de Inscripciones (Alumnos)"
           />
           <Tab
             icon={<SchoolIcon />}
             iconPosition="start"
-            label="Historial Docentes"
+            label="Historial Asignaciones (Docentes)"
           />
         </Tabs>
       </Box>

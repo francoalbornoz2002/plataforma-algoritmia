@@ -7,6 +7,7 @@ import IconButton from "@mui/material/IconButton";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import Tooltip from "@mui/material/Tooltip";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 import Chip from "@mui/material/Chip"; // Para el estado
 import {
   DataGrid,
@@ -241,8 +242,30 @@ export default function UsersPage() {
     setEstado(event.target.value as estado_simple | "");
   };
 
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setRoles([]);
+    setEstado("");
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+  };
+
   // --- Definición de Columnas para DataGrid ---
   const columns: GridColDef<UserData>[] = [
+    {
+      field: "createdAt",
+      headerName: "Fecha de alta",
+      width: 130,
+      // Formatea la fecha para mostrarla de forma legible
+      valueFormatter: (value: string | Date | null) => {
+        if (!value) return "";
+        try {
+          const dateObj = typeof value === "string" ? parseISO(value) : value;
+          return format(dateObj, "dd/MM/yyyy", { locale: es });
+        } catch {
+          return "Inválida";
+        }
+      },
+    },
     { field: "apellido", headerName: "Apellido", width: 150 },
     { field: "nombre", headerName: "Nombre", width: 150, editable: false }, // Editable: false si no usas edición inline
     {
@@ -404,6 +427,15 @@ export default function UsersPage() {
               <MenuItem value="false">Inactivo</MenuItem>
             </Select>
           </FormControl>
+          <Tooltip title="Limpiar filtros">
+            <IconButton
+              onClick={handleClearFilters}
+              size="small"
+              color="primary"
+            >
+              <FilterAltOffIcon />
+            </IconButton>
+          </Tooltip>
           <Box sx={{ flexGrow: 1 }} />
           <Button
             variant="contained"

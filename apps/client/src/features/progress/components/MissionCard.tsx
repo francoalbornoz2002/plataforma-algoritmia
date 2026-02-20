@@ -24,6 +24,7 @@ type MissionItem = MisionConEstado | MisionCompletada | MisionEspecial;
 
 interface MissionCardProps {
   missionData: MissionItem;
+  hideStatus?: boolean;
 }
 
 // --- Helper para mostrar los Stats si está completada ---
@@ -56,7 +57,10 @@ function CompletedStats({ data }: { data: MisionCompletada | MisionEspecial }) {
 }
 
 // --- Componente Principal ---
-export default function MissionCard({ missionData }: MissionCardProps) {
+export default function MissionCard({
+  missionData,
+  hideStatus = false,
+}: MissionCardProps) {
   // LÓGICA DE NORMALIZACIÓN
   let nombre = "";
   let descripcion = "";
@@ -102,7 +106,7 @@ export default function MissionCard({ missionData }: MissionCardProps) {
       sx={{
         height: "100%",
         variant: "outlined",
-        opacity: isCompleted ? 1.0 : 0.6,
+        opacity: isCompleted || hideStatus ? 1.0 : 0.6,
         display: "flex",
         flexDirection: "column",
         // Borde especial si es misión especial
@@ -164,28 +168,32 @@ export default function MissionCard({ missionData }: MissionCardProps) {
         </Typography>
       </CardContent>
 
-      <Divider sx={{ mt: "auto" }} />
-      <Box
-        sx={{
-          p: 2,
-          bgcolor: isCompleted
-            ? isSpecial
-              ? "#f3e5f5"
-              : "#f5fff5"
-            : "#fafafa",
-        }}
-      >
-        {isCompleted ? (
-          <CompletedStats data={completedData!} />
-        ) : (
-          <Chip
-            icon={<LockIcon />}
-            label="Pendiente"
-            size="small"
-            sx={{ width: "100%" }}
-          />
-        )}
-      </Box>
+      {!hideStatus && (
+        <>
+          <Divider sx={{ mt: "auto" }} />
+          <Box
+            sx={{
+              p: 2,
+              bgcolor: isCompleted
+                ? isSpecial
+                  ? "#f3e5f5"
+                  : "#f5fff5"
+                : "#fafafa",
+            }}
+          >
+            {isCompleted ? (
+              <CompletedStats data={completedData!} />
+            ) : (
+              <Chip
+                icon={<LockIcon />}
+                label="Pendiente"
+                size="small"
+                sx={{ width: "100%" }}
+              />
+            )}
+          </Box>
+        </>
+      )}
     </Card>
   );
 }

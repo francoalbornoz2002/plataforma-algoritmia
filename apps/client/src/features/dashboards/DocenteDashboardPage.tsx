@@ -193,7 +193,7 @@ export default function DocenteDashboardPage() {
         </Stack>
       </Paper>
       {/* ACCIONES RÁPIDAS */}
-      <Stack spacing={2} direction="row">
+      <Stack spacing={3} direction="row">
         <Button
           fullWidth
           variant="outlined"
@@ -391,7 +391,7 @@ export default function DocenteDashboardPage() {
             <Typography variant="h6" gutterBottom color="success.main">
               Progreso del Curso
             </Typography>
-            <Grid container spacing={2} alignItems="center">
+            <Grid container spacing={3} alignItems="center">
               <Grid size={{ xs: 12, sm: 5 }}>
                 <Gauge
                   value={stats?.progresoPct ?? 0}
@@ -412,21 +412,25 @@ export default function DocenteDashboardPage() {
                     color="success"
                     small
                   />
-                  <DashboardTextCard
-                    title="Misión más difícil"
-                    value={
-                      stats?.week.misionMasDificil
-                        ? `Misión N° ${stats.week.misionMasDificil.numero}`
-                        : "Ninguna"
-                    }
-                    icon={<Warning />}
-                    color="warning"
-                    small
-                    onClick={() =>
-                      stats?.week.misionMasDificil &&
-                      setSelectedMission(stats.week.misionMasDificil)
-                    }
-                  />
+                  <Tooltip title="Ver detalles de la misión">
+                    <Box>
+                      <DashboardTextCard
+                        title="Misión más difícil"
+                        value={
+                          stats?.week.misionMasDificil
+                            ? `Misión N° ${stats.week.misionMasDificil.numero}`
+                            : "Ninguna"
+                        }
+                        icon={<Warning />}
+                        color="warning"
+                        small
+                        onClick={() =>
+                          stats?.week.misionMasDificil &&
+                          setSelectedMission(stats.week.misionMasDificil)
+                        }
+                      />
+                    </Box>
+                  </Tooltip>
                   <DashboardTextCard
                     title="Alumno más activo"
                     value={stats?.week.alumnoMasActivo || "Ninguno"}
@@ -455,7 +459,7 @@ export default function DocenteDashboardPage() {
             <Typography variant="h6" gutterBottom color="error.main">
               Dificultades Detectadas
             </Typography>
-            <Grid container spacing={2} alignItems="center">
+            <Grid container spacing={3} alignItems="center">
               <Grid size={{ xs: 12, sm: 5 }}>
                 <PieChart
                   series={[
@@ -517,7 +521,7 @@ export default function DocenteDashboardPage() {
             <Typography variant="h6" gutterBottom color="#9c27b0">
               Sesiones de Refuerzo
             </Typography>
-            <Grid container spacing={2}>
+            <Grid container spacing={3}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography variant="caption" align="center" display="block">
                   Por Estado
@@ -580,7 +584,7 @@ export default function DocenteDashboardPage() {
             <Typography variant="h6" gutterBottom color="info.main">
               Consultas y Clases
             </Typography>
-            <Grid container spacing={2} alignItems="center">
+            <Grid container spacing={3} alignItems="center">
               <Grid size={{ xs: 12, sm: 5 }}>
                 <PieChart
                   series={[
@@ -660,6 +664,7 @@ export default function DocenteDashboardPage() {
           {selectedMission && (
             <MissionCard
               missionData={{ mision: selectedMission, completada: null }}
+              hideStatus
             />
           )}
         </Box>

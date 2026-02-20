@@ -10,6 +10,8 @@ import {
   Chip,
   Stack,
   Divider,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
@@ -24,6 +26,7 @@ import QuickDateFilter from "../../../../components/QuickDateFilter";
 import HistoryIcon from "@mui/icons-material/History";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
 import { datePickerConfig } from "../../../../config/theme.config";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
 export default function CoursesHistorySection() {
   const [type, setType] = useState<string>("TODOS");
@@ -95,6 +98,15 @@ export default function CoursesHistorySection() {
       fechaDesde: start,
       fechaHasta: end,
     }));
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      fechaDesde: "",
+      fechaHasta: "",
+      tipoMovimiento: "TODOS" as any,
+    });
+    setType("TODOS");
   };
 
   const columns: GridColDef[] = [
@@ -260,6 +272,15 @@ export default function CoursesHistorySection() {
                 },
               }}
             />
+            <Tooltip title="Limpiar filtros">
+              <IconButton
+                onClick={handleClearFilters}
+                size="small"
+                color="primary"
+              >
+                <FilterAltOffIcon />
+              </IconButton>
+            </Tooltip>
           </Stack>
         </Stack>
 
@@ -348,7 +369,7 @@ export default function CoursesHistorySection() {
                   color: "text.secondary",
                 }}
               >
-                <Typography>Genera el reporte para ver el gráfico</Typography>
+                <Typography>No hay datos para mostrar en el gráfico</Typography>
               </Paper>
             )}
           </Box>

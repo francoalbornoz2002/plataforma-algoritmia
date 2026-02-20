@@ -12,6 +12,8 @@ import {
   type SelectChangeEvent,
   Divider,
   MenuItem,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
@@ -28,6 +30,7 @@ import QuickDateFilter from "../../../../components/QuickDateFilter";
 import HistoryIcon from "@mui/icons-material/History";
 import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
 export default function HistoryReportSection() {
   const [type, setType] = useState<TipoMovimientoUsuario>(
@@ -98,6 +101,16 @@ export default function HistoryReportSection() {
       fechaDesde: start,
       fechaHasta: end,
     });
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      fechaDesde: "",
+      fechaHasta: "",
+      rol: "",
+      tipoMovimiento: TipoMovimientoUsuario.TODOS,
+    });
+    setType(TipoMovimientoUsuario.TODOS);
   };
 
   const handleChange = (
@@ -279,6 +292,15 @@ export default function HistoryReportSection() {
                 ))}
               </Select>
             </FormControl>
+            <Tooltip title="Limpiar filtros">
+              <IconButton
+                onClick={handleClearFilters}
+                size="small"
+                color="primary"
+              >
+                <FilterAltOffIcon />
+              </IconButton>
+            </Tooltip>
           </Stack>
         </Stack>
 

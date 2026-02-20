@@ -71,18 +71,20 @@ export default function AlumnoDashboardPage() {
   }
 
   return (
-    <Stack spacing={2} sx={{ height: "100%" }}>
+    <Stack spacing={3} sx={{ height: "100%" }}>
       {/* HEADER */}
       <Paper
         elevation={3}
         sx={{ p: 2, borderLeft: "4px solid", borderColor: "primary.main" }}
       >
-        <Typography variant="h4" gutterBottom>
-          ¡Hola, {profile?.nombre}! 👋
-        </Typography>
-        <Typography variant="subtitle1" color="text.secondary">
-          Bienvenido a <strong>{selectedCourse.nombre}</strong>
-        </Typography>
+        <Stack spacing={1}>
+          <Typography variant="h4">¡Hola, {profile?.nombre}! 👋</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Bienvenido al panel de control de:{" "}
+            <strong>{selectedCourse.nombre}</strong>. Estas son algunas acciones
+            rápidas que puedes realizar:
+          </Typography>
+        </Stack>
       </Paper>
 
       {error && <Alert severity="error">{error}</Alert>}
@@ -170,7 +172,7 @@ export default function AlumnoDashboardPage() {
       )}
 
       {/* --- COLUMNA IZQUIERDA (Principal) --- */}
-      <Grid container spacing={2}>
+      <Grid container spacing={3}>
         {/* 1. INFO DEL CURSO */}
         <Grid size={{ xs: 12, md: 6 }}>
           <CourseInfoCard

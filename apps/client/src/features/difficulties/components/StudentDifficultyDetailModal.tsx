@@ -96,7 +96,7 @@ export default function StudentDifficultyDetailModal({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle>Dificultades de {nombreAlumno}</DialogTitle>
       <DialogContent>
         {loading ? (
@@ -108,46 +108,41 @@ export default function StudentDifficultyDetailModal({
             {error}
           </Alert>
         ) : (
-          <Box>
+          <Stack spacing={2} sx={{ mt: 2 }}>
             {/* --- Filtros --- */}
-            <Paper elevation={2} sx={{ pt: 1, pb: 2, pr: 2, pl: 2, mb: 2 }}>
-              <Typography variant="overline" sx={{ fontSize: "14px" }}>
-                Filtros de búsqueda
-              </Typography>
-              <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
-                <FormControl size="small" sx={{ minWidth: 200 }}>
-                  <InputLabel>Filtrar por Tema</InputLabel>
-                  <Select
-                    value={temaFilter}
-                    label="Filtrar por Tema"
-                    onChange={handleTemaChange}
-                  >
-                    <MenuItem value="Todos">Todos los Temas</MenuItem>
-                    {temasParaFiltrar.map((tema) => (
-                      <MenuItem key={tema} value={tema}>
-                        {tema}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+            <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+              <FormControl size="small" sx={{ minWidth: 200 }}>
+                <InputLabel>Filtrar por Tema</InputLabel>
+                <Select
+                  value={temaFilter}
+                  label="Filtrar por Tema"
+                  onChange={handleTemaChange}
+                >
+                  <MenuItem value="Todos">Todos los Temas</MenuItem>
+                  {temasParaFiltrar.map((tema) => (
+                    <MenuItem key={tema} value={tema}>
+                      {tema}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-                <FormControl size="small" sx={{ minWidth: 200 }}>
-                  <InputLabel>Filtrar por Grado</InputLabel>
-                  <Select
-                    value={gradoFilter}
-                    label="Filtrar por Grado"
-                    onChange={handleGradoChange}
-                  >
-                    <MenuItem value="Todos">Todos los Grados</MenuItem>
-                    {Object.values(grado_dificultad).map((grado) => (
-                      <MenuItem key={grado} value={grado}>
-                        {grado}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Stack>
-            </Paper>
+              <FormControl size="small" sx={{ minWidth: 200 }}>
+                <InputLabel>Filtrar por Grado</InputLabel>
+                <Select
+                  value={gradoFilter}
+                  label="Filtrar por Grado"
+                  onChange={handleGradoChange}
+                >
+                  <MenuItem value="Todos">Todos los Grados</MenuItem>
+                  {Object.values(grado_dificultad).map((grado) => (
+                    <MenuItem key={grado} value={grado}>
+                      {grado}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Stack>
 
             {/* --- Grid de Dificultades --- */}
             {filteredDifficulties.length === 0 ? (
@@ -168,7 +163,7 @@ export default function StudentDifficultyDetailModal({
                 ))}
               </Grid>
             )}
-          </Box>
+          </Stack>
         )}
       </DialogContent>
       <DialogActions>

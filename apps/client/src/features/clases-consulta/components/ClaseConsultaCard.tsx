@@ -1,5 +1,4 @@
 import {
-  Card,
   CardContent,
   Typography,
   Box,
@@ -8,8 +7,9 @@ import {
   CardActions,
   Tooltip,
   IconButton,
-  Chip,
   Button,
+  Paper,
+  Grid,
 } from "@mui/material";
 // Íconos para la info
 import EditIcon from "@mui/icons-material/Edit";
@@ -24,6 +24,7 @@ import { estado_clase_consulta } from "../../../types";
 import { CheckCircle } from "@mui/icons-material";
 import FactCheckIcon from "@mui/icons-material/FactCheck"; // Para finalizar
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline"; // Para en curso
+import InfoIcon from "@mui/icons-material/Info"; // Para ver detalles
 import { format } from "date-fns";
 import { EstadoClaseChip } from "../../../components/EstadoClaseChip";
 
@@ -119,42 +120,82 @@ export default function ClaseConsultaCard({
   }
   // --------------------------------
 
+  // Helper para color del borde
+  const getBorderColor = () => {
+    if (isCanceled) return "error.main";
+    if (isPendienteAsignacion) return "warning.main";
+    if (isEnCurso) return "success.main";
+    if (estadoVisual === estado_clase_consulta.Realizada) return "primary.main";
+    if (estadoVisual === estado_clase_consulta.Programada) return "info.main";
+    return "divider";
+  };
+
   return (
-    <Card
-      variant="outlined"
+    <Paper
+      elevation={2}
       sx={{
         height: "100%",
         display: "flex",
         flexDirection: "column",
         // La hacemos opaca si fue cancelada/borrada
         opacity: isCanceled ? 0.6 : 1,
-        // Borde especial: Naranja si pendiente, Verde si En Curso
-        borderColor: isPendienteAsignacion
-          ? "warning.main"
-          : isEnCurso
-            ? "success.main"
-            : undefined,
-        borderWidth: isPendienteAsignacion || isEnCurso ? 2 : 1,
+        borderLeft: "5px solid",
+        borderColor: getBorderColor(),
+        transition: "transform 0.2s, box-shadow 0.2s",
+        "&:hover": {
+          transform: "translateY(-3px)",
+          boxShadow: 4,
+        },
       }}
     >
-      <CardContent sx={{ flexGrow: 1 }}>
+      <CardContent sx={{ flexGrow: 1, p: 2 }}>
         {/* Fila 1: Título y Estado */}
         <Box
           sx={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "flex-start",
-            mb: 1.5,
+            alignItems: "center",
+            mb: 1,
           }}
         >
-          <Typography variant="h6" component="div">
-            {nombre}
+          <Typography
+            variant="caption"
+            fontWeight="bold"
+            color="text.secondary"
+            sx={{ textTransform: "uppercase" }}
+          >
+            {modalidad}
           </Typography>
-          <EstadoClaseChip estado={estadoVisual} />
+          <EstadoClaseChip
+            estado={estadoVisual}
+            sx={{
+              fontSize: "0.7rem",
+              fontWeight: "bold",
+            }}
+          />
         </Box>
 
-        {/* Fila 2: Descripción */}
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        {/* Título Principal */}
+        <Typography
+          variant="subtitle1"
+          fontWeight="bold"
+          sx={{ lineHeight: 1.2, mb: 1 }}
+        >
+          {nombre}
+        </Typography>
+
+        {/* Descripción truncada */}
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{
+            mb: 2,
+            display: "-webkit-box",
+            overflow: "hidden",
+            WebkitBoxOrient: "vertical",
+            WebkitLineClamp: 2,
+          }}
+        >
           {descripcion}
         </Typography>
 
@@ -176,78 +217,110 @@ export default function ClaseConsultaCard({
           </Box>
         )}
 
-        {/* Fila 3: Detalles (Iconos) */}
-        <Stack spacing={1.5}>
-          <Stack
-            direction="row"
-            spacing={1}
-            alignItems="center"
-            color="text.secondary"
-          >
-            <EventIcon fontSize="small" />
-            <Typography variant="body2">{fecha}</Typography>
-          </Stack>
-          <Stack
-            direction="row"
-            spacing={1}
-            alignItems="center"
-            color="text.secondary"
-          >
-            <AccessTimeIcon fontSize="small" />
-            <Typography variant="body2">{hora}</Typography>
-          </Stack>
-          <Stack
-            direction="row"
-            spacing={1}
-            alignItems="center"
-            color={!docenteResponsable ? "warning.main" : "text.secondary"}
-          >
-            <PersonIcon fontSize="small" />
-            <Typography
-              variant="body2"
-              fontWeight={!docenteResponsable ? "bold" : "normal"}
-            >
-              {nombreDocente}
-            </Typography>
-          </Stack>
-          {/* --- NUEVO: Renderizado del texto dinámico --- */}
-          <Stack
-            direction="row"
-            spacing={1}
-            alignItems="center"
-            color="text.secondary"
-          >
-            <QuestionAnswerIcon fontSize="small" />
-            <Typography
-              variant="body2"
-              // Si está realizada, la ponemos en negrita o un color sutilmente distinto
-              fontWeight={estadoClase === "Realizada" ? "bold" : "normal"}
-              color={estadoClase === "Realizada" ? "primary.main" : "inherit"}
-            >
-              {textoConsultas}
-            </Typography>
-          </Stack>
-          {/* --------------------------------------------- */}
-        </Stack>
+        <Divider sx={{ mb: 2, borderStyle: "dashed" }} />
+
+        {/* Grid de Detalles */}
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 4 }}>
+            <Stack spacing={0.5}>
+              <Stack
+                direction="row"
+                spacing={0.5}
+                alignItems="center"
+                color="text.secondary"
+              >
+                <EventIcon sx={{ fontSize: 16 }} />
+                <Typography variant="caption" fontWeight="bold">
+                  Fecha
+                </Typography>
+              </Stack>
+              <Typography variant="body2">{fecha}</Typography>
+            </Stack>
+          </Grid>
+
+          <Grid size={{ xs: 4 }}>
+            <Stack spacing={0.5}>
+              <Stack
+                direction="row"
+                spacing={0.5}
+                alignItems="center"
+                color="text.secondary"
+              >
+                <AccessTimeIcon sx={{ fontSize: 16 }} />
+                <Typography variant="caption" fontWeight="bold">
+                  Horario
+                </Typography>
+              </Stack>
+              <Typography variant="body2">{hora}</Typography>
+            </Stack>
+          </Grid>
+
+          <Grid size={{ xs: 4 }}>
+            <Stack spacing={0.5}>
+              <Stack
+                direction="row"
+                spacing={0.5}
+                alignItems="center"
+                color="text.secondary"
+              >
+                <PersonIcon sx={{ fontSize: 16 }} />
+                <Typography variant="caption" fontWeight="bold">
+                  Docente a cargo
+                </Typography>
+              </Stack>
+              <Typography
+                variant="body2"
+                fontWeight={!docenteResponsable ? "bold" : "normal"}
+                color={!docenteResponsable ? "warning.main" : "text.primary"}
+              >
+                {nombreDocente}
+              </Typography>
+            </Stack>
+          </Grid>
+
+          <Grid size={{ xs: 12 }}>
+            <Stack spacing={0.5}>
+              <Stack
+                direction="row"
+                spacing={0.5}
+                alignItems="center"
+                color="text.secondary"
+              >
+                <QuestionAnswerIcon sx={{ fontSize: 16 }} />
+                <Typography variant="caption" fontWeight="bold">
+                  Consultas
+                </Typography>
+              </Stack>
+              <Typography
+                variant="body2"
+                fontWeight={estadoClase === "Realizada" ? "bold" : "normal"}
+                color={
+                  estadoClase === "Realizada" ? "primary.main" : "text.primary"
+                }
+              >
+                {textoConsultas}
+              </Typography>
+            </Stack>
+          </Grid>
+        </Grid>
       </CardContent>
 
       {/* Fila 4: Acciones */}
       <Divider sx={{ mt: "auto" }} />
       <CardActions sx={{ justifyContent: "space-between", p: 1, px: 2 }}>
-        {/* IZQUIERDA: Siempre la Modalidad */}
-        <Chip label={modalidad} size="small" />
+        {/* IZQUIERDA: Botón Detalles */}
+        <Button
+          size="small"
+          variant="text"
+          onClick={() => onViewDetails(clase)}
+          startIcon={<InfoIcon />}
+          disabled={isCanceled}
+        >
+          Detalles
+        </Button>
 
         {/* DERECHA: Acciones */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          {/* Botón de Ver Detalles (Siempre visible salvo cancelada) */}
-          <Button
-            size="small"
-            onClick={() => onViewDetails(clase)}
-            disabled={isCanceled}
-          >
-            Consultas ({totalConsultas})
-          </Button>
-
           {/* Lógica Condicional de Botones de Acción */}
           {!isCanceled && (
             <>
@@ -301,6 +374,6 @@ export default function ClaseConsultaCard({
           )}
         </Box>
       </CardActions>
-    </Card>
+    </Paper>
   );
 }

@@ -79,18 +79,21 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={3}>
       {" "}
       {/* Eliminamos height: "100%" para evitar scroll innecesario */}
       {/* HEADER */}
       <Paper
         elevation={3}
-        sx={{ p: 2, borderLeft: "4px solid", borderColor: "primary.main" }}
+        sx={{ p: 2, borderLeft: "5px solid", borderColor: "primary.main" }}
       >
-        <Typography variant="h4">¡Hola, {profile?.nombre}! 👋</Typography>
-        <Typography variant="subtitle1" color="text.secondary" sx={{ mt: 1 }}>
-          Panel de Administración General del Sistema
-        </Typography>
+        <Stack spacing={1}>
+          <Typography variant="h4">¡Hola, {profile?.nombre}! 👋</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Bienvenido al panel de administración general del sistema. Estas son
+            algunas acciones rápidas que puedes realizar:
+          </Typography>
+        </Stack>
       </Paper>
       {/* ACCIONES RÁPIDAS */}
       <Stack spacing={1} direction="row">
@@ -125,7 +128,7 @@ export default function AdminDashboardPage() {
           Ver Reportes
         </Button>
       </Stack>
-      <Grid container spacing={2}>
+      <Grid container spacing={3}>
         {/* 1. SECCIÓN USUARIOS (Columna Izquierda Superior) */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Paper elevation={2} sx={{ p: 2, height: "100%" }}>
@@ -137,7 +140,7 @@ export default function AdminDashboardPage() {
             >
               Estado de Usuarios
             </Typography>
-            <Grid container spacing={2}>
+            <Grid container spacing={3}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <DashboardStatCard
                   title="Total Usuarios"
@@ -193,7 +196,7 @@ export default function AdminDashboardPage() {
             >
               Estado de Cursos
             </Typography>
-            <Grid container spacing={2}>
+            <Grid container spacing={3}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <DashboardStatCard
                   title="Total Cursos"
@@ -274,7 +277,7 @@ export default function AdminDashboardPage() {
             >
               Rendimiento Semanal del Sistema
             </Typography>
-            <Grid container spacing={2}>
+            <Grid container spacing={3}>
               <Grid size={{ xs: 12, sm: 6 }}>
                 <DashboardStatCard
                   title="Clases Generadas"

@@ -18,6 +18,8 @@ import {
   Checkbox,
   ListItemText,
   Paper,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import CourseCard, { type CourseData } from "../components/CourseCard";
@@ -40,6 +42,7 @@ import {
 import ConfirmationDialog from "../../../components/ConfirmationDialog";
 import CourseFormDialog from "../components/CourseFormDialog";
 import { enqueueSnackbar } from "notistack";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 import HeaderPage from "../../../components/HeaderPage";
 import { School } from "@mui/icons-material";
 
@@ -323,6 +326,15 @@ export default function CoursesPage() {
     setPage(1); // Resetear a página 1 al cambiar filtro
   };
 
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setSortField("nombre");
+    setSortOrder("asc");
+    setSelectedDocentes([]);
+    setEstado("");
+    setPage(1);
+  };
+
   // --- Render Logic ---
   return (
     <Box
@@ -335,8 +347,8 @@ export default function CoursesPage() {
       <Stack spacing={2} sx={{ height: "100%" }}>
         {/* --- ENCABEZADO --- */}
         <HeaderPage
-          title="Usuarios del sistema"
-          description="Gestiona y administra los usuarios de la plataforma."
+          title="Gestión de Cursos"
+          description="Administra los cursos y docentes asignados a cada curso en la plataforma."
           icon={<School />}
           color="primary"
         />
@@ -439,6 +451,15 @@ export default function CoursesPage() {
               </MenuItem>
             </Select>
           </FormControl>
+          <Tooltip title="Limpiar filtros">
+            <IconButton
+              onClick={handleClearFilters}
+              size="small"
+              color="primary"
+            >
+              <FilterAltOffIcon />
+            </IconButton>
+          </Tooltip>
           <Box
             sx={{ flexGrow: { sm: 1 }, display: { xs: "none", sm: "block" } }}
           />{" "}

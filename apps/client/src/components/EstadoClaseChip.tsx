@@ -1,4 +1,4 @@
-import { Chip } from "@mui/material";
+import { Chip, type SxProps } from "@mui/material";
 
 import {
   AccessTime as ProgramadaIcon,
@@ -12,9 +12,10 @@ import { EstadoClaseLabels } from "../types/traducciones";
 
 interface EstadoClaseChipProps {
   estado: estado_clase_consulta;
+  sx?: SxProps;
 }
 
-export const EstadoClaseChip = ({ estado }: EstadoClaseChipProps) => {
+export const EstadoClaseChip = ({ estado, sx }: EstadoClaseChipProps) => {
   let color:
     | "default"
     | "primary"
@@ -57,6 +58,7 @@ export const EstadoClaseChip = ({ estado }: EstadoClaseChipProps) => {
       color={color}
       icon={icon}
       size="small"
+      sx={sx}
     />
   );
 };

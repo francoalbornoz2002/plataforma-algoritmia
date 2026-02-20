@@ -129,7 +129,7 @@ export default function SesionCard({
             label={EstadoSesionLabels[estado]}
             color={getEstadoChipColor(estado)}
             size="small"
-            sx={{ fontSize: "0.7rem" }}
+            sx={{ fontSize: "0.7rem", fontWeight: "bold" }}
           />
         </Box>
 

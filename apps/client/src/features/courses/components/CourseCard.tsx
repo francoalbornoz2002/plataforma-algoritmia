@@ -164,7 +164,7 @@ export default function CourseCard({
           >
             <CalendarTodayIcon sx={{ fontSize: 18, mr: 1, opacity: 0.8 }} />
             <Typography variant="body2" color="text.secondary">
-              Creado el {createdAt.toLocaleDateString("es-AR")}
+              Fecha de alta: {createdAt.toLocaleDateString("es-AR")}
             </Typography>
           </Box>
         )}

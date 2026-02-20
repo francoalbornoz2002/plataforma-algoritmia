@@ -43,6 +43,7 @@ import HistoryIcon from "@mui/icons-material/History";
 import UserDetailModal from "../components/UserDetailModal";
 import { datePickerConfig } from "../../../config/theme.config";
 import HeaderReportPage from "../../../components/HeaderReportPage";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
 // 1. Hooks y Servicios
 
@@ -284,6 +285,17 @@ export default function AuditPage() {
       [fieldName]: dateString,
     }));
     // Reseteamos la página al cambiar un filtro
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+  };
+
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setFilters({
+      fechaDesde: "",
+      fechaHasta: "",
+      tablaAfectada: "",
+      operacion: "",
+    });
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
   };
 
@@ -533,6 +545,15 @@ export default function AuditPage() {
               <MenuItem value="DELETE">DELETE (Lógico)</MenuItem>
             </Select>
           </FormControl>
+          <Tooltip title="Limpiar filtros">
+            <IconButton
+              onClick={handleClearFilters}
+              size="small"
+              color="primary"
+            >
+              <FilterAltOffIcon />
+            </IconButton>
+          </Tooltip>
         </Stack>
 
         {/* --- C. DataGrid --- */}

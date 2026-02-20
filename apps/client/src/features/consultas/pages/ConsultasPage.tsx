@@ -181,48 +181,6 @@ export default function ConsultasPage() {
         {/* --- 1. Filtros y Orden --- */}
 
         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-          <TextField
-            label="Buscar por título o descripción..."
-            variant="outlined"
-            size="small"
-            value={searchTerm}
-            onChange={handleSearchChange}
-            sx={{ minWidth: 200, flexGrow: 1 }}
-          />
-          <FormControl size="small" sx={{ width: 220 }}>
-            <InputLabel>Tema</InputLabel>
-            <Select
-              name="tema"
-              value={filters.tema}
-              label="Tema"
-              onChange={handleFilterChange}
-            >
-              <MenuItem value="">Todos</MenuItem>
-              {Object.values(temas)
-                .filter((t) => t !== temas.Ninguno)
-                .map((t) => (
-                  <MenuItem key={t} value={t}>
-                    {TemasLabels[t]}
-                  </MenuItem>
-                ))}
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ minWidth: 180 }}>
-            <InputLabel>Estado</InputLabel>
-            <Select
-              name="estado"
-              value={filters.estado}
-              label="Estado"
-              onChange={handleFilterChange}
-            >
-              <MenuItem value="">Todos</MenuItem>
-              {Object.values(estado_consulta).map((e) => (
-                <MenuItem key={e} value={e}>
-                  {EstadoConsultaLabels[e]}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
           <DatePicker
             label="Desde"
             value={filters.fechaDesde}
@@ -265,6 +223,49 @@ export default function ConsultasPage() {
               },
             }}
           />
+          <TextField
+            label="Buscar por título o descripción..."
+            variant="outlined"
+            size="small"
+            value={searchTerm}
+            onChange={handleSearchChange}
+            sx={{ minWidth: 200, flexGrow: 1 }}
+          />
+
+          <FormControl size="small" sx={{ width: 220 }}>
+            <InputLabel>Tema</InputLabel>
+            <Select
+              name="tema"
+              value={filters.tema}
+              label="Tema"
+              onChange={handleFilterChange}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {Object.values(temas)
+                .filter((t) => t !== temas.Ninguno)
+                .map((t) => (
+                  <MenuItem key={t} value={t}>
+                    {TemasLabels[t]}
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel>Estado</InputLabel>
+            <Select
+              name="estado"
+              value={filters.estado}
+              label="Estado"
+              onChange={handleFilterChange}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {Object.values(estado_consulta).map((e) => (
+                <MenuItem key={e} value={e}>
+                  {EstadoConsultaLabels[e]}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
           <Tooltip title="Limpiar filtros">
             <IconButton
