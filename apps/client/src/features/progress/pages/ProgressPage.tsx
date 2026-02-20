@@ -77,7 +77,7 @@ export default function ProgressPage() {
   const [queryOptions, setQueryOptions] = useState<FindStudentProgressParams>({
     page: 1,
     limit: 10,
-    sort: "nombre",
+    sort: "apellido",
     order: "asc",
     search: "",
     progressRange: "",
@@ -147,7 +147,7 @@ export default function ProgressPage() {
   const handleSortChange = (model: GridSortModel) => {
     setQueryOptions((prev) => ({
       ...prev,
-      sort: model[0]?.field || "nombre",
+      sort: model[0]?.field || "apellido",
       order: model[0]?.sort || "asc",
     }));
   };
@@ -157,7 +157,7 @@ export default function ProgressPage() {
     setQueryOptions({
       page: 1,
       limit: 10,
-      sort: "nombre",
+      sort: "apellido",
       order: "asc",
       search: "",
       progressRange: "",
@@ -181,11 +181,11 @@ export default function ProgressPage() {
   const columns = useMemo<GridColDef<ProgresoAlumnoDetallado>[]>(
     () => [
       {
-        field: "nombre",
+        field: "apellido",
         headerName: "Alumno",
         flex: 1,
         valueGetter: (value: any, row: ProgresoAlumnoDetallado) =>
-          `${row.nombre} ${row.apellido}`,
+          `${row.apellido}, ${row.nombre}`,
       },
       {
         field: "pctMisionesCompletadas",
@@ -229,7 +229,7 @@ export default function ProgressPage() {
       {
         field: "ultimaActividad",
         headerName: "Última Actividad",
-        width: 125,
+        width: 200,
         valueFormatter: (value: string | null) => {
           if (!value) return "Nunca";
           return (

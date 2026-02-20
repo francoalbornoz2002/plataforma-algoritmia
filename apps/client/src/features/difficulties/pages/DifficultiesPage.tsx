@@ -213,7 +213,7 @@ export default function DifficultiesPage() {
         headerName: "Alumno",
         flex: 2,
         valueGetter: (value: any, row: StudentRow) =>
-          `${row.nombre} ${row.apellido}`,
+          `${row.apellido}, ${row.nombre}`,
       },
       {
         field: "totalDificultades",
