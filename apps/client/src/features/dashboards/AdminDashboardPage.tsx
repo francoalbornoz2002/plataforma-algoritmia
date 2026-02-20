@@ -88,7 +88,9 @@ export default function AdminDashboardPage() {
         sx={{ p: 2, borderLeft: "5px solid", borderColor: "primary.main" }}
       >
         <Stack spacing={1}>
-          <Typography variant="h4">¡Hola, {profile?.nombre}! 👋</Typography>
+          <Typography variant="h4" color="primary.main" fontWeight="bold">
+            ¡Hola, {profile?.nombre}! 👋
+          </Typography>
           <Typography variant="body2" color="text.secondary">
             Bienvenido al panel de administración general del sistema. Estas son
             algunas acciones rápidas que puedes realizar:

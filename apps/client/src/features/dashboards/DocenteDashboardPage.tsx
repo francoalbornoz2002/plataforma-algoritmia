@@ -184,7 +184,9 @@ export default function DocenteDashboardPage() {
         sx={{ p: 2, borderLeft: "5px solid", borderColor: "primary.main" }}
       >
         <Stack spacing={1}>
-          <Typography variant="h4">¡Hola, {profile?.nombre}! 👋</Typography>
+          <Typography variant="h4" color="primary.main" fontWeight="bold">
+            ¡Hola, {profile?.nombre}! 👋
+          </Typography>
           <Typography variant="body2" color="text.secondary">
             Bienvenido al panel de control de:{" "}
             <strong>{selectedCourse.nombre}</strong>. Estas son algunas acciones

@@ -207,7 +207,7 @@ export default function PreguntasPage() {
             onChange={handleSearchChange}
             sx={{ minWidth: 400 }}
           />
-          <FormControl size="small" sx={{ minWidth: 160 }}>
+          <FormControl size="small" sx={{ width: 200 }}>
             <InputLabel>Tema</InputLabel>
             <Select
               name="tema"

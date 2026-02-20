@@ -349,7 +349,7 @@ export default function DifficultiesPage() {
                     : "N/A"
                 }
                 icon={<TopicIcon />}
-                color="info"
+                color="secondary"
               />
             )}
           </Grid>
@@ -386,7 +386,7 @@ export default function DifficultiesPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
             sx={{ flexGrow: 1, minWidth: 200 }}
           />
-          <FormControl size="small" sx={{ minWidth: 160 }}>
+          <FormControl size="small" sx={{ width: 200 }}>
             <InputLabel>Tema</InputLabel>
             <Select
               name="tema"
@@ -404,7 +404,7 @@ export default function DifficultiesPage() {
                 ))}
             </Select>
           </FormControl>
-          <FormControl size="small" sx={{ minWidth: 260 }}>
+          <FormControl size="small" sx={{ width: 300 }}>
             <InputLabel>Dificultad</InputLabel>
             <Select
               name="dificultadId"

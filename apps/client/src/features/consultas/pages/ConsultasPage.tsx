@@ -232,7 +232,7 @@ export default function ConsultasPage() {
             sx={{ minWidth: 200, flexGrow: 1 }}
           />
 
-          <FormControl size="small" sx={{ width: 220 }}>
+          <FormControl size="small" sx={{ width: 200 }}>
             <InputLabel>Tema</InputLabel>
             <Select
               name="tema"
@@ -250,7 +250,7 @@ export default function ConsultasPage() {
                 ))}
             </Select>
           </FormControl>
-          <FormControl size="small" sx={{ minWidth: 180 }}>
+          <FormControl size="small" sx={{ width: 150 }}>
             <InputLabel>Estado</InputLabel>
             <Select
               name="estado"
