@@ -331,6 +331,21 @@ export class UsersService {
       },
     });
 
+    // Obtenemos las misiones especiales completadas por el alumno
+    const misionesEspecialesCompletadas =
+      await this.prisma.misionEspecialCompletada.findMany({
+        where: { idProgreso: idProgreso },
+        select: {
+          id: true,
+          nombre: true,
+          descripcion: true,
+          estrellas: true,
+          exp: true,
+          intentos: true,
+          fechaCompletado: true,
+        },
+      });
+
     // Obtenemos las dificultades registradas por el alumno en ese curso
     const dificultadesAlumno = await this.prisma.dificultadAlumno.findMany({
       where: {
@@ -356,6 +371,7 @@ export class UsersService {
     return {
       alumno: alumnoData,
       misionesCompletadas: misionesCompletadas,
+      misionesEspecialesCompletadas: misionesEspecialesCompletadas,
       dificultadesAlumno: dificultadesAlumno,
     };
   }

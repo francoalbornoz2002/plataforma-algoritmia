@@ -581,7 +581,7 @@ export class ClasesConsultaService {
       }
 
       // Actualizamos solo lo necesario
-      return await this.prisma.claseConsulta.update({
+      const claseActualizada = await this.prisma.claseConsulta.update({
         where: { id: idClase },
         data: {
           idDocente: idDocente, // Se asigna
@@ -591,8 +591,20 @@ export class ClasesConsultaService {
         },
         include: {
           docenteResponsable: { select: { nombre: true, apellido: true } },
+          consultasEnClase: {
+            include: {
+              consulta: {
+                include: { alumno: true },
+              },
+            },
+          },
         },
       });
+
+      // Notificamos a los alumnos que tenían consultas en esta clase
+      this.notificarAlumnosClaseProgramada(claseActualizada);
+
+      return claseActualizada;
     } catch (error) {
       if (
         error instanceof BadRequestException ||
@@ -656,8 +668,18 @@ export class ClasesConsultaService {
           docenteResponsable: {
             select: { nombre: true, apellido: true },
           },
+          consultasEnClase: {
+            include: {
+              consulta: {
+                include: { alumno: true },
+              },
+            },
+          },
         },
       });
+
+      // Notificamos a los alumnos que tenían consultas en esta clase
+      this.notificarAlumnosClaseProgramada(claseActualizada);
 
       return claseActualizada;
     } catch (error) {
@@ -1017,6 +1039,44 @@ export class ClasesConsultaService {
       throw new ForbiddenException(
         'No se puede editar, cancelar o eliminar una clase que ya está en curso o finalizó.',
       );
+    }
+  }
+
+  /**
+   * Helper para notificar a los alumnos cuando una clase pasa a estar "Programada"
+   */
+  private notificarAlumnosClaseProgramada(clase: any) {
+    if (!clase.docenteResponsable || !clase.consultasEnClase) return;
+
+    const alumnosMap = new Map<
+      string,
+      { email: string; nombre: string; consultas: string[] }
+    >();
+
+    clase.consultasEnClase.forEach((cc: any) => {
+      const c = cc.consulta;
+      if (c && c.alumno) {
+        if (!alumnosMap.has(c.idAlumno)) {
+          alumnosMap.set(c.idAlumno, {
+            email: c.alumno.email,
+            nombre: c.alumno.nombre,
+            consultas: [],
+          });
+        }
+        alumnosMap.get(c.idAlumno)?.consultas.push(c.titulo);
+      }
+    });
+
+    const destinatarios = Array.from(alumnosMap.values());
+
+    if (destinatarios.length > 0) {
+      this.mailService.enviarAvisoClaseConsultaAlumno(destinatarios, {
+        nombreClase: clase.nombre,
+        nombreDocente: `${clase.docenteResponsable.nombre} ${clase.docenteResponsable.apellido}`,
+        fechaInicio: clase.fechaInicio,
+        modalidad: clase.modalidad,
+        idClase: clase.id,
+      });
     }
   }
 }
