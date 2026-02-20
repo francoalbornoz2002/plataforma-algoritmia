@@ -2668,18 +2668,28 @@ export class PdfService {
       );
 
     // 4. Formatear datos para la vista
-    const logsFormatted = logs.map((log) => ({
-      fecha:
-        log.fechaHora.toISOString().split('T')[0] +
-        ' ' +
-        log.fechaHora.toISOString().split('T')[1].substring(0, 8),
-      usuario: log.usuarioModifico
-        ? `${log.usuarioModifico.nombre} ${log.usuarioModifico.apellido}`
-        : 'Sistema',
-      tabla: log.tablaAfectada,
-      operacion: log.operacion,
-      idFila: log.idFilaAfectada,
-    }));
+    const logsFormatted = logs.map((log) => {
+      // Detectar Soft Delete (UPDATE de deleted_at: null -> fecha)
+      const isSoftDelete =
+        log.operacion === 'UPDATE' &&
+        log.valoresAnteriores &&
+        (log.valoresAnteriores as any)['deleted_at'] === null &&
+        log.valoresNuevos &&
+        (log.valoresNuevos as any)['deleted_at'];
+
+      return {
+        fecha:
+          log.fechaHora.toISOString().split('T')[0] +
+          ' ' +
+          log.fechaHora.toISOString().split('T')[1].substring(0, 8),
+        usuario: log.usuarioModifico
+          ? `${log.usuarioModifico.nombre} ${log.usuarioModifico.apellido}`
+          : 'Sistema',
+        tabla: log.tablaAfectada,
+        operacion: isSoftDelete ? 'DELETE' : log.operacion,
+        idFila: log.idFilaAfectada,
+      };
+    });
 
     const commonData = this.buildCommonTemplateData(
       { institucion, usuario, logoBase64 },

@@ -149,6 +149,14 @@ export class AuditoriaService {
 
     // Alimentamos el stream
     for (const log of logs) {
+      // Detectar Soft Delete
+      const isSoftDelete =
+        log.operacion === 'UPDATE' &&
+        log.valoresAnteriores &&
+        (log.valoresAnteriores as any)['deleted_at'] === null &&
+        log.valoresNuevos &&
+        (log.valoresNuevos as any)['deleted_at'];
+
       stringifier.write([
         log.id.toString(),
         log.fechaHora.toISOString().split('T')[0],
@@ -157,7 +165,7 @@ export class AuditoriaService {
           ? `${log.usuarioModifico.nombre} ${log.usuarioModifico.apellido}`
           : 'Sistema',
         log.usuarioModifico?.email || '-',
-        log.operacion,
+        isSoftDelete ? 'DELETE' : log.operacion,
         log.tablaAfectada,
         log.idFilaAfectada,
         log.valoresAnteriores ? JSON.stringify(log.valoresAnteriores) : '',
