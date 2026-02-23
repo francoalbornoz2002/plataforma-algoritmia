@@ -5,7 +5,6 @@ import {
   Body,
   Patch,
   Param,
-  Delete,
   UseGuards,
   Req,
   ParseUUIDPipe,
@@ -18,6 +17,7 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { roles } from '@prisma/client';
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
 import { FinalizarClaseDto } from '../dto/finalizar-clase.dto';
+import { CancelarClaseDto } from '../dto/cancelar-clase.dto';
 
 @UseGuards(RolesGuard) // JwtGuard se aplica globalmente.
 @Controller('clases-consulta')
@@ -52,10 +52,14 @@ export class ClasesConsultaController {
     return this.clasesConsultaService.update(id, dto, req.user);
   }
 
-  @Delete('delete/:id')
+  @Patch(':id/cancelar')
   @Roles(roles.Docente)
-  remove(@Param('id') id: string, @Req() req: AuthenticatedUserRequest) {
-    return this.clasesConsultaService.remove(id, req.user);
+  cancelar(
+    @Param('id') id: string,
+    @Body() dto: CancelarClaseDto,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    return this.clasesConsultaService.cancelar(id, dto, req.user);
   }
 
   @Patch(':id/aceptar-reprogramar')

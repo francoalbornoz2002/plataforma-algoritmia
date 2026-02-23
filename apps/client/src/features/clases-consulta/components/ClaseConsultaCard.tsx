@@ -314,7 +314,6 @@ export default function ClaseConsultaCard({
           variant="text"
           onClick={() => onViewDetails(clase)}
           startIcon={<InfoIcon />}
-          disabled={isCanceled}
         >
           Detalles
         </Button>

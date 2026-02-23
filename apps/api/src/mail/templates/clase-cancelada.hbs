@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  {{> styles}}
+</head>
+<body>
+  {{> header}}
+  <div class="content">
+    <p>Hola <strong>{{nombreAlumno}}</strong>,</p>
+    <p>Te informamos que la siguiente Clase de Consulta ha sido <strong>cancelada</strong>.</p>
+    
+    <div class="info-box" style="border-left-color: #d32f2f;">
+      <p><strong>Clase:</strong> {{nombreClase}}</p>
+      <p><strong>Fecha Original:</strong> {{fechaClase}}</p>
+      <p><strong>Docente:</strong> {{nombreDocente}}</p>
+    </div>
+
+    <p><strong>Motivo de la cancelación:</strong></p>
+    <p style="background-color: #fff5f5; padding: 15px; border-radius: 4px; color: #c62828; font-style: italic;">
+      "{{motivo}}"
+    </p>
+
+    <p>
+      Tus consultas asociadas a esta clase han vuelto al estado <strong>Pendiente</strong> 
+      y podrán ser asignadas a una nueva clase próximamente.
+    </p>
+
+    <div class="text-center mt-2">
+      <a href="{{linkClases}}" class="btn">Ver Mis Clases</a>
+    </div>
+  </div>
+  {{> footer}}
+</body>
+</html>

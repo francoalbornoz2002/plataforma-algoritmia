@@ -416,4 +416,48 @@ export class MailService implements OnModuleInit {
       });
     }
   }
+
+  // --- 9. AVISO DE CANCELACIÓN DE CLASE (Alumnos) ---
+  async enviarAvisoCancelacionClase(
+    destinatarios: {
+      email: string;
+      nombre: string;
+    }[],
+    datos: {
+      nombreClase: string;
+      fechaClase: Date;
+      motivo: string;
+      nombreDocente: string;
+    },
+  ) {
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const baseContext = await this.getBaseContext();
+    const linkClases = `${baseUrl}/my/consult-classes`;
+
+    const fechaLegible = datos.fechaClase.toLocaleString('es-AR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    for (const alumno of destinatarios) {
+      await this.safeSendMail({
+        to: alumno.email,
+        subject: `🚫 Clase Cancelada: ${datos.nombreClase}`,
+        template: 'clase-cancelada',
+        context: {
+          ...baseContext,
+          emailTitle: 'Aviso de Cancelación',
+          nombreAlumno: alumno.nombre,
+          nombreClase: datos.nombreClase,
+          fechaClase: fechaLegible,
+          motivo: datos.motivo,
+          nombreDocente: datos.nombreDocente,
+          linkClases,
+        },
+      });
+    }
+  }
 }

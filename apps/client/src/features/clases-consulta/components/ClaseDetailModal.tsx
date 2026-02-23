@@ -9,6 +9,8 @@ import {
   Tooltip,
   Box,
   Chip,
+  Alert,
+  Typography,
 } from "@mui/material";
 import DescriptionIcon from "@mui/icons-material/Description";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
@@ -42,7 +44,7 @@ export default function ClaseDetailModal({
 }: ClaseDetailModalProps) {
   // 3. Estado para el modal de detalle (un modal dentro de otro)
   const [viewingConsulta, setViewingConsulta] = useState<ConsultaSimple | null>(
-    null
+    null,
   );
 
   // 1. Preparar Filas: Aplanamos el objeto para incluir 'revisadaEnClase' en la fila
@@ -155,6 +157,24 @@ export default function ClaseDetailModal({
           Consultas a revisar en la clase {clase.nombre}
         </DialogTitle>
         <DialogContent>
+          {/* Mostrar Motivo si existe (Cancelada o No Realizada) */}
+          {clase.motivo && (
+            <Alert severity="error" variant="outlined" sx={{ mt: 1, mb: 1 }}>
+              <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                Clase{" "}
+                {clase.estadoClase === estado_clase_consulta.Cancelada
+                  ? "Cancelada"
+                  : "No Realizada"}
+              </Typography>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                Motivo dado por el docente:
+              </Typography>
+              <Typography variant="body2" sx={{ fontStyle: "italic", mt: 0.5 }}>
+                "{clase.motivo}"
+              </Typography>
+            </Alert>
+          )}
+
           <Box sx={{ height: 450, width: "100%", mt: 2 }}>
             <DataGrid
               rows={rows}

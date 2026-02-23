@@ -82,10 +82,12 @@ export const updateClaseConsulta = async (
  */
 export const deleteClaseConsulta = async (
   idClase: string,
+  motivo: string,
 ): Promise<ClaseConsulta> => {
   try {
-    const response = await apiClient.delete(
-      `/clases-consulta/delete/${idClase}`,
+    const response = await apiClient.patch(
+      `/clases-consulta/${idClase}/cancelar`,
+      { motivo },
     );
     return response.data;
   } catch (err: any) {

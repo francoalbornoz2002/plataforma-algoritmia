@@ -708,6 +708,7 @@ export interface ClaseConsulta {
   estadoClase: estado_clase_consulta;
   estadoActual?: estado_clase_consulta;
   deletedAt: string | null; // Llega como string ISO
+  motivo?: string | null; // Motivo de cancelación o no realización
 
   // Relaciones (del 'include')
   docenteResponsable: {

@@ -26,6 +26,7 @@ import {
 } from 'src/helpers/access.helper';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { MailService } from 'src/mail/services/mail.service';
+import { CancelarClaseDto } from '../dto/cancelar-clase.dto';
 
 @Injectable()
 export class ClasesConsultaService {
@@ -809,12 +810,15 @@ export class ClasesConsultaService {
   }
 
   /**
-   * Servicio para dar de baja (cancelar) una clase de consulta
+   * Servicio para cancelar una clase de consulta con motivo.
    */
-  async remove(id: string, user: UserPayload) {
+  async cancelar(id: string, dto: CancelarClaseDto, user: UserPayload) {
     // Obtenemos la clase a cancelar
     const clase = await this.prisma.claseConsulta.findUnique({
       where: { id },
+      include: {
+        docenteResponsable: { select: { nombre: true, apellido: true } },
+      },
     });
     if (!clase) throw new NotFoundException('Clase no encontrada.');
 
@@ -830,31 +834,75 @@ export class ClasesConsultaService {
     this.validarBloqueoPorTiempo(clase);
 
     // Hacemos la baja lógica
-    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // a. Actualizar la clase a 'Cancelada' y marcar 'deletedAt'
-      const claseCancelada = await tx.claseConsulta.update({
-        where: { id },
-        data: {
-          estadoClase: estado_clase_consulta.Cancelada,
-          deletedAt: new Date(),
-        },
-      });
+    const resultado = await this.prisma.$transaction(
+      async (tx: Prisma.TransactionClient) => {
+        // a. Actualizar la clase a 'Cancelada' y marcar 'deletedAt'
+        const claseCancelada = await tx.claseConsulta.update({
+          where: { id },
+          data: {
+            estadoClase: estado_clase_consulta.Cancelada,
+            deletedAt: new Date(),
+          },
+        });
 
-      // Obtenemos las consultas que estaban realicionadas a esa clase
-      const consultasVinculadas = await tx.consultaClase.findMany({
-        where: { idClaseConsulta: id },
-        select: { idConsulta: true },
-      });
-      const idsConsultas = consultasVinculadas.map((c) => c.idConsulta);
+        // b. Registrar el motivo en la tabla correspondiente
+        await tx.motivoClaseNoRealizada.create({
+          data: {
+            idClaseConsulta: id,
+            descripcion: dto.motivo,
+          },
+        });
 
-      // Devolvemos todas las consultas a Pendiente.
-      await tx.consulta.updateMany({
-        where: { id: { in: idsConsultas } },
-        data: { estado: estado_consulta.Pendiente },
-      });
+        // c. Obtenemos las consultas vinculadas para notificar a los alumnos
+        const consultasVinculadas = await tx.consultaClase.findMany({
+          where: { idClaseConsulta: id },
+          include: {
+            consulta: {
+              include: { alumno: { select: { email: true, nombre: true } } },
+            },
+          },
+        });
 
-      return claseCancelada;
+        const idsConsultas = consultasVinculadas.map((c) => c.idConsulta);
+
+        // d. Devolvemos todas las consultas a Pendiente.
+        if (idsConsultas.length > 0) {
+          await tx.consulta.updateMany({
+            where: { id: { in: idsConsultas } },
+            data: { estado: estado_consulta.Pendiente },
+          });
+        }
+
+        return { claseCancelada, consultasVinculadas };
+      },
+    );
+
+    // --- NOTIFICACIÓN POR CORREO (Fuera de la transacción) ---
+    // Extraemos destinatarios únicos
+    const destinatariosMap = new Map<
+      string,
+      { email: string; nombre: string }
+    >();
+    resultado.consultasVinculadas.forEach((cc) => {
+      const alumno = cc.consulta.alumno;
+      if (alumno) {
+        destinatariosMap.set(alumno.email, alumno);
+      }
     });
+
+    if (destinatariosMap.size > 0) {
+      this.mailService.enviarAvisoCancelacionClase(
+        Array.from(destinatariosMap.values()),
+        {
+          nombreClase: clase.nombre,
+          fechaClase: clase.fechaInicio,
+          motivo: dto.motivo,
+          nombreDocente: `${clase.docenteResponsable?.nombre} ${clase.docenteResponsable?.apellido}`,
+        },
+      );
+    }
+
+    return resultado.claseCancelada;
   }
 
   /**
