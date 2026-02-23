@@ -9,18 +9,7 @@ import {
   Select,
   MenuItem,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Paper,
   type SelectChangeEvent,
-  TableContainer,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
   Stack,
   Chip,
   IconButton,
@@ -41,13 +30,10 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import InfoIcon from "@mui/icons-material/Info";
 import HistoryIcon from "@mui/icons-material/History";
 import UserDetailModal from "../components/UserDetailModal";
+import DetalleAuditoria from "../components/DetalleAuditoria";
 import { datePickerConfig } from "../../../config/theme.config";
 import HeaderReportPage from "../../../components/HeaderReportPage";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
-
-// 1. Hooks y Servicios
-
-// 2. Tipos
 
 const DB_TABLES = [
   "alumno_curso",
@@ -85,104 +71,6 @@ const DB_TABLES = [
   "valoraciones",
 ];
 
-// --- Componente Helper para el Modal de JSON ---
-interface AuditDetailModalProps {
-  open: boolean;
-  onClose: () => void;
-  log: LogAuditoria | null; // Recibe el log completo
-}
-
-function AuditDetailModal({ open, onClose, log }: AuditDetailModalProps) {
-  // --- 3. LÓGICA DE COMPARACIÓN ---
-  const comparisonData = useMemo(() => {
-    if (!log) return [];
-
-    const oldData = log.valoresAnteriores || {};
-    const newData = log.valoresNuevos || {};
-
-    // Obtenemos todas las claves de ambos objetos, sin duplicados
-    const allKeys = [
-      ...new Set([...Object.keys(oldData), ...Object.keys(newData)]),
-    ];
-
-    return allKeys.map((key) => {
-      const oldValue = oldData[key];
-      const newValue = newData[key];
-
-      // Convertimos a string para una comparación simple
-      // (Ignoramos 'object' que siempre será diferente)
-      const oldValueStr =
-        typeof oldValue === "object" || oldValue === undefined
-          ? JSON.stringify(oldValue)
-          : String(oldValue);
-      const newValueStr =
-        typeof newValue === "object" || newValue === undefined
-          ? JSON.stringify(newValue)
-          : String(newValue);
-
-      const isDifferent = oldValueStr !== newValueStr;
-
-      return {
-        field: key,
-        oldValue: oldValueStr || "---",
-        newValue: newValueStr || "---",
-        isDifferent: isDifferent,
-      };
-    });
-  }, [log]);
-
-  if (!log) return null;
-
-  return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Detalle de Cambio (Tabla: {log.tablaAfectada})</DialogTitle>
-      <DialogContent>
-        {/* Usamos una Tabla de MUI para el side-by-side */}
-        <TableContainer component={Paper} variant="outlined">
-          <Table stickyHeader size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: "bold" }}>Campo</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>
-                  Datos Anteriores
-                </TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>
-                  Datos Actuales
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {comparisonData.map((row) => (
-                <TableRow
-                  key={row.field}
-                  // --- 4. ¡RESALTAMOS LAS FILAS QUE CAMBIARON! ---
-                  sx={{
-                    ...(row.isDifferent && {
-                      backgroundColor: "rgba(255, 236, 179, 0.2)", // Un amarillo suave
-                      "& > *": { fontWeight: "bold" }, // Resaltamos el texto
-                    }),
-                  }}
-                >
-                  <TableCell component="th" scope="row">
-                    {row.field}
-                  </TableCell>
-                  <TableCell>{row.oldValue}</TableCell>
-                  <TableCell>{row.newValue}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cerrar</Button>
-      </DialogActions>
-    </Dialog>
-  );
-}
-// --- Fin Componente Helper ---
-
-// --- Componente Principal ---
 export default function AuditPage() {
   // --- Estados de la DataGrid ---
   const [rows, setRows] = useState<LogAuditoria[]>([]);
@@ -585,8 +473,8 @@ export default function AuditPage() {
           />
         </Box>
 
-        {/* --- D. El Modal de Detalle (JSON) --- */}
-        <AuditDetailModal
+        {/* --- D. El Modal de Detalle --- */}
+        <DetalleAuditoria
           open={!!logToView}
           onClose={() => setLogToView(null)}
           log={logToView}
