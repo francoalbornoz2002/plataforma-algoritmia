@@ -5,6 +5,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { CreateClasesConsultaDto } from '../dto/create-clases-consulta.dto';
 import { UpdateClasesConsultaDto } from '../dto/update-clases-consulta.dto';
@@ -30,6 +31,8 @@ import { CancelarClaseDto } from '../dto/cancelar-clase.dto';
 
 @Injectable()
 export class ClasesConsultaService {
+  private readonly logger = new Logger(ClasesConsultaService.name);
+
   constructor(
     private prisma: PrismaService,
     private readonly mailService: MailService,
@@ -944,6 +947,148 @@ export class ClasesConsultaService {
         estadoClase: estado_clase_consulta.Finalizada,
       },
     });
+  }
+
+  /**
+   * CRON JOB: Asignación Automática y Recordatorios.
+   * Se ejecuta cada 10 minutos para verificar clases pendientes.
+   */
+  @Cron(CronExpression.EVERY_10_MINUTES)
+  async handleCronAsignacionAutomatica() {
+    const now = new Date();
+
+    // 1. Buscar clases pendientes de asignación
+    const clasesPendientes = await this.prisma.claseConsulta.findMany({
+      where: {
+        estadoClase: estado_clase_consulta.Pendiente_Asignacion,
+        deletedAt: null,
+      },
+      include: {
+        curso: {
+          include: {
+            docentes: {
+              where: { estado: 'Activo' },
+              include: { docente: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (clasesPendientes.length === 0) {
+      this.logger.log(
+        'Cron Asignación Automática: No hay clases pendientes de asignación.',
+      );
+      return;
+    }
+
+    for (const clase of clasesPendientes) {
+      const createdAt = new Date(clase.createdAt);
+      const updatedAt = new Date(clase.updatedAt);
+
+      const diffMs = now.getTime() - createdAt.getTime();
+      const hoursSinceCreation = diffMs / (1000 * 60 * 60);
+
+      const diffUpdateMs = now.getTime() - updatedAt.getTime();
+      const hoursSinceLastUpdate = diffUpdateMs / (1000 * 60 * 60);
+
+      // --- CASO A: ASIGNACIÓN FORZOSA (> 24hs) ---
+      if (hoursSinceCreation >= 24) {
+        this.logger.log(
+          `Clase ${clase.id}: Tiempo límite excedido (${hoursSinceCreation.toFixed(1)}hs). Ejecutando asignación forzosa.`,
+        );
+
+        const docentesPosibles = clase.curso.docentes.map((d) => d.docente);
+
+        if (docentesPosibles.length > 0) {
+          // Elegir uno al azar
+          const docenteElegido =
+            docentesPosibles[
+              Math.floor(Math.random() * docentesPosibles.length)
+            ];
+
+          // Actualizar clase
+          const claseActualizada = await this.prisma.claseConsulta.update({
+            where: { id: clase.id },
+            data: {
+              idDocente: docenteElegido.id,
+              estadoClase: estado_clase_consulta.Programada,
+            },
+            include: {
+              docenteResponsable: true,
+              consultasEnClase: {
+                include: { consulta: { include: { alumno: true } } },
+              },
+            },
+          });
+
+          // Notificar al docente elegido
+          const notificado =
+            await this.mailService.enviarAsignacionForzadaDocente(
+              docenteElegido.email,
+              docenteElegido.nombre,
+              {
+                nombreClase: clase.nombre,
+                nombreCurso: clase.curso.nombre,
+                fechaClase: clase.fechaInicio,
+                idClase: clase.id,
+              },
+            );
+
+          if (!notificado) {
+            this.logger.error(
+              `Clase ${clase.id}: Asignada a ${docenteElegido.email} pero falló el envío del correo de notificación.`,
+            );
+          }
+
+          // Notificar a los alumnos (usando el helper existente)
+          this.notificarAlumnosClaseProgramada(claseActualizada);
+        }
+        continue; // Pasamos a la siguiente clase
+      }
+
+      // --- CASO B: RECORDATORIOS (Cada ~4hs) ---
+      // Usamos 3.8hs para asegurar que el cron de 10min lo capture si hubo un pequeño desfase
+      if (hoursSinceCreation >= 4 && hoursSinceLastUpdate >= 3.8) {
+        this.logger.log(
+          `Clase ${clase.id}: Enviando recordatorio (Creación: ${hoursSinceCreation.toFixed(1)}hs, Último update: ${hoursSinceLastUpdate.toFixed(1)}hs).`,
+        );
+
+        const esUltimoAviso = hoursSinceCreation >= 20;
+        const destinatarios = clase.curso.docentes.map((d) => ({
+          email: d.docente.email,
+          nombre: d.docente.nombre,
+        }));
+
+        // Enviar correos
+        const emailEnviado =
+          await this.mailService.enviarRecordatorioPendienteDocentes(
+            destinatarios,
+            {
+              nombreClase: clase.nombre,
+              nombreCurso: clase.curso.nombre,
+              fechaClase: clase.fechaInicio,
+              horasRestantes: 24 - hoursSinceCreation,
+              esUltimoAviso,
+              idClase: clase.id,
+            },
+          );
+
+        if (emailEnviado) {
+          // Solo actualizamos updatedAt si el correo salió bien.
+          // Esto reinicia el contador de 4hs.
+          await this.prisma.claseConsulta.update({
+            where: { id: clase.id },
+            data: { updatedAt: new Date() },
+          });
+        } else {
+          // Si falló, NO actualizamos. El cron volverá a intentar en 10 min.
+          this.logger.warn(
+            `Clase ${clase.id}: Falló el envío de recordatorios. Se reintentará en la próxima ejecución.`,
+          );
+        }
+      }
+    }
   }
 
   // --------------- HELPERS PRIVADOS --------------- //

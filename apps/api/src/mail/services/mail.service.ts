@@ -60,14 +60,16 @@ export class MailService implements OnModuleInit {
    * Método privado para realizar el envío de forma segura.
    * Evita que el servidor se caiga si el servicio de correos no está disponible.
    */
-  private async safeSendMail(options: ISendMailOptions) {
+  private async safeSendMail(options: ISendMailOptions): Promise<boolean> {
     try {
       await this.mailerService.sendMail(options);
+      return true;
     } catch (error) {
       this.logger.error(
         `No se pudo enviar el correo a ${options.to}. ¿Está Mailpit/Docker activo?`,
         error.stack,
       );
+      return false;
     }
   }
 
@@ -459,5 +461,93 @@ export class MailService implements OnModuleInit {
         },
       });
     }
+  }
+
+  // --- 10. RECORDATORIO PENDIENTE ASIGNACIÓN (Docentes) ---
+  async enviarRecordatorioPendienteDocentes(
+    destinatarios: { email: string; nombre: string }[],
+    datos: {
+      nombreClase: string;
+      nombreCurso: string;
+      fechaClase: Date;
+      horasRestantes: number;
+      esUltimoAviso: boolean;
+      idClase: string;
+    },
+  ): Promise<boolean> {
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const baseContext = await this.getBaseContext();
+    const linkClase = `${baseUrl}/course/consult-classes?id=${datos.idClase}`;
+    const fechaLegible = datos.fechaClase.toLocaleString('es-AR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    if (destinatarios.length === 0) return true; // No hay a quien enviar, se considera éxito para no bloquear
+
+    let algunEnvioExitoso = false;
+    for (const docente of destinatarios) {
+      const enviado = await this.safeSendMail({
+        to: docente.email,
+        subject: datos.esUltimoAviso
+          ? `⚠️ ÚLTIMO AVISO: Clase Pendiente en ${datos.nombreCurso}`
+          : `⏳ Recordatorio: Clase Pendiente en ${datos.nombreCurso}`,
+        template: 'recordatorio-pendiente-docentes',
+        context: {
+          ...baseContext,
+          emailTitle: 'Recordatorio de Asignación',
+          nombreClase: datos.nombreClase,
+          nombreCurso: datos.nombreCurso,
+          fechaClase: fechaLegible,
+          horasRestantes: Math.max(0, Math.floor(datos.horasRestantes)),
+          esUltimoAviso: datos.esUltimoAviso,
+          linkClase,
+        },
+      });
+      if (enviado) algunEnvioExitoso = true;
+    }
+
+    return algunEnvioExitoso;
+  }
+
+  // --- 11. ASIGNACIÓN FORZADA (Docente) ---
+  async enviarAsignacionForzadaDocente(
+    email: string,
+    nombreDocente: string,
+    datos: {
+      nombreClase: string;
+      nombreCurso: string;
+      fechaClase: Date;
+      idClase: string;
+    },
+  ): Promise<boolean> {
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const baseContext = await this.getBaseContext();
+    const linkClase = `${baseUrl}/course/consult-classes?id=${datos.idClase}`;
+    const fechaLegible = datos.fechaClase.toLocaleString('es-AR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    return this.safeSendMail({
+      to: email,
+      subject: `📢 Asignación Automática: ${datos.nombreClase}`,
+      template: 'asignacion-forzada-docente',
+      context: {
+        ...baseContext,
+        emailTitle: 'Asignación Automática',
+        nombreDocente,
+        nombreClase: datos.nombreClase,
+        nombreCurso: datos.nombreCurso,
+        fechaClase: fechaLegible,
+        linkClase,
+      },
+    });
   }
 }

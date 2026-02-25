@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  {{> styles}}
+</head>
+<body>
+  {{> header}}
+  <div class="content">
+    <p>Hola <strong>{{nombreDocente}}</strong>,</p>
+    <p>Te informamos que se te ha <strong>asignado automáticamente</strong> la siguiente Clase de Consulta.</p>
+    
+    <div class="info-box" style="border-left-color: #2196f3;">
+      <p><strong>Clase:</strong> {{nombreClase}}</p>
+      <p><strong>Curso:</strong> {{nombreCurso}}</p>
+      <p><strong>Fecha:</strong> {{fechaClase}}</p>
+    </div>
+
+    <p>
+      Esto ocurrió porque se cumplió el plazo de 24 horas sin que ningún docente tomara la clase voluntariamente.
+    </p>
+    <p>
+      Si no puedes asistir, por favor ingresa a la plataforma para reprogramarla o cancelarla (con motivo) lo antes posible.
+    </p>
+
+    <div class="text-center mt-2">
+      <a href="{{linkClase}}" class="btn">Gestionar Clase</a>
+    </div>
+  </div>
+  {{> footer}}
+</body>
+</html>

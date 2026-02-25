@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  {{> styles}}
+</head>
+<body>
+  {{> header}}
+  <div class="content">
+    <p>Hola <strong>Equipo Docente</strong>,</p>
+    <p>Este es un recordatorio sobre una Clase de Consulta Automática que aún se encuentra <strong>Pendiente de Asignación</strong>.</p>
+    
+    <div class="info-box" style="border-left-color: #ff9800;">
+      <p><strong>Clase:</strong> {{nombreClase}}</p>
+      <p><strong>Curso:</strong> {{nombreCurso}}</p>
+      <p><strong>Fecha Programada:</strong> {{fechaClase}}</p>
+      <p><strong>Tiempo restante:</strong> {{horasRestantes}} horas aprox.</p>
+    </div>
+
+    <p>
+      {{#if esUltimoAviso}}
+        <strong style="color: #d32f2f;">⚠️ ÚLTIMO AVISO:</strong> Si nadie toma la clase en las próximas 4 horas, el sistema asignará un docente al azar.
+      {{else}}
+        Por favor, ingresen a la plataforma para tomar la clase o reprogramarla si es necesario.
+      {{/if}}
+    </p>
+
+    <div class="text-center mt-2">
+      <a href="{{linkClase}}" class="btn">Ver Clase</a>
+    </div>
+  </div>
+  {{> footer}}
+</body>
+</html>
