@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import AddIcon from "@mui/icons-material/Add";
 import IconButton from "@mui/material/IconButton";
@@ -34,7 +33,6 @@ import {
   ListItemText,
   MenuItem,
   OutlinedInput,
-  Paper,
   Select,
   Stack,
   TextField,
@@ -282,7 +280,15 @@ export default function UsersPage() {
         if (!value) return "";
         try {
           const dateObj = typeof value === "string" ? parseISO(value) : value;
-          return format(dateObj, "dd/MM/yyyy", { locale: es });
+          // Al ser un campo db.Date, Prisma lo devuelve como medianoche UTC.
+          // Para evitar que la zona horaria local lo desplace al día anterior,
+          // extraemos los componentes UTC y creamos una fecha local equivalente para mostrar.
+          const day = dateObj.getUTCDate();
+          const month = dateObj.getUTCMonth();
+          const year = dateObj.getUTCFullYear();
+          return format(new Date(year, month, day), "dd/MM/yyyy", {
+            locale: es,
+          });
         } catch {
           return "Inválida";
         }
