@@ -47,6 +47,7 @@ import type {
 } from "../../../types";
 import {
   ActivityRange,
+  AttemptsRange,
   ProgressRange,
   StarsRange,
 } from "../../../types/progress-filters";
@@ -73,13 +74,19 @@ export default function ProgressPage() {
   const [gridLoading, setGridLoading] = useState(true);
   const [gridError, setGridError] = useState<string | null>(null);
 
-  // Estado unificado para todos los filtros de la API
-  const [queryOptions, setQueryOptions] = useState<FindStudentProgressParams>({
-    page: 1,
-    limit: 10,
-    sort: "apellido",
-    order: "asc",
-    search: "",
+  // Estado para paginación
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0,
+    pageSize: 10,
+  });
+
+  // Estado para ordenamiento
+  const [sortModel, setSortModel] = useState<GridSortModel>([
+    { field: "apellido", sort: "asc" },
+  ]);
+
+  // Estado para filtros
+  const [filters, setFilters] = useState({
     progressRange: "",
     starsRange: "",
     attemptsRange: "",
@@ -113,68 +120,60 @@ export default function ProgressPage() {
 
     setGridLoading(true);
     setGridError(null);
-    getStudentProgressList(selectedCourse.id, queryOptions)
+
+    const params: FindStudentProgressParams = {
+      page: paginationModel.page + 1,
+      limit: paginationModel.pageSize,
+      sort: sortModel[0]?.field || "apellido",
+      order: (sortModel[0]?.sort as "asc" | "desc") || "asc",
+      search: debouncedSearchTerm,
+      progressRange: filters.progressRange as ProgressRange | "",
+      starsRange: filters.starsRange as StarsRange | "",
+      attemptsRange: filters.attemptsRange as AttemptsRange | "",
+      activityRange: filters.activityRange as ActivityRange | "",
+    };
+
+    getStudentProgressList(selectedCourse.id, params)
       .then((response) => {
         setRows(response.data);
         setTotalRows(response.total);
       })
       .catch((err) => setGridError(err.message))
       .finally(() => setGridLoading(false));
-  }, [selectedCourse, queryOptions]); // <-- Se re-ejecuta si el curso o los filtros cambian
+  }, [
+    selectedCourse,
+    paginationModel,
+    sortModel,
+    filters,
+    debouncedSearchTerm,
+  ]);
 
   // Efecto para conectar el buscador con (debounce) a los filtros
   useEffect(() => {
-    setQueryOptions((prev) => {
-      if (prev.search === debouncedSearchTerm) return prev;
-      return {
-        ...prev,
-        search: debouncedSearchTerm,
-        page: 1,
-      };
-    });
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
   }, [debouncedSearchTerm]);
 
   // --- 4. HANDLERS (para la DataGrid y Filtros) ---
 
-  const handlePaginationChange = (model: GridPaginationModel) => {
-    setQueryOptions((prev) => ({
-      ...prev,
-      page: model.page + 1, // El DTO espera 1-indexed, MUI usa 0-indexed
-      limit: model.pageSize,
-    }));
-  };
-
-  const handleSortChange = (model: GridSortModel) => {
-    setQueryOptions((prev) => ({
-      ...prev,
-      sort: model[0]?.field || "apellido",
-      order: model[0]?.sort || "asc",
-    }));
-  };
-
   const handleClearFilters = () => {
     setSearchTerm("");
-    setQueryOptions({
-      page: 1,
-      limit: 10,
-      sort: "apellido",
-      order: "asc",
-      search: "",
+    setFilters({
       progressRange: "",
       starsRange: "",
       attemptsRange: "",
       activityRange: "",
     });
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
   };
 
   const handleFilterChange = (
     e: SelectChangeEvent<string | number> | React.ChangeEvent<HTMLInputElement>,
   ) => {
-    setQueryOptions((prev) => ({
+    setFilters((prev) => ({
       ...prev,
       [e.target.name]: e.target.value,
-      page: 1, // Resetea a la pág 1 al filtrar
     }));
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
   };
 
   // --- 5. COLUMNAS (DataGrid) ---
@@ -368,7 +367,7 @@ export default function ProgressPage() {
                 <InputLabel>Progreso</InputLabel>
                 <Select
                   name="progressRange"
-                  value={queryOptions.progressRange}
+                  value={filters.progressRange}
                   label="Progreso"
                   onChange={handleFilterChange}
                 >
@@ -384,7 +383,7 @@ export default function ProgressPage() {
                 <InputLabel>Estrellas</InputLabel>
                 <Select
                   name="starsRange"
-                  value={queryOptions.starsRange}
+                  value={filters.starsRange}
                   label="Estrellas"
                   onChange={handleFilterChange}
                 >
@@ -400,7 +399,7 @@ export default function ProgressPage() {
                 <InputLabel>Últ. Actividad</InputLabel>
                 <Select
                   name="activityRange"
-                  value={queryOptions.activityRange}
+                  value={filters.activityRange}
                   label="Últ. Actividad"
                   onChange={handleFilterChange}
                 >
@@ -439,17 +438,12 @@ export default function ProgressPage() {
                 loading={gridLoading}
                 // Paginación
                 paginationMode="server"
-                paginationModel={{
-                  page: queryOptions.page - 1,
-                  pageSize: queryOptions.limit,
-                }}
-                onPaginationModelChange={handlePaginationChange}
+                paginationModel={paginationModel}
+                onPaginationModelChange={setPaginationModel}
                 pageSizeOptions={[5, 10, 25]}
                 sortingMode="server"
-                sortModel={[
-                  { field: queryOptions.sort, sort: queryOptions.order },
-                ]}
-                onSortModelChange={handleSortChange}
+                sortModel={sortModel}
+                onSortModelChange={setSortModel}
                 disableRowSelectionOnClick
                 disableColumnResize={true}
                 sx={{

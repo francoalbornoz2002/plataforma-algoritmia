@@ -78,18 +78,23 @@ export default function DifficultiesPage() {
   // --- ¡NUEVO ESTADO PARA EL MODAL! ---
   const [viewingStudent, setViewingStudent] = useState<StudentRow | null>(null);
 
-  // Estado unificado para los filtros de la API
-  const [queryOptions, setQueryOptions] =
-    useState<FindStudentDifficultiesParams>({
-      page: 1,
-      limit: 10,
-      sort: "apellido", // Ordenar por apellido por defecto
-      order: "asc",
-      search: "",
-      tema: "",
-      dificultadId: "", // (Lo dejamos listo para el futuro)
-      grado: "",
-    });
+  // Estado para paginación
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0,
+    pageSize: 10,
+  });
+
+  // Estado para ordenamiento
+  const [sortModel, setSortModel] = useState<GridSortModel>([
+    { field: "apellido", sort: "asc" },
+  ]);
+
+  // Estado para filtros
+  const [filters, setFilters] = useState({
+    tema: "",
+    dificultadId: "", // (Lo dejamos listo para el futuro)
+    grado: "",
+  });
 
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
@@ -125,11 +130,11 @@ export default function DifficultiesPage() {
 
   // Filtramos las dificultades disponibles según el tema seleccionado
   const filteredDifficulties = useMemo(() => {
-    if (queryOptions.tema) {
-      return allDifficulties.filter((d) => d.tema === queryOptions.tema);
+    if (filters.tema) {
+      return allDifficulties.filter((d) => d.tema === filters.tema);
     }
     return allDifficulties;
-  }, [allDifficulties, queryOptions.tema]);
+  }, [allDifficulties, filters.tema]);
 
   // --- DATA FETCHING (DataGrid) ---
   useEffect(() => {
@@ -137,72 +142,66 @@ export default function DifficultiesPage() {
 
     setGridLoading(true);
     setGridError(null);
-    getStudentDifficultyList(selectedCourse.id, queryOptions)
+
+    const params: FindStudentDifficultiesParams = {
+      page: paginationModel.page + 1,
+      limit: paginationModel.pageSize,
+      sort: sortModel[0]?.field || "apellido",
+      order: (sortModel[0]?.sort as "asc" | "desc") || "asc",
+      search: debouncedSearchTerm,
+      tema: filters.tema as temas | "",
+      dificultadId: filters.dificultadId,
+      grado: filters.grado as grado_dificultad | "",
+    };
+
+    getStudentDifficultyList(selectedCourse.id, params)
       .then((response) => {
         setRows(response.data);
         setTotalRows(response.total);
       })
       .catch((err) => setGridError(err.message))
       .finally(() => setGridLoading(false));
-  }, [selectedCourse, queryOptions]);
+  }, [
+    selectedCourse,
+    paginationModel,
+    sortModel,
+    filters,
+    debouncedSearchTerm,
+  ]);
 
   // Efecto para el buscador (debounce)
   useEffect(() => {
-    setQueryOptions((prev) => ({
-      ...prev,
-      search: debouncedSearchTerm,
-      page: 1,
-    }));
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
   }, [debouncedSearchTerm]);
 
   // --- Handlers (para la DataGrid y Filtros) ---
-  const handlePaginationChange = (model: GridPaginationModel) => {
-    setQueryOptions((prev) => ({
-      ...prev,
-      page: model.page + 1,
-      limit: model.pageSize,
-    }));
-  };
-
-  const handleSortChange = (model: GridSortModel) => {
-    setQueryOptions((prev) => ({
-      ...prev,
-      sort: model[0]?.field || "apellido",
-      order: model[0]?.sort || "asc",
-    }));
-  };
-
   const handleFilterChange = (
     e: SelectChangeEvent<string> | React.ChangeEvent<HTMLInputElement>,
   ) => {
     const { name, value } = e.target;
 
-    setQueryOptions((prev) => {
-      const newOptions = {
+    setFilters((prev) => {
+      const newFilters = {
         ...prev,
         [name]: value,
-        page: 1,
       };
       // Si cambia el tema, reseteamos la dificultad seleccionada
       if (name === "tema") {
-        newOptions.dificultadId = "";
+        newFilters.dificultadId = "";
       }
-      return newOptions;
+      return newFilters;
     });
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
   };
 
   const handleClearFilters = () => {
     setSearchTerm("");
-    setQueryOptions({
-      page: 1,
-      limit: 10,
-      sort: "apellido",
-      order: "asc",
-      search: "",
+    setFilters({
       tema: "",
       dificultadId: "",
       grado: "",
     });
+    setPaginationModel((prev) => ({ ...prev, page: 0 }));
   };
 
   // --- COLUMNAS (DataGrid) ---
@@ -390,7 +389,7 @@ export default function DifficultiesPage() {
             <InputLabel>Tema</InputLabel>
             <Select
               name="tema"
-              value={queryOptions.tema}
+              value={filters.tema}
               label="Tema"
               onChange={handleFilterChange}
             >
@@ -408,7 +407,7 @@ export default function DifficultiesPage() {
             <InputLabel>Dificultad</InputLabel>
             <Select
               name="dificultadId"
-              value={queryOptions.dificultadId}
+              value={filters.dificultadId}
               label="Dificultad"
               onChange={handleFilterChange}
               disabled={allDifficulties.length === 0} // Deshabilitar si aún no carga
@@ -425,7 +424,7 @@ export default function DifficultiesPage() {
             <InputLabel>Grado</InputLabel>
             <Select
               name="grado"
-              value={queryOptions.grado}
+              value={filters.grado}
               label="Grado"
               onChange={handleFilterChange}
             >
@@ -458,15 +457,12 @@ export default function DifficultiesPage() {
             rowCount={totalRows}
             loading={gridLoading}
             paginationMode="server"
-            paginationModel={{
-              page: queryOptions.page - 1,
-              pageSize: queryOptions.limit,
-            }}
-            onPaginationModelChange={handlePaginationChange}
+            paginationModel={paginationModel}
+            onPaginationModelChange={setPaginationModel}
             pageSizeOptions={[5, 10, 25]}
             sortingMode="server"
-            sortModel={[{ field: queryOptions.sort, sort: queryOptions.order }]}
-            onSortModelChange={handleSortChange}
+            sortModel={sortModel}
+            onSortModelChange={setSortModel}
             disableRowSelectionOnClick
             disableColumnResize={true}
             sx={{

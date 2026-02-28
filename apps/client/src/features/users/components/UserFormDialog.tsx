@@ -17,6 +17,7 @@ import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { format } from "date-fns";
 import { es } from "date-fns/locale/es";
 
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -103,8 +104,17 @@ export default function UserFormDialog({
           nombre: userToEdit.nombre || "",
           apellido: userToEdit.apellido || "",
           dni: userToEdit.dni || "",
+          // Al cargar la fecha de la BD (UTC), extraemos los componentes
+          // para que el DatePicker la muestre correctamente en hora local.
           fechaNacimiento: userToEdit.fechaNacimiento
-            ? new Date(userToEdit.fechaNacimiento)
+            ? (() => {
+                const d = new Date(userToEdit.fechaNacimiento);
+                return new Date(
+                  d.getUTCFullYear(),
+                  d.getUTCMonth(),
+                  d.getUTCDate(),
+                );
+              })()
             : undefined,
           genero: userToEdit.genero || "Otro",
           email: userToEdit.email || "", // Email no se edita, pero lo mostramos
@@ -135,21 +145,27 @@ export default function UserFormDialog({
   > = async (data) => {
     setSubmitError(null);
     try {
-      const { confirmPassword, ...rest } = data;
+      const { confirmPassword, fechaNacimiento, ...rest } = data;
+
+      // Al enviar, formateamos a YYYY-MM-DD para evitar que la zona horaria
+      // del navegador reste horas y cambie el día en el servidor.
       const dataToSend = {
         ...rest,
+        fechaNacimiento: fechaNacimiento
+          ? format(fechaNacimiento, "yyyy-MM-dd")
+          : undefined,
         // Asegura no enviar password vacío en update si no se quiere cambiar
         password: isEditMode && !data.password ? undefined : data.password,
-      };
+      } as any;
 
       if (isEditMode && userToEdit) {
-        await updateUser(userToEdit.id, dataToSend as UpdateUserFormValues);
+        await updateUser(userToEdit.id, dataToSend);
         enqueueSnackbar("Usuario actualizado con éxito", {
           variant: "success",
           autoHideDuration: 3000,
         });
       } else {
-        await createUser(dataToSend as CreateUserFormValues);
+        await createUser(dataToSend);
         enqueueSnackbar("Usuario creado con éxito", {
           variant: "success",
           autoHideDuration: 3000,
@@ -161,7 +177,7 @@ export default function UserFormDialog({
       setSubmitError(
         error?.response?.data?.message ||
           error.message ||
-          "Error al guardar el usuario."
+          "Error al guardar el usuario.",
       );
     }
   };
