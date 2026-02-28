@@ -398,8 +398,13 @@ export default function DocenteDashboardPage() {
                 <Gauge
                   value={stats?.progresoPct ?? 0}
                   height={200}
-                  text={({ value }) => `${value?.toFixed(0)}%`}
+                  cornerRadius="50%"
+                  text={({ value }) => `${value?.toFixed(1)}%`}
                   sx={{
+                    [`& .${gaugeClasses.valueText}`]: {
+                      fontSize: 28,
+                      fontWeight: "bold",
+                    },
                     [`& .${gaugeClasses.valueArc}`]: { fill: "#4caf50" },
                   }}
                 />
