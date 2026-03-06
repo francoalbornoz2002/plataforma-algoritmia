@@ -5,15 +5,37 @@ import CourseDifficultiesHistory from "./CourseDifficultiesHistory";
 import StudentDifficultiesReport from "./StudentDifficultiesReport";
 import { Assessment, History, Person } from "@mui/icons-material";
 
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function CustomTabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`difficulties-tabpanel-${index}`}
+      aria-labelledby={`difficulties-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ py: 2 }}>{children}</Box>}
+    </div>
+  );
+}
+
 interface Props {
   courseId: string;
 }
 
 export default function DifficultiesReportTab({ courseId }: Props) {
-  const [tabIndex, setTabIndex] = useState(0);
+  const [value, setValue] = useState(0);
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabIndex(newValue);
+    setValue(newValue);
   };
 
   return (
@@ -22,12 +44,12 @@ export default function DifficultiesReportTab({ courseId }: Props) {
         sx={{
           borderBottom: 1,
           borderColor: "divider",
-          bgcolor: "background.paper",
           mx: -3,
+          bgcolor: "background.paper",
         }}
       >
         <Tabs
-          value={tabIndex}
+          value={value}
           onChange={handleChange}
           variant="scrollable"
           scrollButtons="auto"
@@ -45,9 +67,15 @@ export default function DifficultiesReportTab({ courseId }: Props) {
           <Tab icon={<Person />} iconPosition="start" label="Por Alumno" />
         </Tabs>
       </Box>
-      {tabIndex === 0 && <CourseDifficultiesSummary courseId={courseId} />}
-      {tabIndex === 1 && <CourseDifficultiesHistory courseId={courseId} />}
-      {tabIndex === 2 && <StudentDifficultiesReport courseId={courseId} />}
+      <CustomTabPanel value={value} index={0}>
+        <CourseDifficultiesSummary courseId={courseId} />
+      </CustomTabPanel>
+      <CustomTabPanel value={value} index={1}>
+        <CourseDifficultiesHistory courseId={courseId} />
+      </CustomTabPanel>
+      <CustomTabPanel value={value} index={2}>
+        <StudentDifficultiesReport courseId={courseId} />
+      </CustomTabPanel>
     </Box>
   );
 }
