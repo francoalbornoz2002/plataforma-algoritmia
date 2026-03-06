@@ -51,6 +51,12 @@ export class ClasesConsultaService {
       ...restDto // nombre, descripcion, modalidad
     } = dto;
 
+    if (consultasIds.length < 5) {
+      throw new BadRequestException(
+        'Debe seleccionar al menos 5 consultas para crear una clase.',
+      );
+    }
+
     const dbFechaInicio = new Date(fechaInicio);
     const dbFechaFin = new Date(fechaFin);
 
@@ -299,6 +305,12 @@ export class ClasesConsultaService {
    */
   async update(id: string, dto: UpdateClasesConsultaDto, user: UserPayload) {
     const { consultasIds, fechaInicio, fechaFin, ...restDto } = dto;
+
+    if (consultasIds && consultasIds.length < 5) {
+      throw new BadRequestException(
+        'La clase debe mantener al menos 5 consultas asignadas.',
+      );
+    }
 
     // --- Obtemos la clase de consulta ---
     const actual = await this.prisma.claseConsulta.findUnique({
