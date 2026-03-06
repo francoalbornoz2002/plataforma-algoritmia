@@ -490,82 +490,86 @@ export default function CourseSessionsHistory({ courseId }: Props) {
             </FormControl>
           </Stack>
         </Stack>
-      </Stack>
 
-      {showLoading && (
-        <CircularProgress sx={{ display: "block", mx: "auto", my: 4 }} />
-      )}
-      {error && <Alert severity="error">{error}</Alert>}
+        {showLoading && (
+          <CircularProgress sx={{ display: "block", mx: "auto", my: 4 }} />
+        )}
+        {error && <Alert severity="error">{error}</Alert>}
 
-      {data && !showLoading && (
-        <Stack spacing={4}>
-          {/* Gráfico de Línea de Tiempo */}
-          <Paper elevation={3} sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Actividad en el Tiempo
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Cantidad de sesiones según fecha de referencia (Asignación,
-              Completado o Vencimiento).
-            </Typography>
-            {data.chartData.length > 0 ? (
-              <LineChart
-                dataset={data.chartData}
-                yAxis={[
-                  {
-                    label: "Cantidad de sesiones",
-                    valueFormatter: (value: number) =>
-                      Number.isInteger(value) ? value.toString() : "",
-                  },
-                ]}
-                xAxis={[
-                  {
-                    label: getDateLabel(),
-                    scaleType: "point",
-                    dataKey: "fecha",
-                    valueFormatter: (val) => format(val, "dd/MM"),
-                  },
-                ]}
-                series={[
-                  {
-                    dataKey: "cantidad",
-                    label: "Sesiones",
-                    color: "#2196f3",
-                  },
-                ]}
-                height={300}
-              />
-            ) : (
-              <Typography align="center" sx={{ py: 4 }} color="text.secondary">
-                No hay datos para mostrar en el gráfico.
+        {data && !showLoading && (
+          <Stack spacing={2}>
+            {/* Gráfico de Línea de Tiempo */}
+            <Paper elevation={3} sx={{ p: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Actividad en el Tiempo
               </Typography>
-            )}
-          </Paper>
+              <Typography variant="caption" color="text.secondary">
+                Cantidad de sesiones según fecha de referencia (Asignación,
+                Completado o Vencimiento).
+              </Typography>
+              {data.chartData.length > 0 ? (
+                <LineChart
+                  dataset={data.chartData}
+                  yAxis={[
+                    {
+                      label: "Cantidad de sesiones",
+                      valueFormatter: (value: number) =>
+                        Number.isInteger(value) ? value.toString() : "",
+                    },
+                  ]}
+                  xAxis={[
+                    {
+                      label: getDateLabel(),
+                      scaleType: "point",
+                      dataKey: "fecha",
+                      valueFormatter: (val) => format(val, "dd/MM"),
+                    },
+                  ]}
+                  series={[
+                    {
+                      dataKey: "cantidad",
+                      label: "Sesiones",
+                      color: "#2196f3",
+                    },
+                  ]}
+                  height={300}
+                />
+              ) : (
+                <Typography
+                  align="center"
+                  sx={{ py: 4 }}
+                  color="text.secondary"
+                >
+                  No hay datos para mostrar en el gráfico.
+                </Typography>
+              )}
+            </Paper>
 
-          {/* Tabla de Datos */}
-          <Paper elevation={3} sx={{ height: 600, width: "100%" }}>
-            <DataGrid
-              rows={data.sessions}
-              columns={columns}
-              density="compact"
-              initialState={{
-                pagination: { paginationModel: { pageSize: 10 } },
-                sorting: {
-                  sortModel: [{ field: "fechaGrafico", sort: "desc" }],
-                },
-              }}
-              pageSizeOptions={[10, 25, 50]}
-              disableRowSelectionOnClick
-            />
-          </Paper>
-        </Stack>
-      )}
+            {/* Tabla de Datos */}
+            <Paper elevation={3} sx={{ height: 600, width: "100%" }}>
+              <DataGrid
+                rows={data.sessions}
+                columns={columns}
+                density="compact"
+                initialState={{
+                  pagination: { paginationModel: { pageSize: 10 } },
+                  sorting: {
+                    sortModel: [{ field: "fechaGrafico", sort: "desc" }],
+                  },
+                }}
+                pageSizeOptions={[10, 25, 50]}
+                disableRowSelectionOnClick
+              />
+            </Paper>
+          </Stack>
+        )}
 
-      <SesionDetailModal
-        open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        sesion={selectedSession}
-      />
+        <SesionDetailModal
+          open={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          sesion={selectedSession}
+        />
+      </Stack>
     </Box>
   );
 }
