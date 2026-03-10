@@ -522,7 +522,22 @@ export class UsersService {
         );
       }
 
-      // 5. Cancelar todas las sesiones de refuerzo pendientes del alumno
+      // 5. Cerrar Consultas pendientes del alumno en CUALQUIER curso
+      await tx.consulta.updateMany({
+        where: {
+          idAlumno: userId,
+          estado: {
+            in: [
+              estado_consulta.Pendiente,
+              estado_consulta.A_revisar,
+              estado_consulta.Revisada,
+            ],
+          },
+        },
+        data: { estado: estado_consulta.No_resuelta },
+      });
+
+      // 6. Cancelar todas las sesiones de refuerzo pendientes del alumno
       await tx.sesionRefuerzo.updateMany({
         where: {
           idAlumno: userId,

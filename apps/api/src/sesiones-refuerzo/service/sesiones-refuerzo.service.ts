@@ -909,10 +909,15 @@ export class SesionesRefuerzoService {
         await tx.respuestaAlumno.createMany({ data: respuestasToSave });
       }
 
-      // 5. Finalizar Sesión
+      // 5. Finalizar Sesión (Completada o Incompleta si se pasó el tiempo)
+      const estadoFinal =
+        new Date() > sesion.fechaHoraLimite
+          ? estado_sesion.Incompleta
+          : estado_sesion.Completada;
+
       await tx.sesionRefuerzo.update({
         where: { id: idSesion },
-        data: { estado: estado_sesion.Completada },
+        data: { estado: estadoFinal },
       });
 
       return {
