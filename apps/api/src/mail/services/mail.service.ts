@@ -619,4 +619,51 @@ export class MailService implements OnModuleInit {
       },
     });
   }
+
+  // --- 14. MODIFICACIÓN DE CLASE (Alumnos y Docente) ---
+  async enviarAvisoModificacionClase(
+    destinatarios: { email: string; nombre: string }[],
+    datos: {
+      nombreClase: string;
+      nombreCurso: string;
+      nombreDocente: string;
+      fechaInicio: Date;
+      fechaFin: Date;
+      modalidad: string;
+      idClase: string;
+    },
+  ) {
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const baseContext = await this.getBaseContext();
+    // El link varía levemente según el rol, pero usaremos el genérico de "Mis Clases" que redirige según auth
+    const linkClase = `${baseUrl}/my/consult-classes`;
+
+    const fecha = datos.fechaInicio.toLocaleString('es-AR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
+
+    const horario = `${datos.fechaInicio.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} - ${datos.fechaFin.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs`;
+
+    for (const usuario of destinatarios) {
+      await this.safeSendMail({
+        to: usuario.email,
+        subject: `🔄 Clase Modificada: ${datos.nombreClase}`,
+        template: 'clase-modificada',
+        context: {
+          ...baseContext,
+          emailTitle: 'Actualización de Clase',
+          nombreUsuario: usuario.nombre,
+          nombreClase: datos.nombreClase,
+          nombreCurso: datos.nombreCurso,
+          nombreDocente: datos.nombreDocente,
+          modalidad: datos.modalidad,
+          fecha,
+          horario,
+          linkClase,
+        },
+      });
+    }
+  }
 }

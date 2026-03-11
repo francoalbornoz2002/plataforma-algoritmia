@@ -429,7 +429,7 @@ export class ClasesConsultaService {
       };
 
       // --- Iniciamos la transacción para actualizar la clase ---
-      return await this.prisma.$transaction(
+      const claseActualizada = await this.prisma.$transaction(
         async (tx: Prisma.TransactionClient) => {
           // Actualizamos los datos simples de la clase
           await tx.claseConsulta.update({
@@ -507,14 +507,69 @@ export class ClasesConsultaService {
           return tx.claseConsulta.findUnique({
             where: { id },
             include: {
-              docenteResponsable: { select: { nombre: true, apellido: true } },
+              curso: { select: { nombre: true } },
+              docenteResponsable: {
+                select: { nombre: true, apellido: true, email: true },
+              },
               consultasEnClase: {
-                select: { consulta: { select: { id: true, titulo: true } } },
+                select: {
+                  consulta: {
+                    select: {
+                      id: true,
+                      titulo: true,
+                      alumno: { select: { nombre: true, email: true } },
+                    },
+                  },
+                },
               },
             },
           });
         },
       );
+
+      // --- NOTIFICACIÓN DE CAMBIOS ---
+      if (claseActualizada) {
+        const destinatariosMap = new Map<
+          string,
+          { email: string; nombre: string }
+        >();
+
+        // 1. Agregar Docente Responsable
+        if (claseActualizada.docenteResponsable) {
+          destinatariosMap.set(claseActualizada.docenteResponsable.email, {
+            email: claseActualizada.docenteResponsable.email,
+            nombre: claseActualizada.docenteResponsable.nombre,
+          });
+        }
+
+        // 2. Agregar Alumnos involucrados
+        claseActualizada.consultasEnClase.forEach((cc) => {
+          const alumno = cc.consulta.alumno;
+          if (alumno) {
+            destinatariosMap.set(alumno.email, {
+              email: alumno.email,
+              nombre: alumno.nombre,
+            });
+          }
+        });
+
+        // 3. Enviar correos
+        const destinatarios = Array.from(destinatariosMap.values());
+
+        if (destinatarios.length > 0) {
+          this.mailService.enviarAvisoModificacionClase(destinatarios, {
+            nombreClase: claseActualizada.nombre,
+            nombreCurso: claseActualizada.curso?.nombre || 'Curso',
+            nombreDocente: `${claseActualizada.docenteResponsable?.nombre} ${claseActualizada.docenteResponsable?.apellido}`,
+            fechaInicio: claseActualizada.fechaInicio,
+            fechaFin: claseActualizada.fechaFin,
+            modalidad: claseActualizada.modalidad,
+            idClase: claseActualizada.id,
+          });
+        }
+      }
+
+      return claseActualizada;
     } catch (error) {
       if (
         error instanceof BadRequestException ||

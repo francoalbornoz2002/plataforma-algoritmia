@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  {{> styles}}
+</head>
+<body>
+  {{> header}}
+  <div class="content">
+    <p>Hola <strong>{{nombreUsuario}}</strong>,</p>
+    <p>Te informamos que se han realizado <strong>modificaciones</strong> en la clase de consulta <strong>{{nombreClase}}</strong> del curso <strong>{{nombreCurso}}</strong>.</p>
+    
+    <div class="info-box">
+      <p><strong>📅 Nueva Fecha:</strong> {{fecha}}</p>
+      <p><strong>⏰ Nuevo Horario:</strong> {{horario}}</p>
+      <p><strong>👨‍🏫 Docente a cargo:</strong> {{nombreDocente}}</p>
+      <p><strong>💻 Modalidad:</strong> {{modalidad}}</p>
+    </div>
+
+    <div class="text-center mt-2">
+      <a href="{{linkClase}}" class="btn">Ver Detalle de Clase</a>
+    </div>
+  </div>
+  {{> footer}}
+</body>
+</html>
