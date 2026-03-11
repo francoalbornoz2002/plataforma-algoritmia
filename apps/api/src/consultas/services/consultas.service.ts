@@ -218,7 +218,14 @@ export class ConsultasService {
     try {
       const consulta = await this.prisma.consulta.findUnique({
         where: { id: idConsulta },
-        select: { idAlumno: true, estado: true },
+        include: {
+          // Incluimos relaciones para validar y notificar
+          respuestaConsulta: {
+            include: { docente: true }, // Para obtener el email del docente
+          },
+          alumno: { select: { nombre: true, apellido: true } },
+          curso: { select: { nombre: true } },
+        },
       });
 
       if (!consulta) {
@@ -244,6 +251,23 @@ export class ConsultasService {
           estado: estado_consulta.Resuelta,
         },
       });
+
+      // --- NOTIFICACIÓN AL DOCENTE ---
+      if (consulta.respuestaConsulta?.docente) {
+        const docente = consulta.respuestaConsulta.docente;
+        this.mailService.enviarValoracionConsultaDocente(
+          docente.email,
+          docente.nombre,
+          {
+            nombreAlumno: `${consulta.alumno.nombre} ${consulta.alumno.apellido}`,
+            nombreCurso: consulta.curso.nombre,
+            tituloConsulta: consulta.titulo,
+            valoracion: valoracion,
+            comentario: comentarioValoracion,
+            idCurso: consulta.idCurso,
+          },
+        );
+      }
 
       return consultaActualizada;
     } catch (error) {

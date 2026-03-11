@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  {{> styles}}
+</head>
+<body>
+  {{> header}}
+  <div class="content">
+    <p>Hola <strong>{{nombreDocente}}</strong>,</p>
+    <p>El alumno <strong>{{nombreAlumno}}</strong> ha valorado tu respuesta en la consulta <strong>{{tituloConsulta}}</strong> del curso <strong>{{nombreCurso}}</strong>.</p>
+    
+    <div class="info-box">
+      <p><strong>Valoración:</strong> {{valoracion}} / 5 ⭐</p>
+      {{#if comentario}}
+        <p><strong>Comentario:</strong></p>
+        <p><i>"{{comentario}}"</i></p>
+      {{/if}}
+    </div>
+
+    <div class="text-center mt-2">
+      <a href="{{linkConsulta}}" class="btn">Ver Consultas</a>
+    </div>
+  </div>
+  {{> footer}}
+</body>
+</html>

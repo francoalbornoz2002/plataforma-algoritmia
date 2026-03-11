@@ -550,4 +550,39 @@ export class MailService implements OnModuleInit {
       },
     });
   }
+
+  // --- 12. VALORACIÓN DE CONSULTA (Docente) ---
+  async enviarValoracionConsultaDocente(
+    email: string,
+    nombreDocente: string,
+    datos: {
+      nombreAlumno: string;
+      nombreCurso: string;
+      tituloConsulta: string;
+      valoracion: number;
+      comentario?: string | null;
+      idCurso: string;
+    },
+  ) {
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const baseContext = await this.getBaseContext();
+    const linkConsulta = `${baseUrl}/course/consults`; // Link a la lista de consultas del docente
+
+    await this.safeSendMail({
+      to: email,
+      subject: `Nueva Valoración: ${datos.tituloConsulta}`,
+      template: 'valoracion-consulta-docente',
+      context: {
+        ...baseContext,
+        emailTitle: 'Respuesta Valorada',
+        nombreDocente,
+        nombreAlumno: datos.nombreAlumno,
+        nombreCurso: datos.nombreCurso,
+        tituloConsulta: datos.tituloConsulta,
+        valoracion: datos.valoracion,
+        comentario: datos.comentario,
+        linkConsulta,
+      },
+    });
+  }
 }
