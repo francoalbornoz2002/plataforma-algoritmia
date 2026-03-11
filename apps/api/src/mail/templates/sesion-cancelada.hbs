@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  {{> styles}}
+</head>
+<body>
+  {{> header}}
+  <div class="content">
+    <p>Hola <strong>{{nombreAlumno}}</strong>,</p>
+    <p>Te informamos que la sesión de refuerzo asignada en el curso <strong>{{nombreCurso}}</strong> ha sido cancelada.</p>
+    
+    <div class="info-box">
+      <p><strong>Dificultad:</strong> {{nombreDificultad}}</p>
+      <p><strong>Fecha de Cancelación:</strong> {{fechaCancelacion}}</p>
+    </div>
+
+    <div class="text-center mt-2">
+      <a href="{{linkSesiones}}" class="btn">Mis Sesiones</a>
+    </div>
+  </div>
+  {{> footer}}
+</body>
+</html>

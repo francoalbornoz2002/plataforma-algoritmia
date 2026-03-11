@@ -703,14 +703,33 @@ export class SesionesRefuerzoService {
           estado: estado_sesion.Cancelada,
           deletedAt: new Date(),
         },
+        include: {
+          alumno: { select: { email: true, nombre: true, apellido: true } },
+          curso: { select: { nombre: true } },
+          dificultad: { select: { nombre: true } },
+        },
       });
     };
 
+    let sesionCancelada;
+
     if (externalTx) {
-      return execute(externalTx);
+      sesionCancelada = await execute(externalTx);
     } else {
-      return this.prisma.$transaction(execute);
+      sesionCancelada = await this.prisma.$transaction(execute);
     }
+
+    // Enviamos el correo de notificación
+    if (sesionCancelada && sesionCancelada.alumno) {
+      this.mailService.enviarAvisoCancelacionSesion({
+        email: sesionCancelada.alumno.email,
+        nombreAlumno: `${sesionCancelada.alumno.nombre} ${sesionCancelada.alumno.apellido}`,
+        nombreCurso: sesionCancelada.curso.nombre,
+        nombreDificultad: sesionCancelada.dificultad.nombre,
+      });
+    }
+
+    return sesionCancelada;
   }
 
   async iniciarSesion(idCurso: string, idSesion: string, idAlumno: string) {

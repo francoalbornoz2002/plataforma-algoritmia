@@ -585,4 +585,38 @@ export class MailService implements OnModuleInit {
       },
     });
   }
+
+  // --- 13. CANCELACIÓN DE SESIÓN (Alumno) ---
+  async enviarAvisoCancelacionSesion(datos: {
+    email: string;
+    nombreAlumno: string;
+    nombreCurso: string;
+    nombreDificultad: string;
+  }) {
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const baseContext = await this.getBaseContext();
+    const linkSesiones = `${baseUrl}/my/sessions`;
+
+    const fechaCancelacion = new Date().toLocaleString('es-AR', {
+      day: 'numeric',
+      month: 'long',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    await this.safeSendMail({
+      to: datos.email,
+      subject: `🚫 Sesión Cancelada: ${datos.nombreDificultad}`,
+      template: 'sesion-cancelada',
+      context: {
+        ...baseContext,
+        emailTitle: 'Sesión Cancelada',
+        nombreAlumno: datos.nombreAlumno,
+        nombreCurso: datos.nombreCurso,
+        nombreDificultad: datos.nombreDificultad,
+        fechaCancelacion,
+        linkSesiones,
+      },
+    });
+  }
 }
