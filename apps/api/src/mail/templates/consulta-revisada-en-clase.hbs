@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  {{> styles}}
+</head>
+<body>
+  {{> header}}
+  <div class="content">
+    <p>Hola <strong>{{nombreAlumno}}</strong>,</p>
+    <p>Te informamos que durante la clase de consulta <strong>{{nombreClase}}</strong>, el docente <strong>{{nombreDocente}}</strong> ha revisado tus siguientes consultas:</p>
+
+    <div class="info-box">
+      <ul>
+        {{#each consultas}}
+          <li>{{this}}</li>
+        {{/each}}
+      </ul>
+    </div>
+
+    <p>Por favor, ingresa a la plataforma para valorar la respuesta y dar por resuelta la consulta.</p>
+
+    <div class="text-center mt-2">
+      <a href="{{linkConsultas}}" class="btn">Mis Consultas</a>
+    </div>
+  </div>
+  {{> footer}}
+</body>
+</html>

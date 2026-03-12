@@ -666,4 +666,38 @@ export class MailService implements OnModuleInit {
       });
     }
   }
+
+  // --- 15. CONSULTA REVISADA EN CLASE (Alumnos) ---
+  async enviarAvisoConsultaRevisadaEnClase(
+    destinatarios: {
+      email: string;
+      nombre: string;
+      consultas: string[]; // Títulos de sus consultas
+    }[],
+    datos: {
+      nombreClase: string;
+      nombreDocente: string;
+    },
+  ) {
+    const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const baseContext = await this.getBaseContext();
+    const linkConsultas = `${baseUrl}/my/consults`;
+
+    for (const alumno of destinatarios) {
+      await this.safeSendMail({
+        to: alumno.email,
+        subject: `✅ Consultas Revisadas en: ${datos.nombreClase}`,
+        template: 'consulta-revisada-en-clase',
+        context: {
+          ...baseContext,
+          emailTitle: 'Consulta Revisada',
+          nombreAlumno: alumno.nombre,
+          nombreClase: datos.nombreClase,
+          nombreDocente: datos.nombreDocente,
+          consultas: alumno.consultas,
+          linkConsultas,
+        },
+      });
+    }
+  }
 }

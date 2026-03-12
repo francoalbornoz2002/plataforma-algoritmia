@@ -774,7 +774,18 @@ export class ClasesConsultaService {
     // Obtenemos la clase y sus relaciones.
     const clase = await this.prisma.claseConsulta.findUnique({
       where: { id: idClase },
-      include: { consultasEnClase: true },
+      include: {
+        consultasEnClase: {
+          include: {
+            consulta: {
+              include: { alumno: { select: { email: true, nombre: true } } },
+            },
+          },
+        },
+        docenteResponsable: {
+          select: { nombre: true, apellido: true },
+        },
+      },
     });
 
     if (!clase) throw new NotFoundException('Clase no encontrada.');
@@ -827,6 +838,39 @@ export class ClasesConsultaService {
             where: { id: { in: Array.from(idsRevisadasSet) } },
             data: { estado: estado_consulta.Revisada },
           });
+
+          // --- NOTIFICACIÓN: Consultas Revisadas ---
+          // Agrupamos por alumno para no enviar múltiples correos al mismo estudiante
+          const alumnosMap = new Map<
+            string,
+            { email: string; nombre: string; consultas: string[] }
+          >();
+
+          clase.consultasEnClase.forEach((cc) => {
+            if (idsRevisadasSet.has(cc.idConsulta)) {
+              const c = cc.consulta;
+              if (c.alumno) {
+                if (!alumnosMap.has(c.idAlumno)) {
+                  alumnosMap.set(c.idAlumno, {
+                    email: c.alumno.email,
+                    nombre: c.alumno.nombre,
+                    consultas: [],
+                  });
+                }
+                alumnosMap.get(c.idAlumno)?.consultas.push(c.titulo);
+              }
+            }
+          });
+
+          const destinatarios = Array.from(alumnosMap.values());
+          if (destinatarios.length > 0) {
+            this.mailService.enviarAvisoConsultaRevisadaEnClase(destinatarios, {
+              nombreClase: clase.nombre,
+              nombreDocente: clase.docenteResponsable
+                ? `${clase.docenteResponsable.nombre} ${clase.docenteResponsable.apellido}`
+                : 'Docente',
+            });
+          }
         }
 
         // B.2. Devolvemos las NO REVISADAS a Pendiente
