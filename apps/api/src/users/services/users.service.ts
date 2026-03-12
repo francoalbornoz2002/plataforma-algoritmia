@@ -391,11 +391,7 @@ export class UsersService {
     // 1. Verificar si el usuario existe para obtener su foto actual (si vamos a cambiarla)
     let oldFotoUrl: string | null = null;
     if (fotoPerfil) {
-      const usuarioActual = await this.prisma.usuario.findUnique({
-        where: { id },
-        select: { fotoPerfilUrl: true },
-      });
-      if (usuarioActual) {
+      if (usuarioActual.fotoPerfilUrl) {
         oldFotoUrl = usuarioActual.fotoPerfilUrl;
       }
     }
@@ -443,7 +439,9 @@ export class UsersService {
       });
     }
 
-    return usuarioActualizado;
+    // Devolvemos el usuario sin la contraseña (SafeUser)
+    const { password, ...rest } = usuarioActualizado;
+    return rest;
   }
 
   async delete(id: string) {
