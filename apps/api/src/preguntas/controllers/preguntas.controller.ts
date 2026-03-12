@@ -62,7 +62,10 @@ export class PreguntasController {
 
   @Roles(roles.Docente)
   @Delete('delete/:id')
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.preguntasService.remove(id);
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    return this.preguntasService.remove(id, req.user.userId);
   }
 }

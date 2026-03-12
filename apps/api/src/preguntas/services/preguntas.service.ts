@@ -19,6 +19,13 @@ export class PreguntasService {
   async create(dto: CreatePreguntaDto, idDocente: string) {
     const { idDificultad, gradoDificultad, enunciado, opcionesRespuesta } = dto;
 
+    // Validar longitud del enunciado (según requisitos de diseño)
+    if (enunciado.length < 10) {
+      throw new BadRequestException(
+        'El enunciado debe tener al menos 10 caracteres.',
+      );
+    }
+
     // Validar si ya exite una pregunta con el mismo enunciado
     const preguntaExistente = await this.prisma.pregunta.findFirst({
       where: { enunciado: enunciado },
@@ -245,6 +252,13 @@ export class PreguntasService {
       );
     }
 
+    // Validar que la pregunta pertenezca al docente que intenta modificarla
+    if (pregunta.idDocente !== idDocente) {
+      throw new ForbiddenException(
+        'No tienes permiso para modificar esta pregunta.',
+      );
+    }
+
     try {
       // Verificamos si la pregunta ya fue utilizada en una sesión de refuerzo.
       const usoEnSesion = await this.prisma.preguntaSesion.count({
@@ -261,6 +275,13 @@ export class PreguntasService {
 
       // 1. Validamos que el nuevo enunciado no sea igual a los enunciados de otras preguntas
       if (enunciado) {
+        // Validar longitud
+        if (enunciado.length < 10) {
+          throw new BadRequestException(
+            'El enunciado debe tener al menos 10 caracteres.',
+          );
+        }
+
         const preguntaExistente = await this.prisma.pregunta.findFirst({
           where: {
             id: { not: idPregunta }, // Omitimos la pregunta actual
@@ -351,16 +372,34 @@ export class PreguntasService {
     }
   }
 
-  async remove(idPregunta: string) {
+  async remove(idPregunta: string, idDocente: string) {
     try {
       // 1. Verificamos que la pregunta exista y no esté ya eliminada
-      const pregunta = await this.prisma.pregunta.findFirst({
+      const pregunta = await this.prisma.pregunta.findUnique({
         where: { id: idPregunta, deletedAt: null },
       });
 
       if (!pregunta) {
         throw new NotFoundException(
           `La pregunta con ID "${idPregunta}" no fue encontrada o ya ha sido eliminada.`,
+        );
+      }
+
+      // Validar propiedad
+      if (pregunta.idDocente !== idDocente) {
+        throw new ForbiddenException(
+          'No tienes permiso para eliminar esta pregunta.',
+        );
+      }
+
+      // Validar uso en sesiones (Integridad histórica)
+      const usoEnSesion = await this.prisma.preguntaSesion.count({
+        where: { idPregunta: idPregunta },
+      });
+
+      if (usoEnSesion > 0) {
+        throw new ForbiddenException(
+          'No se puede eliminar una pregunta que ya ha sido utilizada en una sesión de refuerzo.',
         );
       }
 
