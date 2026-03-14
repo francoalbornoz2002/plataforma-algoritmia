@@ -360,6 +360,9 @@ export default function AuditPage() {
           <DatePicker
             label="Fecha Desde"
             value={filters.fechaDesde ? parseISO(filters.fechaDesde) : null}
+            maxDate={
+              filters.fechaHasta ? parseISO(filters.fechaHasta) : undefined
+            }
             onChange={(newDate) => handleDateChange("fechaDesde", newDate)}
             {...datePickerConfig}
             slotProps={{
@@ -378,6 +381,9 @@ export default function AuditPage() {
           <DatePicker
             label="Fecha Hasta"
             value={filters.fechaHasta ? parseISO(filters.fechaHasta) : null}
+            minDate={
+              filters.fechaDesde ? parseISO(filters.fechaDesde) : undefined
+            }
             onChange={(newDate) => handleDateChange("fechaHasta", newDate)}
             {...datePickerConfig}
             slotProps={{

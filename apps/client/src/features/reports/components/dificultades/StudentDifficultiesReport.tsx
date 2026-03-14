@@ -428,6 +428,16 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
                       ? new Date(filters.fechaDesde + "T00:00:00")
                       : null
                   }
+                  maxDate={
+                    filters.fechaHasta
+                      ? new Date(filters.fechaHasta + "T00:00:00")
+                      : undefined
+                  }
+                  minDate={
+                    filters.fechaDesde
+                      ? new Date(filters.fechaDesde + "T00:00:00")
+                      : undefined
+                  }
                   onChange={(val) =>
                     setFilters({
                       ...filters,

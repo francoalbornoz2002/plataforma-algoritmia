@@ -128,7 +128,6 @@ export default function CourseProgressSummary({ courseId }: Props) {
               },
             }}
             disableFuture
-            minDate={courseCreatedAt ? new Date(courseCreatedAt) : undefined}
           />
           {filters.fechaCorte && (
             <Button variant="text" size="small" onClick={handleClearFilter}>

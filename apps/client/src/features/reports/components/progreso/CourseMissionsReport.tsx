@@ -146,6 +146,16 @@ export default function CourseMissionsReport({ courseId }: Props) {
                 ? new Date(filters.fechaDesde + "T00:00:00")
                 : null
             }
+            maxDate={
+              filters.fechaHasta
+                ? new Date(filters.fechaHasta + "T00:00:00")
+                : undefined
+            }
+            minDate={
+              filters.fechaDesde
+                ? new Date(filters.fechaDesde + "T00:00:00")
+                : undefined
+            }
             onChange={(val) =>
               setFilters({
                 ...filters,
@@ -154,7 +164,6 @@ export default function CourseMissionsReport({ courseId }: Props) {
             }
             {...datePickerConfig}
             disableFuture
-            minDate={courseCreatedAt ? new Date(courseCreatedAt) : undefined}
           />
           <DatePicker
             label="Hasta"
@@ -171,7 +180,6 @@ export default function CourseMissionsReport({ courseId }: Props) {
             }
             {...datePickerConfig}
             disableFuture
-            minDate={courseCreatedAt ? new Date(courseCreatedAt) : undefined}
           />
           <FormControl size="small" sx={{ minWidth: 200 }}>
             <InputLabel>Dificultad</InputLabel>

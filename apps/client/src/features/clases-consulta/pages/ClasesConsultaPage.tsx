@@ -395,6 +395,7 @@ export default function ClasesConsultaPage() {
           <DatePicker
             label="Fecha Desde"
             value={fechaDesde}
+            maxDate={fechaHasta || undefined}
             onChange={setFechaDesde}
             slotProps={{
               textField: {
@@ -414,6 +415,7 @@ export default function ClasesConsultaPage() {
             label="Fecha Hasta"
             disableFuture
             value={fechaHasta}
+            minDate={fechaDesde || undefined}
             onChange={setFechaHasta}
             slotProps={{
               textField: {

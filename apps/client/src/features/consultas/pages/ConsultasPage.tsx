@@ -184,6 +184,7 @@ export default function ConsultasPage() {
           <DatePicker
             label="Desde"
             value={filters.fechaDesde}
+            maxDate={filters.fechaHasta || undefined}
             onChange={(newValue) => {
               setFilters((prev) => ({ ...prev, fechaDesde: newValue }));
               setPage(1);
@@ -206,6 +207,7 @@ export default function ConsultasPage() {
             label="Hasta"
             disableFuture
             value={filters.fechaHasta}
+            minDate={filters.fechaDesde || undefined}
             onChange={(newValue) => {
               setFilters((prev) => ({ ...prev, fechaHasta: newValue }));
               setPage(1);

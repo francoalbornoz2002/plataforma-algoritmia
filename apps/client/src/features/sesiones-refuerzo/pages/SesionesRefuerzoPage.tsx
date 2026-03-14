@@ -220,6 +220,7 @@ export default function SesionesRefuerzoPage() {
           <DatePicker
             label="Desde"
             value={dateFilters.fechaDesde}
+            maxDate={dateFilters.fechaHasta || undefined}
             onChange={(newValue) => {
               setDateFilters((prev) => ({ ...prev, fechaDesde: newValue }));
               setPagination((prev) => ({ ...prev, page: 1 }));
@@ -242,6 +243,7 @@ export default function SesionesRefuerzoPage() {
             label="Hasta"
             disableFuture
             value={dateFilters.fechaHasta}
+            minDate={dateFilters.fechaDesde || undefined}
             onChange={(newValue) => {
               setDateFilters((prev) => ({ ...prev, fechaHasta: newValue }));
               setPagination((prev) => ({ ...prev, page: 1 }));
