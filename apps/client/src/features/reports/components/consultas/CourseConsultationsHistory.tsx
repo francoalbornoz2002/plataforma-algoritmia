@@ -297,6 +297,7 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
             />
             <DatePicker
               label="Hasta"
+              disableFuture
               value={
                 filters.fechaHasta
                   ? new Date(filters.fechaHasta + "T00:00:00")

@@ -155,6 +155,7 @@ export default function CourseSessionsSummary({ courseId }: Props) {
           />
           <DatePicker
             label="Fecha Hasta"
+            disableFuture
             value={
               filters.fechaHasta
                 ? new Date(filters.fechaHasta + "T00:00:00")
