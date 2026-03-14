@@ -22,6 +22,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ReportesModule } from './reportes/reportes.module';
 import { PdfModule } from './pdf/pdf.module';
 import { ExcelModule } from './excel/excel.module';
+import { GameModule } from './game/game.module';
 
 const UPLOADS_PATH = join(process.cwd(), 'uploads');
 
@@ -57,6 +58,7 @@ const UPLOADS_PATH = join(process.cwd(), 'uploads');
     ReportesModule,
     PdfModule,
     ExcelModule,
+    GameModule,
   ],
   controllers: [],
   providers: [MailService],
