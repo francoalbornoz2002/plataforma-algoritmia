@@ -263,7 +263,7 @@ export default function MyProgressPage() {
 
             <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
               <DatePicker
-                label="Fecha de inicio"
+                label="Desde"
                 value={
                   filters.fechaDesde
                     ? new Date(filters.fechaDesde + "T00:00:00")
@@ -279,7 +279,7 @@ export default function MyProgressPage() {
                 disableFuture
               />
               <DatePicker
-                label="Fecha de fin"
+                label="Hasta"
                 value={
                   filters.fechaHasta
                     ? new Date(filters.fechaHasta + "T00:00:00")

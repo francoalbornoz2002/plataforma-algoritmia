@@ -240,6 +240,7 @@ export default function SesionesRefuerzoPage() {
           />
           <DatePicker
             label="Hasta"
+            disableFuture
             value={dateFilters.fechaHasta}
             onChange={(newValue) => {
               setDateFilters((prev) => ({ ...prev, fechaHasta: newValue }));

@@ -412,6 +412,7 @@ export default function ClasesConsultaPage() {
 
           <DatePicker
             label="Fecha Hasta"
+            disableFuture
             value={fechaHasta}
             onChange={setFechaHasta}
             slotProps={{

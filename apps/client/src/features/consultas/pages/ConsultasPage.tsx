@@ -204,6 +204,7 @@ export default function ConsultasPage() {
           />
           <DatePicker
             label="Hasta"
+            disableFuture
             value={filters.fechaHasta}
             onChange={(newValue) => {
               setFilters((prev) => ({ ...prev, fechaHasta: newValue }));
