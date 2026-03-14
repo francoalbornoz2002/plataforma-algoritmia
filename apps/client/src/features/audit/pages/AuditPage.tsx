@@ -392,7 +392,7 @@ export default function AuditPage() {
                 sx: { width: 170 },
               },
             }}
-            disableFuture={true}
+            disableFuture
           />
           <TextField
             label="Buscar (Tabla, ID, Usuario)..."
