@@ -411,7 +411,10 @@ export class PreguntasService {
         data: { deletedAt: new Date() },
       });
     } catch (error) {
-      if (error instanceof NotFoundException) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ForbiddenException
+      ) {
         throw error;
       }
       console.error(`Error al eliminar la pregunta ${idPregunta}:`, error);
