@@ -46,7 +46,7 @@ export default function ResultadoSesionView({
   } = sesion.resultadoSesion;
 
   const respuestasMap = new Map(
-    (respuestasAlumno || []).map((r) => [r.idPregunta, r.idOpcionElegida])
+    (respuestasAlumno || []).map((r) => [r.idPregunta, r.idOpcionElegida]),
   );
 
   const renderGradoChange = () => {
@@ -153,9 +153,11 @@ export default function ResultadoSesionView({
         {sesion.preguntas.map(({ pregunta }, index) => {
           const opcionElegidaId = respuestasMap.get(pregunta.id);
           const opcionCorrecta = pregunta.opcionesRespuesta.find(
-            (o) => o.esCorrecta
+            (o) => o.esCorrecta,
           );
-          const esCorrectaLaElegida = opcionElegidaId === opcionCorrecta?.id;
+          const noRespondio = !opcionElegidaId;
+          const esCorrectaLaElegida =
+            !noRespondio && opcionElegidaId === opcionCorrecta?.id;
 
           return (
             <Paper key={pregunta.id} variant="outlined" sx={{ p: 3 }}>
@@ -180,10 +182,28 @@ export default function ResultadoSesionView({
                   </Typography>
                 </Stack>
                 <Chip
-                  label={esCorrectaLaElegida ? "¡Correcta!" : "¡Incorrecta!"}
-                  color={esCorrectaLaElegida ? "success" : "error"}
+                  label={
+                    noRespondio
+                      ? "No respondió"
+                      : esCorrectaLaElegida
+                        ? "¡Correcta!"
+                        : "¡Incorrecta!"
+                  }
+                  color={
+                    noRespondio
+                      ? "default"
+                      : esCorrectaLaElegida
+                        ? "success"
+                        : "error"
+                  }
                   size="small"
-                  variant={esCorrectaLaElegida ? "filled" : "outlined"}
+                  variant={
+                    noRespondio
+                      ? "outlined"
+                      : esCorrectaLaElegida
+                        ? "filled"
+                        : "outlined"
+                  }
                 />
               </Stack>
 

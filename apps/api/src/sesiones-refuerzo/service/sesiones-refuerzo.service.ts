@@ -928,9 +928,22 @@ export class SesionesRefuerzoService {
         await tx.respuestaAlumno.createMany({ data: respuestasToSave });
       }
 
-      // 5. Finalizar Sesión (Completada o Incompleta si se pasó el tiempo)
+      // 5. Finalizar Sesión: Se marca como Incompleta solo si se agotó el tiempo límite de la sesión o la fecha absoluta.
+      let superoTiempoLimite = false;
+      if (sesion.fechaInicioReal) {
+        const limiteMs = sesion.tiempoLimite * 60 * 1000;
+        // 15 segundos de tolerancia para cubrir los 3 segundos del popup de frontend y la latencia de red.
+        const toleranciaMs = 15 * 1000;
+        const fechaFinPermitida = new Date(
+          sesion.fechaInicioReal.getTime() + limiteMs + toleranciaMs,
+        );
+        superoTiempoLimite = new Date() > fechaFinPermitida;
+      }
+
+      const superoFechaLimite = new Date() > sesion.fechaHoraLimite;
+
       const estadoFinal =
-        new Date() > sesion.fechaHoraLimite
+        superoTiempoLimite || superoFechaLimite
           ? estado_sesion.Incompleta
           : estado_sesion.Completada;
 

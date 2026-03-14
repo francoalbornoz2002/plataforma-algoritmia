@@ -71,6 +71,7 @@ export default function SesionResolverPage() {
   // --- Timer ---
   const [timeLeft, setTimeLeft] = useState<number | null>(null); // en segundos
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // --- Carga Inicial ---
   useEffect(() => {
@@ -200,12 +201,11 @@ export default function SesionResolverPage() {
     ) {
       // Tiempo agotado: Mostrar modal y luego enviar automáticamente tras 3 segundos
       setOpenTimeoutDialog(true);
-      const timeout = setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         setOpenConfirmDialog(false); // Cerramos el de confirmación si estaba abierto
         handleSubmit();
         setOpenTimeoutDialog(false);
       }, 3000);
-      return () => clearTimeout(timeout);
     }
 
     return () => {
@@ -218,6 +218,13 @@ export default function SesionResolverPage() {
     openTimeoutDialog,
     handleSubmit,
   ]);
+
+  // Limpiar el timeout al desmontar el componente por seguridad
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   // --- Prevent Accidental Navigation ---
   const isExamInProgress = timeLeft !== null && !finalResultData;
@@ -369,7 +376,11 @@ export default function SesionResolverPage() {
         {showConfetti && <Confetti recycle={false} />}
         <Paper elevation={3} sx={{ p: 4, textAlign: "center" }}>
           <Typography variant="h4" gutterBottom>
-            {showConfetti ? "¡Felicitaciones!" : "¡Sesión Completada!"}
+            {showConfetti
+              ? "¡Felicitaciones!"
+              : sesionData.estado === estado_sesion.Incompleta
+                ? "¡Sesión Incompleta!"
+                : "¡Sesión Completada!"}
           </Typography>
           <Box sx={{ my: 3 }}>
             <ResultadoSesionView

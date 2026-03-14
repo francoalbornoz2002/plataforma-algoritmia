@@ -8,6 +8,7 @@ import {
   CircularProgress,
   Alert,
   Divider,
+  Chip,
 } from "@mui/material";
 import { useState, useEffect } from "react";
 import { useCourseContext } from "../../../context/CourseContext";
@@ -15,6 +16,7 @@ import { findSesionById } from "../service/sesiones-refuerzo.service";
 import {
   type SesionRefuerzoResumen,
   type SesionRefuerzoConDetalles,
+  estado_sesion,
 } from "../../../types";
 import ResultadoSesionView from "./ResultadoSesionView";
 
@@ -56,6 +58,14 @@ export default function ResultadoSesionModal({
     >
       <DialogTitle>
         Resultados de la Sesión N° {sesionResumen.nroSesion}
+        {sesionResumen.estado === estado_sesion.Incompleta && (
+          <Chip
+            label="Incompleta"
+            color="warning"
+            size="small"
+            sx={{ ml: 2, verticalAlign: "middle" }}
+          />
+        )}
       </DialogTitle>
       <Divider />
       <DialogContent>

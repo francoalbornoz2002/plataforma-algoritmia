@@ -55,17 +55,17 @@ export default function PreguntaSesionAccordion({
           sx={{ width: "100%" }}
         >
           {/* Columna Izquierda: Enunciado y nombre de la dificultad */}
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="overline" color="text.secondary" noWrap>
+          <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="overline" color="text.secondary">
               {dificultad?.nombre || "Dificultad"}
             </Typography>
-            <Typography variant="subtitle1" noWrap>
+            <Typography variant="subtitle2" sx={{ wordBreak: "break-word" }}>
               {enunciado}
             </Typography>
-          </Box>
+          </Stack>
 
           {/* Columna Derecha: Chips de metadatos */}
-          <Box>
+          <Box sx={{ flexShrink: 0 }}>
             <Stack direction="row" spacing={1}>
               {dificultad?.tema && <TemaChip tema={dificultad.tema} small />}
               <GradeChip grado={gradoDificultad} texto="Grado" small />
@@ -100,7 +100,15 @@ export default function PreguntaSesionAccordion({
                       />
                     )}
                   </ListItemIcon>
-                  <ListItemText primary={opcion.textoOpcion} />
+                  <ListItemText
+                    primary={opcion.textoOpcion}
+                    primaryTypographyProps={{
+                      fontWeight: opcion.esCorrecta ? "bold" : "normal",
+                      color: opcion.esCorrecta
+                        ? "success.dark"
+                        : "text.primary",
+                    }}
+                  />
                 </ListItem>
               ))}
             </List>

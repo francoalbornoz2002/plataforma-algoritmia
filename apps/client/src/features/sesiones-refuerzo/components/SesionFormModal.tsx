@@ -381,6 +381,7 @@ export default function SesionFormModal({
                         slotProps={{
                           textField: {
                             ...datePickerConfig.slotProps.textField,
+                            size: "medium",
                             error: !!errors.fechaHoraLimite,
                             helperText: errors.fechaHoraLimite?.message,
                             fullWidth: true,
