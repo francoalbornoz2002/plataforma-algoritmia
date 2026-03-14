@@ -30,6 +30,7 @@ import { EstadoClaseChip } from "../../../components/EstadoClaseChip";
 
 interface ClaseConsultaCardProps {
   clase: ClaseConsulta;
+  currentUserId?: string;
   onEdit: (clase: ClaseConsulta) => void;
   onDelete: (clase: ClaseConsulta) => void;
   onViewDetails: (clase: ClaseConsulta) => void;
@@ -39,6 +40,7 @@ interface ClaseConsultaCardProps {
 
 export default function ClaseConsultaCard({
   clase,
+  currentUserId,
   onEdit,
   onDelete,
   onViewDetails,
@@ -76,10 +78,16 @@ export default function ClaseConsultaCard({
   // 'deletedAt' es el 'soft delete' (que también la pone en estado 'Cancelada')
   const isCanceled = !!deletedAt;
 
-  // 2. Bloqueo de Edición:
-  // Solo se edita si está programada Y NO ha empezado ni terminado por horario.
+  // 2. Validación de propietario
+  const isOwner = currentUserId ? clase.idDocente === currentUserId : false;
+
+  // 3. Bloqueo de Edición:
+  // Solo se edita si está programada Y NO ha empezado ni terminado por horario, Y es el dueño.
   const canEditOrDelete =
-    isProgramada && !isEnCurso && !isPorCerrar && !isCanceled;
+    isProgramada && !isEnCurso && !isPorCerrar && !isCanceled && isOwner;
+
+  // 4. Bloqueo de Finalización:
+  const canFinalize = isPorCerrar && !isCanceled && isOwner;
 
   // 1. Formateo de Fecha (el "hack" anti-UTC)
   const fechaString = fechaInicio.split("T")[0]; // "2025-11-11"
@@ -125,8 +133,12 @@ export default function ClaseConsultaCard({
     if (isCanceled) return "error.main";
     if (isPendienteAsignacion) return "warning.main";
     if (isEnCurso) return "success.main";
-    if (estadoVisual === estado_clase_consulta.Realizada) return "primary.main";
-    if (estadoVisual === estado_clase_consulta.Programada) return "info.main";
+    if (estadoVisual === estado_clase_consulta.Realizada) return "success.main";
+    if (estadoVisual === estado_clase_consulta.No_realizada)
+      return "error.main";
+    if (estadoVisual === estado_clase_consulta.Programada)
+      return "secondary.main";
+    if (estadoVisual === estado_clase_consulta.Finalizada) return "info.main";
     return "divider";
   };
 
@@ -358,8 +370,8 @@ export default function ClaseConsultaCard({
                 </>
               )}
 
-              {/* CASO 3: POR CERRAR -> FINALIZAR */}
-              {isPorCerrar && (
+              {/* CASO 3: POR CERRAR Y ES EL DUEÑO -> FINALIZAR */}
+              {canFinalize && (
                 <Button
                   size="small"
                   variant="contained"

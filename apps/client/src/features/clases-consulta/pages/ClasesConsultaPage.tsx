@@ -50,6 +50,7 @@ import ActionConfirmationDialog from "../components/ActionConfirmationDialog";
 import { FinalizarClaseModal } from "../components/FinalizarClaseModal";
 import HeaderPage from "../../../components/HeaderPage";
 import { datePickerConfig } from "../../../config/theme.config";
+import { useAuth } from "../../authentication/context/AuthProvider";
 
 // Tipos para los filtros
 type OrdenFiltro =
@@ -60,6 +61,7 @@ type OrdenFiltro =
 
 export default function ClasesConsultaPage() {
   const { selectedCourse, isReadOnly } = useCourseContext();
+  const { user } = useAuth();
 
   // --- Estados de Datos (Precarga) ---
   const [allClases, setAllClases] = useState<ClaseConsulta[]>([]);
@@ -518,6 +520,7 @@ export default function ClasesConsultaPage() {
                   <Grid size={{ xs: 12, sm: 6, md: 4 }} key={clase.id}>
                     <ClaseConsultaCard
                       clase={clase}
+                      currentUserId={user?.userId}
                       onEdit={!isReadOnly ? handleOpenEdit : () => {}}
                       onDelete={!isReadOnly ? setClaseToDelete : () => {}}
                       onViewDetails={setClaseToView}

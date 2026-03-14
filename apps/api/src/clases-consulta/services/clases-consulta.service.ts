@@ -416,6 +416,14 @@ export class ClasesConsultaService {
         );
       }
 
+      // Validar si es el docente responsable (o si es Admin)
+      if (
+        actual.idDocente !== user.userId &&
+        user.rol !== roles.Administrador
+      ) {
+        throw new ForbiddenException('No eres el responsable de esta clase.');
+      }
+
       this.validarBloqueoPorTiempo(actual);
 
       if (dto.idDocente) {
@@ -937,6 +945,11 @@ export class ClasesConsultaService {
     if (!clase) throw new NotFoundException('Clase no encontrada.');
 
     await checkDocenteAccess(this.prisma, user.userId, clase.idCurso);
+
+    // Validar si es el docente responsable
+    if (clase.idDocente !== user.userId && user.rol !== roles.Administrador) {
+      throw new ForbiddenException('No eres el responsable de esta clase.');
+    }
 
     // Validamos que la clase a cancelar esté programada.
     if (clase.estadoClase !== estado_clase_consulta.Programada) {
