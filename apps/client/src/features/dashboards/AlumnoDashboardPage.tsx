@@ -26,6 +26,7 @@ import { useAuth } from "../authentication/context/AuthProvider";
 import { useCourseContext } from "../../context/CourseContext";
 import { getStudentDashboardStats } from "../courses/services/courses.service";
 import CourseInfoCard from "./components/CourseInfoCard";
+import { getGameDownload } from "../game/services/game.service";
 import DashboardStatCard from "./components/DashboardStatCard";
 import DashboardTextCard from "./components/DashboardTextCard";
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
@@ -37,6 +38,7 @@ export default function AlumnoDashboardPage() {
 
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -55,6 +57,29 @@ export default function AlumnoDashboardPage() {
     };
     fetchStats();
   }, [selectedCourse]);
+
+  const handleDownloadGame = async () => {
+    setIsDownloading(true);
+    setError(null);
+    try {
+      const blob = await getGameDownload();
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "algoritmia-game.zip");
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      console.error("Error downloading game:", error);
+      setError(
+        error.response?.data?.message || "Error al descargar el videojuego.",
+      );
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   if (!selectedCourse) {
     return (
@@ -96,11 +121,18 @@ export default function AlumnoDashboardPage() {
           fullWidth
           variant="outlined"
           color="primary"
-          startIcon={<VideogameAsset />}
-          onClick={() => navigate("/my/download-game")}
+          startIcon={
+            isDownloading ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              <VideogameAsset />
+            )
+          }
+          onClick={handleDownloadGame}
+          disabled={isDownloading}
           sx={{ justifyContent: "flex-start", bgcolor: "background.paper" }}
         >
-          Descargar Videojuego
+          {isDownloading ? "Descargando..." : "Descargar Videojuego"}
         </Button>
         <Button
           fullWidth
