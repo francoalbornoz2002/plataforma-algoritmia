@@ -1,16 +1,27 @@
 import { ForbiddenException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma, roles } from '@prisma/client';
 
 /**
  * Valida si un docente tiene acceso a un curso.
  * Regla: Debe estar 'Activo' en la relación, O el curso debe estar finalizado (Historial).
+ * Excepción: Los Administradores tienen acceso total.
  */
 export async function checkDocenteAccess(
   tx: PrismaService | Prisma.TransactionClient,
   idDocente: string,
   idCurso: string,
 ) {
+  // Permiso global para Administradores
+  const user = await (tx as PrismaService).usuario.findUnique({
+    where: { id: idDocente },
+    select: { rol: true },
+  });
+
+  if (user?.rol === roles.Administrador) {
+    return;
+  }
+
   const asignacion = await (tx as PrismaService).docenteCurso.findUnique({
     where: {
       idDocente_idCurso: {
@@ -44,6 +55,16 @@ export async function checkAlumnoAccess(
   idAlumno: string,
   idCurso: string,
 ) {
+  // Permiso global para Administradores
+  const user = await (tx as PrismaService).usuario.findUnique({
+    where: { id: idAlumno },
+    select: { rol: true },
+  });
+
+  if (user?.rol === roles.Administrador) {
+    return;
+  }
+
   const inscripcion = await (tx as PrismaService).alumnoCurso.findUnique({
     where: {
       idAlumno_idCurso: {
