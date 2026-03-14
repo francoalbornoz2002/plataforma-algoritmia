@@ -9,6 +9,8 @@ import {
   Select,
   MenuItem,
   Alert,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format, parse } from "date-fns";
@@ -28,6 +30,7 @@ import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
 interface Props {
   courseId: string;
@@ -77,6 +80,14 @@ export default function CourseMissionsReport({ courseId }: Props) {
       ...filters,
       fechaDesde: start,
       fechaHasta: end,
+    });
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      dificultad: "",
+      fechaDesde: "",
+      fechaHasta: "",
     });
   };
 
@@ -196,6 +207,15 @@ export default function CourseMissionsReport({ courseId }: Props) {
               <MenuItem value={dificultad_mision.Dificil}>Difícil</MenuItem>
             </Select>
           </FormControl>
+          <Tooltip title="Limpiar filtros">
+            <IconButton
+              onClick={handleClearFilters}
+              size="small"
+              color="primary"
+            >
+              <FilterAltOffIcon />
+            </IconButton>
+          </Tooltip>
         </Stack>
 
         {error && (
@@ -281,6 +301,17 @@ export default function CourseMissionsReport({ courseId }: Props) {
               density="compact"
               sx={{ borderRadius: "0.7em" }}
               disableRowSelectionOnClick
+              slots={{
+                noRowsOverlay: () => (
+                  <Stack
+                    height="100%"
+                    alignItems="center"
+                    justifyContent="center"
+                  >
+                    No se encontraron misiones con los filtros aplicados.
+                  </Stack>
+                ),
+              }}
             />
           </Paper>
         </Stack>

@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import HistoryIcon from "@mui/icons-material/History";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 import { format, parse } from "date-fns";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { BarChart } from "@mui/x-charts/BarChart";
@@ -310,9 +311,15 @@ export default function CourseClassesHistory({ courseId }: Props) {
               sx={{ width: 300 }}
               isOptionEqualToValue={(option, value) => option.id === value.id}
             />
-            <Button variant="text" onClick={handleClearFilters}>
-              Limpiar
-            </Button>
+            <Tooltip title="Limpiar filtros">
+              <IconButton
+                onClick={handleClearFilters}
+                size="small"
+                color="primary"
+              >
+                <FilterAltOffIcon />
+              </IconButton>
+            </Tooltip>
           </Stack>
         </Stack>
 
@@ -418,6 +425,17 @@ export default function CourseClassesHistory({ courseId }: Props) {
                 }}
                 pageSizeOptions={[10, 25, 50]}
                 disableRowSelectionOnClick
+                slots={{
+                  noRowsOverlay: () => (
+                    <Stack
+                      height="100%"
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      No se encontraron clases con los filtros aplicados.
+                    </Stack>
+                  ),
+                }}
                 sx={{ borderRadius: "0.7em" }}
               />
             </Paper>

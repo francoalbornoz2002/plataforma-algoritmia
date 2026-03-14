@@ -9,6 +9,8 @@ import {
   Button,
   Grid,
   Divider,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
@@ -18,6 +20,7 @@ import FunctionsIcon from "@mui/icons-material/Functions";
 import TopicIcon from "@mui/icons-material/Topic";
 import WarningIcon from "@mui/icons-material/Warning";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 import {
   getCourseDifficultiesReport,
   type CourseDifficultiesReportFilters,
@@ -168,11 +171,15 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
             }}
             disableFuture
           />
-          {filters.fechaCorte && (
-            <Button variant="text" size="small" onClick={handleClearFilter}>
-              Ver Actual
-            </Button>
-          )}
+          <Tooltip title="Limpiar filtro (Ver Actual)">
+            <IconButton
+              onClick={handleClearFilter}
+              size="small"
+              color="primary"
+            >
+              <FilterAltOffIcon />
+            </IconButton>
+          </Tooltip>
         </Stack>
 
         {showLoading && (

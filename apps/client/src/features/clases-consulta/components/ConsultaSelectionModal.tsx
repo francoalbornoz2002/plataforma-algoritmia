@@ -7,6 +7,7 @@ import {
   Button,
   Box,
   Tooltip,
+  Stack,
   IconButton,
 } from "@mui/material";
 import {
@@ -50,7 +51,7 @@ export default function ConsultaSelectionModal({
   });
 
   const [viewingConsulta, setViewingConsulta] = useState<ConsultaSimple | null>(
-    null
+    null,
   );
 
   useEffect(() => {
@@ -130,6 +131,17 @@ export default function ConsultaSelectionModal({
               disableRowSelectionExcludeModel
               onRowSelectionModelChange={(newSelection) => {
                 setSelectionModel(newSelection);
+              }}
+              slots={{
+                noRowsOverlay: () => (
+                  <Stack
+                    height="100%"
+                    alignItems="center"
+                    justifyContent="center"
+                  >
+                    No hay consultas disponibles para seleccionar.
+                  </Stack>
+                ),
               }}
               rowSelectionModel={selectionModel}
               sx={{

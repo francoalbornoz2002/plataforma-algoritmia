@@ -12,6 +12,8 @@ import {
   FormControl,
   Select,
   MenuItem,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -24,6 +26,7 @@ import FunctionsIcon from "@mui/icons-material/Functions";
 import CategoryIcon from "@mui/icons-material/Category";
 import { PieChart } from "@mui/x-charts/PieChart";
 import { BarChart } from "@mui/x-charts/BarChart";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
 import {
   getCourseClassesSummary,
@@ -177,9 +180,15 @@ export default function CourseClassesSummary({ courseId }: Props) {
                 },
               }}
             />
-            <Button variant="text" onClick={handleClearFilters}>
-              Limpiar
-            </Button>
+            <Tooltip title="Limpiar filtros">
+              <IconButton
+                onClick={handleClearFilters}
+                size="small"
+                color="primary"
+              >
+                <FilterAltOffIcon />
+              </IconButton>
+            </Tooltip>
           </Stack>
         </Stack>
 

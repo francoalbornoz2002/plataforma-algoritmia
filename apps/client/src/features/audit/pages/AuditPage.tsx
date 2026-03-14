@@ -465,6 +465,17 @@ export default function AuditPage() {
             sortingMode="server"
             sortModel={sortModel}
             onSortModelChange={setSortModel}
+            slots={{
+              noRowsOverlay: () => (
+                <Stack
+                  height="100%"
+                  alignItems="center"
+                  justifyContent="center"
+                >
+                  No se encontraron registros de auditoría.
+                </Stack>
+              ),
+            }}
             sx={{
               // Desactivamos los 'outline' de foco
               "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {

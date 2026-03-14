@@ -19,6 +19,8 @@ import {
   Autocomplete,
   TextField,
   Chip,
+  IconButton,
+  Tooltip,
   type SelectChangeEvent,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -27,6 +29,7 @@ import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
 import FunctionsIcon from "@mui/icons-material/Functions";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 import DateRangeIcon from "@mui/icons-material/DateRange";
 
 import {
@@ -391,9 +394,15 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
               )}
               sx={{ width: 300 }}
             />
-            <Button variant="text" onClick={handleClearFilters}>
-              Limpiar
-            </Button>
+            <Tooltip title="Limpiar filtros">
+              <IconButton
+                onClick={handleClearFilters}
+                size="small"
+                color="primary"
+              >
+                <FilterAltOffIcon />
+              </IconButton>
+            </Tooltip>
           </Stack>
         </Stack>
 
@@ -492,6 +501,17 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
                 }}
                 pageSizeOptions={[10, 25, 50]}
                 disableRowSelectionOnClick
+                slots={{
+                  noRowsOverlay: () => (
+                    <Stack
+                      height="100%"
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      No se encontraron consultas con los filtros aplicados.
+                    </Stack>
+                  ),
+                }}
                 sx={{ borderRadius: "12px" }}
               />
             </Paper>

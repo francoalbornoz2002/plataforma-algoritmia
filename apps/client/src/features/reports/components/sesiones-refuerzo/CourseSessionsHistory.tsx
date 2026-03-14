@@ -22,6 +22,7 @@ import { format, parse } from "date-fns";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
 import InfoIcon from "@mui/icons-material/Info";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import HistoryIcon from "@mui/icons-material/History";
 
@@ -400,9 +401,15 @@ export default function CourseSessionsHistory({ courseId }: Props) {
               </Select>
             </FormControl>
 
-            <Button variant="text" onClick={handleClearFilters}>
-              Limpiar
-            </Button>
+            <Tooltip title="Limpiar filtros">
+              <IconButton
+                onClick={handleClearFilters}
+                size="small"
+                color="primary"
+              >
+                <FilterAltOffIcon />
+              </IconButton>
+            </Tooltip>
           </Stack>
 
           {/* Filtros Avanzados (Fila 2) */}
@@ -570,6 +577,17 @@ export default function CourseSessionsHistory({ courseId }: Props) {
                 }}
                 pageSizeOptions={[10, 25, 50]}
                 disableRowSelectionOnClick
+                slots={{
+                  noRowsOverlay: () => (
+                    <Stack
+                      height="100%"
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      No se encontraron sesiones con los filtros aplicados.
+                    </Stack>
+                  ),
+                }}
               />
             </Paper>
           </Stack>

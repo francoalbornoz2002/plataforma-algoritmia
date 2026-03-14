@@ -20,6 +20,8 @@ import {
   OutlinedInput,
   Alert,
   LinearProgress,
+  IconButton,
+  Tooltip,
   type SelectChangeEvent,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -31,6 +33,7 @@ import VideogameAssetIcon from "@mui/icons-material/VideogameAsset";
 import SchoolIcon from "@mui/icons-material/School";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 import PersonIcon from "@mui/icons-material/Person";
 
 import {
@@ -530,7 +533,15 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
                     ))}
                   </Select>
                 </FormControl>
-                <Button onClick={handleClearFilters}>Limpiar</Button>
+                <Tooltip title="Limpiar filtros">
+                  <IconButton
+                    onClick={handleClearFilters}
+                    size="small"
+                    color="primary"
+                  >
+                    <FilterAltOffIcon />
+                  </IconButton>
+                </Tooltip>
               </Stack>
             </Stack>
           </Box>
@@ -791,6 +802,17 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
                 columns={historyColumns}
                 getRowId={(row) => row.id}
                 density="compact"
+                slots={{
+                  noRowsOverlay: () => (
+                    <Stack
+                      height="100%"
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      No hay historial de cambios para mostrar.
+                    </Stack>
+                  ),
+                }}
                 initialState={{
                   pagination: { paginationModel: { pageSize: 10 } },
                 }}

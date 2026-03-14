@@ -18,6 +18,8 @@ import {
   ListItemText,
   OutlinedInput,
   Grid,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
@@ -26,6 +28,7 @@ import SchoolIcon from "@mui/icons-material/School";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import HistoryIcon from "@mui/icons-material/History";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
 import {
@@ -471,9 +474,15 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
               </Select>
             </FormControl>
 
-            <Button variant="text" onClick={handleClearFilters}>
-              Limpiar
-            </Button>
+            <Tooltip title="Limpiar filtros">
+              <IconButton
+                onClick={handleClearFilters}
+                size="small"
+                color="primary"
+              >
+                <FilterAltOffIcon />
+              </IconButton>
+            </Tooltip>
           </Stack>
         </Stack>
 
@@ -643,6 +652,18 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
                     <DataGrid
                       rows={data.tabla}
                       columns={columns}
+                      slots={{
+                        noRowsOverlay: () => (
+                          <Stack
+                            height="100%"
+                            alignItems="center"
+                            justifyContent="center"
+                          >
+                            No se encontraron registros con los filtros
+                            aplicados.
+                          </Stack>
+                        ),
+                      }}
                       getRowId={(row) => row.id}
                       density="compact"
                       disableRowSelectionOnClick

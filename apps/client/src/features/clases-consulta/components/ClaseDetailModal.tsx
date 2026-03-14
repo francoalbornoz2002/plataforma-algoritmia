@@ -10,6 +10,7 @@ import {
   Box,
   Chip,
   Alert,
+  Stack,
   Typography,
 } from "@mui/material";
 import DescriptionIcon from "@mui/icons-material/Description";
@@ -180,6 +181,17 @@ export default function ClaseDetailModal({
               rows={rows}
               columns={columns}
               disableRowSelectionOnClick
+              slots={{
+                noRowsOverlay: () => (
+                  <Stack
+                    height="100%"
+                    alignItems="center"
+                    justifyContent="center"
+                  >
+                    No hay consultas asignadas a esta clase.
+                  </Stack>
+                ),
+              }}
               pageSizeOptions={[5, 10, 25]}
               getRowId={(row) => row.id}
               sx={{

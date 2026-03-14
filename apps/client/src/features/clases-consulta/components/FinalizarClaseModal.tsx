@@ -15,6 +15,7 @@ import {
   Alert,
   CircularProgress,
   Tooltip,
+  Stack,
   IconButton,
 } from "@mui/material";
 import {
@@ -68,7 +69,7 @@ export const FinalizarClaseModal = ({
 
   // Estado para ver detalles
   const [viewingConsulta, setViewingConsulta] = useState<ConsultaSimple | null>(
-    null
+    null,
   );
 
   // 1. Preparamos los datos para el DataGrid
@@ -214,6 +215,17 @@ export const FinalizarClaseModal = ({
                   rowSelectionModel={selectionModel}
                   onRowSelectionModelChange={(newSelection) => {
                     setSelectionModel(newSelection);
+                  }}
+                  slots={{
+                    noRowsOverlay: () => (
+                      <Stack
+                        height="100%"
+                        alignItems="center"
+                        justifyContent="center"
+                      >
+                        Esta clase no tiene consultas asignadas.
+                      </Stack>
+                    ),
                   }}
                   // Opciones visuales
                   pageSizeOptions={[5, 10]}

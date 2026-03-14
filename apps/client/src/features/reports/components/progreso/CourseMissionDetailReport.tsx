@@ -10,6 +10,8 @@ import {
   MenuItem,
   Alert,
   Grid,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format, parse } from "date-fns";
@@ -30,6 +32,7 @@ import ReplayIcon from "@mui/icons-material/Replay";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
 interface Props {
   courseId: string;
@@ -91,6 +94,15 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
       ...filters,
       fechaDesde: start,
       fechaHasta: end,
+    });
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      misionId: "",
+      dificultad: "",
+      fechaDesde: "",
+      fechaHasta: "",
     });
   };
 
@@ -221,6 +233,15 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
             {...datePickerConfig}
             disableFuture
           />
+          <Tooltip title="Limpiar filtros">
+            <IconButton
+              onClick={handleClearFilters}
+              size="small"
+              color="primary"
+            >
+              <FilterAltOffIcon />
+            </IconButton>
+          </Tooltip>
         </Stack>
 
         {error && (
@@ -355,6 +376,17 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
                     loading={loading}
                     density="compact"
                     disableRowSelectionOnClick
+                    slots={{
+                      noRowsOverlay: () => (
+                        <Stack
+                          height="100%"
+                          alignItems="center"
+                          justifyContent="center"
+                        >
+                          No hay alumnos que hayan completado esta misión.
+                        </Stack>
+                      ),
+                    }}
                     sx={{ flex: 1, borderRadius: "0.7em" }}
                   />
                 </Paper>
