@@ -8,6 +8,8 @@ import {
   Button,
   Alert,
   CircularProgress,
+  LinearProgress,
+  Divider,
 } from "@mui/material";
 import {
   TrendingUp,
@@ -27,9 +29,65 @@ import { useCourseContext } from "../../context/CourseContext";
 import { getStudentDashboardStats } from "../courses/services/courses.service";
 import CourseInfoCard from "./components/CourseInfoCard";
 import { getGameDownload } from "../game/services/game.service";
-import DashboardStatCard from "./components/DashboardStatCard";
 import DashboardTextCard from "./components/DashboardTextCard";
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
+import DashboardStatCard from "./components/DashboardStatCard";
+
+// --- Componente Auxiliar Visual ---
+const ProgressItem = ({
+  title,
+  percent,
+  color,
+  valueText,
+}: {
+  title: string;
+  percent: number;
+  color:
+    | "primary"
+    | "secondary"
+    | "error"
+    | "info"
+    | "success"
+    | "warning"
+    | "inherit";
+  valueText: string;
+}) => (
+  <Box sx={{ mb: 1 }}>
+    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+      <Typography variant="body2" color="text.secondary" fontWeight="medium">
+        {title}
+      </Typography>
+      <Typography variant="body2" color="text.secondary" fontWeight="bold">
+        {valueText}
+      </Typography>
+    </Box>
+    <LinearProgress
+      variant="determinate"
+      value={percent}
+      color={color}
+      sx={{ height: 8, borderRadius: 4 }}
+    />
+  </Box>
+);
+
+const formatClassTime = (inicio: string, fin: string) => {
+  const start = new Date(inicio);
+  const end = new Date(fin);
+  const dd = String(start.getDate()).padStart(2, "0");
+  const mm = String(start.getMonth() + 1).padStart(2, "0");
+  const yy = String(start.getFullYear()).slice(-2);
+  const startHHmm = start.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const endHHmm = end.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  return `${dd}/${mm}/${yy} de ${startHHmm} a ${endHHmm}`;
+};
 
 export default function AlumnoDashboardPage() {
   const { profile } = useAuth();
@@ -96,7 +154,7 @@ export default function AlumnoDashboardPage() {
   }
 
   return (
-    <Stack spacing={3} sx={{ height: "100%" }}>
+    <Stack spacing={3}>
       {/* HEADER */}
       <Paper
         elevation={3}
@@ -207,7 +265,7 @@ export default function AlumnoDashboardPage() {
 
       {/* --- COLUMNA IZQUIERDA (Principal) --- */}
       <Grid container spacing={3}>
-        {/* 1. INFO DEL CURSO */}
+        {/* LADO IZQUIERDO: INFO DEL CURSO */}
         <Grid size={{ xs: 12, md: 6 }}>
           <CourseInfoCard
             course={selectedCourse}
@@ -216,92 +274,116 @@ export default function AlumnoDashboardPage() {
           />
         </Grid>
 
-        {/* 2. GRÁFICO DE PROGRESO */}
-        <Grid size={{ xs: 12, md: 3 }}>
-          <Stack spacing={2} sx={{ height: "100%" }}>
-            <Paper
-              elevation={2}
-              sx={{
-                p: 2,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                borderTop: "4px solid",
-                borderColor: "success.main",
-              }}
-            >
-              <Typography
-                variant="subtitle2"
-                color="text.secondary"
-                fontWeight="bold"
-                gutterBottom
-              >
-                Mi Progreso General
-              </Typography>
-              <Gauge
-                value={stats?.progresoPct ?? 0}
-                cornerRadius="50%"
+        {/* LADO DERECHO: RENDIMIENTO Y ESTADÍSTICAS */}
+        <Grid size={{ xs: 12, md: 6 }}>
+          {/* 1. GAUGE Y MISIONES */}
+          <Grid container spacing={2} sx={{ height: "100%" }}>
+            <Grid size={{ xs: 6 }}>
+              <Paper
+                elevation={2}
                 sx={{
-                  [`& .${gaugeClasses.valueText}`]: {
-                    fontSize: 28,
-                    fontWeight: "bold",
-                  },
-                  [`& .${gaugeClasses.valueArc}`]: {
-                    fill: "#4caf50",
-                  },
+                  p: 3,
+                  borderTop: "4px solid",
+                  borderColor: "success.main",
+                  height: "100%",
                 }}
-                text={({ value }) => `${value?.toFixed(1)}%`}
-              />
-            </Paper>
-            {/* 4. PRÓXIMA CLASE */}
-            <DashboardTextCard
-              title="Próxima Clase de Consulta"
-              value={
-                stats?.proximaClase
-                  ? new Date(stats.proximaClase.fechaInicio).toLocaleString()
-                  : "No hay clases programadas"
-              }
-              description={
-                stats?.proximaClase
-                  ? `Modalidad: ${stats.proximaClase.modalidad}`
-                  : "Estate atento a las próximas clases"
-              }
-              icon={<Event />}
-              color="primary"
-            />
-          </Stack>
-        </Grid>
-        {/* 3. ESTADÍSTICAS UNIFICADAS Y NUEVAS */}
-        <Grid size={{ xs: 12, md: 3 }}>
-          <Stack spacing={2}>
-            <DashboardStatCard
-              title="Misiones Completadas"
-              value={`${stats?.misiones.hoy ?? 0} / ${stats?.misiones.semana ?? 0}`}
-              subtitle="Hoy vs. Esta semana"
-              icon={<TrendingUp />}
-              color="success"
-              week
-            />
-            <DashboardStatCard
-              title="Dificultades Activas"
-              value={stats?.dificultades.activas ?? 0}
-              subtitle={
-                stats?.dificultades.ultimaAlta
-                  ? `Última alta: ${stats.dificultades.ultimaAlta}`
-                  : "Sin dificultades críticas"
-              }
-              icon={<AssignmentLate />}
-              color="error"
-            />
-            <DashboardStatCard
-              title="Consultas Realizadas"
-              value={stats?.totalConsultas ?? 0}
-              subtitle="Total acumulado"
-              icon={<QuestionAnswer />}
-              color="info"
-            />
-          </Stack>
+              >
+                <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+                  <Assessment color="success" sx={{ mr: 1 }} />
+                  <Typography
+                    variant="h6"
+                    color="success.main"
+                    fontWeight="bold"
+                  >
+                    Mi Rendimiento
+                  </Typography>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
+                  <Gauge
+                    value={stats?.progresoPct ?? 0}
+                    height={160}
+                    cornerRadius="50%"
+                    sx={{
+                      [`& .${gaugeClasses.valueText}`]: {
+                        fontSize: 28,
+                        fontWeight: "bold",
+                      },
+                      [`& .${gaugeClasses.valueArc}`]: {
+                        fill: "#4caf50",
+                      },
+                    }}
+                    text={({ value }) => `${value?.toFixed(1)}%`}
+                  />
+                </Box>
+
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  gutterBottom
+                >
+                  Actividad Reciente
+                </Typography>
+                <ProgressItem
+                  title="Misiones: Hoy vs Semana"
+                  percent={
+                    stats?.misiones.semana
+                      ? (stats.misiones.hoy / stats.misiones.semana) * 100
+                      : 0
+                  }
+                  color="success"
+                  valueText={`${stats?.misiones.hoy ?? 0} / ${stats?.misiones.semana ?? 0}`}
+                />
+              </Paper>
+            </Grid>
+            {/* 2. DIFICULTADES Y CONSULTAS (Dividido en dos) */}
+            <Grid size={{ xs: 6 }}>
+              <Stack
+                spacing={3}
+                justifyContent="space-between"
+                sx={{ height: "100%" }}
+              >
+                <DashboardStatCard
+                  title="Dificultades"
+                  value={String(stats?.dificultades.activas ?? 0)}
+                  subtitle={
+                    stats?.dificultades.ultimaAlta
+                      ? `Alta: ${stats.dificultades.ultimaAlta}`
+                      : "Sin estado crítico"
+                  }
+                  icon={<AssignmentLate />}
+                  color="error"
+                  small
+                />
+                <DashboardStatCard
+                  title="Consultas"
+                  value={String(stats?.totalConsultas ?? 0)}
+                  subtitle="Realizadas"
+                  icon={<QuestionAnswer />}
+                  color="info"
+                  small
+                />
+                {/* 3. PRÓXIMA CLASE (Ancho completo) */}
+                <DashboardTextCard
+                  title="Próxima Clase de Consulta"
+                  value={
+                    stats?.proximaClase
+                      ? formatClassTime(
+                          stats.proximaClase.fechaInicio,
+                          stats.proximaClase.fechaFin,
+                        )
+                      : "No hay clases programadas"
+                  }
+                  description={
+                    stats?.proximaClase
+                      ? `Modalidad: ${stats.proximaClase.modalidad}`
+                      : "Estate atento a las próximas clases"
+                  }
+                  icon={<Event />}
+                  color="primary"
+                />
+              </Stack>
+            </Grid>
+          </Grid>
         </Grid>
       </Grid>
     </Stack>

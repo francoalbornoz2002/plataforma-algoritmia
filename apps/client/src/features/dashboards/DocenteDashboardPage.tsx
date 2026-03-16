@@ -16,10 +16,10 @@ import {
   ListItemText,
   TextField,
   InputAdornment,
-  Divider,
   Dialog,
+  LinearProgress,
+  Divider,
 } from "@mui/material";
-import DashboardStatCard from "./components/DashboardStatCard";
 import DashboardTextCard from "./components/DashboardTextCard";
 import CourseInfoCard from "./components/CourseInfoCard";
 
@@ -43,6 +43,7 @@ import {
 import { useAuth } from "../authentication/context/AuthProvider";
 import {
   Assessment,
+  AssignmentLate,
   Class,
   Delete,
   Event,
@@ -50,16 +51,172 @@ import {
   MarkUnreadChatAlt,
   School,
   Search,
+  SwitchAccessShortcutAdd,
   TrendingUp,
   Warning,
 } from "@mui/icons-material";
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
-import { PieChart } from "@mui/x-charts/PieChart";
 import MissionCard from "../progress/components/MissionCard";
 import {
   EstadoConsultaLabels,
   EstadoSesionLabels,
 } from "../../types/traducciones";
+
+// --- Componentes Auxiliares Visuales ---
+
+const DistributionBar = ({
+  items,
+}: {
+  items: { label: string; value: number; color: string }[];
+}) => {
+  const total = items.reduce((acc, curr) => acc + curr.value, 0);
+  if (total === 0)
+    return (
+      <Typography variant="body2" color="text.secondary">
+        Sin datos
+      </Typography>
+    );
+
+  return (
+    <Box sx={{ width: "100%", mb: 1 }}>
+      <Box
+        sx={{
+          display: "flex",
+          width: "100%",
+          height: 16,
+          borderRadius: 2,
+          overflow: "hidden",
+          mb: 1.5,
+        }}
+      >
+        {items.map((item, index) => (
+          <Box
+            key={index}
+            sx={{
+              width: `${(item.value / total) * 100}%`,
+              bgcolor: item.color,
+            }}
+            title={`${item.label}: ${item.value}`}
+          />
+        ))}
+      </Box>
+      <Stack
+        direction="row"
+        spacing={2}
+        flexWrap="wrap"
+        useFlexGap
+        sx={{ rowGap: 1 }}
+      >
+        {items.map((item, index) => (
+          <Box key={index} sx={{ display: "flex", alignItems: "center" }}>
+            <Box
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: "50%",
+                bgcolor: item.color,
+                mr: 1,
+              }}
+            />
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              fontWeight="medium"
+            >
+              {item.label}: {item.value}
+            </Typography>
+          </Box>
+        ))}
+      </Stack>
+    </Box>
+  );
+};
+
+const ProgressItem = ({
+  title,
+  percent,
+  color,
+  valueText,
+}: {
+  title: string;
+  percent: number;
+  color:
+    | "primary"
+    | "secondary"
+    | "error"
+    | "info"
+    | "success"
+    | "warning"
+    | "inherit";
+  valueText: string;
+}) => (
+  <Box sx={{ mb: 1 }}>
+    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
+      <Typography variant="body2" color="text.secondary" fontWeight="medium">
+        {title}
+      </Typography>
+      <Typography variant="body2" color="text.secondary" fontWeight="bold">
+        {valueText}
+      </Typography>
+    </Box>
+    <LinearProgress
+      variant="determinate"
+      value={percent}
+      color={color}
+      sx={{ height: 8, borderRadius: 4 }}
+    />
+  </Box>
+);
+
+// --- Helpers de Color ---
+const getDificultadColor = (label: string) => {
+  if (label === "Bajo") return "#4caf50";
+  if (label === "Medio") return "#ff9800";
+  if (label === "Alto") return "#f44336";
+  return "#9e9e9e";
+};
+
+const getEstadoSesionColor = (estado: string) => {
+  const map: Record<string, string> = {
+    Pendiente: "#ff9800",
+    Completada: "#4caf50",
+    Cancelada: "#f44336",
+    En_curso: "#03a9f4",
+    Incompleta: "#9c27b0",
+    No_realizada: "#9e9e9e",
+  };
+  return map[estado] || "#9e9e9e";
+};
+
+const getEstadoConsultaColor = (estado: string) => {
+  const map: Record<string, string> = {
+    Pendiente: "#ff9800",
+    Resuelta: "#4caf50",
+    No_resuelta: "#f44336",
+    A_revisar: "#03a9f4",
+    Revisada: "#9c27b0",
+  };
+  return map[estado] || "#9e9e9e";
+};
+
+const formatClassTime = (inicio: string, fin: string) => {
+  const start = new Date(inicio);
+  const end = new Date(fin);
+  const dd = String(start.getDate()).padStart(2, "0");
+  const mm = String(start.getMonth() + 1).padStart(2, "0");
+  const yy = String(start.getFullYear()).slice(-2);
+  const startHHmm = start.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const endHHmm = end.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  return `${dd}/${mm}/${yy} de ${startHHmm} a ${endHHmm}`;
+};
 
 export default function DocenteDashboardPage() {
   const { selectedCourse, isReadOnly, refreshCourse } = useCourseContext();
@@ -390,9 +547,12 @@ export default function DocenteDashboardPage() {
               height: "100%",
             }}
           >
-            <Typography variant="h6" gutterBottom color="success.main">
-              Progreso del Curso
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <Assessment color="success" sx={{ mr: 1 }} />
+              <Typography variant="h6" color="success.main" fontWeight="bold">
+                Progreso del Curso
+              </Typography>
+            </Box>
             <Grid container spacing={3} alignItems="center">
               <Grid size={{ xs: 12, sm: 5 }}>
                 <Gauge
@@ -410,19 +570,32 @@ export default function DocenteDashboardPage() {
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 7 }}>
-                <Stack spacing={1}>
-                  <DashboardStatCard
-                    title="Misiones"
-                    value={`${stats?.today.misionesCompletadas ?? 0} / ${stats?.week.misionesCompletadas ?? 0}`}
-                    subtitle="Hoy vs Semana"
-                    icon={<TrendingUp />}
-                    color="success"
-                    small
-                  />
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  gutterBottom
+                >
+                  Actividad Reciente
+                </Typography>
+                <ProgressItem
+                  title="Misiones: Hoy vs Semana"
+                  percent={
+                    stats?.week.misionesCompletadas
+                      ? (stats.today.misionesCompletadas /
+                          stats.week.misionesCompletadas) *
+                        100
+                      : 0
+                  }
+                  color="success"
+                  valueText={`${stats?.today.misionesCompletadas ?? 0} / ${stats?.week.misionesCompletadas ?? 0}`}
+                />
+
+                <Divider sx={{ my: 2 }} />
+
+                <Grid container spacing={2}>
                   <Tooltip title="Ver detalles de la misión">
-                    <Box>
+                    <Grid size={{ xs: 6 }}>
                       <DashboardTextCard
-                        title="Misión más difícil"
                         value={
                           stats?.week.misionMasDificil
                             ? `Misión N° ${stats.week.misionMasDificil.numero}`
@@ -435,17 +608,20 @@ export default function DocenteDashboardPage() {
                           stats?.week.misionMasDificil &&
                           setSelectedMission(stats.week.misionMasDificil)
                         }
+                        title="Misión difícil"
                       />
-                    </Box>
+                    </Grid>
                   </Tooltip>
-                  <DashboardTextCard
-                    title="Alumno más activo"
-                    value={stats?.week.alumnoMasActivo || "Ninguno"}
-                    icon={<School />}
-                    color="secondary"
-                    small
-                  />
-                </Stack>
+                  <Grid size={{ xs: 6 }}>
+                    <DashboardTextCard
+                      title="Alumno más activo"
+                      value={stats?.week.alumnoMasActivo || "Ninguno"}
+                      icon={<School />}
+                      color="secondary"
+                      small
+                    />
+                  </Grid>
+                </Grid>
               </Grid>
             </Grid>
           </Paper>
@@ -463,49 +639,46 @@ export default function DocenteDashboardPage() {
               alignContent: "center",
             }}
           >
-            <Typography variant="h6" gutterBottom color="error.main">
-              Dificultades Detectadas
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <AssignmentLate color="error" sx={{ mr: 1 }} />
+              <Typography variant="h6" color="error.main" fontWeight="bold">
+                Dificultades Detectadas
+              </Typography>
+            </Box>
+
+            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+              Distribución por Grado
             </Typography>
-            <Grid container spacing={3} alignItems="center">
-              <Grid size={{ xs: 12, sm: 5 }}>
-                <PieChart
-                  series={[
-                    {
-                      data:
-                        stats?.dificultadesPorGrado?.map((d) => ({
-                          ...d,
-                          color:
-                            d.label === "Bajo"
-                              ? "#4caf50"
-                              : d.label === "Medio"
-                                ? "#ff9800"
-                                : d.label === "Alto"
-                                  ? "#f44336"
-                                  : "#9e9e9e",
-                        })) ?? [],
-                      innerRadius: 30,
-                    },
-                  ]}
-                  height={200}
+            <DistributionBar
+              items={
+                stats?.dificultadesPorGrado?.map((d) => ({
+                  label: d.label,
+                  value: d.value,
+                  color: getDificultadColor(d.label),
+                })) ?? []
+              }
+            />
+
+            <Divider sx={{ my: 2 }} />
+
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 6 }}>
+                <DashboardTextCard
+                  title="Frecuente"
+                  value={stats?.week.dificultadMasDetectada || "Ninguna"}
+                  icon={<Warning />}
+                  color="error"
+                  small
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 7 }}>
-                <Stack spacing={1}>
-                  <DashboardTextCard
-                    title="Frecuente"
-                    value={stats?.week.dificultadMasDetectada || "Ninguna"}
-                    icon={<Warning />}
-                    color="error"
-                    small
-                  />
-                  <DashboardTextCard
-                    title="Alumno con más dificultades"
-                    value={stats?.alumnoMasDificultades || "Ninguno"}
-                    icon={<School />}
-                    color="warning"
-                    small
-                  />
-                </Stack>
+              <Grid size={{ xs: 6 }}>
+                <DashboardTextCard
+                  title="Alumno con más dificultades"
+                  value={stats?.alumnoMasDificultades || "Ninguno"}
+                  icon={<School />}
+                  color="warning"
+                  small
+                />
               </Grid>
             </Grid>
           </Paper>
@@ -525,54 +698,46 @@ export default function DocenteDashboardPage() {
               alignContent: "center",
             }}
           >
-            <Typography variant="h6" gutterBottom color="#9c27b0">
-              Sesiones de Refuerzo
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <SwitchAccessShortcutAdd sx={{ color: "#9c27b0", mr: 1 }} />
+              <Typography variant="h6" color="#9c27b0" fontWeight="bold">
+                Sesiones de Refuerzo
+              </Typography>
+            </Box>
+
+            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+              Por Estado
             </Typography>
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="caption" align="center" display="block">
-                  Por Estado
-                </Typography>
-                <PieChart
-                  series={[
-                    {
-                      data:
-                        stats?.sesionesPorEstado?.map((s) => ({
-                          ...s,
-                          label:
-                            EstadoSesionLabels[s.label as estado_sesion] ||
-                            s.label,
-                        })) ?? [],
-                    },
-                  ]}
-                  height={170}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography variant="caption" align="center" display="block">
-                  Por Origen
-                </Typography>
-                <PieChart
-                  series={[
-                    {
-                      data: [
-                        {
-                          label: "Sistema",
-                          value: stats?.sesionesPorOrigen.sistema ?? 0,
-                          color: "#9c27b0",
-                        },
-                        {
-                          label: "Docente",
-                          value: stats?.sesionesPorOrigen.docente ?? 0,
-                          color: "#ff9800",
-                        },
-                      ],
-                    },
-                  ]}
-                  height={170}
-                />
-              </Grid>
-            </Grid>
+            <DistributionBar
+              items={
+                stats?.sesionesPorEstado?.map((s) => ({
+                  label:
+                    EstadoSesionLabels[s.label as estado_sesion] || s.label,
+                  value: s.value,
+                  color: getEstadoSesionColor(s.label),
+                })) ?? []
+              }
+            />
+
+            <Divider sx={{ my: 2 }} />
+
+            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+              Por Origen
+            </Typography>
+            <DistributionBar
+              items={[
+                {
+                  label: "Generadas por Sistema",
+                  value: stats?.sesionesPorOrigen.sistema ?? 0,
+                  color: "#9c27b0",
+                },
+                {
+                  label: "Asignadas por Docente",
+                  value: stats?.sesionesPorOrigen.docente ?? 0,
+                  color: "#ff9800",
+                },
+              ]}
+            />
           </Paper>
         </Grid>
         {/* GRUPO: CONSULTAS */}
@@ -588,53 +753,60 @@ export default function DocenteDashboardPage() {
               alignContent: "center",
             }}
           >
-            <Typography variant="h6" gutterBottom color="info.main">
-              Consultas y Clases
+            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              <MarkUnreadChatAlt color="info" sx={{ mr: 1 }} />
+              <Typography variant="h6" color="info.main" fontWeight="bold">
+                Consultas y Clases
+              </Typography>
+            </Box>
+
+            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+              Estado de Consultas
             </Typography>
-            <Grid container spacing={3} alignItems="center">
-              <Grid size={{ xs: 12, sm: 5 }}>
-                <PieChart
-                  series={[
-                    {
-                      data:
-                        stats?.consultasPorEstado?.map((c) => ({
-                          ...c,
-                          label:
-                            EstadoConsultaLabels[c.label as estado_consulta] ||
-                            c.label,
-                        })) ?? [],
-                      innerRadius: 30,
-                      paddingAngle: 2,
-                    },
-                  ]}
-                  height={200}
+            <DistributionBar
+              items={
+                stats?.consultasPorEstado?.map((c) => ({
+                  label:
+                    EstadoConsultaLabels[c.label as estado_consulta] || c.label,
+                  value: c.value,
+                  color: getEstadoConsultaColor(c.label),
+                })) ?? []
+              }
+            />
+
+            <Divider sx={{ my: 2 }} />
+
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 6 }}>
+                <ProgressItem
+                  title="Consultas Hoy vs Sem"
+                  percent={
+                    stats?.week.consultasRealizadas
+                      ? (stats.today.consultasRealizadas /
+                          stats.week.consultasRealizadas) *
+                        100
+                      : 0
+                  }
+                  color="info"
+                  valueText={`${stats?.today.consultasRealizadas ?? 0} / ${stats?.week.consultasRealizadas ?? 0}`}
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 7 }}>
-                <Stack spacing={1}>
-                  <DashboardStatCard
-                    title="Consultas"
-                    value={`${stats?.today.consultasRealizadas ?? 0} / ${stats?.week.consultasRealizadas ?? 0}`}
-                    subtitle="Hoy vs Semana"
-                    icon={<MarkUnreadChatAlt />}
-                    color="info"
-                    small
-                  />
-                  <DashboardTextCard
-                    title="Próxima Clase"
-                    value={
-                      stats?.nextClass
-                        ? new Date(
-                            stats.nextClass.fechaInicio,
-                          ).toLocaleDateString()
-                        : "Sin programar"
-                    }
-                    description={stats?.nextClass?.modalidad}
-                    icon={<Event />}
-                    color="primary"
-                    small
-                  />
-                </Stack>
+              <Grid size={{ xs: 6 }}>
+                <DashboardTextCard
+                  title="Próxima Clase"
+                  value={
+                    stats?.nextClass
+                      ? formatClassTime(
+                          stats.nextClass.fechaInicio,
+                          stats.nextClass.fechaFin,
+                        )
+                      : "Sin programar"
+                  }
+                  description={stats?.nextClass?.modalidad}
+                  icon={<Event />}
+                  color="primary"
+                  small
+                />
               </Grid>
             </Grid>
           </Paper>
