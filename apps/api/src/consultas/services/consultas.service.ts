@@ -238,7 +238,7 @@ export class ConsultasService {
 
       if (consulta.estado !== estado_consulta.Revisada) {
         throw new ForbiddenException(
-          'Solo puedes valorar consultas respondidas.',
+          'Solo puedes valorar consultas respondidas o revisadas.',
         );
       }
 
@@ -252,12 +252,35 @@ export class ConsultasService {
         },
       });
 
-      // --- NOTIFICACIÓN AL DOCENTE ---
+      // --- IDENTIFICAR DOCENTE A NOTIFICAR ---
+      let docenteNotificar;
+
       if (consulta.respuestaConsulta?.docente) {
-        const docente = consulta.respuestaConsulta.docente;
+        docenteNotificar = consulta.respuestaConsulta.docente;
+      } else {
+        // Si no hay respuesta escrita, buscamos si fue revisada en una clase
+        const consultaRevisada = await this.prisma.consultaClase.findFirst({
+          where: {
+            idConsulta: idConsulta,
+            revisadaEnClase: true,
+          },
+          include: {
+            claseConsulta: {
+              include: { docenteResponsable: true },
+            },
+          },
+        });
+
+        if (consultaRevisada?.claseConsulta?.docenteResponsable) {
+          docenteNotificar = consultaRevisada.claseConsulta.docenteResponsable;
+        }
+      }
+
+      // --- NOTIFICACIÓN AL DOCENTE ---
+      if (docenteNotificar) {
         this.mailService.enviarValoracionConsultaDocente(
-          docente.email,
-          docente.nombre,
+          docenteNotificar.email,
+          docenteNotificar.nombre,
           {
             nombreAlumno: `${consulta.alumno.nombre} ${consulta.alumno.apellido}`,
             nombreCurso: consulta.curso.nombre,

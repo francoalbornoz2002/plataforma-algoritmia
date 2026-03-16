@@ -1010,7 +1010,7 @@ export class CoursesService {
         deletedAt: null,
       },
       orderBy: { fechaInicio: 'asc' },
-      select: { id: true, fechaInicio: true, modalidad: true },
+      select: { id: true, fechaInicio: true, fechaFin: true, modalidad: true },
     });
 
     // 4. Dificultades
