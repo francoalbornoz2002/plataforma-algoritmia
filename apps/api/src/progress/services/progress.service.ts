@@ -111,7 +111,13 @@ export class ProgressService {
           take,
           include: {
             alumno: {
-              select: { nombre: true, apellido: true, fotoPerfilUrl: true },
+              select: {
+                nombre: true,
+                apellido: true,
+                fotoPerfilUrl: true,
+                dni: true,
+                fechaNacimiento: true,
+              },
             },
             // --- CAMBIO AQUÍ ---
             progresoAlumno: {
@@ -146,6 +152,9 @@ export class ProgressService {
         nombre: ac.alumno.nombre,
         apellido: ac.alumno.apellido,
         fotoPerfilUrl: ac.alumno.fotoPerfilUrl,
+        dni: ac.alumno.dni,
+        fechaNacimiento: ac.alumno.fechaNacimiento,
+        fechaInscripcion: ac.fechaInscripcion,
         pctMisionesCompletadas: this.toNum(
           ac.progresoAlumno.pctMisionesCompletadas,
         ),
@@ -430,11 +439,10 @@ export class ProgressService {
             },
           });
 
-          // Definimos la fecha de registro para el historial
-          const fechaRegistroHistorial =
-            ultimaActividadLote.getTime() > 0
-              ? ultimaActividadLote
-              : new Date();
+          // Definimos la fecha de registro para el historial:
+          // SIEMPRE será el momento actual (cuando el servidor recibe la sincronización),
+          // para no romper la cronología de los gráficos si el alumno jugó offline en el pasado.
+          const fechaRegistroHistorial = new Date();
 
           // --- NUEVO: Insertar en HistorialProgresoAlumno ---
           await tx.historialProgresoAlumno.create({
