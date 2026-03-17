@@ -61,6 +61,7 @@ import {
   EstadoConsultaLabels,
   EstadoSesionLabels,
 } from "../../types/traducciones";
+import InfoAlumno from "./components/InfoAlumno";
 
 // --- Componentes Auxiliares Visuales ---
 
@@ -232,6 +233,7 @@ export default function DocenteDashboardPage() {
   const [stats, setStats] = useState<CourseDashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedMission, setSelectedMission] = useState<Mision | null>(null);
+  const [studentInfoOpen, setStudentInfoOpen] = useState<any | null>(null);
 
   // Estados de UI
   const [searchTerm, setSearchTerm] = useState("");
@@ -479,9 +481,7 @@ export default function DocenteDashboardPage() {
                             size="small"
                             color="primary"
                             onClick={() => {
-                              // Aquí podrías abrir un modal rápido con info del alumno
-                              // O navegar a su detalle
-                              console.log("Ver info de", student.nombre);
+                              setStudentInfoOpen(student);
                             }}
                           >
                             <Info fontSize="small" />
@@ -554,7 +554,7 @@ export default function DocenteDashboardPage() {
               </Typography>
             </Box>
             <Grid container spacing={3} alignItems="center">
-              <Grid size={{ xs: 12, sm: 5 }}>
+              <Grid size={{ xs: 12, sm: 4 }}>
                 <Gauge
                   value={stats?.progresoPct ?? 0}
                   height={200}
@@ -569,7 +569,7 @@ export default function DocenteDashboardPage() {
                   }}
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 7 }}>
+              <Grid size={{ xs: 12, sm: 8 }}>
                 <Typography
                   variant="subtitle2"
                   color="text.secondary"
@@ -608,13 +608,15 @@ export default function DocenteDashboardPage() {
                           stats?.week.misionMasDificil &&
                           setSelectedMission(stats.week.misionMasDificil)
                         }
-                        title="Misión difícil"
+                        title="Misión más difícil"
+                        description="Qué mas intentos acumula"
                       />
                     </Grid>
                   </Tooltip>
                   <Grid size={{ xs: 6 }}>
                     <DashboardTextCard
                       title="Alumno más activo"
+                      description="En la semana actual"
                       value={stats?.week.alumnoMasActivo || "Ninguno"}
                       icon={<School />}
                       color="secondary"
@@ -636,7 +638,6 @@ export default function DocenteDashboardPage() {
               borderColor: "error.main",
               height: "100%",
               alignItems: "center",
-              alignContent: "center",
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
@@ -664,7 +665,7 @@ export default function DocenteDashboardPage() {
             <Grid container spacing={2}>
               <Grid size={{ xs: 6 }}>
                 <DashboardTextCard
-                  title="Frecuente"
+                  title="Dificultad más frecuente"
                   value={stats?.week.dificultadMasDetectada || "Ninguna"}
                   icon={<Warning />}
                   color="error"
@@ -848,6 +849,13 @@ export default function DocenteDashboardPage() {
           )}
         </Box>
       </Dialog>
+
+      {/* MODAL DE INFO DEL ALUMNO */}
+      <InfoAlumno
+        open={!!studentInfoOpen}
+        onClose={() => setStudentInfoOpen(null)}
+        student={studentInfoOpen}
+      />
     </Stack>
   );
 }

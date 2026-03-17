@@ -266,6 +266,9 @@ export interface ProgresoAlumnoDetallado {
   nombre: string;
   apellido: string;
   fotoPerfilUrl?: string | null;
+  dni?: string;
+  fechaNacimiento?: string | Date;
+  fechaInscripcion?: string | Date;
   misionesCompletadas?: MisionCompletada[];
   misionesEspeciales?: MisionEspecial[];
 }
