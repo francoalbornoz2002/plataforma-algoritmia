@@ -838,11 +838,21 @@ export class ReportesService {
       select: { fechaRegistro: true, pctMisionesCompletadas: true },
     });
 
-    // Mapear directamente cada registro histórico para mostrar la evolución exacta
-    const evolutionChartData = evolutionHistory.map((h) => ({
-      fecha: h.fechaRegistro,
-      progreso: Number(h.pctMisionesCompletadas),
-    }));
+    // Hay múltiples registros por día (cada vez que un alumno completa una misión).
+    // Agrupamos por día y nos quedamos con el último registro (el progreso final del día).
+    const dailyEvolutionMap = new Map<
+      string,
+      { fecha: Date; progreso: number }
+    >();
+    evolutionHistory.forEach((h) => {
+      const dateKey = h.fechaRegistro.toISOString().split('T')[0];
+      dailyEvolutionMap.set(dateKey, {
+        fecha: h.fechaRegistro,
+        progreso: Number(h.pctMisionesCompletadas),
+      });
+    });
+
+    const evolutionChartData = Array.from(dailyEvolutionMap.values());
 
     return {
       resumen: {
