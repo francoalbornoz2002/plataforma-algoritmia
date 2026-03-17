@@ -326,19 +326,13 @@ export class DifficultiesService {
 
       // 4. Ejecutar todo como UNA transacción
       await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        let fechaRegistroLote = new Date(0);
+        // Definimos la fecha de registro para los historiales:
+        // SIEMPRE será el momento actual (cuando el servidor recibe la sincronización),
+        // para no romper la cronología de los gráficos.
+        const fechaRegistroHistorial = new Date();
 
         // --- Paso A: Iterar y hacer UPSERT para cada dificultad ---
         for (const dto of dtos) {
-          // Calculamos la fecha para este registro (para pruebas)
-          const fechaDto = (dto as any).fechaRegistro
-            ? new Date((dto as any).fechaRegistro)
-            : new Date();
-
-          if (fechaDto > fechaRegistroLote) {
-            fechaRegistroLote = fechaDto;
-          }
-
           // --- Lógica de Cancelación de Sesiones por cambio de Grado ---
           const sesionPendiente = await tx.sesionRefuerzo.findFirst({
             where: {
@@ -423,7 +417,7 @@ export class DifficultiesService {
                   ? existing.grado
                   : grado_dificultad.Ninguno,
                 gradoNuevo: dto.grado,
-                fechaCambio: fechaDto,
+                fechaCambio: fechaRegistroHistorial,
                 fuente: fuente_cambio_dificultad.VIDEOJUEGO,
               },
             });
@@ -431,9 +425,11 @@ export class DifficultiesService {
         } // Fin del bucle
 
         // --- Paso B: Recalcular los KPIs del curso (UNA SOLA VEZ) ---
-        const fechaParaCurso =
-          fechaRegistroLote.getTime() > 0 ? fechaRegistroLote : new Date();
-        await this.recalculateCourseDifficulties(tx, idCurso, fechaParaCurso);
+        await this.recalculateCourseDifficulties(
+          tx,
+          idCurso,
+          fechaRegistroHistorial,
+        );
       }); // Fin de la transacción
 
       // 5. PROCESO AUTOMÁTICO: Verificar si alguna dificultad quedó en grado ALTO
