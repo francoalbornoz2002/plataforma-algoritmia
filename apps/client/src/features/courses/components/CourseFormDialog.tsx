@@ -27,10 +27,16 @@ import {
   styled,
   Divider, // Para el layout de diasClase
   InputAdornment,
+  Paper,
+  Tooltip,
+  Chip,
+  OutlinedInput,
 } from "@mui/material";
 import {
+  Add,
   CloudUpload as CloudUploadIcon,
   Delete as DeleteIcon,
+  PersonSearch,
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
 } from "@mui/icons-material";
@@ -60,6 +66,7 @@ import {
 } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { enqueueSnackbar } from "notistack";
+import SelectTeacherModal from "./SelectTeacherModal";
 
 const VisuallyHiddenInput = styled(Input)({
   clip: "rect(0 0 0 0)",
@@ -112,6 +119,7 @@ export default function CourseFormDialog({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [isTeacherModalOpen, setIsTeacherModalOpen] = useState(false);
 
   // --- INICIALIZACIÓN DE REACT HOOK FORM ---
   const {
@@ -297,222 +305,336 @@ export default function CourseFormDialog({
   }
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle align="center">
         {isEditMode ? "Editar Curso" : "Crear Nuevo Curso"}
       </DialogTitle>
       <Divider variant="middle" />
 
       <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
-        <DialogContent>
+        <DialogContent
+          sx={{ display: "flex", flexDirection: "column", gap: 4, pt: 2 }}
+        >
           {isLoading ? (
             <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
               <CircularProgress />
             </Box>
           ) : (
-            <Grid container spacing={3} sx={{ mt: 1 }}>
-              {/* --- Columna Izquierda: Datos Principales --- */}
-              <Grid size={{ xs: 12, md: 7 }}>
-                <Stack spacing={2}>
-                  <TextField
-                    {...register("nombre")} // Conecta RHF
-                    label="Nombre del Curso"
-                    fullWidth
-                    required
-                    disabled={isSubmitting || isTeacherMode} // <-- Bloqueado para docentes
-                    error={!!errors.nombre} // Muestra error de Zod
-                    helperText={errors.nombre?.message} // Muestra mensaje de Zod
-                  />
-                  <TextField
-                    {...register("descripcion")}
-                    label="Descripción"
-                    fullWidth
-                    multiline
-                    rows={3}
-                    required
-                    disabled={isSubmitting}
-                    error={!!errors.descripcion}
-                    helperText={errors.descripcion?.message}
-                  />
-                  <TextField
-                    {...register("contrasenaAcceso")}
-                    label="Contraseña de Acceso"
-                    fullWidth
-                    required
-                    disabled={isSubmitting}
-                    type={showPassword ? "text" : "password"}
-                    error={!!errors.contrasenaAcceso}
-                    helperText={errors.contrasenaAcceso?.message}
-                    slotProps={{
-                      input: {
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton
-                              aria-label="toggle password visibility"
-                              onClick={() => setShowPassword(!showPassword)}
-                              edge="end"
-                            >
-                              {showPassword ? (
-                                <VisibilityOffIcon />
-                              ) : (
-                                <VisibilityIcon />
-                              )}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      },
-                    }}
-                  />
-                  {/* --- CAMPO 'docentes' (con RHF Controller) --- */}
-                  <Controller
-                    name="docentes"
-                    control={control}
-                    render={({ field: { onChange, value } }) => (
-                      <Autocomplete
-                        multiple
-                        options={allDocentes}
-                        loading={docentesLoading}
-                        disabled={isTeacherMode} // <-- Bloqueado para docentes
-                        value={value || []} // RHF maneja el valor
-                        onChange={(e, newValue) => onChange(newValue)} // RHF maneja el cambio
-                        disableCloseOnSelect
-                        getOptionLabel={(o) => `${o.nombre} ${o.apellido}`}
-                        isOptionEqualToValue={(o, v) => o.id === v.id}
-                        renderOption={(props, option, { selected }) => {
-                          const { key, ...liProps } = props as any;
-                          return (
-                            <li key={key} {...liProps}>
-                              <Checkbox
-                                style={{ marginRight: 8 }}
-                                checked={selected}
-                              />
-                              <ListItemText
-                                primary={`${option.nombre} ${option.apellido}`}
-                              />
-                            </li>
-                          );
-                        }}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label="Docentes a asignar"
-                            placeholder="Buscar docente..."
-                            error={!!errors.docentes}
-                            helperText={errors.docentes?.message}
-                          />
-                        )}
-                      />
-                    )}
-                  />
-                  {/* --- CAMPO 'modalidadPreferencial' (con RHF Controller) --- */}
-                  <Controller
-                    name="modalidadPreferencial"
-                    control={control}
-                    render={({ field }) => (
-                      <FormControl
+            <>
+              {/* --- SECCIÓN 1: Detalles Generales --- */}
+              <Box>
+                <Grid container spacing={3}>
+                  {/* Columna Izquierda: Nombres y Descripción */}
+                  <Grid size={{ xs: 12, md: 7 }}>
+                    <Stack spacing={2} sx={{ height: "100%" }}>
+                      <TextField
+                        {...register("nombre")}
+                        label="Nombre del Curso"
                         fullWidth
-                        error={!!errors.modalidadPreferencial}
-                      >
-                        <InputLabel>Modalidad preferencial</InputLabel>
-                        <Select
-                          {...field} // RHF maneja 'value', 'onChange', 'name'
-                          label="Modalidad (Consultas)"
-                          disabled={isSubmitting}
-                        >
-                          <MenuItem value={modalidad.Presencial}>
-                            Presencial
-                          </MenuItem>
-                          <MenuItem value={modalidad.Virtual}>Virtual</MenuItem>
-                        </Select>
-                        <FormHelperText error={!!errors.modalidadPreferencial}>
-                          {errors.modalidadPreferencial?.message ||
-                            "Para clases de consulta automáticas"}
-                        </FormHelperText>
-                      </FormControl>
-                    )}
-                  />
-                </Stack>
-              </Grid>
-
-              {/* --- Columna Derecha: Imagen --- */}
-              <Grid size={{ xs: 12, md: 5 }}>
-                <FormControl fullWidth error={!!errors.imagen}>
-                  <Box
-                    sx={{
-                      border: "1px dashed grey",
-                      borderRadius: 1,
-                      p: 2,
-                      textAlign: "center",
-                      height: 170,
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                    }}
-                  >
-                    {/* El preview sigue usando el state local */}
-                    {previewImage ? (
-                      <img
-                        src={previewImage}
-                        alt="Previsualización"
-                        style={{
-                          maxHeight: "100%",
-                          maxWidth: "100%",
-                          objectFit: "contain",
+                        required
+                        disabled={isSubmitting || isTeacherMode}
+                        error={!!errors.nombre}
+                        helperText={errors.nombre?.message}
+                      />
+                      <TextField
+                        {...register("descripcion")}
+                        label="Descripción"
+                        fullWidth
+                        multiline
+                        required
+                        disabled={isSubmitting}
+                        error={!!errors.descripcion}
+                        helperText={errors.descripcion?.message}
+                        sx={{
+                          flexGrow: 1,
+                          display: "flex",
+                          flexDirection: "column",
+                          "& .MuiInputBase-root": {
+                            flexGrow: 1,
+                            alignItems: "flex-start",
+                          },
                         }}
                       />
-                    ) : (
-                      <Typography variant="body2" color="text.secondary">
-                        Imagen para el Curso
-                      </Typography>
-                    )}
-                  </Box>
-                  <Button
-                    component="label"
-                    variant="outlined"
-                    startIcon={<CloudUploadIcon />}
-                    sx={{ mt: 1 }}
-                    disabled={isSubmitting}
-                  >
-                    Seleccionar Archivo
-                    <VisuallyHiddenInput
-                      type="file"
-                      // Registramos la imagen, pero el onChange es manual
-                      {...register("imagen")}
-                      onChange={handleFileChange}
-                      inputProps={{
-                        accept: ".jpg,.jpeg,.png,.gif",
+                    </Stack>
+                  </Grid>
+
+                  {/* Columna Derecha: Imagen */}
+                  <Grid size={{ xs: 12, md: 5 }}>
+                    <FormControl fullWidth error={!!errors.imagen}>
+                      <Box
+                        sx={{
+                          border: "2px dashed",
+                          borderColor: errors.imagen
+                            ? "error.main"
+                            : "grey.400",
+                          borderRadius: 2,
+                          p: 2,
+                          textAlign: "center",
+                          height: 195,
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          bgcolor: "grey.50",
+                          transition: "all 0.2s",
+                          "&:hover": {
+                            borderColor: "primary.main",
+                            bgcolor: "primary.50",
+                          },
+                        }}
+                      >
+                        {previewImage ? (
+                          <img
+                            src={previewImage}
+                            alt="Previsualización"
+                            style={{
+                              maxHeight: "100%",
+                              maxWidth: "100%",
+                              objectFit: "contain",
+                              borderRadius: "4px",
+                            }}
+                          />
+                        ) : (
+                          <>
+                            <CloudUploadIcon
+                              color="action"
+                              sx={{ fontSize: 40, mb: 1, opacity: 0.7 }}
+                            />
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              fontWeight="medium"
+                            >
+                              Subir Imagen Portada
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              JPG, PNG, GIF (Máx. 2MB)
+                            </Typography>
+                          </>
+                        )}
+                      </Box>
+                      <Button
+                        component="label"
+                        variant="outlined"
+                        sx={{ mt: 1.5 }}
+                        disabled={isSubmitting}
+                      >
+                        {previewImage
+                          ? "Cambiar Archivo"
+                          : "Seleccionar Archivo"}
+                        <VisuallyHiddenInput
+                          type="file"
+                          {...register("imagen")}
+                          onChange={handleFileChange}
+                          inputProps={{ accept: ".jpg,.jpeg,.png,.gif" }}
+                        />
+                      </Button>
+                      {errors.imagen && (
+                        <FormHelperText error sx={{ textAlign: "center" }}>
+                          {errors.imagen.message as string}
+                        </FormHelperText>
+                      )}
+                    </FormControl>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* --- SECCIÓN 2: Configuración de Acceso --- */}
+              <Box>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <TextField
+                      {...register("contrasenaAcceso")}
+                      label="Contraseña de Acceso"
+                      fullWidth
+                      required
+                      disabled={isSubmitting}
+                      type={showPassword ? "text" : "password"}
+                      error={!!errors.contrasenaAcceso}
+                      helperText={errors.contrasenaAcceso?.message}
+                      slotProps={{
+                        input: {
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton
+                                aria-label="toggle password visibility"
+                                onClick={() => setShowPassword(!showPassword)}
+                                edge="end"
+                              >
+                                {showPassword ? (
+                                  <VisibilityOffIcon />
+                                ) : (
+                                  <VisibilityIcon />
+                                )}
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        },
                       }}
                     />
-                  </Button>
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ mt: 0.5, textAlign: "center", display: "block" }}
-                  >
-                    Tamaño máximo: 2 MB. Formatos: JPG, PNG, GIF.
-                  </Typography>
-                  <FormHelperText error={!!errors.imagen}>
-                    {errors.imagen?.message as string}
-                  </FormHelperText>
-                </FormControl>
-              </Grid>
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <Controller
+                      name="modalidadPreferencial"
+                      control={control}
+                      render={({ field }) => (
+                        <FormControl
+                          fullWidth
+                          error={!!errors.modalidadPreferencial}
+                        >
+                          <InputLabel>Modalidad preferencial</InputLabel>
+                          <Select
+                            {...field}
+                            label="Modalidad preferencial"
+                            disabled={isSubmitting}
+                          >
+                            <MenuItem value={modalidad.Presencial}>
+                              Presencial
+                            </MenuItem>
+                            <MenuItem value={modalidad.Virtual}>
+                              Virtual
+                            </MenuItem>
+                          </Select>
+                          <FormHelperText>
+                            {errors.modalidadPreferencial?.message ||
+                              "Para clases de consulta automáticas"}
+                          </FormHelperText>
+                        </FormControl>
+                      )}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <Controller
+                      name="docentes"
+                      control={control}
+                      render={({ field: { onChange, value } }) => (
+                        <>
+                          <FormControl
+                            fullWidth
+                            error={!!errors.docentes}
+                            disabled={isTeacherMode || docentesLoading}
+                          >
+                            <InputLabel shrink>Docentes a asignar</InputLabel>
+                            <OutlinedInput
+                              notched
+                              label="Docentes a asignar"
+                              readOnly
+                              value={
+                                value && value.length > 0
+                                  ? value
+                                      .map((docente: any) => docente.nombre)
+                                      .join(", ")
+                                  : ""
+                              }
+                              placeholder={
+                                docentesLoading
+                                  ? "Cargando..."
+                                  : "Sin asignar..."
+                              }
+                              inputProps={{
+                                sx: {
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                },
+                              }}
+                              endAdornment={
+                                <InputAdornment position="end">
+                                  <Button
+                                    size="small"
+                                    onClick={() => setIsTeacherModalOpen(true)}
+                                    startIcon={<PersonSearch />}
+                                    disabled={isTeacherMode || docentesLoading}
+                                  >
+                                    Seleccionar
+                                  </Button>
+                                </InputAdornment>
+                              }
+                            />
+                            {errors.docentes && (
+                              <FormHelperText>
+                                {errors.docentes.message}
+                              </FormHelperText>
+                            )}
+                          </FormControl>
 
-              {/* --- Fila Inferior: Días de Clase (con useFieldArray) --- */}
-              <Grid size={{ xs: 12 }}>
-                <Box>
-                  <Typography variant="h6" gutterBottom>
-                    Días de Clase
-                  </Typography>
-                  <Stack sx={{ mt: 2 }} spacing={2}>
-                    {/* Iteramos sobre los 'fields' de useFieldArray */}
-                    {diasClaseFields.map((field, index) => (
+                          <SelectTeacherModal
+                            open={isTeacherModalOpen}
+                            onClose={() => setIsTeacherModalOpen(false)}
+                            allDocentes={allDocentes}
+                            initialSelection={value || []}
+                            onSelect={onChange}
+                          />
+                        </>
+                      )}
+                    />
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* --- SECCIÓN 3: Horarios de Cursada --- */}
+              <Box>
+                <Stack
+                  direction="row"
+                  justifyContent="flex-end"
+                  alignItems="center"
+                  sx={{ mb: 2 }}
+                >
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<Add />}
+                    onClick={() =>
+                      appendDiaClase({
+                        id: null,
+                        dia: dias_semana.Lunes,
+                        horaInicio: "09:00",
+                        horaFin: "11:00",
+                        modalidad: modalidad.Presencial,
+                      })
+                    }
+                    disabled={isSubmitting}
+                  >
+                    Añadir Día
+                  </Button>
+                </Stack>
+
+                <Stack spacing={2}>
+                  {diasClaseFields.length === 0 && (
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      align="center"
+                      sx={{
+                        py: 2,
+                        bgcolor: "grey.50",
+                        borderRadius: 1,
+                        border: "1px dashed grey",
+                      }}
+                    >
+                      No hay días de clase configurados. Haz clic en "Añadir
+                      Día" para comenzar.
+                    </Typography>
+                  )}
+
+                  {diasClaseFields.map((field, index) => (
+                    <Paper
+                      key={field.id}
+                      variant="outlined"
+                      sx={{
+                        p: 2,
+                        bgcolor: "background.default",
+                        borderRadius: 2,
+                      }}
+                    >
                       <Stack
-                        key={field.id} // RHF provee el 'key'
                         direction={{ xs: "column", sm: "row" }}
-                        spacing={1}
+                        spacing={2}
                         alignItems="center"
                       >
-                        {/* Cada campo se registra con su índice */}
                         <FormControl
                           size="small"
                           sx={{ minWidth: 130, flex: 1.5 }}
@@ -535,16 +657,19 @@ export default function CourseFormDialog({
                         </FormControl>
                         <TextField
                           {...register(`diasClase.${index}.horaInicio`)}
-                          label="Inicio"
+                          label="Hora Inicio"
                           type="time"
                           size="small"
                           InputLabelProps={{ shrink: true }}
                           sx={{ flex: 1 }}
                           error={!!errors.diasClase?.[index]?.horaInicio}
                         />
+                        <Typography variant="body2" color="text.secondary">
+                          -
+                        </Typography>
                         <TextField
                           {...register(`diasClase.${index}.horaFin`)}
-                          label="Fin"
+                          label="Hora Fin"
                           type="time"
                           size="small"
                           InputLabelProps={{ shrink: true }}
@@ -572,38 +697,27 @@ export default function CourseFormDialog({
                             )}
                           />
                         </FormControl>
-                        <IconButton
-                          onClick={() => removeDiaClase(index)} // RHF maneja el borrado
-                          color="error"
-                        >
-                          <DeleteIcon />
-                        </IconButton>
+                        <Tooltip title="Eliminar horario">
+                          <IconButton
+                            onClick={() => removeDiaClase(index)}
+                            color="error"
+                            sx={{ ml: { sm: "auto" } }}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Tooltip>
                       </Stack>
-                    ))}
-                    <Button
-                      onClick={() =>
-                        // RHF maneja añadir el objeto
-                        appendDiaClase({
-                          id: null,
-                          dia: dias_semana.Lunes,
-                          horaInicio: "09:00",
-                          horaFin: "11:00",
-                          modalidad: modalidad.Presencial,
-                        })
-                      }
-                      disabled={isSubmitting}
-                    >
-                      Añadir Día de Clase
-                    </Button>
-                    {errors.diasClase && (
-                      <FormHelperText error sx={{ ml: 2 }}>
+                    </Paper>
+                  ))}
+                  {errors.diasClase &&
+                    typeof errors.diasClase.message === "string" && (
+                      <FormHelperText error sx={{ ml: 1 }}>
                         {errors.diasClase.message}
                       </FormHelperText>
                     )}
-                  </Stack>
-                </Box>
-              </Grid>
-            </Grid>
+                </Stack>
+              </Box>
+            </>
           )}
         </DialogContent>
         <DialogActions>

@@ -239,6 +239,7 @@ export class UsersService {
         id: true,
         nombre: true,
         apellido: true,
+        fotoPerfilUrl: true,
       },
     });
   }

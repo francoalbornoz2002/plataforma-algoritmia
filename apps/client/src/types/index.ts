@@ -192,6 +192,7 @@ export interface DocenteParaFiltro {
   id: string;
   nombre: string;
   apellido: string;
+  fotoPerfilUrl?: string | null;
 }
 
 // Tipo para el sub-formulario de Días de Clase
