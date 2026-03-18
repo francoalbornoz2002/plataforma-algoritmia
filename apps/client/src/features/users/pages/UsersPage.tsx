@@ -385,7 +385,7 @@ export default function UsersPage() {
       <Stack spacing={2} sx={{ height: "100%" }}>
         {/* --- ENCABEZADO --- */}
         <HeaderPage
-          title="Gestión de usuarios"
+          title="Gestión de Usuarios"
           description="Administra y gestiona los usuarios de la plataforma."
           icon={<People />}
           color="primary"
