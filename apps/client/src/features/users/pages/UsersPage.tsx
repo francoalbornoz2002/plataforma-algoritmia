@@ -100,8 +100,8 @@ export default function UsersPage() {
   // Este estado se le pasa como prop al Modal (UserData para editar, null para crear).
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
 
-  // Estado para settear el usuario a dar de baja
-  const [userToDeleteId, setUserToDeleteId] = useState<string | null>(null);
+  // Estado para guardar el usuario completo a dar de baja
+  const [userToDelete, setUserToDelete] = useState<UserData | null>(null);
 
   // Estado del modal para confirmar la baja
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -176,22 +176,22 @@ export default function UsersPage() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteClick = (id: string) => {
-    setUserToDeleteId(id); // Store ID of user to delete
+  const handleDeleteClick = (user: UserData) => {
+    setUserToDelete(user); // Guardamos el usuario completo
     setIsDeleteDialogOpen(true); // Open confirmation dialog
   };
 
   const handleCloseDeleteDialog = () => {
     setIsDeleteDialogOpen(false);
-    setUserToDeleteId(null);
+    setUserToDelete(null);
   };
 
   const confirmDelete = async () => {
-    if (!userToDeleteId) return;
+    if (!userToDelete) return;
     setIsDeleting(true);
     setError(null);
     try {
-      await deleteUser(userToDeleteId);
+      await deleteUser(userToDelete.id);
       handleCloseDeleteDialog();
       enqueueSnackbar("Usuario dado de baja con éxito", {
         variant: "success",
@@ -347,10 +347,10 @@ export default function UsersPage() {
               </IconButton>
             </span>
           </Tooltip>
-          <Tooltip title="Dar de baja Usuario">
+          <Tooltip title="Dar de baja">
             <span>
               <IconButton
-                onClick={() => handleDeleteClick(params.row.id)}
+                onClick={() => handleDeleteClick(params.row)}
                 size="small"
                 color="error"
                 disabled={!!params.row.deletedAt}
@@ -544,8 +544,11 @@ export default function UsersPage() {
           </DialogTitle>
           <DialogContent>
             <DialogContentText id="alert-dialog-description">
-              ¿Estás seguro de que quieres dar de baja a este usuario? Esta
-              acción marcará al usuario como inactivo.
+              ¿Estás seguro de que quieres dar de baja a{" "}
+              <strong>
+                {userToDelete?.nombre} {userToDelete?.apellido}
+              </strong>
+              ? Esta acción marcará al usuario como inactivo.
             </DialogContentText>
             {/* Muestra error específico del borrado si ocurre */}
             {error && (
