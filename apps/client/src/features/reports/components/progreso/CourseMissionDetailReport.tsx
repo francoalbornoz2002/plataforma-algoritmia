@@ -148,11 +148,7 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
 
         {/* Filtros */}
         <QuickDateFilter onApply={handleQuickFilter} />
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          spacing={2}
-          alignItems="center"
-        >
+        <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
           <FormControl size="small" sx={{ minWidth: 200 }}>
             <InputLabel>Dificultad de misión</InputLabel>
             <Select
@@ -173,7 +169,7 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
             </Select>
           </FormControl>
 
-          <FormControl size="small" sx={{ minWidth: 400 }}>
+          <FormControl size="small" sx={{ minWidth: 250, flexGrow: 1 }}>
             <InputLabel>Seleccionar Misión</InputLabel>
             <Select
               value={filters.misionId}
@@ -304,94 +300,100 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
               </Grid>
             </Paper>
 
-            <Grid container spacing={2}>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "minmax(0, 1fr)",
+                gap: 2,
+                width: "100%",
+              }}
+            >
               {/* Gráfico */}
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-                  <Typography variant="h6" gutterBottom>
-                    Frecuencia de Completado
-                  </Typography>
-                  {data.grafico.length > 0 ? (
-                    <LineChart
-                      yAxis={[
-                        {
-                          label: "Cantidad de misiones",
-                          valueFormatter: (value: number) =>
-                            Number.isInteger(value) ? value.toString() : "",
-                          min: 0,
-                          max: maxCantidad < 5 ? 5 : undefined,
-                        },
-                      ]}
-                      xAxis={[
-                        {
-                          scaleType: "point",
-                          dataKey: "fecha",
-                          label: "Fecha",
-                          valueFormatter: (date: string) =>
-                            format(
-                              parse(date, "yyyy-MM-dd", new Date()),
-                              "dd/MM",
-                            ),
-                        },
-                      ]}
-                      series={[
-                        {
-                          dataKey: "cantidad",
-                          label: "Completados",
-                          color: "#2e7d32",
-                        },
-                      ]}
-                      dataset={data.grafico}
-                      height={300}
-                    />
-                  ) : (
-                    <Typography
-                      color="text.secondary"
-                      align="center"
-                      sx={{ py: 4 }}
-                    >
-                      Sin datos en el periodo seleccionado
-                    </Typography>
-                  )}
-                </Paper>
-              </Grid>
-              {/* Tabla */}
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Paper
-                  elevation={3}
-                  sx={{
-                    p: 2,
-                    height: 400,
-                    width: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                >
-                  <Typography variant="h6" gutterBottom>
-                    Alumnos que la completaron
-                  </Typography>
-                  <DataGrid
-                    rows={data.tabla}
-                    columns={columns}
-                    loading={loading}
-                    density="compact"
-                    disableRowSelectionOnClick
-                    slots={{
-                      noRowsOverlay: () => (
-                        <Stack
-                          height="100%"
-                          alignItems="center"
-                          justifyContent="center"
-                        >
-                          No hay alumnos que hayan completado esta misión.
-                        </Stack>
-                      ),
-                    }}
-                    sx={{ flex: 1, borderRadius: "0.7em" }}
+              <Paper
+                elevation={3}
+                sx={{ p: 2, width: "100%", boxSizing: "border-box" }}
+              >
+                <Typography variant="h6" gutterBottom>
+                  Frecuencia de Completado
+                </Typography>
+                {data.grafico.length > 0 ? (
+                  <LineChart
+                    yAxis={[
+                      {
+                        label: "Cantidad de misiones",
+                        valueFormatter: (value: number) =>
+                          Number.isInteger(value) ? value.toString() : "",
+                        min: 0,
+                        max: maxCantidad < 5 ? 5 : undefined,
+                      },
+                    ]}
+                    xAxis={[
+                      {
+                        scaleType: "point",
+                        dataKey: "fecha",
+                        label: "Fecha",
+                        valueFormatter: (date: string) =>
+                          format(
+                            parse(date, "yyyy-MM-dd", new Date()),
+                            "dd/MM",
+                          ),
+                      },
+                    ]}
+                    series={[
+                      {
+                        dataKey: "cantidad",
+                        label: "Completados",
+                        color: "#2e7d32",
+                      },
+                    ]}
+                    dataset={data.grafico}
+                    height={300}
                   />
-                </Paper>
-              </Grid>
-            </Grid>
+                ) : (
+                  <Typography
+                    color="text.secondary"
+                    align="center"
+                    sx={{ py: 4 }}
+                  >
+                    Sin datos en el periodo seleccionado
+                  </Typography>
+                )}
+              </Paper>
+              {/* Tabla */}
+              <Paper
+                elevation={3}
+                sx={{
+                  height: 400,
+                  width: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  boxSizing: "border-box",
+                }}
+              >
+                <Typography variant="h6" gutterBottom sx={{ p: 2, pb: 0 }}>
+                  Alumnos que la completaron
+                </Typography>
+                <DataGrid
+                  rows={data.tabla}
+                  columns={columns}
+                  loading={loading}
+                  density="compact"
+                  disableRowSelectionOnClick
+                  slots={{
+                    noRowsOverlay: () => (
+                      <Stack
+                        height="100%"
+                        alignItems="center"
+                        justifyContent="center"
+                      >
+                        No hay alumnos que hayan completado esta misión.
+                      </Stack>
+                    ),
+                  }}
+                  sx={{ flex: 1, borderRadius: "0.7em", border: 0 }}
+                />
+              </Paper>
+            </Box>
           </Stack>
         )}
       </Stack>

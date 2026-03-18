@@ -204,9 +204,10 @@ export default function MyConsultsPage() {
         width: "100%",
         display: "flex",
         flexDirection: "column",
+        minWidth: 0,
       }}
     >
-      <Stack spacing={2} sx={{ width: "100%" }}>
+      <Stack spacing={2} sx={{ width: "100%", minWidth: 0 }}>
         <HeaderPage
           title={`${
             filters.scope === "mine"
@@ -367,7 +368,7 @@ export default function MyConsultsPage() {
             </Button>
           )}
         </Stack>
-        <Stack spacing={2}>
+        <Stack spacing={2} sx={{ minWidth: 0 }}>
           {/* --- 2. Lista de Consultas (Cards) --- */}
           {loading ? (
             <CircularProgress

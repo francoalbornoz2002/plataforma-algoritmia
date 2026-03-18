@@ -329,9 +329,19 @@ export default function CourseClassesHistory({ courseId }: Props) {
         {error && <Alert severity="error">{error}</Alert>}
 
         {data && !showLoading && (
-          <Stack spacing={2}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1fr)",
+              gap: 2,
+              width: "100%",
+            }}
+          >
             {/* --- Gráfico Apilado --- */}
-            <Paper elevation={3} sx={{ p: 2 }}>
+            <Paper
+              elevation={3}
+              sx={{ p: 2, width: "100%", boxSizing: "border-box" }}
+            >
               <Typography variant="h6">
                 Evolución de Consultas por Clase
               </Typography>
@@ -412,7 +422,10 @@ export default function CourseClassesHistory({ courseId }: Props) {
             </Paper>
 
             {/* --- Tabla Detallada --- */}
-            <Paper elevation={3} sx={{ height: 600, width: "100%" }}>
+            <Paper
+              elevation={3}
+              sx={{ height: 600, width: "100%", boxSizing: "border-box" }}
+            >
               <DataGrid
                 rows={data.tableData}
                 columns={columns}
@@ -436,10 +449,10 @@ export default function CourseClassesHistory({ courseId }: Props) {
                     </Stack>
                   ),
                 }}
-                sx={{ borderRadius: "0.7em" }}
+                sx={{ borderRadius: "0.7em", border: 0 }}
               />
             </Paper>
-          </Stack>
+          </Box>
         )}
       </Stack>
 

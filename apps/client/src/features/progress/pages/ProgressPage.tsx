@@ -278,9 +278,10 @@ export default function ProgressPage() {
         width: "100%",
         display: "flex",
         flexDirection: "column",
+        minWidth: 0,
       }}
     >
-      <Stack spacing={2} sx={{ height: "100%" }}>
+      <Stack spacing={2} sx={{ height: "100%", minWidth: 0 }}>
         <HeaderPage
           title={`Progreso del Curso: ${selectedCourse.nombre}`}
           description="Visualiza el rendimiento global del curso y el detalle individual de cada alumno."
@@ -430,39 +431,51 @@ export default function ProgressPage() {
             </Stack>
             {/* --- C. DataGrid --- */}
             {gridError && <Alert severity="error">{gridError}</Alert>}
-            <Paper elevation={2} sx={{ height: 600, width: "100%" }}>
-              <DataGrid
-                rows={rows}
-                columns={columns}
-                rowCount={totalRows}
-                loading={gridLoading}
-                // Paginación
-                paginationMode="server"
-                paginationModel={paginationModel}
-                onPaginationModelChange={setPaginationModel}
-                pageSizeOptions={[5, 10, 25]}
-                sortingMode="server"
-                sortModel={sortModel}
-                onSortModelChange={setSortModel}
-                disableRowSelectionOnClick
-                disableColumnResize={true}
-                sx={{
-                  borderRadius: "0.7em",
-                  "& .MuiDataGrid-cell:focus": {
-                    outline: "none",
-                  },
-                  "& .MuiDataGrid-cell:focus-within": {
-                    outline: "none",
-                  },
-                  "& .MuiDataGrid-columnHeader:focus": {
-                    outline: "none",
-                  },
-                  "& .MuiDataGrid-columnHeader:focus-within": {
-                    outline: "none",
-                  },
-                }}
-              />
-            </Paper>
+            <Box
+              sx={{
+                width: "100%",
+                display: "grid",
+                gridTemplateColumns: "minmax(0, 1fr)",
+              }}
+            >
+              <Paper
+                elevation={2}
+                sx={{ height: 600, width: "100%", boxSizing: "border-box" }}
+              >
+                <DataGrid
+                  rows={rows}
+                  columns={columns}
+                  rowCount={totalRows}
+                  loading={gridLoading}
+                  // Paginación
+                  paginationMode="server"
+                  paginationModel={paginationModel}
+                  onPaginationModelChange={setPaginationModel}
+                  pageSizeOptions={[5, 10, 25]}
+                  sortingMode="server"
+                  sortModel={sortModel}
+                  onSortModelChange={setSortModel}
+                  disableRowSelectionOnClick
+                  disableColumnResize={true}
+                  sx={{
+                    borderRadius: "0.7em",
+                    border: 0,
+                    "& .MuiDataGrid-cell:focus": {
+                      outline: "none",
+                    },
+                    "& .MuiDataGrid-cell:focus-within": {
+                      outline: "none",
+                    },
+                    "& .MuiDataGrid-columnHeader:focus": {
+                      outline: "none",
+                    },
+                    "& .MuiDataGrid-columnHeader:focus-within": {
+                      outline: "none",
+                    },
+                  }}
+                />
+              </Paper>
+            </Box>
           </Stack>
         ) : null}
 

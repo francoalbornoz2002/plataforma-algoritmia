@@ -145,11 +145,7 @@ export default function CourseMissionsReport({ courseId }: Props) {
 
         {/* Filtros */}
         <QuickDateFilter onApply={handleQuickFilter} />
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          spacing={2}
-          alignItems="center"
-        >
+        <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
           <DatePicker
             label="Desde"
             value={
@@ -249,71 +245,90 @@ export default function CourseMissionsReport({ courseId }: Props) {
             </Stack>
           )}
 
-          {/* Gráfico */}
-          <Paper elevation={3} sx={{ p: 2 }}>
-            <Typography variant="h6">Misiones completadas</Typography>
-            <Typography variant="caption" color="text.secondary" gutterBottom>
-              Cantidad de misiones completadas en el periodo seleccionado.
-            </Typography>
-            {data?.grafico && data.grafico.length > 0 ? (
-              <LineChart
-                dataset={data.grafico}
-                yAxis={[
-                  {
-                    label: "Cantidad de misiones",
-                    valueFormatter: (value: number) =>
-                      Number.isInteger(value) ? value.toString() : "",
-                    min: 0,
-                    max: maxMisiones < 5 ? 5 : undefined,
-                  },
-                ]}
-                xAxis={[
-                  {
-                    scaleType: "point",
-                    dataKey: "fecha",
-                    label: "Fecha",
-                    valueFormatter: (date: string) =>
-                      format(parse(date, "yyyy-MM-dd", new Date()), "dd/MM"),
-                  },
-                ]}
-                series={[
-                  {
-                    dataKey: "cantidad",
-                    label: "Misiones Completadas",
-                    color: "#1976d2",
-                  },
-                ]}
-                height={300}
-              />
-            ) : (
-              <Typography color="text.secondary" align="center" sx={{ py: 4 }}>
-                No hay datos para mostrar en el gráfico
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1fr)",
+              gap: 3,
+              width: "100%",
+            }}
+          >
+            {/* Gráfico (Arriba) */}
+            <Paper
+              elevation={3}
+              sx={{ p: 2, width: "100%", boxSizing: "border-box" }}
+            >
+              <Typography variant="h6">Misiones completadas</Typography>
+              <Typography variant="caption" color="text.secondary" gutterBottom>
+                Cantidad de misiones completadas en el periodo seleccionado.
               </Typography>
-            )}
-          </Paper>
+              {data?.grafico && data.grafico.length > 0 ? (
+                <LineChart
+                  dataset={data.grafico}
+                  yAxis={[
+                    {
+                      label: "Cantidad de misiones",
+                      valueFormatter: (value: number) =>
+                        Number.isInteger(value) ? value.toString() : "",
+                      min: 0,
+                      max: maxMisiones < 5 ? 5 : undefined,
+                    },
+                  ]}
+                  xAxis={[
+                    {
+                      scaleType: "point",
+                      dataKey: "fecha",
+                      label: "Fecha",
+                      valueFormatter: (date: string) =>
+                        format(parse(date, "yyyy-MM-dd", new Date()), "dd/MM"),
+                    },
+                  ]}
+                  series={[
+                    {
+                      dataKey: "cantidad",
+                      label: "Misiones Completadas",
+                      color: "#1976d2",
+                    },
+                  ]}
+                  height={350}
+                />
+              ) : (
+                <Typography
+                  color="text.secondary"
+                  align="center"
+                  sx={{ py: 4 }}
+                >
+                  No hay datos para mostrar en el gráfico
+                </Typography>
+              )}
+            </Paper>
 
-          {/* Tabla */}
-          <Paper elevation={3} sx={{ height: 400, width: "100%" }}>
-            <DataGrid
-              rows={data?.tabla || []}
-              columns={columns}
-              loading={loading}
-              density="compact"
-              sx={{ borderRadius: "0.7em" }}
-              disableRowSelectionOnClick
-              slots={{
-                noRowsOverlay: () => (
-                  <Stack
-                    height="100%"
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    No se encontraron misiones con los filtros aplicados.
-                  </Stack>
-                ),
-              }}
-            />
-          </Paper>
+            {/* Tabla (Abajo) */}
+            <Paper
+              elevation={3}
+              sx={{ height: 450, width: "100%", boxSizing: "border-box" }}
+            >
+              <DataGrid
+                rows={data?.tabla || []}
+                columns={columns}
+                loading={loading}
+                density="compact"
+                sx={{ borderRadius: "0.7em", height: "100%", border: 0 }}
+                disableRowSelectionOnClick
+                slots={{
+                  noRowsOverlay: () => (
+                    <Stack
+                      height="100%"
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      No se encontraron misiones con los filtros aplicados.
+                    </Stack>
+                  ),
+                }}
+              />
+            </Paper>
+          </Box>
         </Stack>
       </Stack>
     </Box>

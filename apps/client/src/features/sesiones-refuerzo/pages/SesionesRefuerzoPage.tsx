@@ -198,8 +198,15 @@ export default function SesionesRefuerzoPage() {
   }
 
   return (
-    <Box>
-      <Stack spacing={2} sx={{ height: "100%" }}>
+    <Box
+      sx={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        minWidth: 0,
+      }}
+    >
+      <Stack spacing={2} sx={{ height: "100%", minWidth: 0 }}>
         {/* --- TÍTULO --- */}
         <HeaderPage
           title={`Sesiones de Refuerzo en ${selectedCourse.nombre}`}

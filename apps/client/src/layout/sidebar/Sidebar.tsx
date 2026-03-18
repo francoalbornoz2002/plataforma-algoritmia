@@ -148,7 +148,9 @@ export default function Sidebar({
   const { logout } = useAuth();
 
   // Detectar si estamos en la página de reportes para ajustar el layout
-  const isReportsPage = location.pathname.startsWith("/dashboard/reports");
+  const isReportsPage =
+    location.pathname.startsWith("/dashboard/reports") ||
+    location.pathname.startsWith("/course/reports");
 
   // --- OBTENER EL CONTEXTO DEL CURSO --- //
   // (La envolvemos en un try/catch porque el Admin NO tiene este contexto)

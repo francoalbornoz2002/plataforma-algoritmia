@@ -412,7 +412,14 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
         {error && <Alert severity="error">{error}</Alert>}
 
         {data && !showLoading && (
-          <Stack spacing={2}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1fr)",
+              gap: 2,
+              width: "100%",
+            }}
+          >
             {/* --- Stats Cards --- */}
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 4 }}>
@@ -444,7 +451,10 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
               </Grid>
             </Grid>
             {/* --- Timeline Chart --- */}
-            <Paper elevation={3} sx={{ p: 2 }}>
+            <Paper
+              elevation={3}
+              sx={{ p: 2, width: "100%", boxSizing: "border-box" }}
+            >
               <Typography variant="h6" gutterBottom>
                 Evolución de Consultas en el Tiempo
               </Typography>
@@ -488,7 +498,10 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
             </Paper>
 
             {/* --- Tabla Detallada --- */}
-            <Paper elevation={3} sx={{ height: 500, width: "100%" }}>
+            <Paper
+              elevation={3}
+              sx={{ height: 500, width: "100%", boxSizing: "border-box" }}
+            >
               <DataGrid
                 rows={data.tabla}
                 columns={columns}
@@ -512,10 +525,10 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
                     </Stack>
                   ),
                 }}
-                sx={{ borderRadius: "12px" }}
+                sx={{ borderRadius: "12px", border: 0 }}
               />
             </Paper>
-          </Stack>
+          </Box>
         )}
       </Stack>
     </Box>

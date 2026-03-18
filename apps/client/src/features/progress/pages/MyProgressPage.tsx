@@ -178,6 +178,7 @@ export default function MyProgressPage() {
         width: "100%",
         display: "flex",
         flexDirection: "column",
+        minWidth: 0,
       }}
     >
       {isLoading ? (
@@ -187,7 +188,7 @@ export default function MyProgressPage() {
       ) : error ? (
         <Alert severity="error">{error}</Alert>
       ) : progress ? (
-        <Stack spacing={2} sx={{ height: "100%" }}>
+        <Stack spacing={2} sx={{ height: "100%", minWidth: 0 }}>
           <HeaderPage
             title={`Mi Progreso en ${selectedCourse.nombre}`}
             description="Consulta tu avance y estadísticas de progreso en el curso"

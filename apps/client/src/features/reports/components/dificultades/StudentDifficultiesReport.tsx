@@ -565,9 +565,12 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
 
         {/* Contenido (Se mantiene visible durante recargas de filtros) */}
         {selectedStudent && data && (
-          <Stack
-            spacing={3}
+          <Box
             sx={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1fr)",
+              gap: 3,
+              width: "100%",
               position: "relative",
               opacity: loading ? 0.6 : 1,
               transition: "opacity 0.2s",
@@ -650,7 +653,15 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
             </Box>
 
             {/* --- Stats de Mejora --- */}
-            <Paper elevation={3} sx={{ p: 2, bgcolor: "primary.50" }}>
+            <Paper
+              elevation={3}
+              sx={{
+                p: 2,
+                bgcolor: "primary.50",
+                width: "100%",
+                boxSizing: "border-box",
+              }}
+            >
               <Typography variant="h6">Fuente de Mejora</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 Proporción de mejoras logradas por cada fuente (reducción de
@@ -725,7 +736,10 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
             </Paper>
 
             {/* --- Gráfico de Evolución --- */}
-            <Paper elevation={3} sx={{ p: 2 }}>
+            <Paper
+              elevation={3}
+              sx={{ p: 2, width: "100%", boxSizing: "border-box" }}
+            >
               <Typography variant="h6" gutterBottom>
                 Evolución de Grados por Dificultad
               </Typography>
@@ -796,7 +810,10 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
             </Paper>
 
             {/* --- Tabla Historial --- */}
-            <Paper elevation={3} sx={{ height: 400, width: "100%" }}>
+            <Paper
+              elevation={3}
+              sx={{ height: 400, width: "100%", boxSizing: "border-box" }}
+            >
               <DataGrid
                 rows={data.history}
                 columns={historyColumns}
@@ -816,10 +833,10 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
                 initialState={{
                   pagination: { paginationModel: { pageSize: 10 } },
                 }}
-                sx={{ borderRadius: "0.7em" }}
+                sx={{ borderRadius: "0.7em", border: 0 }}
               />
             </Paper>
-          </Stack>
+          </Box>
         )}
 
         {selectedStudent && (

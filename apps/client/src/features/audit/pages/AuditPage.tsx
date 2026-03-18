@@ -452,42 +452,51 @@ export default function AuditPage() {
 
         {/* --- C. DataGrid --- */}
         {gridError && <Alert severity="error">{gridError}</Alert>}
-        <Box sx={{ height: 600, width: "100%" }}>
-          <DataGrid
-            rows={rows}
-            columns={columns}
-            rowCount={totalRows}
-            loading={gridLoading}
-            paginationMode="server"
-            paginationModel={paginationModel}
-            onPaginationModelChange={setPaginationModel}
-            pageSizeOptions={[10, 20, 30]}
-            sortingMode="server"
-            sortModel={sortModel}
-            onSortModelChange={setSortModel}
-            slots={{
-              noRowsOverlay: () => (
-                <Stack
-                  height="100%"
-                  alignItems="center"
-                  justifyContent="center"
-                >
-                  No se encontraron registros de auditoría.
-                </Stack>
-              ),
-            }}
-            sx={{
-              // Desactivamos los 'outline' de foco
-              "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
-                outline: "none",
-              },
-              "& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within":
-                {
+        <Box
+          sx={{
+            width: "100%",
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr)",
+          }}
+        >
+          <Box sx={{ height: 600, width: "100%", boxSizing: "border-box" }}>
+            <DataGrid
+              rows={rows}
+              columns={columns}
+              rowCount={totalRows}
+              loading={gridLoading}
+              paginationMode="server"
+              paginationModel={paginationModel}
+              onPaginationModelChange={setPaginationModel}
+              pageSizeOptions={[10, 20, 30]}
+              sortingMode="server"
+              sortModel={sortModel}
+              onSortModelChange={setSortModel}
+              slots={{
+                noRowsOverlay: () => (
+                  <Stack
+                    height="100%"
+                    alignItems="center"
+                    justifyContent="center"
+                  >
+                    No se encontraron registros de auditoría.
+                  </Stack>
+                ),
+              }}
+              sx={{
+                // Desactivamos los 'outline' de foco
+                "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
                   outline: "none",
                 },
-            }}
-            disableColumnResize
-          />
+                "& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within":
+                  {
+                    outline: "none",
+                  },
+                border: 0,
+              }}
+              disableColumnResize
+            />
+          </Box>
         </Box>
 
         {/* --- D. El Modal de Detalle --- */}

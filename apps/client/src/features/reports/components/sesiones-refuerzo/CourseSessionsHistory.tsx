@@ -515,9 +515,19 @@ export default function CourseSessionsHistory({ courseId }: Props) {
         {error && <Alert severity="error">{error}</Alert>}
 
         {data && !showLoading && (
-          <Stack spacing={2}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1fr)",
+              gap: 2,
+              width: "100%",
+            }}
+          >
             {/* Gráfico de Línea de Tiempo */}
-            <Paper elevation={3} sx={{ p: 2 }}>
+            <Paper
+              elevation={3}
+              sx={{ p: 2, width: "100%", boxSizing: "border-box" }}
+            >
               <Typography variant="h6" gutterBottom>
                 Actividad en el Tiempo
               </Typography>
@@ -564,7 +574,10 @@ export default function CourseSessionsHistory({ courseId }: Props) {
             </Paper>
 
             {/* Tabla de Datos */}
-            <Paper elevation={3} sx={{ height: 600, width: "100%" }}>
+            <Paper
+              elevation={3}
+              sx={{ height: 600, width: "100%", boxSizing: "border-box" }}
+            >
               <DataGrid
                 rows={data.sessions}
                 columns={columns}
@@ -588,9 +601,10 @@ export default function CourseSessionsHistory({ courseId }: Props) {
                     </Stack>
                   ),
                 }}
+                sx={{ border: 0 }}
               />
             </Paper>
-          </Stack>
+          </Box>
         )}
 
         <SesionDetailModal

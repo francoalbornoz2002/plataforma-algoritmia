@@ -375,9 +375,10 @@ export default function ClasesConsultaPage() {
         width: "100%",
         display: "flex",
         flexDirection: "column",
+        minWidth: 0,
       }}
     >
-      <Stack spacing={2} sx={{ height: "100%" }}>
+      <Stack spacing={2} sx={{ height: "100%", minWidth: 0 }}>
         {/* --- TÍTULO --- */}
         <HeaderPage
           title={`Clases de Consulta en ${selectedCourse.nombre}`}

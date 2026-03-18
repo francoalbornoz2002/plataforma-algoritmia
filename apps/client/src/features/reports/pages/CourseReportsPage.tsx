@@ -14,7 +14,7 @@ export default function CourseReportsPage() {
     return <Typography>Curso no encontrado o no seleccionado.</Typography>;
 
   return (
-    <Box sx={{ mx: -3, mt: -3 }}>
+    <Box sx={{ width: "100%" }}>
       <CourseReportsView courseId={courseId} />
     </Box>
   );

@@ -492,203 +492,202 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
         )}
 
         {data && (
-          <Grid container spacing={2}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1fr)",
+              gap: 2,
+              width: "100%",
+            }}
+          >
             {/* --- Gráfico de Línea --- */}
-            <Grid size={12}>
-              <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-                <Typography variant="h6" gutterBottom>
-                  Evolución de Registros de Dificultad
-                </Typography>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mb: 2 }}
+            <Paper
+              elevation={3}
+              sx={{ p: 2, width: "100%", boxSizing: "border-box" }}
+            >
+              <Typography variant="h6" gutterBottom>
+                Evolución de Registros de Dificultad
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Cantidad de registros o actualización de grado dificultad segun
+                origen y agrupado por fecha.
+              </Typography>
+              {data.timeline.length > 0 ? (
+                <LineChart
+                  xAxis={[
+                    {
+                      scaleType: "point",
+                      data: data.timeline.map((t: any) => t.fecha),
+                      label: "Fecha",
+                      valueFormatter: (date) => {
+                        const [y, m, d] = date.split("-");
+                        return `${d}/${m}/${y}`;
+                      },
+                    },
+                  ]}
+                  series={[
+                    {
+                      data: data.timeline.map((t: any) => t.videojuego),
+                      label: "Videojuego",
+                      color: "#1976d2",
+                      curve: "linear",
+                    },
+                    {
+                      data: data.timeline.map((t: any) => t.sesion_refuerzo),
+                      label: "Sesiones",
+                      color: "#9c27b0",
+                      curve: "linear",
+                    },
+                  ]}
+                  height={350}
+                  margin={{ left: 30, right: 30, top: 30, bottom: 30 }}
+                />
+              ) : (
+                <Box
+                  display="flex"
+                  justifyContent="center"
+                  alignItems="center"
+                  height={250}
                 >
-                  Cantidad de registros o actualización de grado dificultad
-                  segun origen y agrupado por fecha.
-                </Typography>
-                {data.timeline.length > 0 ? (
-                  <LineChart
-                    xAxis={[
-                      {
-                        scaleType: "point",
-                        data: data.timeline.map((t: any) => t.fecha),
-                        label: "Fecha",
-                        valueFormatter: (date) => {
-                          const [y, m, d] = date.split("-");
-                          return `${d}/${m}/${y}`;
-                        },
-                      },
-                    ]}
-                    series={[
-                      {
-                        data: data.timeline.map((t: any) => t.videojuego),
-                        label: "Videojuego",
-                        color: "#1976d2",
-                        curve: "linear",
-                      },
-                      {
-                        data: data.timeline.map((t: any) => t.sesion_refuerzo),
-                        label: "Sesiones",
-                        color: "#9c27b0",
-                        curve: "linear",
-                      },
-                    ]}
-                    height={350}
-                    margin={{ left: 30, right: 30, top: 30, bottom: 30 }}
-                  />
-                ) : (
-                  <Box
-                    display="flex"
-                    justifyContent="center"
-                    alignItems="center"
-                    height={250}
-                  >
-                    <Typography color="text.secondary">
-                      No hay datos para el periodo seleccionado.
-                    </Typography>
-                  </Box>
-                )}
-              </Paper>
-            </Grid>
-            {/* --- Fuente de Mejora (Barras y Tabla) --- */}
-            <Grid size={12}>
-              <Paper
-                elevation={3}
-                sx={{
-                  p: 2,
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  bgcolor: "primary.50",
-                  height: "100%",
-                }}
-              >
-                <Typography variant="h6">Fuente de Mejora</Typography>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mb: 2 }}
-                >
-                  Proporción de mejoras logradas por cada fuente (reducción de
-                  grado de dificultad).
-                </Typography>
-
-                <Stack spacing={2}>
-                  <Box>
-                    <Stack
-                      direction="row"
-                      justifyContent="space-between"
-                      alignItems="center"
-                    >
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <VideogameAssetIcon color="primary" />
-                        <Typography variant="subtitle2">Videojuego</Typography>
-                      </Stack>
-                      <Typography variant="h6" fontWeight="bold">
-                        {data.stats.porcentajeVideojuego.toFixed(1)}%
-                      </Typography>
-                    </Stack>
-                    <Box
-                      sx={{
-                        width: "100%",
-                        height: 8,
-                        bgcolor: "grey.300",
-                        borderRadius: 1,
-                        mt: 0.5,
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          width: `${data.stats.porcentajeVideojuego}%`,
-                          height: "100%",
-                          bgcolor: "primary.main",
-                          borderRadius: 1,
-                        }}
-                      />
-                    </Box>
-                  </Box>
-
-                  <Box>
-                    <Stack
-                      direction="row"
-                      justifyContent="space-between"
-                      alignItems="center"
-                    >
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <SchoolIcon color="secondary" />
-                        <Typography variant="subtitle2">Sesiones</Typography>
-                      </Stack>
-                      <Typography variant="h6" fontWeight="bold">
-                        {data.stats.porcentajeSesion.toFixed(1)}%
-                      </Typography>
-                    </Stack>
-                    <Box
-                      sx={{
-                        width: "100%",
-                        height: 8,
-                        bgcolor: "grey.300",
-                        borderRadius: 1,
-                        mt: 0.5,
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          width: `${data.stats.porcentajeSesion}%`,
-                          height: "100%",
-                          bgcolor: "secondary.main",
-                          borderRadius: 1,
-                        }}
-                      />
-                    </Box>
-                  </Box>
-
-                  <Typography variant="caption" align="center" sx={{ mt: 2 }}>
-                    Total de mejoras registradas:{" "}
-                    <strong>{data.stats.totalMejoras}</strong>
+                  <Typography color="text.secondary">
+                    No hay datos para el periodo seleccionado.
                   </Typography>
+                </Box>
+              )}
+            </Paper>
+            {/* --- Fuente de Mejora (Barras y Tabla) --- */}
+            <Paper
+              elevation={3}
+              sx={{
+                p: 2,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                bgcolor: "primary.50",
+                width: "100%",
+                boxSizing: "border-box",
+              }}
+            >
+              <Typography variant="h6">Fuente de Mejora</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Proporción de mejoras logradas por cada fuente (reducción de
+                grado de dificultad).
+              </Typography>
 
-                  <Box sx={{ height: 400, width: "100%", mt: 2 }}>
-                    <DataGrid
-                      rows={data.tabla}
-                      columns={columns}
-                      slots={{
-                        noRowsOverlay: () => (
-                          <Stack
-                            height="100%"
-                            alignItems="center"
-                            justifyContent="center"
-                          >
-                            No se encontraron registros con los filtros
-                            aplicados.
-                          </Stack>
-                        ),
-                      }}
-                      getRowId={(row) => row.id}
-                      density="compact"
-                      disableRowSelectionOnClick
-                      initialState={{
-                        pagination: { paginationModel: { pageSize: 10 } },
-                        sorting: {
-                          sortModel: [{ field: "fechaCambio", sort: "desc" }],
-                        },
-                      }}
-                      pageSizeOptions={[10, 25]}
+              <Stack spacing={2}>
+                <Box>
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                  >
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <VideogameAssetIcon color="primary" />
+                      <Typography variant="subtitle2">Videojuego</Typography>
+                    </Stack>
+                    <Typography variant="h6" fontWeight="bold">
+                      {data.stats.porcentajeVideojuego.toFixed(1)}%
+                    </Typography>
+                  </Stack>
+                  <Box
+                    sx={{
+                      width: "100%",
+                      height: 8,
+                      bgcolor: "grey.300",
+                      borderRadius: 1,
+                      mt: 0.5,
+                    }}
+                  >
+                    <Box
                       sx={{
-                        "& .MuiDataGrid-cell": {
-                          fontSize: "0.75rem",
-                        },
-                        "& .MuiDataGrid-columnHeader": {
-                          fontSize: "0.75rem",
-                        },
-                        borderRadius: "0.7em",
+                        width: `${data.stats.porcentajeVideojuego}%`,
+                        height: "100%",
+                        bgcolor: "primary.main",
+                        borderRadius: 1,
                       }}
                     />
                   </Box>
-                </Stack>
-              </Paper>
-            </Grid>
-          </Grid>
+                </Box>
+
+                <Box>
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                  >
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <SchoolIcon color="secondary" />
+                      <Typography variant="subtitle2">Sesiones</Typography>
+                    </Stack>
+                    <Typography variant="h6" fontWeight="bold">
+                      {data.stats.porcentajeSesion.toFixed(1)}%
+                    </Typography>
+                  </Stack>
+                  <Box
+                    sx={{
+                      width: "100%",
+                      height: 8,
+                      bgcolor: "grey.300",
+                      borderRadius: 1,
+                      mt: 0.5,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: `${data.stats.porcentajeSesion}%`,
+                        height: "100%",
+                        bgcolor: "secondary.main",
+                        borderRadius: 1,
+                      }}
+                    />
+                  </Box>
+                </Box>
+
+                <Typography variant="caption" align="center" sx={{ mt: 2 }}>
+                  Total de mejoras registradas:{" "}
+                  <strong>{data.stats.totalMejoras}</strong>
+                </Typography>
+
+                <Box sx={{ height: 400, width: "100%", mt: 2 }}>
+                  <DataGrid
+                    rows={data.tabla}
+                    columns={columns}
+                    slots={{
+                      noRowsOverlay: () => (
+                        <Stack
+                          height="100%"
+                          alignItems="center"
+                          justifyContent="center"
+                        >
+                          No se encontraron registros con los filtros aplicados.
+                        </Stack>
+                      ),
+                    }}
+                    getRowId={(row) => row.id}
+                    density="compact"
+                    disableRowSelectionOnClick
+                    initialState={{
+                      pagination: { paginationModel: { pageSize: 10 } },
+                      sorting: {
+                        sortModel: [{ field: "fechaCambio", sort: "desc" }],
+                      },
+                    }}
+                    pageSizeOptions={[10, 25]}
+                    sx={{
+                      "& .MuiDataGrid-cell": {
+                        fontSize: "0.75rem",
+                      },
+                      "& .MuiDataGrid-columnHeader": {
+                        fontSize: "0.75rem",
+                      },
+                      borderRadius: "0.7em",
+                      border: 0,
+                    }}
+                  />
+                </Box>
+              </Stack>
+            </Paper>
+          </Box>
         )}
       </Stack>
     </Box>
