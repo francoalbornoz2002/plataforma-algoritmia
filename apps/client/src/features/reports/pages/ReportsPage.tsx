@@ -42,9 +42,22 @@ export default function ReportsPage() {
     nombre: string;
   } | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(true); // Abrir al inicio por defecto
+  const [tabTriggers, setTabTriggers] = useState<Record<number, number>>({});
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
+    // Al cambiar de pestaña, también disparamos la apertura del modal selector
+    setTabTriggers((prev) => ({
+      ...prev,
+      [newValue]: (prev[newValue] || 0) + 1,
+    }));
+  };
+
+  // Dispara el modal si el usuario hace clic en la pestaña que ya está activa
+  const handleTabClick = (index: number) => {
+    if (value === index) {
+      setTabTriggers((prev) => ({ ...prev, [index]: (prev[index] || 0) + 1 }));
+    }
   };
 
   // Handlers para el diálogo
@@ -92,21 +105,32 @@ export default function ReportsPage() {
               variant="scrollable"
               scrollButtons="auto"
             >
-              <Tab icon={<GroupIcon />} iconPosition="start" label="Usuarios" />
-              <Tab icon={<SchoolIcon />} iconPosition="start" label="Cursos" />
+              <Tab
+                icon={<GroupIcon />}
+                iconPosition="start"
+                label="Usuarios"
+                onClick={() => handleTabClick(0)}
+              />
+              <Tab
+                icon={<SchoolIcon />}
+                iconPosition="start"
+                label="Cursos"
+                onClick={() => handleTabClick(1)}
+              />
               <Tab
                 icon={<VpnKeyIcon />}
                 iconPosition="start"
                 label="Auditoría"
+                onClick={() => handleTabClick(2)}
               />
             </Tabs>
             {changeViewButton}
           </Box>
           <CustomTabPanel value={value} index={0}>
-            <UsersReportTab />
+            <UsersReportTab trigger={tabTriggers[0] || 0} />
           </CustomTabPanel>
           <CustomTabPanel value={value} index={1}>
-            <CoursesReportTab />
+            <CoursesReportTab trigger={tabTriggers[1] || 0} />
           </CustomTabPanel>
           <CustomTabPanel value={value} index={2}>
             <AuditPage />

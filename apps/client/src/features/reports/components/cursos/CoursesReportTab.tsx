@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Box, Tab, Tabs, Typography } from "@mui/material";
+import { useState, useEffect } from "react";
+import { Box, Paper, Typography, Button } from "@mui/material";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import HistoryEduIcon from "@mui/icons-material/HistoryEdu";
 import PersonIcon from "@mui/icons-material/Person";
@@ -8,95 +8,87 @@ import CoursesSummarySection from "./CoursesSummarySection";
 import CoursesHistorySection from "./CoursesHistorySection";
 import StudentEnrollmentHistorySection from "./StudentEnrollmentHistorySection";
 import TeacherAssignmentHistorySection from "./TeacherAssignmentHistorySection";
+import ReportSelectorDialog, {
+  type ReportOption,
+} from "../common/ReportSelectorDialog";
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
+interface Props {
+  trigger: number;
 }
 
-function CustomTabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
+export default function CoursesReportTab({ trigger }: Props) {
+  const [selectedReport, setSelectedReport] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (trigger > 0) setIsDialogOpen(true);
+  }, [trigger]);
+
+  const options: ReportOption[] = [
+    {
+      id: "summary",
+      title: "Resumen General",
+      description: "Estado general de todos los cursos.",
+      icon: <AssessmentIcon />,
+      color: "primary.main",
+    },
+    {
+      id: "history",
+      title: "Historial de Cursos",
+      description: "Altas, bajas y finalizaciones.",
+      icon: <HistoryEduIcon />,
+      color: "secondary.main",
+    },
+    {
+      id: "enrollment",
+      title: "Inscripciones",
+      description: "Historial de alumnos inscriptos.",
+      icon: <PersonIcon />,
+      color: "info.main",
+    },
+    {
+      id: "assignment",
+      title: "Asignaciones",
+      description: "Historial de docentes asignados.",
+      icon: <SchoolIcon />,
+      color: "warning.main",
+    },
+  ];
 
   return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`course-report-tabpanel-${index}`}
-      aria-labelledby={`course-report-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ py: 2 }}>{children}</Box>}
-    </div>
-  );
-}
+    <Box sx={{ width: "100%" }}>
+      {selectedReport ? (
+        <>
+          {selectedReport === "summary" && <CoursesSummarySection />}
+          {selectedReport === "history" && <CoursesHistorySection />}
+          {selectedReport === "enrollment" && (
+            <StudentEnrollmentHistorySection />
+          )}
+          {selectedReport === "assignment" && (
+            <TeacherAssignmentHistorySection />
+          )}
+        </>
+      ) : (
+        <Paper sx={{ p: 4, textAlign: "center", mt: 2 }} elevation={1}>
+          <SchoolIcon sx={{ fontSize: 60, color: "text.secondary", mb: 2 }} />
+          <Typography variant="h6" gutterBottom>
+            No se ha seleccionado ningún reporte
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Haz clic en la pestaña "Cursos" o en el botón para ver las opciones.
+          </Typography>
+          <Button variant="contained" onClick={() => setIsDialogOpen(true)}>
+            Elegir Reporte
+          </Button>
+        </Paper>
+      )}
 
-export default function CoursesReportTab() {
-  const [value, setValue] = useState(0);
-
-  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
-    setValue(newValue);
-  };
-
-  return (
-    <Box sx={{ width: "100%", mt: -3 }}>
-      <Box
-        sx={{
-          borderBottom: 1,
-          borderColor: "divider",
-          bgcolor: "background.paper",
-          mx: -3,
-        }}
-      >
-        <Tabs
-          value={value}
-          onChange={handleChange}
-          aria-label="secciones reporte cursos"
-          variant="scrollable"
-          scrollButtons="auto"
-        >
-          <Tab
-            icon={<AssessmentIcon />}
-            iconPosition="start"
-            label="Resumen General"
-          />
-          <Tab
-            icon={<HistoryEduIcon />}
-            iconPosition="start"
-            label="Historial de Movimientos"
-          />
-          <Tab
-            icon={<PersonIcon />}
-            iconPosition="start"
-            label="Historial de Inscripciones (Alumnos)"
-          />
-          <Tab
-            icon={<SchoolIcon />}
-            iconPosition="start"
-            label="Historial Asignaciones (Docentes)"
-          />
-        </Tabs>
-      </Box>
-
-      {/* Sección 1: Resumen General */}
-      <CustomTabPanel value={value} index={0}>
-        <CoursesSummarySection />
-      </CustomTabPanel>
-
-      {/* Sección 2: Historial Cursos */}
-      <CustomTabPanel value={value} index={1}>
-        <CoursesHistorySection />
-      </CustomTabPanel>
-
-      {/* Sección 3: Historial Alumnos */}
-      <CustomTabPanel value={value} index={2}>
-        <StudentEnrollmentHistorySection />
-      </CustomTabPanel>
-
-      {/* Sección 4: Historial Docentes */}
-      <CustomTabPanel value={value} index={3}>
-        <TeacherAssignmentHistorySection />
-      </CustomTabPanel>
+      <ReportSelectorDialog
+        open={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSelect={setSelectedReport}
+        options={options}
+      />
     </Box>
   );
 }

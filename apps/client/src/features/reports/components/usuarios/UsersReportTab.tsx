@@ -1,78 +1,73 @@
-import { useState } from "react";
-import { Box, Tab, Tabs } from "@mui/material";
+import { useState, useEffect } from "react";
+import { Box, Button, Typography, Paper } from "@mui/material";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import HistoryIcon from "@mui/icons-material/History";
 import SummaryReportSection from "./SummaryReportSection";
 import HistoryReportSection from "./HistoryReportSection";
+import ReportSelectorDialog, {
+  type ReportOption,
+} from "../common/ReportSelectorDialog";
 
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
+interface Props {
+  trigger: number;
 }
 
-function CustomTabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
+export default function UsersReportTab({ trigger }: Props) {
+  const [selectedReport, setSelectedReport] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (trigger > 0) setIsDialogOpen(true);
+  }, [trigger]);
+
+  const options: ReportOption[] = [
+    {
+      id: "summary",
+      title: "Resumen General",
+      description: "Distribución de usuarios por rol y estado.",
+      icon: <AssessmentIcon />,
+      color: "primary.main",
+    },
+    {
+      id: "history",
+      title: "Historial",
+      description: "Registro de altas, bajas y movimientos.",
+      icon: <HistoryIcon />,
+      color: "secondary.main",
+    },
+  ];
 
   return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`users-report-tabpanel-${index}`}
-      aria-labelledby={`users-report-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ py: 2 }}>{children}</Box>}
-    </div>
-  );
-}
-
-export default function UsersReportTab() {
-  const [value, setValue] = useState(0);
-
-  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
-    setValue(newValue);
-  };
-
-  return (
-    <Box sx={{ width: "100%", mt: -3 }}>
-      <Box
-        sx={{
-          borderBottom: 1,
-          borderColor: "divider",
-          bgcolor: "background.paper",
-          mx: -3,
-        }}
-      >
-        <Tabs
-          value={value}
-          onChange={handleChange}
-          aria-label="secciones reporte usuarios"
-          variant="scrollable"
-          scrollButtons="auto"
-        >
-          <Tab
-            icon={<AssessmentIcon />}
-            iconPosition="start"
-            label="Resumen General"
+    <Box sx={{ width: "100%" }}>
+      {selectedReport ? (
+        <>
+          {selectedReport === "summary" && <SummaryReportSection />}
+          {selectedReport === "history" && <HistoryReportSection />}
+        </>
+      ) : (
+        <Paper sx={{ p: 4, textAlign: "center", mt: 2 }} elevation={1}>
+          <AssessmentIcon
+            sx={{ fontSize: 60, color: "text.secondary", mb: 2 }}
           />
-          <Tab
-            icon={<HistoryIcon />}
-            iconPosition="start"
-            label="Historial de Movimientos"
-          />
-        </Tabs>
-      </Box>
+          <Typography variant="h6" gutterBottom>
+            No se ha seleccionado ningún reporte
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Haz clic en la pestaña "Usuarios" o en el botón de abajo para
+            visualizar las estadísticas.
+          </Typography>
+          <Button variant="contained" onClick={() => setIsDialogOpen(true)}>
+            Elegir Reporte
+          </Button>
+        </Paper>
+      )}
 
-      {/* Sección 1: Resumen */}
-      <CustomTabPanel value={value} index={0}>
-        <SummaryReportSection />
-      </CustomTabPanel>
-
-      {/* Sección 2: Historial */}
-      <CustomTabPanel value={value} index={1}>
-        <HistoryReportSection />
-      </CustomTabPanel>
+      <ReportSelectorDialog
+        open={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSelect={setSelectedReport}
+        options={options}
+      />
     </Box>
   );
 }

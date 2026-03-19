@@ -1,79 +1,77 @@
-import { useState } from "react";
-import { Box, Tabs, Tab } from "@mui/material";
+import { useState, useEffect } from "react";
+import { Box, Paper, Typography, Button } from "@mui/material";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import HistoryIcon from "@mui/icons-material/History";
 import CourseConsultationsSummary from "./CourseConsultationsSummary";
 import CourseConsultationsHistory from "./CourseConsultationsHistory";
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function CustomTabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`consultas-tabpanel-${index}`}
-      aria-labelledby={`consultas-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ py: 2 }}>{children}</Box>}
-    </div>
-  );
-}
+import ReportSelectorDialog, {
+  type ReportOption,
+} from "../common/ReportSelectorDialog";
 
 interface Props {
   courseId: string;
+  trigger: number;
 }
 
-export default function ConsultasReportTab({ courseId }: Props) {
-  const [tabValue, setTabValue] = useState(0);
+export default function ConsultasReportTab({ courseId, trigger }: Props) {
+  const [selectedReport, setSelectedReport] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
+  useEffect(() => {
+    if (trigger > 0) setIsDialogOpen(true);
+  }, [trigger]);
+
+  const options: ReportOption[] = [
+    {
+      id: "summary",
+      title: "Resumen General",
+      description: "Estado y métricas de consultas.",
+      icon: <AssessmentIcon />,
+      color: "info.main",
+    },
+    {
+      id: "history",
+      title: "Historial Detallado",
+      description: "Registro y evolución en el tiempo.",
+      icon: <HistoryIcon />,
+      color: "secondary.main",
+    },
+  ];
 
   return (
-    <Box sx={{ width: "100%", mt: -3 }}>
-      <Box
-        sx={{
-          borderBottom: 1,
-          borderColor: "divider",
-          bgcolor: "background.paper",
-          mx: -3,
-        }}
-      >
-        <Tabs
-          value={tabValue}
-          onChange={handleTabChange}
-          variant="scrollable"
-          scrollButtons="auto"
-        >
-          <Tab
-            icon={<AssessmentIcon />}
-            iconPosition="start"
-            label="Resumen General"
+    <Box sx={{ width: "100%" }}>
+      {selectedReport ? (
+        <>
+          {selectedReport === "summary" && (
+            <CourseConsultationsSummary courseId={courseId} />
+          )}
+          {selectedReport === "history" && (
+            <CourseConsultationsHistory courseId={courseId} />
+          )}
+        </>
+      ) : (
+        <Paper sx={{ p: 4, textAlign: "center", mt: 2 }} elevation={1}>
+          <AssessmentIcon
+            sx={{ fontSize: 60, color: "text.secondary", mb: 2 }}
           />
-          <Tab
-            icon={<HistoryIcon />}
-            iconPosition="start"
-            label="Historial Detallado"
-          />
-        </Tabs>
-      </Box>
-
-      <CustomTabPanel value={tabValue} index={0}>
-        <CourseConsultationsSummary courseId={courseId} />
-      </CustomTabPanel>
-
-      <CustomTabPanel value={tabValue} index={1}>
-        <CourseConsultationsHistory courseId={courseId} />
-      </CustomTabPanel>
+          <Typography variant="h6" gutterBottom>
+            No se ha seleccionado ningún reporte
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Haz clic en la pestaña "Consultas" o en el botón para ver las
+            opciones.
+          </Typography>
+          <Button variant="contained" onClick={() => setIsDialogOpen(true)}>
+            Elegir Reporte
+          </Button>
+        </Paper>
+      )}
+      <ReportSelectorDialog
+        open={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSelect={setSelectedReport}
+        options={options}
+      />
     </Box>
   );
 }
