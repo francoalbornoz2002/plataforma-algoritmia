@@ -828,7 +828,9 @@ export default function DocenteDashboardPage() {
         onClose={() => setStudentToDelete(null)}
         onConfirm={confirmRemove}
         title="Dar de baja alumno"
-        description={`¿Estás seguro de que deseas dar de baja a ${studentToDelete?.nombre}? Esta acción cancelará sus sesiones pendientes y cerrará sus consultas.`}
+        description="¿Estás seguro de que deseas dar de baja a "
+        subject={studentToDelete?.nombre}
+        warning="? Esta acción cancelará sus sesiones pendientes y cerrará sus consultas."
         isLoading={isDeleting}
         confirmText="Dar de baja"
       />

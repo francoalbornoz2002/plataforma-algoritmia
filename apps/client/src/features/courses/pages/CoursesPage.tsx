@@ -554,8 +554,11 @@ export default function CoursesPage() {
           onClose={handleCloseDeleteDialog}
           onConfirm={confirmDelete}
           title="Confirmar Baja de Curso"
-          description="¿Estás seguro de que quieres dar de baja este curso? Esta acción es reversible."
+          description="¿Estás seguro de que quieres dar de baja el curso "
+          subject={cursos.find((c) => c.id === courseToDeleteId)?.nombre}
+          warning="? Esta acción es irreversible."
           isLoading={isDeleting}
+          error={error}
         />
 
         <ConfirmationDialog
@@ -563,8 +566,11 @@ export default function CoursesPage() {
           onClose={handleCloseFinalizeDialog}
           onConfirm={confirmFinalize}
           title="Confirmar Finalización de Curso"
-          description="¿Estás seguro de finalizar este curso? Se cerrarán las actas, se cancelarán clases pendientes y pasará a modo 'Solo Lectura' para el historial. Esta acción marca el fin del ciclo lectivo."
+          description="¿Estás seguro de finalizar el curso "
+          subject={cursos.find((c) => c.id === courseToFinalizeId)?.nombre}
+          warning="? Se cerrarán los progresos, dificultades se cancelarán clases de consulta y sesiones de refuerzo pendientes y quedará disponible para consulta a modo de historial. Esta acción marca el fin del ciclo lectivo."
           isLoading={isDeleting}
+          error={error}
         />
       </Stack>
     </Box>

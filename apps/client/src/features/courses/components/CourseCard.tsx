@@ -195,7 +195,7 @@ export default function CourseCard({
             </IconButton>
           </span>
         </Tooltip>
-        <Tooltip title="Dar de baja Curso">
+        <Tooltip title="Dar de baja">
           <span>
             <IconButton
               onClick={() => onDelete(id)}

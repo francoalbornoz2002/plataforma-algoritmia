@@ -23,11 +23,6 @@ import {
   Alert,
   Checkbox,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   FormControl,
   InputLabel,
   ListItemText,
@@ -49,6 +44,7 @@ import {
   type FindUsersParams,
 } from "../services/user.service";
 import HeaderPage from "../../../components/HeaderPage";
+import ConfirmationDialog from "../../../components/ConfirmationDialog";
 import { People } from "@mui/icons-material";
 
 // --- 2. DEFINE LA LISTA DE ROLES DISPONIBLES ---
@@ -523,58 +519,30 @@ export default function UsersPage() {
           </Box>
         </Box>
         {/* --- Dialog/Modal para Crear/Editar Usuario --- */}
-        {
-          <UserFormDialog
-            open={isModalOpen}
-            onClose={handleCloseModal}
-            userToEdit={editingUser}
-            onSave={handleSaveUser} // Pasamos la función de guardado/refresco
-          />
-        }
+        <UserFormDialog
+          open={isModalOpen}
+          onClose={handleCloseModal}
+          userToEdit={editingUser}
+          onSave={handleSaveUser} // Pasamos la función de guardado/refresco
+        />
 
         {/* --- Dialogo de Confirmación de Borrado --- */}
-        <Dialog
+        <ConfirmationDialog
           open={isDeleteDialogOpen}
           onClose={handleCloseDeleteDialog}
-          aria-labelledby="alert-dialog-title"
-          aria-describedby="alert-dialog-description"
-        >
-          <DialogTitle id="alert-dialog-title">
-            Confirmar Baja de Usuario
-          </DialogTitle>
-          <DialogContent>
-            <DialogContentText id="alert-dialog-description">
-              ¿Estás seguro de que quieres dar de baja a{" "}
-              <strong>
-                {userToDelete?.nombre} {userToDelete?.apellido}
-              </strong>
-              ? Esta acción marcará al usuario como inactivo.
-            </DialogContentText>
-            {/* Muestra error específico del borrado si ocurre */}
-            {error && (
-              <Alert severity="error" sx={{ mt: 2 }}>
-                {error}
-              </Alert>
-            )}
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDeleteDialog} disabled={isDeleting}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={confirmDelete}
-              color="error"
-              disabled={isDeleting}
-              autoFocus
-            >
-              {isDeleting ? (
-                <CircularProgress size={20} color="inherit" />
-              ) : (
-                "Confirmar Baja"
-              )}
-            </Button>
-          </DialogActions>
-        </Dialog>
+          onConfirm={confirmDelete}
+          title="Confirmar Baja de Usuario"
+          description="¿Estás seguro de que quieres dar de baja a "
+          subject={
+            userToDelete
+              ? `${userToDelete.nombre} ${userToDelete.apellido}`
+              : undefined
+          }
+          warning="? Esta acción marcará al usuario como inactivo."
+          isLoading={isDeleting}
+          confirmText="Confirmar Baja"
+          error={error}
+        />
       </Stack>
     </Box>
   );

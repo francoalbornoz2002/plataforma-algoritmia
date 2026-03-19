@@ -697,7 +697,7 @@ export default function CourseFormDialog({
                             )}
                           />
                         </FormControl>
-                        <Tooltip title="Eliminar horario">
+                        <Tooltip title="Eliminar día">
                           <IconButton
                             onClick={() => removeDiaClase(index)}
                             color="error"
@@ -725,7 +725,7 @@ export default function CourseFormDialog({
             Cancelar
           </Button>
           <Button type="submit" variant="contained" disabled={isSubmitting}>
-            {isEditMode ? "Actualizar" : "Crear curso"}
+            {isEditMode ? "Guardar cambios" : "Crear curso"}
             {/* 'isSubmitting' reemplaza a 'isSaving' */}
             {isSubmitting ? <CircularProgress size={24} sx={{ ml: 1 }} /> : ""}
           </Button>

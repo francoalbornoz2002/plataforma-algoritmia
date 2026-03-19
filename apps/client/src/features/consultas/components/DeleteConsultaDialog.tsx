@@ -1,17 +1,8 @@
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Button,
-  CircularProgress,
-  Alert,
-} from "@mui/material";
 import { useState } from "react";
 import type { Consulta } from "../../../types";
 import { deleteConsulta } from "../../users/services/alumnos.service";
 import { enqueueSnackbar } from "notistack";
+import ConfirmationDialog from "../../../components/ConfirmationDialog";
 
 interface DeleteConsultaDialogProps {
   open: boolean;
@@ -51,31 +42,17 @@ export default function DeleteConsultaDialog({
   };
 
   return (
-    <Dialog open={open} onClose={onClose}>
-      <DialogTitle>Confirmar Borrado</DialogTitle>
-      <DialogContent>
-        <DialogContentText>
-          ¿Estás seguro de que querés borrar tu consulta: "
-          {consultaToDelete.titulo}"? Esta acción no se puede deshacer.
-        </DialogContentText>
-        {error && (
-          <Alert severity="error" sx={{ mt: 2 }}>
-            {error}
-          </Alert>
-        )}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={isDeleting}>
-          Cancelar
-        </Button>
-        <Button
-          onClick={handleConfirmDelete}
-          color="error"
-          disabled={isDeleting}
-        >
-          {isDeleting ? <CircularProgress size={24} /> : "Borrar"}
-        </Button>
-      </DialogActions>
-    </Dialog>
+    <ConfirmationDialog
+      open={open}
+      onClose={onClose}
+      onConfirm={handleConfirmDelete}
+      title="Confirmar Borrado"
+      description='¿Estás seguro de que querés borrar tu consulta: "'
+      subject={consultaToDelete.titulo}
+      warning='"? Esta acción no se puede deshacer.'
+      isLoading={isDeleting}
+      confirmText="Borrar"
+      error={error}
+    />
   );
 }
