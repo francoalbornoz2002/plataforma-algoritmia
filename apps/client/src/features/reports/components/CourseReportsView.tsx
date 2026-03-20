@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Box, Tab, Tabs } from "@mui/material";
+import { Box, Tab, Tabs, Tooltip } from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import WarningIcon from "@mui/icons-material/Warning";
 import QuestionAnswerIcon from "@mui/icons-material/QuestionAnswer";
@@ -68,6 +69,20 @@ export default function CourseReportsView({
     }
   };
 
+  const renderTabLabel = (text: string, index: number) => (
+    <Tooltip
+      title={value === index ? "Clic para cambiar reporte" : ""}
+      placement="top"
+    >
+      <span style={{ display: "flex", alignItems: "center" }}>
+        {text}
+        {value === index && (
+          <ExpandMoreIcon fontSize="small" sx={{ ml: 0.5 }} />
+        )}
+      </span>
+    </Tooltip>
+  );
+
   return (
     <Box sx={{ width: "100%" }}>
       <Box
@@ -90,31 +105,31 @@ export default function CourseReportsView({
           <Tab
             icon={<Assessment />}
             iconPosition="start"
-            label="Progreso"
+            label={renderTabLabel("Progreso", 0)}
             onClick={() => handleTabClick(0)}
           />
           <Tab
             icon={<AssignmentLate />}
             iconPosition="start"
-            label="Dificultades"
+            label={renderTabLabel("Dificultades", 1)}
             onClick={() => handleTabClick(1)}
           />
           <Tab
             icon={<MarkUnreadChatAlt />}
             iconPosition="start"
-            label="Consultas"
+            label={renderTabLabel("Consultas", 2)}
             onClick={() => handleTabClick(2)}
           />
           <Tab
             icon={<ClassIcon />}
             iconPosition="start"
-            label="Clases de Consulta"
+            label={renderTabLabel("Clases de Consulta", 3)}
             onClick={() => handleTabClick(3)}
           />
           <Tab
             icon={<SwitchAccessShortcutAdd />}
             iconPosition="start"
-            label="Sesiones de Refuerzo"
+            label={renderTabLabel("Sesiones de Refuerzo", 4)}
             onClick={() => handleTabClick(4)}
           />
         </Tabs>

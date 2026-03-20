@@ -107,7 +107,7 @@ export default function ReportContextDialog({
                 />
                 <Typography variant="h6">Reportes Generales</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Usuarios, Totales de Cursos, Auditoría
+                  Usuarios, Todos los Cursos y Auditoría
                 </Typography>
               </Paper>
             </Grid>
@@ -132,7 +132,8 @@ export default function ReportContextDialog({
                 />
                 <Typography variant="h6">Reportes por Curso</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Progreso, Dificultades, Consultas, Sesiones
+                  Progreso, Dificultades, Consultas, Clases de consulta y
+                  Sesiones
                 </Typography>
               </Paper>
             </Grid>

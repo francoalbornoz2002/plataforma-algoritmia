@@ -323,7 +323,7 @@ export default function CoursesHistorySection() {
                       data: chartData.dates,
                       label: "Fecha",
                       valueFormatter: (date) =>
-                        new Date(date).toLocaleDateString(),
+                        new Date(date + "T00:00:00").toLocaleDateString(),
                     },
                   ]}
                   series={[

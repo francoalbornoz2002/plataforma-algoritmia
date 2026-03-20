@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Box, Tab, Tabs, Button } from "@mui/material";
+import { Box, Tab, Tabs, Button, Tooltip } from "@mui/material";
 import GroupIcon from "@mui/icons-material/Group";
 import SchoolIcon from "@mui/icons-material/School";
 import VpnKeyIcon from "@mui/icons-material/VpnKey";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import UsersReportTab from "../components/usuarios/UsersReportTab";
 import CoursesReportTab from "../components/cursos/CoursesReportTab";
 import AuditPage from "../../audit/pages/AuditPage";
@@ -108,13 +109,37 @@ export default function ReportsPage() {
               <Tab
                 icon={<GroupIcon />}
                 iconPosition="start"
-                label="Usuarios"
+                label={
+                  <Tooltip
+                    title={value === 0 ? "Clic para cambiar reporte" : ""}
+                    placement="top"
+                  >
+                    <span style={{ display: "flex", alignItems: "center" }}>
+                      Usuarios
+                      {value === 0 && (
+                        <ExpandMoreIcon fontSize="small" sx={{ ml: 0.5 }} />
+                      )}
+                    </span>
+                  </Tooltip>
+                }
                 onClick={() => handleTabClick(0)}
               />
               <Tab
                 icon={<SchoolIcon />}
                 iconPosition="start"
-                label="Cursos"
+                label={
+                  <Tooltip
+                    title={value === 1 ? "Clic para cambiar reporte" : ""}
+                    placement="top"
+                  >
+                    <span style={{ display: "flex", alignItems: "center" }}>
+                      Cursos
+                      {value === 1 && (
+                        <ExpandMoreIcon fontSize="small" sx={{ ml: 0.5 }} />
+                      )}
+                    </span>
+                  </Tooltip>
+                }
                 onClick={() => handleTabClick(1)}
               />
               <Tab
