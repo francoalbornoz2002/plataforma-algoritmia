@@ -298,6 +298,7 @@ export default function CoursesSummarySection() {
                     <BarChart
                       dataset={chartConfig.dataset}
                       xAxis={chartConfig.xAxis}
+                      yAxis={[{ tickMinStep: 1 }]}
                       series={chartConfig.series}
                       height={350}
                       onItemClick={handleItemClick}

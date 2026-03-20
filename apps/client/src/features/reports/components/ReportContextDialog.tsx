@@ -139,12 +139,13 @@ export default function ReportContextDialog({
             </Grid>
           </Grid>
         ) : (
-          <Box sx={{ mt: 2, minHeight: 200 }}>
+          <Box>
             <Typography variant="body1" gutterBottom>
               Elige el curso del cual deseas ver los reportes detallados:
             </Typography>
             <Autocomplete
               options={courses}
+              sx={{ mt: 2 }}
               loading={loadingCourses}
               getOptionLabel={(option) => option.nombre}
               value={selectedCourse}

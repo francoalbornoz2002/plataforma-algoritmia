@@ -224,11 +224,13 @@ export default function AuditPage() {
                   Sistema
                 </Typography>
                 <Tooltip title="Operación automática del sistema (tareas programadas, triggers, etc.)">
-                  <InfoIcon
-                    fontSize="small"
-                    color="action"
+                  <IconButton
+                    size="small"
+                    disableRipple
                     sx={{ cursor: "help" }}
-                  />
+                  >
+                    <InfoIcon fontSize="small" color="action" />
+                  </IconButton>
                 </Tooltip>
               </Stack>
             );
@@ -484,6 +486,7 @@ export default function AuditPage() {
                   </Stack>
                 ),
               }}
+              disableRowSelectionOnClick
               sx={{
                 // Desactivamos los 'outline' de foco
                 "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {

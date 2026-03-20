@@ -404,7 +404,7 @@ export default function UsersPage() {
             sx={{ minWidth: 250, flexGrow: 1 }}
             variant="outlined"
           />
-          <FormControl size="small" sx={{ m: 1, minWidth: 200 }}>
+          <FormControl size="small" sx={{ minWidth: 200 }}>
             <InputLabel id="multiple-checkbox-label">Rol</InputLabel>
             <Select
               labelId="multiple-checkbox-label"

@@ -327,6 +327,7 @@ export default function CoursesHistorySection() {
                         new Date(date + "T00:00:00").toLocaleDateString(),
                     },
                   ]}
+                  yAxis={[{ tickMinStep: 1 }]}
                   series={[
                     ...(type === "ALTA" || type === "TODOS"
                       ? [
