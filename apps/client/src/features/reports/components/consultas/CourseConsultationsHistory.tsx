@@ -272,7 +272,8 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
             flexWrap="wrap"
           >
             <DatePicker
-              label="Desde"
+              label="Fecha Desde"
+              disableFuture
               value={
                 filters.fechaDesde
                   ? new Date(filters.fechaDesde + "T00:00:00")
@@ -309,7 +310,7 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
               }}
             />
             <DatePicker
-              label="Hasta"
+              label="Fecha Hasta"
               disableFuture
               value={
                 filters.fechaHasta

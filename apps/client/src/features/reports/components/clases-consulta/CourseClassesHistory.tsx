@@ -227,7 +227,7 @@ export default function CourseClassesHistory({ courseId }: Props) {
             flexWrap="wrap"
           >
             <DatePicker
-              label="Desde"
+              label="Fecha Desde"
               disableFuture
               value={
                 filters.fechaDesde
@@ -265,7 +265,7 @@ export default function CourseClassesHistory({ courseId }: Props) {
               }}
             />
             <DatePicker
-              label="Hasta"
+              label="Fecha Hasta"
               disableFuture
               value={
                 filters.fechaHasta

@@ -147,7 +147,7 @@ export default function CourseMissionsReport({ courseId }: Props) {
         <QuickDateFilter onApply={handleQuickFilter} />
         <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
           <DatePicker
-            label="Desde"
+            label="Fecha Desde"
             value={
               filters.fechaDesde
                 ? new Date(filters.fechaDesde + "T00:00:00")
@@ -173,7 +173,7 @@ export default function CourseMissionsReport({ courseId }: Props) {
             disableFuture
           />
           <DatePicker
-            label="Hasta"
+            label="Fecha Hasta"
             value={
               filters.fechaHasta
                 ? new Date(filters.fechaHasta + "T00:00:00")

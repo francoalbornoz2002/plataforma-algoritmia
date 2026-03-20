@@ -188,7 +188,7 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
           </FormControl>
 
           <DatePicker
-            label="Desde"
+            label="Fecha Desde"
             value={
               filters.fechaDesde
                 ? new Date(filters.fechaDesde + "T00:00:00")

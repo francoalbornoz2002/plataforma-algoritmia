@@ -156,7 +156,7 @@ export default function StudentProgressDetailModal({
                 </Typography>
                 <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
                   <DatePicker
-                    label="Desde"
+                    label="Fecha Desde"
                     value={
                       filters.fechaDesde
                         ? new Date(filters.fechaDesde + "T00:00:00")
@@ -182,7 +182,7 @@ export default function StudentProgressDetailModal({
                     disableFuture
                   />
                   <DatePicker
-                    label="Hasta"
+                    label="Fecha Hasta"
                     value={
                       filters.fechaHasta
                         ? new Date(filters.fechaHasta + "T00:00:00")

@@ -359,6 +359,7 @@ export default function AuditPage() {
         >
           <DatePicker
             label="Fecha Desde"
+            disableFuture
             value={filters.fechaDesde ? parseISO(filters.fechaDesde) : null}
             maxDate={
               filters.fechaHasta ? parseISO(filters.fechaHasta) : undefined

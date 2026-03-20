@@ -397,6 +397,7 @@ export default function ClasesConsultaPage() {
         >
           <DatePicker
             label="Fecha Desde"
+            disableFuture
             value={fechaDesde}
             maxDate={fechaHasta || undefined}
             onChange={setFechaDesde}

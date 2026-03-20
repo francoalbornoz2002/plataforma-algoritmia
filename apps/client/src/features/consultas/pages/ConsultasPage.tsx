@@ -183,7 +183,8 @@ export default function ConsultasPage() {
 
         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
           <DatePicker
-            label="Desde"
+            label="Fecha Desde"
+            disableFuture
             value={filters.fechaDesde}
             maxDate={filters.fechaHasta || undefined}
             onChange={(newValue) => {
@@ -205,7 +206,7 @@ export default function ConsultasPage() {
             }}
           />
           <DatePicker
-            label="Hasta"
+            label="Fecha Hasta"
             disableFuture
             value={filters.fechaHasta}
             minDate={filters.fechaDesde || undefined}

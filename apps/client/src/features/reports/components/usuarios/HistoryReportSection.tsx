@@ -215,6 +215,7 @@ export default function HistoryReportSection() {
           >
             <DatePicker
               label="Fecha Desde"
+              disableFuture
               value={
                 filters.fechaDesde
                   ? new Date(filters.fechaDesde + "T00:00:00")

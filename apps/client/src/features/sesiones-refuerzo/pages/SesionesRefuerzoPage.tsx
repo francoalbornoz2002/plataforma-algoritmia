@@ -225,7 +225,8 @@ export default function SesionesRefuerzoPage() {
           alignItems="center"
         >
           <DatePicker
-            label="Desde"
+            label="Fecha Desde"
+            disableFuture
             value={dateFilters.fechaDesde}
             maxDate={dateFilters.fechaHasta || undefined}
             onChange={(newValue) => {

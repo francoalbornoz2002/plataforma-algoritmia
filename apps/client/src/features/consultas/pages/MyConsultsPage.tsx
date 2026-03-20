@@ -252,7 +252,8 @@ export default function MyConsultsPage() {
             sx={{ width: 260 }}
           />
           <DatePicker
-            label="Desde"
+            label="Fecha Desde"
+            disableFuture
             value={filters.fechaDesde}
             maxDate={filters.fechaHasta || undefined}
             onChange={(newValue) => {
@@ -274,7 +275,7 @@ export default function MyConsultsPage() {
             }}
           />
           <DatePicker
-            label="Hasta"
+            label="Fecha Hasta"
             disableFuture
             value={filters.fechaHasta}
             minDate={filters.fechaDesde || undefined}
