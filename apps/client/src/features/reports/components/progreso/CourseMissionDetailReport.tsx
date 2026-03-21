@@ -177,6 +177,7 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
               onChange={(e) =>
                 setFilters({ ...filters, misionId: e.target.value })
               }
+              MenuProps={{ PaperProps: { sx: { maxHeight: 300 } } }}
             >
               <MenuItem value="">-- Seleccione --</MenuItem>
               {missionsList.map((m) => (
@@ -254,51 +255,45 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
 
         {data && (
           <Stack spacing={2}>
-            <Paper elevation={3} sx={{ p: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Estadísticas generales
-              </Typography>
-
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <ReportStatCard
-                    icon={<TaskAltIcon fontSize="small" />}
-                    title="Veces Completada"
-                    subtitle="Total de ejecuciones"
-                    count={data.stats.vecesCompletada}
-                    color="success"
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <ReportStatCard
-                    icon={<PersonIcon fontSize="small" />}
-                    title="Alumnos que completaron"
-                    subtitle="Total de alumnos distintos"
-                    count={data.stats.alumnosCompletaron}
-                    percentage={data.stats.pctAlumnos}
-                    color="primary"
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <ReportStatCard
-                    icon={<StarIcon fontSize="small" />}
-                    title="Prom. Estrellas"
-                    subtitle="Calificación promedio"
-                    count={data.stats.promEstrellas.toFixed(1)}
-                    color="warning"
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                  <ReportStatCard
-                    icon={<ReplayIcon fontSize="small" />}
-                    title="Prom. Intentos"
-                    subtitle="Intentos promedio"
-                    count={data.stats.promIntentos.toFixed(1)}
-                    color="info"
-                  />
-                </Grid>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <ReportStatCard
+                  icon={<TaskAltIcon fontSize="small" />}
+                  title="Veces Completada"
+                  subtitle="Total de ejecuciones"
+                  count={data.stats.vecesCompletada}
+                  color="success"
+                />
               </Grid>
-            </Paper>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <ReportStatCard
+                  icon={<PersonIcon fontSize="small" />}
+                  title="Alumnos que completaron"
+                  subtitle="Total de alumnos distintos"
+                  count={data.stats.alumnosCompletaron}
+                  percentage={data.stats.pctAlumnos}
+                  color="primary"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <ReportStatCard
+                  icon={<StarIcon fontSize="small" />}
+                  title="Prom. Estrellas"
+                  subtitle="Calificación promedio"
+                  count={data.stats.promEstrellas.toFixed(1)}
+                  color="warning"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <ReportStatCard
+                  icon={<ReplayIcon fontSize="small" />}
+                  title="Prom. Intentos"
+                  subtitle="Intentos promedio"
+                  count={data.stats.promIntentos.toFixed(1)}
+                  color="info"
+                />
+              </Grid>
+            </Grid>
 
             <Box
               sx={{
@@ -370,9 +365,6 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
                   boxSizing: "border-box",
                 }}
               >
-                <Typography variant="h6" gutterBottom sx={{ p: 2, pb: 0 }}>
-                  Alumnos que la completaron
-                </Typography>
                 <DataGrid
                   rows={data.tabla}
                   columns={columns}

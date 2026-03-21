@@ -258,7 +258,9 @@ export default function CourseMissionsReport({ courseId }: Props) {
               elevation={3}
               sx={{ p: 2, width: "100%", boxSizing: "border-box" }}
             >
-              <Typography variant="h6">Misiones completadas</Typography>
+              <Typography variant="h6">
+                Misiones completadas en el tiempo
+              </Typography>
               <Typography variant="caption" color="text.secondary" gutterBottom>
                 Cantidad de misiones completadas en el periodo seleccionado.
               </Typography>
