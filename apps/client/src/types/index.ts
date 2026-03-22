@@ -470,7 +470,7 @@ export interface Consulta {
   titulo: string;
   tema: temas;
   descripcion: string;
-  fechaConsulta: string;
+  createdAt: string;
   estado: estado_consulta;
   valoracionAlumno: number | null;
   comentarioValoracion: string | null;
@@ -744,7 +744,7 @@ export interface ConsultaSimple {
   titulo: string;
   tema: temas;
   descripcion: string;
-  fechaConsulta: string;
+  createdAt: string;
   alumno: {
     nombre: string;
     apellido: string;

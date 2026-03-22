@@ -21,10 +21,12 @@ import { Description } from "@mui/icons-material";
 import ConsultaDetailInfoModal from "./ConsultaDetailInfoModal";
 
 // Helper de fecha
-const formatFechaSimple = (fechaISO: string) => {
-  if (!fechaISO) return "";
-  const fechaString = fechaISO.split("T")[0];
-  const [year, month, day] = fechaString.split("-");
+const formatFechaSimple = (fechaString: string) => {
+  if (!fechaString) return "";
+  const date = new Date(fechaString);
+  const day = date.getDate().toString().padStart(2, "0");
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const year = date.getFullYear();
   return `${day}/${month}/${year}`;
 };
 
@@ -95,7 +97,7 @@ export default function ConsultaSelectionModal({
       renderCell: (params) => <TemaChip tema={params.value} />,
     },
     {
-      field: "fechaConsulta",
+      field: "createdAt",
       headerName: "Fecha",
       flex: 0.5,
       valueFormatter: (value: string) => formatFechaSimple(value),

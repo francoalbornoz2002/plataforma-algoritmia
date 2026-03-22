@@ -77,17 +77,14 @@ export default function ConsultaAccordion({
   const isResuelta = consulta.estado === estado_consulta.Resuelta;
 
   // 1. Formateo de Fecha de Consulta (la del Alumno)
-  // (Usamos el "hack" de string-split para evitar UTC)
-  const fechaConsultaString = consulta.fechaConsulta.split("T")[0];
-  const [yearC, monthC, dayC] = fechaConsultaString.split("-");
-  const fechaConsultaFormateada = `${dayC}/${monthC}/${yearC}`;
+  const dateC = new Date(consulta.createdAt);
+  const fechaConsultaFormateada = `${dateC.getDate().toString().padStart(2, "0")}/${(dateC.getMonth() + 1).toString().padStart(2, "0")}/${dateC.getFullYear()}`;
 
   // 2. Formateo de Fecha de Respuesta (la del Docente)
   let fechaRespuestaFormateada = ""; // Default
   if (respuestaConsulta) {
-    const fechaRespuestaString = respuestaConsulta.fechaRespuesta.split("T")[0];
-    const [yearR, monthR, dayR] = fechaRespuestaString.split("-");
-    fechaRespuestaFormateada = `${dayR}/${monthR}/${yearR}`;
+    const dateR = new Date(respuestaConsulta.fechaRespuesta);
+    fechaRespuestaFormateada = `${dateR.getDate().toString().padStart(2, "0")}/${(dateR.getMonth() + 1).toString().padStart(2, "0")}/${dateR.getFullYear()}`;
   }
 
   return (

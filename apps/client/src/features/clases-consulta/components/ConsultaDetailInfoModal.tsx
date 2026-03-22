@@ -12,11 +12,13 @@ import TemaChip from "../../../components/TemaChip";
 import type { ConsultaSimple } from "../../../types";
 
 // Helper para formatear la fecha (el "hack" anti-UTC)
-const formatFechaSimple = (fechaISO: string) => {
-  if (!fechaISO) return "";
-  const fechaString = fechaISO.split("T")[0]; // "2025-11-11"
-  const [year, month, day] = fechaString.split("-");
-  return `${day}/${month}/${year}`; // "11/11/2025"
+const formatFechaSimple = (fechaString: string) => {
+  if (!fechaString) return "";
+  const date = new Date(fechaString);
+  const day = date.getDate().toString().padStart(2, "0");
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
 };
 
 interface ConsultaDetailInfoModalProps {
@@ -38,7 +40,7 @@ export default function ConsultaDetailInfoModal({
       <DialogTitle>
         <Typography variant="body2" color="text.secondary">
           Consulta de {consulta.alumno.nombre} {consulta.alumno.apellido} (
-          {formatFechaSimple(consulta.fechaConsulta)})
+          {formatFechaSimple(consulta.createdAt)})
         </Typography>
       </DialogTitle>
       <DialogContent>

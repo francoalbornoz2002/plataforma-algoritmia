@@ -189,8 +189,7 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
       width: 165,
       valueFormatter: (value: string) => {
         if (!value) return "-";
-        // Forzamos a que interprete la fecha sin desfase de zona horaria local
-        const date = new Date(value.split("T")[0] + "T00:00:00");
+        const date = new Date(value);
         return format(date, "dd/MM/yyyy");
       },
     },

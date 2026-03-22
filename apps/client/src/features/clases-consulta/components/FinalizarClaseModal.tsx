@@ -31,10 +31,12 @@ import TemaChip from "../../../components/TemaChip";
 import ConsultaDetailInfoModal from "./ConsultaDetailInfoModal"; // Reutilizamos el mismo modal de detalle
 
 // Helper de fecha (mismo que en tu ejemplo)
-const formatFechaSimple = (fechaISO: string | Date) => {
-  if (!fechaISO) return "";
-  const fechaString = new Date(fechaISO).toISOString().split("T")[0];
-  const [year, month, day] = fechaString.split("-");
+const formatFechaSimple = (fechaString: string | Date) => {
+  if (!fechaString) return "";
+  const date = new Date(fechaString);
+  const day = date.getDate().toString().padStart(2, "0");
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const year = date.getFullYear();
   return `${day}/${month}/${year}`;
 };
 
@@ -132,7 +134,7 @@ export const FinalizarClaseModal = ({
       renderCell: (params) => <TemaChip tema={params.value} />,
     },
     {
-      field: "fechaConsulta",
+      field: "createdAt",
       headerName: "Fecha",
       width: 100,
       valueFormatter: (value: string) => formatFechaSimple(value),

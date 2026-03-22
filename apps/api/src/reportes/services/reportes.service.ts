@@ -1686,15 +1686,19 @@ export class ReportesService {
   ) {
     const { fechaDesde, fechaHasta } = dto;
     const start = fechaDesde ? new Date(fechaDesde) : new Date(0);
-    if (fechaDesde) start.setUTCHours(0, 0, 0, 0);
+    if (fechaDesde) {
+      start.setUTCHours(3, 0, 0, 0); // Ajustamos a las 00:00 hora local (UTC-3)
+    }
     const end = fechaHasta ? new Date(fechaHasta) : new Date();
-    end.setUTCHours(23, 59, 59, 999);
+    if (fechaHasta) {
+      end.setUTCHours(26, 59, 59, 999); // Ajustamos a las 23:59 hora local (UTC-3)
+    }
 
     // 1. Obtener todas las consultas en el rango (incluyendo eliminadas para el conteo de inactivas)
     const allConsultations = await this.prisma.consulta.findMany({
       where: {
         idCurso,
-        fechaConsulta: { gte: start, lte: end },
+        createdAt: { gte: start, lte: end },
       },
       include: {
         alumno: { select: { id: true, nombre: true, apellido: true } },
@@ -1947,14 +1951,18 @@ export class ReportesService {
 
     // 1. Configurar Fechas
     const start = fechaDesde ? new Date(fechaDesde) : new Date(0);
-    if (fechaDesde) start.setUTCHours(0, 0, 0, 0);
+    if (fechaDesde) {
+      start.setUTCHours(3, 0, 0, 0); // Ajustamos a las 00:00 hora local (UTC-3)
+    }
     const end = fechaHasta ? new Date(fechaHasta) : new Date();
-    end.setUTCHours(23, 59, 59, 999);
+    if (fechaHasta) {
+      end.setUTCHours(26, 59, 59, 999); // Ajustamos a las 23:59 hora local (UTC-3)
+    }
 
     // 2. Construir Filtros
     const where: Prisma.ConsultaWhereInput = {
       idCurso,
-      fechaConsulta: { gte: start, lte: end },
+      createdAt: { gte: start, lte: end },
       deletedAt: null, // Solo consultas activas para el historial operativo
     };
 
@@ -1993,14 +2001,15 @@ export class ReportesService {
           },
         },
       },
-      orderBy: { fechaConsulta: 'desc' },
+      orderBy: { createdAt: 'desc' },
     });
 
     // 4. Procesar Datos para Tabla y Timeline
     const timelineMap = new Map<string, number>();
     const tabla = consultas.map((c) => {
       // Timeline
-      const dateKey = c.fechaConsulta.toISOString().split('T')[0];
+      const localDate = new Date(c.createdAt.getTime() - 3 * 60 * 60 * 1000);
+      const dateKey = localDate.toISOString().split('T')[0];
       timelineMap.set(dateKey, (timelineMap.get(dateKey) || 0) + 1);
 
       // Determinar docente responsable (Respuesta directa o Clase)
@@ -2019,7 +2028,7 @@ export class ReportesService {
         id: c.id,
         titulo: c.titulo,
         tema: c.tema,
-        fecha: c.fechaConsulta,
+        fecha: c.createdAt,
         alumno: `${c.alumno.nombre} ${c.alumno.apellido}`,
         estado: c.estado,
         docente,
@@ -2248,7 +2257,7 @@ export class ReportesService {
       where: {
         idCurso,
         estado: estado_consulta.Resuelta,
-        fechaConsulta: { gte: start, lte: end },
+        createdAt: { gte: start, lte: end },
       },
       include: {
         clasesDondeSeTrata: true,

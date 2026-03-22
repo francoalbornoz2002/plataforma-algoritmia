@@ -777,7 +777,7 @@ export class CoursesService {
       const consultasRealizadas = await this.prisma.consulta.count({
         where: {
           idCurso,
-          fechaConsulta: { gte: start, lte: end },
+          createdAt: { gte: start, lte: end },
         },
       });
 

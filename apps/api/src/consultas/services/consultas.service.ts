@@ -38,7 +38,7 @@ export class ConsultasService {
     idCurso: string,
     dto: CreateConsultaDto,
   ) {
-    const { titulo, descripcion, tema, fechaConsulta } = dto;
+    const { titulo, descripcion, tema } = dto;
 
     // Validar que el título y la descripción no sean iguales
     if (titulo.toLowerCase() === descripcion.toLowerCase()) {
@@ -73,7 +73,6 @@ export class ConsultasService {
           titulo: titulo,
           descripcion: descripcion,
           tema: tema,
-          fechaConsulta: new Date(fechaConsulta),
           idAlumno,
           idCurso,
           estado: estado_consulta.Pendiente,
@@ -333,7 +332,7 @@ export class ConsultasService {
         ],
       }),
       ...((fechaDesde || fechaHasta) && {
-        fechaConsulta: {
+        createdAt: {
           ...(fechaDesde && { gte: new Date(fechaDesde) }),
           ...(fechaHasta && { lte: new Date(fechaHasta) }),
         },
@@ -341,7 +340,7 @@ export class ConsultasService {
     };
 
     const orderBy: Prisma.ConsultaOrderByWithRelationInput = {
-      [sort || 'fechaConsulta']: order || 'desc',
+      [sort || 'createdAt']: order || 'desc',
     };
 
     try {
@@ -394,7 +393,7 @@ export class ConsultasService {
         ],
       }),
       ...((fechaDesde || fechaHasta) && {
-        fechaConsulta: {
+        createdAt: {
           ...(fechaDesde && { gte: new Date(fechaDesde) }),
           ...(fechaHasta && { lte: new Date(fechaHasta) }),
         },
@@ -402,7 +401,7 @@ export class ConsultasService {
     };
 
     const orderBy: Prisma.ConsultaOrderByWithRelationInput = {
-      [sort || 'fechaConsulta']: order || 'desc',
+      [sort || 'createdAt']: order || 'desc',
     };
 
     try {
@@ -469,7 +468,7 @@ export class ConsultasService {
         ],
       }),
       ...((fechaDesde || fechaHasta) && {
-        fechaConsulta: {
+        createdAt: {
           ...(fechaDesde && { gte: new Date(fechaDesde) }),
           ...(fechaHasta && { lte: new Date(fechaHasta) }),
         },
@@ -477,7 +476,7 @@ export class ConsultasService {
     };
 
     const orderBy: Prisma.ConsultaOrderByWithRelationInput = {
-      [sort || 'fechaConsulta']: order || 'desc',
+      [sort || 'createdAt']: order || 'desc',
     };
 
     try {
@@ -623,14 +622,14 @@ export class ConsultasService {
         titulo: true,
         tema: true,
         descripcion: true,
-        fechaConsulta: true,
+        createdAt: true,
         // (Incluimos el alumno para que el docente vea de quién es)
         alumno: {
           select: { nombre: true, apellido: true },
         },
       },
       orderBy: {
-        fechaConsulta: 'asc',
+        createdAt: 'asc',
       },
     });
   }
