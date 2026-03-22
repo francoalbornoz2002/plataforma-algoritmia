@@ -60,13 +60,12 @@ model Consulta {
   titulo               String             @db.VarChar(255)
   tema                 temas
   descripcion          String             @db.VarChar(255)
-  fechaConsulta        DateTime           @map("fecha_consulta") @db.Date
   estado               estado_consulta
   valoracionAlumno     Int?               @map("valoracion_alumno") @db.SmallInt
   comentarioValoracion String?            @map("comentario_valoracion") @db.VarChar(255)
-  createdAt            DateTime           @default(now()) @map("created_at")
-  updatedAt            DateTime           @updatedAt @map("updated_at")
-  deletedAt            DateTime?          @map("deleted_at")
+  createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt            DateTime?          @map("deleted_at") @db.Timestamptz(6)
   alumno               Usuario            @relation("ConsultasAlumno", fields: [idAlumno], references: [id], onDelete: NoAction, onUpdate: NoAction)
   curso                Curso              @relation("ConsultasCurso", fields: [idCurso], references: [id], onDelete: NoAction, onUpdate: NoAction)
   valoracion           Valoracion?        @relation(fields: [valoracionAlumno], references: [valor], onDelete: NoAction, onUpdate: NoAction)
@@ -78,7 +77,7 @@ model Consulta {
   @@index([idAlumno], map: "idx_consultas_alumno")
   @@index([idCurso], map: "idx_consultas_curso")
   @@index([estado], map: "idx_consultas_estado")
-  @@index([fechaConsulta], map: "idx_consultas_fecha")
+  @@index([createdAt], map: "idx_consultas_created_at")
   @@index([tema], map: "idx_consultas_tema")
   @@index([valoracionAlumno], map: "idx_consultas_valoracion")
   @@map("consultas")
@@ -340,7 +339,7 @@ model MisionCompletada {
 model MotivoClaseNoRealizada {
   id              String        @id @default(uuid()) @db.Uuid
   descripcion     String        @db.VarChar(255)
-  fechaRegistro   DateTime      @default(now()) @map("fecha_registro")
+  fechaRegistro   DateTime      @default(now()) @map("fecha_registro") @db.Timestamptz(6)
   idClaseConsulta String        @unique @map("id_clase_consulta") @db.Uuid
   claseConsulta   ClaseConsulta @relation(fields: [idClaseConsulta], references: [id], onDelete: Cascade)
 
@@ -496,7 +495,7 @@ model RespuestaConsulta {
   idDocente      String   @map("id_docente") @db.Uuid
   idConsulta     String   @unique @map("id_consulta") @db.Uuid
   descripcion    String   @db.VarChar(255)
-  fechaRespuesta DateTime @map("fecha_respuesta") @db.Date
+  fechaRespuesta DateTime @default(now()) @map("fecha_respuesta") @db.Timestamptz(6)
   consulta       Consulta @relation("RespuestaDeConsulta", fields: [idConsulta], references: [id], onDelete: NoAction, onUpdate: NoAction)
   docente        Usuario  @relation("RespuestasDocente", fields: [idDocente], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
