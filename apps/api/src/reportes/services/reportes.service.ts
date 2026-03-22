@@ -2033,12 +2033,18 @@ export class ReportesService {
         estado: c.estado,
         docente,
         valoracion: c.valoracionAlumno,
+        comentarioValoracion: c.comentarioValoracion,
         respuesta: c.respuestaConsulta?.descripcion || null,
       };
     });
 
     // 5. Calcular Estadísticas
     const totalConsultas = consultas.length;
+    const consultasAtendidas = consultas.filter(
+      (c) =>
+        c.estado === estado_consulta.Revisada ||
+        c.estado === estado_consulta.Resuelta,
+    ).length;
 
     // Calcular diferencia de días real entre el rango seleccionado (o el rango de datos si no se seleccionó)
     let effectiveStart: Date;
@@ -2060,12 +2066,11 @@ export class ReportesService {
       0,
     );
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1; // Mínimo 1 día para evitar división por 0
-    const diffWeeks = Math.max(diffDays / 7, 1);
 
     const stats = {
       total: totalConsultas,
       promedioDiario: totalConsultas / diffDays,
-      promedioSemanal: totalConsultas / diffWeeks,
+      promedioAtendidasDiario: consultasAtendidas / diffDays,
     };
 
     const timeline = Array.from(timelineMap.entries())

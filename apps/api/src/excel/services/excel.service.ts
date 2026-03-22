@@ -2714,8 +2714,8 @@ export class ExcelService {
       currentRow,
       6,
       3,
-      'PROMEDIO SEMANAL',
-      data.stats.promedioSemanal.toFixed(1),
+      'PROM. ATENDIDAS/DÍA',
+      data.stats.promedioAtendidasDiario.toFixed(1),
       'FF2E7D32',
     );
 
@@ -2768,15 +2768,23 @@ export class ExcelService {
       'Estado',
       'Atendido por',
       'Valoración',
+      'Respuesta',
     ];
+
+    // Ajustamos anchos dinámicos para la tabla detallada
+    worksheet.getColumn('H').width = 40; // Respuesta ancha
+    worksheet.getColumn('B').width = 25; // Título
+    worksheet.getColumn('D').width = 25; // Alumno
+    worksheet.getColumn('F').width = 25; // Docente
+
     worksheet.getCell(`A${currentRow}`).value = headers[0];
-    worksheet.mergeCells(`B${currentRow}:C${currentRow}`);
     worksheet.getCell(`B${currentRow}`).value = headers[1];
-    worksheet.getCell(`D${currentRow}`).value = headers[2];
-    worksheet.getCell(`E${currentRow}`).value = headers[3];
-    worksheet.getCell(`F${currentRow}`).value = headers[4];
-    worksheet.getCell(`G${currentRow}`).value = headers[5];
-    worksheet.getCell(`H${currentRow}`).value = headers[6];
+    worksheet.getCell(`C${currentRow}`).value = headers[2];
+    worksheet.getCell(`D${currentRow}`).value = headers[3];
+    worksheet.getCell(`E${currentRow}`).value = headers[4];
+    worksheet.getCell(`F${currentRow}`).value = headers[5];
+    worksheet.getCell(`G${currentRow}`).value = headers[6];
+    worksheet.getCell(`H${currentRow}`).value = headers[7];
 
     this.styleTableHeaders(worksheet.getRow(currentRow));
     currentRow++;
@@ -2786,27 +2794,34 @@ export class ExcelService {
         c.fecha,
       ).toLocaleDateString();
 
-      worksheet.mergeCells(`B${currentRow}:C${currentRow}`);
       const cellTitulo = worksheet.getCell(`B${currentRow}`);
       cellTitulo.value = c.titulo;
       cellTitulo.alignment = { vertical: 'middle', wrapText: true };
 
-      worksheet.getCell(`D${currentRow}`).value = c.tema;
+      worksheet.getCell(`C${currentRow}`).value = c.tema;
 
-      const cellAlumno = worksheet.getCell(`E${currentRow}`);
+      const cellAlumno = worksheet.getCell(`D${currentRow}`);
       cellAlumno.value = c.alumno;
       cellAlumno.alignment = { vertical: 'middle', wrapText: true };
 
-      worksheet.getCell(`F${currentRow}`).value = c.estado.replace('_', ' ');
+      worksheet.getCell(`E${currentRow}`).value = c.estado.replace('_', ' ');
 
-      const cellDocente = worksheet.getCell(`G${currentRow}`);
+      const cellDocente = worksheet.getCell(`F${currentRow}`);
       cellDocente.value = c.docente;
       cellDocente.alignment = { vertical: 'middle', wrapText: true };
 
-      worksheet.getCell(`H${currentRow}`).value = c.valoracion
+      worksheet.getCell(`G${currentRow}`).value = c.valoracion
         ? `${c.valoracion} ⭐`
         : '-';
-      worksheet.getCell(`H${currentRow}`).alignment = { horizontal: 'center' };
+      worksheet.getCell(`G${currentRow}`).alignment = { horizontal: 'center' };
+
+      const cellRespuesta = worksheet.getCell(`H${currentRow}`);
+      cellRespuesta.value = c.respuesta
+        ? c.respuesta
+        : ['Revisada', 'Resuelta'].includes(c.estado)
+          ? 'Atendida verbalmente en clase de consulta.'
+          : '-';
+      cellRespuesta.alignment = { vertical: 'middle', wrapText: true };
 
       currentRow++;
     });

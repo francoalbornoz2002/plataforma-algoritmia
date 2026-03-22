@@ -21,6 +21,11 @@ import {
   Chip,
   IconButton,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Rating,
   type SelectChangeEvent,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -31,6 +36,8 @@ import FunctionsIcon from "@mui/icons-material/Functions";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 import DateRangeIcon from "@mui/icons-material/DateRange";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 import {
   getCourseConsultationsHistory,
@@ -88,6 +95,9 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
   >([]);
   const [studentSearch, setStudentSearch] = useState("");
   const debouncedStudentSearch = useDebounce(studentSearch, 500);
+
+  // Estado del Modal de Respuesta
+  const [viewingResponse, setViewingResponse] = useState<any>(null);
 
   // --- Carga de Alumnos ---
   useEffect(() => {
@@ -225,6 +235,32 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
       headerName: "Valoración",
       width: 100,
       valueFormatter: (v) => (v ? `${v} ⭐` : "-"),
+    },
+    {
+      field: "respuestaAction",
+      headerName: "Respuesta",
+      width: 90,
+      sortable: false,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (params) => {
+        const isAtendida =
+          params.row.estado === estado_consulta.Revisada ||
+          params.row.estado === estado_consulta.Resuelta;
+        return (
+          <Tooltip title={isAtendida ? "Ver respuesta" : "Aún no atendida"}>
+            <span>
+              <IconButton
+                size="small"
+                disabled={!isAtendida}
+                onClick={() => setViewingResponse(params.row)}
+              >
+                <VisibilityIcon fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
+        );
+      },
     },
   ];
 
@@ -416,7 +452,7 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
                 <ReportStatCard
                   icon={<FunctionsIcon fontSize="small" />}
                   title="Total de Consultas"
-                  subtitle="Cantidad de consultas realizadas en el periodo indicado"
+                  subtitle="Consultas realizadas en el periodo indicado"
                   count={data.stats.total}
                   color="primary"
                 />
@@ -432,10 +468,10 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
                 <ReportStatCard
-                  icon={<DateRangeIcon fontSize="small" />}
-                  title="Promedio Semanal"
-                  subtitle="Consultas realizadas por semana en el periodo indicado"
-                  count={Number(data.stats.promedioSemanal.toFixed(1))}
+                  icon={<CheckCircleIcon fontSize="small" />}
+                  title="Prom. Atendidas/Día"
+                  subtitle="Consultas revisadas o resueltas por día"
+                  count={Number(data.stats.promedioAtendidasDiario.toFixed(1))}
                   color="success"
                 />
               </Grid>
@@ -521,6 +557,72 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
             </Paper>
           </Box>
         )}
+
+        {/* Modal de Detalle de Respuesta */}
+        <Dialog
+          open={!!viewingResponse}
+          onClose={() => setViewingResponse(null)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Detalle de Atención</DialogTitle>
+          <DialogContent dividers>
+            {viewingResponse && (
+              <Stack spacing={2}>
+                <Box>
+                  <Typography variant="overline" color="text.secondary">
+                    Docente que atendió
+                  </Typography>
+                  <Typography variant="body1">
+                    {viewingResponse.docente}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="overline" color="text.secondary">
+                    Respuesta / Resolución
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      fontStyle: viewingResponse.respuesta
+                        ? "normal"
+                        : "italic",
+                    }}
+                  >
+                    {viewingResponse.respuesta ||
+                      "Esta consulta fue atendida verbalmente en una clase de consulta."}
+                  </Typography>
+                </Box>
+                {viewingResponse.valoracion && (
+                  <Box>
+                    <Typography variant="overline" color="text.secondary">
+                      Valoración del Alumno
+                    </Typography>
+                    <Box sx={{ mt: 0.5 }}>
+                      <Rating
+                        value={viewingResponse.valoracion}
+                        readOnly
+                        size="small"
+                      />
+                      {viewingResponse.comentarioValoracion && (
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ fontStyle: "italic", mt: 0.5 }}
+                        >
+                          "{viewingResponse.comentarioValoracion}"
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+                )}
+              </Stack>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setViewingResponse(null)}>Cerrar</Button>
+          </DialogActions>
+        </Dialog>
       </Stack>
     </Box>
   );

@@ -1276,6 +1276,11 @@ export class PdfService {
       estadoRaw: c.estado,
       docente: c.docente,
       valoracion: c.valoracion ? `${c.valoracion} ⭐` : '-',
+      respuesta: c.respuesta
+        ? c.respuesta
+        : ['Revisada', 'Resuelta'].includes(c.estado)
+          ? 'Atendida verbalmente en clase de consulta.'
+          : '-',
     }));
 
     const commonData = this.buildCommonTemplateData(
