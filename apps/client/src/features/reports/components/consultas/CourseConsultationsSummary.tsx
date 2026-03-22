@@ -85,6 +85,25 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
 
   const showLoading = loading && !data;
 
+  const totalEstados =
+    data?.graficoEstados?.reduce(
+      (acc: number, curr: any) => acc + curr.value,
+      0,
+    ) || 0;
+  const totalTemas =
+    data?.graficoTemas?.reduce(
+      (acc: number, curr: any) => acc + curr.value,
+      0,
+    ) || 0;
+
+  // Función para formatear el tooltip de las barras apiladas
+  const barValueFormatter = (v: number | null) => {
+    if (v === null) return "";
+    const pct =
+      totalEstados > 0 ? ((v / totalEstados) * 100).toFixed(1) : "0.0";
+    return `${v} (${pct}%)`;
+  };
+
   return (
     <Box
       component="section"
@@ -202,10 +221,13 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 3 }}>
                 <ReportTotalCard
-                  resourceName="Consultas"
+                  resourceName="Total de Consultas"
                   total={data.kpis.totalConsultas}
                   active={data.kpis.activas}
                   inactive={data.kpis.inactivas}
+                  activeLabelPrefix="Consultas"
+                  activeLabel="Activas"
+                  inactiveLabel="Inactivas"
                   icon={<FunctionsIcon fontSize="small" />}
                 />
               </Grid>
@@ -291,6 +313,7 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
                   {chartGrouping === "AMBOS" ? (
                     <BarChart
                       dataset={data.graficoTemasEstados}
+                      yAxis={[{ label: "Cantidad de consultas" }]}
                       xAxis={[{ scaleType: "band", dataKey: "tema" }]}
                       series={[
                         {
@@ -298,30 +321,35 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
                           label: "Pendiente",
                           color: "#ff9800",
                           stack: "A",
+                          valueFormatter: barValueFormatter,
                         },
                         {
                           dataKey: "A_revisar",
                           label: "A revisar",
                           color: "#2196f3",
                           stack: "A",
+                          valueFormatter: barValueFormatter,
                         },
                         {
                           dataKey: "Revisada",
                           label: "Revisada",
                           color: "#9c27b0",
                           stack: "A",
+                          valueFormatter: barValueFormatter,
                         },
                         {
                           dataKey: "Resuelta",
                           label: "Resuelta",
                           color: "#4caf50",
                           stack: "A",
+                          valueFormatter: barValueFormatter,
                         },
                         {
                           dataKey: "No_resuelta",
                           label: "No Resuelta",
                           color: "#9e9e9e",
                           stack: "A",
+                          valueFormatter: barValueFormatter,
                         },
                       ]}
                       height={280}
@@ -348,10 +376,17 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
                           paddingAngle: 2,
                           cornerRadius: 4,
                           highlightScope: { fade: "global", highlight: "item" },
-                          faded: {
-                            innerRadius: 30,
-                            additionalRadius: -30,
-                            color: "gray",
+                          valueFormatter: (v: any) => {
+                            const val = typeof v === "number" ? v : v?.value;
+                            const total =
+                              chartGrouping === "ESTADO"
+                                ? totalEstados
+                                : totalTemas;
+                            const pct =
+                              total > 0
+                                ? ((val / total) * 100).toFixed(1)
+                                : "0.0";
+                            return `${val} (${pct}%)`;
                           },
                         },
                       ]}

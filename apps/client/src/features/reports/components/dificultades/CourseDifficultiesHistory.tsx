@@ -41,6 +41,7 @@ import {
   fuente_cambio_dificultad,
   grado_dificultad,
 } from "../../../../types";
+import { TemasLabels } from "../../../../types/traducciones";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
@@ -422,7 +423,7 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
               </Select>
             </FormControl>
 
-            <FormControl size="small" sx={{ width: 250 }}>
+            <FormControl size="small" sx={{ width: 270 }}>
               <InputLabel id="temas-select-label">Filtrar por Temas</InputLabel>
               <Select
                 labelId="temas-select-label"
@@ -430,7 +431,9 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
                 value={selectedTemas}
                 onChange={handleTemasChange}
                 input={<OutlinedInput label="Filtrar por Temas" />}
-                renderValue={(selected) => selected.join(", ")}
+                renderValue={(selected) =>
+                  selected.map((t) => TemasLabels[t as temas] || t).join(", ")
+                }
                 MenuProps={MenuProps}
               >
                 {Object.values(temas)
@@ -438,13 +441,13 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
                   .map((t) => (
                     <MenuItem key={t} value={t}>
                       <Checkbox checked={selectedTemas.indexOf(t) > -1} />
-                      <ListItemText primary={t} />
+                      <ListItemText primary={TemasLabels[t as temas] || t} />
                     </MenuItem>
                   ))}
               </Select>
             </FormControl>
 
-            <FormControl size="small" sx={{ width: 300 }}>
+            <FormControl size="small" sx={{ width: 400 }}>
               <InputLabel id="dificultades-select-label">
                 Filtrar por Dificultades
               </InputLabel>
@@ -576,72 +579,73 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
               </Typography>
 
               <Stack spacing={2}>
-                <Box>
-                  <Stack
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                  >
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <VideogameAssetIcon color="primary" />
-                      <Typography variant="subtitle2">Videojuego</Typography>
-                    </Stack>
-                    <Typography variant="h6" fontWeight="bold">
-                      {data.stats.porcentajeVideojuego.toFixed(1)}%
-                    </Typography>
-                  </Stack>
+                <Box sx={{ width: "100%", mt: 1 }}>
                   <Box
                     sx={{
+                      display: "flex",
                       width: "100%",
-                      height: 8,
+                      height: 16,
+                      borderRadius: 2,
+                      overflow: "hidden",
+                      mb: 1.5,
                       bgcolor: "grey.300",
-                      borderRadius: 1,
-                      mt: 0.5,
                     }}
                   >
-                    <Box
-                      sx={{
-                        width: `${data.stats.porcentajeVideojuego}%`,
-                        height: "100%",
-                        bgcolor: "primary.main",
-                        borderRadius: 1,
-                      }}
-                    />
+                    {data.stats.porcentajeVideojuego > 0 && (
+                      <Box
+                        sx={{
+                          width: `${data.stats.porcentajeVideojuego}%`,
+                          bgcolor: "primary.main",
+                        }}
+                        title={`Videojuego: ${data.stats.porcentajeVideojuego.toFixed(1)}%`}
+                      />
+                    )}
+                    {data.stats.porcentajeSesion > 0 && (
+                      <Box
+                        sx={{
+                          width: `${data.stats.porcentajeSesion}%`,
+                          bgcolor: "secondary.main",
+                        }}
+                        title={`Sesiones: ${data.stats.porcentajeSesion.toFixed(1)}%`}
+                      />
+                    )}
                   </Box>
-                </Box>
-
-                <Box>
                   <Stack
                     direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
+                    spacing={3}
+                    justifyContent="center"
+                    flexWrap="wrap"
                   >
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <SchoolIcon color="secondary" />
-                      <Typography variant="subtitle2">Sesiones</Typography>
-                    </Stack>
-                    <Typography variant="h6" fontWeight="bold">
-                      {data.stats.porcentajeSesion.toFixed(1)}%
-                    </Typography>
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <VideogameAssetIcon
+                        color="primary"
+                        fontSize="small"
+                        sx={{ mr: 0.5 }}
+                      />
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        fontWeight="medium"
+                      >
+                        Videojuego: {data.stats.porcentajeVideojuego.toFixed(1)}
+                        %
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <SchoolIcon
+                        color="secondary"
+                        fontSize="small"
+                        sx={{ mr: 0.5 }}
+                      />
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        fontWeight="medium"
+                      >
+                        Sesiones: {data.stats.porcentajeSesion.toFixed(1)}%
+                      </Typography>
+                    </Box>
                   </Stack>
-                  <Box
-                    sx={{
-                      width: "100%",
-                      height: 8,
-                      bgcolor: "grey.300",
-                      borderRadius: 1,
-                      mt: 0.5,
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        width: `${data.stats.porcentajeSesion}%`,
-                        height: "100%",
-                        bgcolor: "secondary.main",
-                        borderRadius: 1,
-                      }}
-                    />
-                  </Box>
                 </Box>
 
                 <Typography variant="caption" align="center" sx={{ mt: 2 }}>
@@ -682,7 +686,6 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
                         fontSize: "0.75rem",
                       },
                       borderRadius: "0.7em",
-                      border: 0,
                     }}
                   />
                 </Box>

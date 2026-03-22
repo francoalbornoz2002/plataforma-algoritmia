@@ -6,7 +6,6 @@ import {
   Stack,
   Alert,
   CircularProgress,
-  Button,
   Grid,
   Divider,
   IconButton,
@@ -25,12 +24,12 @@ import {
   getCourseDifficultiesReport,
   type CourseDifficultiesReportFilters,
 } from "../../service/reports.service";
-import { useOptionalCourseContext } from "../../../../context/CourseContext";
 import ReportTextualCard from "../common/ReportTextualCard";
 import { temas } from "../../../../types";
 import { TemasLabels } from "../../../../types/traducciones";
 import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
+import ReportTotalCard from "../common/ReportTotalCard";
 
 interface Props {
   courseId: string;
@@ -43,12 +42,6 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
   const [filters, setFilters] = useState<CourseDifficultiesReportFilters>({
     fechaCorte: "",
   });
-  const courseContext = useOptionalCourseContext();
-
-  const courseCreatedAt =
-    courseContext?.selectedCourse?.id === courseId
-      ? courseContext?.selectedCourse?.createdAt
-      : undefined;
 
   useEffect(() => {
     const loadData = async () => {
@@ -107,12 +100,34 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
       color: DISTINCT_COLORS[index % DISTINCT_COLORS.length],
     })) || [];
 
+  // Mapear los nombres de los temas a sus etiquetas amigables
+  const temasPieData =
+    data?.graficos?.porTema?.map((item: any) => ({
+      ...item,
+      label: TemasLabels[item.label as temas] || item.label,
+    })) || [];
+
   // Calcular el máximo valor para el eje X para que las barras sean proporcionales al total de alumnos
   const maxBarValue = barChartData.reduce(
     (acc: number, item: any) =>
       Math.max(acc, item.ninguno + item.bajo + item.medio + item.alto),
     0,
   );
+
+  const totalDifficulties = difficultiesPieData.reduce(
+    (acc: number, curr: any) => acc + curr.value,
+    0,
+  );
+  const totalTemas = temasPieData.reduce(
+    (acc: number, curr: any) => acc + curr.value,
+    0,
+  );
+  const totalGrados =
+    data?.graficos?.porGrado?.reduce(
+      (acc: number, curr: any) => acc + curr.value,
+      0,
+    ) || 0;
+
   const xMax =
     data?.kpis?.totalAlumnos > 0
       ? Math.max(data.kpis.totalAlumnos, maxBarValue)
@@ -191,16 +206,17 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
           <Stack spacing={3}>
             {/* KPIs */}
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, md: 1.9 }}>
-                <ReportTextualCard
-                  icon={<FunctionsIcon />}
-                  title="Prom. Dificultades"
-                  value={data.kpis.promDificultades.toFixed(1)}
-                  description={`Por alumno. Total alumnos: ${data.kpis.totalAlumnos}`}
-                  color="primary"
+              <Grid size={{ xs: 12, md: 2.7 }}>
+                <ReportTotalCard
+                  icon={<FunctionsIcon fontSize="small" />}
+                  resourceName="Prom. Dificultades por Alumno"
+                  total={data.kpis.promDificultades.toFixed(1)}
+                  active={data.kpis.totalAlumnos}
+                  inactive={data.kpis.totalAlumnosInactivos}
+                  activeLabelPrefix="Alumnos"
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 3.1 }}>
+              <Grid size={{ xs: 12, md: 2.6 }}>
                 <ReportTextualCard
                   icon={<TopicIcon />}
                   title="Tema Más Frecuente"
@@ -214,7 +230,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                   color="info"
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 4.5 }}>
+              <Grid size={{ xs: 12, md: 4.2 }}>
                 <ReportTextualCard
                   icon={<WarningIcon />}
                   title="Dificultad Más Frecuente"
@@ -235,10 +251,11 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                 <ReportTextualCard
                   icon={<TrendingUpIcon />}
                   title="Dificultades en Grado Alto"
-                  value={`${data.kpis.gradoAlto.pctAlumnos.toFixed(1)}%`}
+                  value={`${data.kpis.gradoAlto.porcentaje.toFixed(1)}%`}
                   description={
                     <>
-                      Más frecuente: <b>{data.kpis.gradoAlto.modaNombre}</b>
+                      Del total de registradas. Moda:{" "}
+                      <b>{data.kpis.gradoAlto.modaNombre}</b>
                     </>
                   }
                   color="error"
@@ -251,7 +268,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
             {/* Gráficos de Distribución */}
             <Grid container spacing={3}>
               {/* Izquierda: Por Dificultad (Más grande) */}
-              <Grid size={6}>
+              <Grid size={7}>
                 <Paper
                   elevation={3}
                   sx={{
@@ -272,6 +289,15 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                         innerRadius: 30,
                         paddingAngle: 2,
                         cornerRadius: 4,
+                        highlightScope: { fade: "global", highlight: "item" },
+                        valueFormatter: (v: any) => {
+                          const val = typeof v === "number" ? v : v?.value;
+                          const pct =
+                            totalDifficulties > 0
+                              ? ((val / totalDifficulties) * 100).toFixed(1)
+                              : "0.0";
+                          return `${val} (${pct}%)`;
+                        },
                       },
                     ]}
                     height={400}
@@ -288,7 +314,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
               </Grid>
 
               {/* Derecha: Stack de Tema y Grado */}
-              <Grid size={6}>
+              <Grid size={5}>
                 <Stack spacing={3}>
                   <Paper
                     elevation={3}
@@ -300,28 +326,37 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                     }}
                   >
                     <Typography variant="h6" align="center" gutterBottom>
-                      Cantidad de alumnos con dificultades activas por tema
+                      Cantidad de alumnos con dificultades activas por Tema
                     </Typography>
                     <PieChart
                       series={[
                         {
-                          data: data.graficos.porTema,
+                          data: temasPieData,
                           innerRadius: 30,
                           paddingAngle: 2,
                           cornerRadius: 4,
+                          highlightScope: { fade: "global", highlight: "item" },
+                          valueFormatter: (v: any) => {
+                            const val = typeof v === "number" ? v : v?.value;
+                            const pct =
+                              totalTemas > 0
+                                ? ((val / totalTemas) * 100).toFixed(1)
+                                : "0.0";
+                            return `${val} (${pct}%)`;
+                          },
                         },
                       ]}
                       height={180}
                       slotProps={{
                         legend: {
-                          direction: "horizontal",
+                          direction: "vertical",
                           position: {
-                            vertical: "bottom",
+                            vertical: "middle",
                             horizontal: "center",
                           },
+                          sx: { ml: -5 },
                         },
                       }}
-                      margin={{ bottom: 20 }}
                     />
                   </Paper>
                   <Paper
@@ -334,7 +369,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                     }}
                   >
                     <Typography variant="h6" align="center" gutterBottom>
-                      Distribución de alumnos por Grado de Dificultad
+                      Cantidad de alumnos afectados por Grado de Dificultad
                     </Typography>
                     <PieChart
                       series={[
@@ -343,6 +378,15 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                           innerRadius: 30,
                           paddingAngle: 1,
                           cornerRadius: 4,
+                          highlightScope: { fade: "global", highlight: "item" },
+                          valueFormatter: (v: any) => {
+                            const val = typeof v === "number" ? v : v?.value;
+                            const pct =
+                              totalGrados > 0
+                                ? ((val / totalGrados) * 100).toFixed(1)
+                                : "0.0";
+                            return `${val} (${pct}%)`;
+                          },
                         },
                       ]}
                       height={180}

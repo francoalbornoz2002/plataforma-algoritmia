@@ -213,12 +213,15 @@ export default function CourseSessionsSummary({ courseId }: Props) {
           <Stack spacing={2}>
             {/* Fila 1: KPIs Generales */}
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, md: 2 }}>
+              <Grid size={{ xs: 12, md: 2.6 }}>
                 <ReportTotalCard
-                  resourceName="Sesiones"
+                  resourceName="Total de Sesiones"
                   total={data.kpis.total}
                   active={data.kpis.activas}
                   inactive={data.kpis.inactivas}
+                  activeLabelPrefix="Sesiones"
+                  activeLabel="Activas"
+                  inactiveLabel="Inactivas"
                   icon={<FunctionsIcon fontSize="small" />}
                 />
               </Grid>
@@ -251,11 +254,11 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                   color="error"
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 2.5 }}>
+              <Grid size={{ xs: 12, md: 1.9 }}>
                 <ReportTextualCard
                   icon={<WarningIcon />}
-                  title="Grado Promedio por sesión"
-                  description="Dificultad promedio asignada"
+                  title="Grado Promedio "
+                  description="Por sesión"
                   value={data.kpis.promedioGrado}
                   color="warning"
                 />

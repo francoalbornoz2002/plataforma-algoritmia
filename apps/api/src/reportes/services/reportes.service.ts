@@ -1152,6 +1152,7 @@ export class ReportesService {
 
     // 1. Obtener Total de Alumnos (Activos a la fecha)
     let totalAlumnos = 0;
+    let totalAlumnosInactivos = 0;
     let rawDifficulties: any[] = [];
 
     if (fechaCorte) {
@@ -1171,7 +1172,19 @@ export class ReportesService {
         },
       });
 
-      // B. Reconstruir estado de dificultades desde el historial
+      // B. Alumnos inactivos a la fecha de corte
+      totalAlumnosInactivos = await this.prisma.alumnoCurso.count({
+        where: {
+          idCurso: idCurso,
+          fechaInscripcion: { lte: end },
+          AND: [
+            { fechaBaja: { lte: end, not: null } },
+            { estado: { not: estado_simple.Finalizado } },
+          ],
+        },
+      });
+
+      // C. Reconstruir estado de dificultades desde el historial
       const history = await this.prisma.historialDificultadAlumno.findMany({
         where: {
           idCurso: idCurso,
@@ -1202,6 +1215,10 @@ export class ReportesService {
           idCurso: idCurso,
           estado: { in: [estado_simple.Activo, estado_simple.Finalizado] }, // <-- Incluimos Finalizados
         },
+      });
+
+      totalAlumnosInactivos = await this.prisma.alumnoCurso.count({
+        where: { idCurso: idCurso, estado: estado_simple.Inactivo },
       });
 
       rawDifficulties = await this.prisma.dificultadAlumno.findMany({
@@ -1322,7 +1339,9 @@ export class ReportesService {
 
     // Grado Alto
     const pctGradoAlto =
-      totalAlumnos > 0 ? (studentsWithHighGrade.size / totalAlumnos) * 100 : 0;
+      totalActiveDifficulties > 0
+        ? (byGrade.Alto / totalActiveDifficulties) * 100
+        : 0;
 
     let maxHighDiffId = '';
     let maxHighDiffCount = 0;
@@ -1345,6 +1364,7 @@ export class ReportesService {
       distribucionGrados,
       kpis: {
         totalAlumnos,
+        totalAlumnosInactivos,
         promDificultades,
         temaFrecuente: {
           nombre: maxTopic.label,
@@ -1356,7 +1376,7 @@ export class ReportesService {
           desglose: breakdownDificultadFrecuente,
         },
         gradoAlto: {
-          pctAlumnos: pctGradoAlto,
+          porcentaje: pctGradoAlto,
           modaNombre: nombreModaAlto,
         },
       },

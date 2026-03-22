@@ -68,14 +68,14 @@ export default function ConsultasPage() {
     setLoading(true);
     setError(null);
 
-    let sort = "fechaConsulta";
+    let sort = "createdAt";
     let order: "asc" | "desc" = "desc";
 
     if (sortOption === "recent") {
-      sort = "fechaConsulta";
+      sort = "createdAt";
       order = "desc";
     } else if (sortOption === "old") {
-      sort = "fechaConsulta";
+      sort = "createdAt";
       order = "asc";
     } else if (sortOption === "az") {
       sort = "titulo";

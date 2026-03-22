@@ -202,16 +202,19 @@ export default function CourseClassesSummary({ courseId }: Props) {
           <Stack spacing={2}>
             {/* KPIs Generales */}
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, md: 2 }}>
+              <Grid size={{ xs: 12, md: 2.5 }}>
                 <ReportTotalCard
-                  resourceName="Clases"
+                  resourceName="Total de Clases"
                   total={data.kpis.totalClases}
                   active={data.kpis.activas}
                   inactive={data.kpis.inactivas}
+                  activeLabelPrefix="Clases"
+                  activeLabel="Activas"
+                  inactiveLabel="Inactivas"
                   icon={<FunctionsIcon fontSize="small" />}
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 3 }}>
+              <Grid size={{ xs: 12, md: 2.5 }}>
                 <ReportStatCard
                   icon={<FunctionsIcon />}
                   title="Promedio Consultas por Clase"
@@ -221,7 +224,7 @@ export default function CourseClassesSummary({ courseId }: Props) {
                 />
               </Grid>
 
-              {/* Efectividad de Revisión */}
+              {/* Tema de consulta más frecuente en clases */}
               <Grid size={{ xs: 12, md: 3.5 }}>
                 <ReportTextualCard
                   icon={<CategoryIcon />}

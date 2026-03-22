@@ -24,7 +24,7 @@ import {
   type SelectChangeEvent,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { format, parse } from "date-fns";
+import { format } from "date-fns";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import { LineChart } from "@mui/x-charts/LineChart";
 import FunctionsIcon from "@mui/icons-material/Functions";
@@ -123,13 +123,6 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
       setLoading(true);
       try {
         const result = await getCourseConsultationsHistory(courseId, filters);
-        // Parsear fechas para el gráfico
-        if (result.timeline) {
-          result.timeline = result.timeline.map((t: any) => ({
-            ...t,
-            fecha: parse(t.fecha, "yyyy-MM-dd", new Date()),
-          }));
-        }
         setData(result);
       } catch (err) {
         console.error(err);
@@ -196,12 +189,9 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
       width: 165,
       valueFormatter: (value: string) => {
         if (!value) return "-";
-        // Parseamos la fecha como UTC para evitar el desfase de zona horaria
-        const date = new Date(value);
-        return format(
-          new Date(date.valueOf() + date.getTimezoneOffset() * 60 * 1000),
-          "dd/MM/yyyy",
-        );
+        // Forzamos a que interprete la fecha sin desfase de zona horaria local
+        const date = new Date(value.split("T")[0] + "T00:00:00");
+        return format(date, "dd/MM/yyyy");
       },
     },
     { field: "titulo", headerName: "Título", flex: 1, minWidth: 150 },
@@ -474,7 +464,8 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
                     {
                       scaleType: "point",
                       dataKey: "fecha",
-                      valueFormatter: (date) => format(date, "dd/MM"),
+                      valueFormatter: (date) =>
+                        format(new Date(date + "T00:00:00"), "dd/MM"),
                       label: "Fecha",
                     },
                   ]}

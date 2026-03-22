@@ -48,6 +48,7 @@ import {
   fuente_cambio_dificultad,
   grado_dificultad,
 } from "../../../../types";
+import { TemasLabels } from "../../../../types/traducciones";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import StudentChartDetailModal from "./StudentChartDetailModal";
 import { datePickerConfig } from "../../../../config/theme.config";
@@ -249,6 +250,17 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
       });
     }
   };
+
+  const totalGrados =
+    data?.summary?.graficos?.porGrado?.reduce(
+      (acc: number, curr: any) => acc + curr.value,
+      0,
+    ) || 0;
+  const totalTemas =
+    data?.summary?.graficos?.porTema?.reduce(
+      (acc: number, curr: any) => acc + curr.value,
+      0,
+    ) || 0;
 
   const historyColumns: GridColDef[] = [
     {
@@ -490,15 +502,19 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
                     },
                   }}
                 />
-                <FormControl size="small" sx={{ width: 200 }}>
-                  <InputLabel id="temas-label">Temas</InputLabel>
+                <FormControl size="small" sx={{ width: 270 }}>
+                  <InputLabel id="temas-label">Filtrar por Temas</InputLabel>
                   <Select
                     labelId="temas-label"
                     multiple
                     value={selectedTemas}
                     onChange={handleTemasChange}
-                    input={<OutlinedInput label="Temas" />}
-                    renderValue={(selected) => selected.join(", ")}
+                    input={<OutlinedInput label="Filtrar por Temas" />}
+                    renderValue={(selected) =>
+                      selected
+                        .map((t) => TemasLabels[t as temas] || t)
+                        .join(", ")
+                    }
                     MenuProps={MenuProps}
                   >
                     {Object.values(temas)
@@ -506,22 +522,31 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
                       .map((t) => (
                         <MenuItem key={t} value={t}>
                           <Checkbox checked={selectedTemas.indexOf(t) > -1} />
-                          <ListItemText primary={t} />
+                          <ListItemText
+                            primary={TemasLabels[t as temas] || t}
+                          />
                         </MenuItem>
                       ))}
                   </Select>
                 </FormControl>
-                <FormControl size="small" sx={{ width: 250 }}>
-                  <InputLabel id="diff-label">Dificultades</InputLabel>
+                <FormControl size="small" sx={{ width: 400 }}>
+                  <InputLabel id="diff-label">
+                    Filtrar por Dificultades
+                  </InputLabel>
                   <Select
                     labelId="diff-label"
                     multiple
                     value={selectedDificultadesIds}
                     onChange={handleDificultadesChange}
-                    input={<OutlinedInput label="Dificultades" />}
-                    renderValue={(selected) =>
-                      selected.length + " seleccionadas"
-                    }
+                    input={<OutlinedInput label="Filtrar por Dificultades" />}
+                    renderValue={(selected) => {
+                      const names = selected.map(
+                        (id) =>
+                          availableDifficulties.find((d) => d.id === id)
+                            ?.nombre || id,
+                      );
+                      return names.join(", ");
+                    }}
                     MenuProps={MenuProps}
                   >
                     {availableDifficulties.map((d) => (
@@ -612,6 +637,15 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
                           innerRadius: 30,
                           paddingAngle: 2,
                           cornerRadius: 4,
+                          highlightScope: { fade: "global", highlight: "item" },
+                          valueFormatter: (v: any) => {
+                            const val = typeof v === "number" ? v : v?.value;
+                            const pct =
+                              totalGrados > 0
+                                ? ((val / totalGrados) * 100).toFixed(1)
+                                : "0.0";
+                            return `${val} (${pct}%)`;
+                          },
                         },
                       ]}
                       width={300}
@@ -642,6 +676,15 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
                           innerRadius: 30,
                           paddingAngle: 2,
                           cornerRadius: 4,
+                          highlightScope: { fade: "global", highlight: "item" },
+                          valueFormatter: (v: any) => {
+                            const val = typeof v === "number" ? v : v?.value;
+                            const pct =
+                              totalTemas > 0
+                                ? ((val / totalTemas) * 100).toFixed(1)
+                                : "0.0";
+                            return `${val} (${pct}%)`;
+                          },
                         },
                       ]}
                       width={300}
@@ -652,89 +695,6 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
                 </Grid>
               </Grid>
             </Box>
-
-            {/* --- Stats de Mejora --- */}
-            <Paper
-              elevation={3}
-              sx={{
-                p: 2,
-                bgcolor: "primary.50",
-                width: "100%",
-                boxSizing: "border-box",
-              }}
-            >
-              <Typography variant="h6">Fuente de Mejora</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Proporción de mejoras logradas por cada fuente (reducción de
-                grado de dificultad).
-              </Typography>
-              <Stack direction="row" spacing={4} alignItems="center">
-                <Box sx={{ flex: 1 }}>
-                  <Stack
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                  >
-                    <Stack direction="row" spacing={1}>
-                      <VideogameAssetIcon color="primary" />
-                      <Typography>Videojuego</Typography>
-                    </Stack>
-                    <Typography fontWeight="bold">
-                      {data.stats.porcentajeVideojuego.toFixed(1)}%
-                    </Typography>
-                  </Stack>
-                  <Box
-                    sx={{
-                      height: 8,
-                      bgcolor: "grey.300",
-                      borderRadius: 1,
-                      mt: 1,
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        width: `${data.stats.porcentajeVideojuego}%`,
-                        height: "100%",
-                        bgcolor: "primary.main",
-                        borderRadius: 1,
-                      }}
-                    />
-                  </Box>
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <Stack
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                  >
-                    <Stack direction="row" spacing={1}>
-                      <SchoolIcon color="secondary" />
-                      <Typography>Sesiones de refuerzo</Typography>
-                    </Stack>
-                    <Typography fontWeight="bold">
-                      {data.stats.porcentajeSesion.toFixed(1)}%
-                    </Typography>
-                  </Stack>
-                  <Box
-                    sx={{
-                      height: 8,
-                      bgcolor: "grey.300",
-                      borderRadius: 1,
-                      mt: 1,
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        width: `${data.stats.porcentajeSesion}%`,
-                        height: "100%",
-                        bgcolor: "secondary.main",
-                        borderRadius: 1,
-                      }}
-                    />
-                  </Box>
-                </Box>
-              </Stack>
-            </Paper>
 
             {/* --- Gráfico de Evolución --- */}
             <Paper
@@ -810,32 +770,135 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
               )}
             </Paper>
 
-            {/* --- Tabla Historial --- */}
+            {/* --- Fuente de Mejora (Barras y Tabla) --- */}
             <Paper
               elevation={3}
-              sx={{ height: 400, width: "100%", boxSizing: "border-box" }}
+              sx={{
+                p: 2,
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                width: "100%",
+                boxSizing: "border-box",
+              }}
             >
-              <DataGrid
-                rows={data.history}
-                columns={historyColumns}
-                getRowId={(row) => row.id}
-                density="compact"
-                slots={{
-                  noRowsOverlay: () => (
-                    <Stack
-                      height="100%"
-                      alignItems="center"
-                      justifyContent="center"
-                    >
-                      No hay historial de cambios para mostrar.
-                    </Stack>
-                  ),
-                }}
-                initialState={{
-                  pagination: { paginationModel: { pageSize: 10 } },
-                }}
-                sx={{ borderRadius: "0.7em", border: 0 }}
-              />
+              <Typography variant="h6">Fuente de Mejora</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Proporción de mejoras logradas por cada fuente (reducción de
+                grado de dificultad).
+              </Typography>
+
+              <Stack spacing={2}>
+                <Box sx={{ width: "100%", mt: 1 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      width: "100%",
+                      height: 16,
+                      borderRadius: 2,
+                      overflow: "hidden",
+                      mb: 1.5,
+                      bgcolor: "grey.300",
+                    }}
+                  >
+                    {data.stats.porcentajeVideojuego > 0 && (
+                      <Box
+                        sx={{
+                          width: `${data.stats.porcentajeVideojuego}%`,
+                          bgcolor: "primary.main",
+                        }}
+                        title={`Videojuego: ${data.stats.porcentajeVideojuego.toFixed(1)}%`}
+                      />
+                    )}
+                    {data.stats.porcentajeSesion > 0 && (
+                      <Box
+                        sx={{
+                          width: `${data.stats.porcentajeSesion}%`,
+                          bgcolor: "secondary.main",
+                        }}
+                        title={`Sesiones: ${data.stats.porcentajeSesion.toFixed(1)}%`}
+                      />
+                    )}
+                  </Box>
+                  <Stack
+                    direction="row"
+                    spacing={3}
+                    justifyContent="center"
+                    flexWrap="wrap"
+                  >
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <VideogameAssetIcon
+                        color="primary"
+                        fontSize="small"
+                        sx={{ mr: 0.5 }}
+                      />
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        fontWeight="medium"
+                      >
+                        Videojuego: {data.stats.porcentajeVideojuego.toFixed(1)}
+                        %
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <SchoolIcon
+                        color="secondary"
+                        fontSize="small"
+                        sx={{ mr: 0.5 }}
+                      />
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        fontWeight="medium"
+                      >
+                        Sesiones: {data.stats.porcentajeSesion.toFixed(1)}%
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Box>
+
+                <Typography variant="caption" align="center" sx={{ mt: 2 }}>
+                  Total de mejoras registradas:{" "}
+                  <strong>{data.stats.totalMejoras}</strong>
+                </Typography>
+
+                <Box sx={{ height: 400, width: "100%", mt: 2 }}>
+                  <DataGrid
+                    rows={data.history}
+                    columns={historyColumns}
+                    getRowId={(row) => row.id}
+                    density="compact"
+                    disableRowSelectionOnClick
+                    slots={{
+                      noRowsOverlay: () => (
+                        <Stack
+                          height="100%"
+                          alignItems="center"
+                          justifyContent="center"
+                        >
+                          No hay historial de cambios para mostrar.
+                        </Stack>
+                      ),
+                    }}
+                    initialState={{
+                      pagination: { paginationModel: { pageSize: 10 } },
+                      sorting: {
+                        sortModel: [{ field: "fechaCambio", sort: "desc" }],
+                      },
+                    }}
+                    sx={{
+                      "& .MuiDataGrid-cell": {
+                        fontSize: "0.75rem",
+                      },
+                      "& .MuiDataGrid-columnHeader": {
+                        fontSize: "0.75rem",
+                      },
+                      borderRadius: "0.7em",
+                    }}
+                  />
+                </Box>
+              </Stack>
             </Paper>
           </Box>
         )}

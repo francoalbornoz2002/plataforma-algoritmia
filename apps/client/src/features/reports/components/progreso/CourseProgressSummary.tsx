@@ -4,10 +4,8 @@ import {
   Typography,
   Paper,
   Stack,
-  Divider,
   Alert,
   CircularProgress,
-  Button,
   Grid,
   List,
   ListItem,
@@ -34,7 +32,6 @@ import {
   getCourseProgressSummary,
   type CourseProgressSummaryFilters,
 } from "../../service/reports.service";
-import { useOptionalCourseContext } from "../../../../context/CourseContext";
 import ReportTotalCard from "../common/ReportTotalCard";
 import ReportStatCard from "../common/ReportStatCard";
 import { datePickerConfig } from "../../../../config/theme.config";
@@ -52,13 +49,6 @@ export default function CourseProgressSummary({ courseId }: Props) {
   const [filters, setFilters] = useState<CourseProgressSummaryFilters>({
     fechaCorte: "",
   });
-  const courseContext = useOptionalCourseContext();
-
-  // Obtenemos la fecha de creación del curso desde el contexto si coincide con el curso actual
-  const courseCreatedAt =
-    courseContext?.selectedCourse?.id === courseId
-      ? courseContext?.selectedCourse?.createdAt
-      : undefined;
 
   useEffect(() => {
     const loadData = async () => {

@@ -1775,7 +1775,7 @@ export class ExcelService {
       1,
       8,
       'GRADO ALTO',
-      `${data.kpis.gradoAlto.pctAlumnos.toFixed(1)}% (Moda: ${data.kpis.gradoAlto.modaNombre})`,
+      `${data.kpis.gradoAlto.porcentaje.toFixed(1)}% (Moda: ${data.kpis.gradoAlto.modaNombre})`,
       'FFD32F2F',
     ); // Error
     currentRow += 3;

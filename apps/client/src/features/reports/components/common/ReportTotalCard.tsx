@@ -9,6 +9,8 @@ interface ReportTotalCardProps {
   icon?: ReactNode;
   small?: boolean;
   activeLabelPrefix?: string;
+  activeLabel?: string;
+  inactiveLabel?: string;
 }
 
 export default function ReportTotalCard({
@@ -19,6 +21,8 @@ export default function ReportTotalCard({
   icon,
   small = false,
   activeLabelPrefix,
+  activeLabel = "Activos",
+  inactiveLabel = "Inactivos",
 }: ReportTotalCardProps) {
   return (
     <Paper
@@ -70,8 +74,8 @@ export default function ReportTotalCard({
                 fontWeight="bold"
                 sx={{ fontSize: small ? "0.7rem" : undefined }}
               >
-                {activeLabelPrefix ? `${activeLabelPrefix} ` : ""}Activos:{" "}
-                {active}
+                {activeLabelPrefix ? `${activeLabelPrefix} ` : ""}
+                {activeLabel}: {active}
               </Typography>
             )}
             {inactive !== undefined && (
@@ -81,8 +85,8 @@ export default function ReportTotalCard({
                 color="text.disabled"
                 sx={{ fontSize: small ? "0.7rem" : undefined }}
               >
-                {activeLabelPrefix ? `${activeLabelPrefix} ` : ""}Inactivos:{" "}
-                {inactive}
+                {activeLabelPrefix ? `${activeLabelPrefix} ` : ""}
+                {inactiveLabel}: {inactive}
               </Typography>
             )}
           </Stack>

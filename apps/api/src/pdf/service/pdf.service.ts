@@ -2324,7 +2324,7 @@ export class PdfService {
         temaFrecuentePct: data.kpis.temaFrecuente.pctAlumnos.toFixed(1),
         dificultadFrecuentePct:
           data.kpis.dificultadFrecuente.pctAlumnos.toFixed(1),
-        gradoAltoPct: data.kpis.gradoAlto.pctAlumnos.toFixed(1),
+        gradoAltoPct: data.kpis.gradoAlto.porcentaje.toFixed(1),
       },
       chartJsContent,
       chartConfigDificultad: JSON.stringify(chartConfigDificultad),
