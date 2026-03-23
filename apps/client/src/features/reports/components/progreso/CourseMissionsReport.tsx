@@ -158,11 +158,6 @@ export default function CourseMissionsReport({ courseId }: Props) {
                 ? new Date(filters.fechaHasta + "T00:00:00")
                 : undefined
             }
-            minDate={
-              filters.fechaDesde
-                ? new Date(filters.fechaDesde + "T00:00:00")
-                : undefined
-            }
             onChange={(val) =>
               setFilters({
                 ...filters,
@@ -179,6 +174,11 @@ export default function CourseMissionsReport({ courseId }: Props) {
                 ? new Date(filters.fechaHasta + "T00:00:00")
                 : null
             }
+            minDate={
+              filters.fechaDesde
+                ? new Date(filters.fechaDesde + "T00:00:00")
+                : undefined
+            }
             onChange={(val) =>
               setFilters({
                 ...filters,
@@ -189,10 +189,10 @@ export default function CourseMissionsReport({ courseId }: Props) {
             disableFuture
           />
           <FormControl size="small" sx={{ minWidth: 200 }}>
-            <InputLabel>Dificultad</InputLabel>
+            <InputLabel>Filtrar por Dificultad</InputLabel>
             <Select
               value={filters.dificultad}
-              label="Dificultad"
+              label="Filtrar por Dificultad"
               onChange={(e) =>
                 setFilters({ ...filters, dificultad: e.target.value as any })
               }

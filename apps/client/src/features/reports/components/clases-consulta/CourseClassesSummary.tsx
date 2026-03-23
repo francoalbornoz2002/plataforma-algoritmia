@@ -86,6 +86,13 @@ export default function CourseClassesSummary({ courseId }: Props) {
 
   const showLoading = loading && !data;
 
+  const totalClases = data?.kpis?.totalClases || 0;
+  const barValueFormatter = (v: number | null) => {
+    if (v === null) return "";
+    const pct = totalClases > 0 ? ((v / totalClases) * 100).toFixed(1) : "0.0";
+    return `${v} (${pct}%)`;
+  };
+
   return (
     <Box
       component="section"
@@ -128,11 +135,6 @@ export default function CourseClassesSummary({ courseId }: Props) {
                   ? new Date(filters.fechaHasta + "T00:00:00")
                   : undefined
               }
-              minDate={
-                filters.fechaDesde
-                  ? new Date(filters.fechaDesde + "T00:00:00")
-                  : undefined
-              }
               onChange={(val) =>
                 setFilters({
                   ...filters,
@@ -160,6 +162,11 @@ export default function CourseClassesSummary({ courseId }: Props) {
                 filters.fechaHasta
                   ? new Date(filters.fechaHasta + "T00:00:00")
                   : null
+              }
+              minDate={
+                filters.fechaDesde
+                  ? new Date(filters.fechaDesde + "T00:00:00")
+                  : undefined
               }
               onChange={(val) =>
                 setFilters({
@@ -306,12 +313,14 @@ export default function CourseClassesSummary({ courseId }: Props) {
                           label: "Sistema",
                           color: "#9c27b0",
                           stack: "A",
+                          valueFormatter: barValueFormatter,
                         },
                         {
                           dataKey: "Docente",
                           label: "Docente",
                           color: "#ff9800",
                           stack: "A",
+                          valueFormatter: barValueFormatter,
                         },
                       ]}
                       height={280}
@@ -338,6 +347,14 @@ export default function CourseClassesSummary({ courseId }: Props) {
                           paddingAngle: 2,
                           cornerRadius: 4,
                           highlightScope: { fade: "global", highlight: "item" },
+                          valueFormatter: (v: any) => {
+                            const val = typeof v === "number" ? v : v?.value;
+                            const pct =
+                              totalClases > 0
+                                ? ((val / totalClases) * 100).toFixed(1)
+                                : "0.0";
+                            return `${val} (${pct}%)`;
+                          },
                         },
                       ]}
                       height={280}

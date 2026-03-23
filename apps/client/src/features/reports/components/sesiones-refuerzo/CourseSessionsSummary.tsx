@@ -95,6 +95,14 @@ export default function CourseSessionsSummary({ courseId }: Props) {
   const calcPct = (val: number, total: number) =>
     total > 0 ? (val / total) * 100 : 0;
 
+  const totalSesiones = data?.kpis?.total || 0;
+  const barValueFormatter = (v: number | null) => {
+    if (v === null) return "";
+    const pct =
+      totalSesiones > 0 ? ((v / totalSesiones) * 100).toFixed(1) : "0.0";
+    return `${v} (${pct}%)`;
+  };
+
   return (
     <Box
       component="section"
@@ -141,11 +149,6 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                 ? new Date(filters.fechaHasta + "T00:00:00")
                 : undefined
             }
-            minDate={
-              filters.fechaDesde
-                ? new Date(filters.fechaDesde + "T00:00:00")
-                : undefined
-            }
             onChange={(val) =>
               setFilters({
                 ...filters,
@@ -173,6 +176,11 @@ export default function CourseSessionsSummary({ courseId }: Props) {
               filters.fechaHasta
                 ? new Date(filters.fechaHasta + "T00:00:00")
                 : null
+            }
+            minDate={
+              filters.fechaDesde
+                ? new Date(filters.fechaDesde + "T00:00:00")
+                : undefined
             }
             onChange={(val) =>
               setFilters({
@@ -266,14 +274,13 @@ export default function CourseSessionsSummary({ courseId }: Props) {
             </Grid>
             <Grid container spacing={2}>
               {/* Gráfico 1: Estado / Origen */}
-              <Grid size={{ xs: 12, md: 6 }}>
+              <Grid size={{ xs: 12, md: 5 }}>
                 <Paper
                   elevation={3}
                   sx={{
                     p: 2,
                     display: "flex",
                     flexDirection: "column",
-                    alignItems: "center",
                     height: "100%",
                     width: "100%",
                   }}
@@ -313,12 +320,14 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                           label: "Sistema",
                           color: "#9c27b0",
                           stack: "A",
+                          valueFormatter: barValueFormatter,
                         },
                         {
                           dataKey: "Docente",
                           label: "Docente",
                           color: "#ff9800",
                           stack: "A",
+                          valueFormatter: barValueFormatter,
                         },
                       ]}
                       height={280}
@@ -344,14 +353,22 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                           paddingAngle: 2,
                           cornerRadius: 4,
                           highlightScope: { fade: "global", highlight: "item" },
+                          valueFormatter: (v: any) => {
+                            const val = typeof v === "number" ? v : v?.value;
+                            const pct =
+                              totalSesiones > 0
+                                ? ((val / totalSesiones) * 100).toFixed(1)
+                                : "0.0";
+                            return `${val} (${pct}%)`;
+                          },
                         },
                       ]}
                       height={280}
                       slotProps={{
                         legend: {
-                          direction: "horizontal",
+                          direction: "vertical",
                           position: {
-                            vertical: "bottom",
+                            vertical: "middle",
                             horizontal: "center",
                           },
                         },
@@ -361,14 +378,13 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                 </Paper>
               </Grid>
               {/* Gráfico 2: Tema / Dificultad */}
-              <Grid size={{ xs: 12, md: 6 }}>
+              <Grid size={{ xs: 12, md: 7 }}>
                 <Paper
                   elevation={3}
                   sx={{
                     p: 2,
                     display: "flex",
                     flexDirection: "column",
-                    alignItems: "center",
                     height: "100%",
                     width: "100%",
                   }}
@@ -400,12 +416,20 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                   {chartGrouping2 === "AMBOS" ? (
                     <BarChart
                       dataset={data.graficos.temasDificultades}
-                      xAxis={[{ scaleType: "band", dataKey: "tema" }]}
+                      xAxis={[
+                        {
+                          scaleType: "band",
+                          dataKey: "tema",
+                          valueFormatter: (val: string) =>
+                            TemasLabels[val as temas] || val,
+                        },
+                      ]}
                       series={data.graficos.allDifficulties.map(
                         (dif: string) => ({
                           dataKey: dif,
                           label: dif,
                           stack: "A",
+                          valueFormatter: barValueFormatter,
                         }),
                       )}
                       height={280}
@@ -425,20 +449,32 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                         {
                           data:
                             chartGrouping2 === "TEMA"
-                              ? data.graficos.temas
+                              ? data.graficos.temas.map((t: any) => ({
+                                  ...t,
+                                  label:
+                                    TemasLabels[t.label as temas] || t.label,
+                                }))
                               : data.graficos.dificultades,
                           innerRadius: 30,
                           paddingAngle: 2,
                           cornerRadius: 4,
                           highlightScope: { fade: "global", highlight: "item" },
+                          valueFormatter: (v: any) => {
+                            const val = typeof v === "number" ? v : v?.value;
+                            const pct =
+                              totalSesiones > 0
+                                ? ((val / totalSesiones) * 100).toFixed(1)
+                                : "0.0";
+                            return `${val} (${pct}%)`;
+                          },
                         },
                       ]}
                       height={280}
                       slotProps={{
                         legend: {
-                          direction: "horizontal",
+                          direction: "vertical",
                           position: {
-                            vertical: "bottom",
+                            vertical: "middle",
                             horizontal: "center",
                           },
                         },
@@ -450,7 +486,7 @@ export default function CourseSessionsSummary({ courseId }: Props) {
             </Grid>
             <Grid container spacing={2}>
               {/* Alumno y docente con más sesiones asignadas */}
-              <Grid size={{ xs: 12, md: 4 }}>
+              <Grid size={{ xs: 12, md: 3.5 }}>
                 <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
                   <Typography variant="h6" gutterBottom>
                     Estadísticas de Alumnos y Docentes
@@ -491,7 +527,7 @@ export default function CourseSessionsSummary({ courseId }: Props) {
               </Grid>
 
               {/* Efectividad Comparativa */}
-              <Grid size={{ xs: 12, md: 8 }}>
+              <Grid size={{ xs: 12, md: 8.5 }}>
                 <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
                   <Typography variant="h6" gutterBottom>
                     Efectividad de Sesiones Completadas
@@ -505,11 +541,11 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                     origen de la sesión.
                   </Typography>
 
-                  <Grid container spacing={3}>
+                  <Grid container spacing={2}>
                     {/* Sistema */}
                     <Grid size={{ xs: 12, md: 6 }}>
                       <Paper
-                        elevation={3}
+                        elevation={1}
                         sx={{ p: 2, borderTop: "4px solid #9c27b0" }}
                       >
                         <Stack
@@ -647,7 +683,7 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                     {/* Docente */}
                     <Grid size={{ xs: 12, md: 6 }}>
                       <Paper
-                        elevation={3}
+                        elevation={1}
                         sx={{ p: 2, borderTop: "4px solid #ff9800" }}
                       >
                         <Stack

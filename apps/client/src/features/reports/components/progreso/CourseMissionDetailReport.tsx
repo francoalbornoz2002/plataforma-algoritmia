@@ -149,6 +149,48 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
         {/* Filtros */}
         <QuickDateFilter onApply={handleQuickFilter} />
         <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+          <DatePicker
+            label="Fecha Desde"
+            value={
+              filters.fechaDesde
+                ? new Date(filters.fechaDesde + "T00:00:00")
+                : null
+            }
+            maxDate={
+              filters.fechaHasta
+                ? new Date(filters.fechaHasta + "T00:00:00")
+                : undefined
+            }
+            onChange={(val) =>
+              setFilters({
+                ...filters,
+                fechaDesde: val ? format(val, "yyyy-MM-dd") : "",
+              })
+            }
+            {...datePickerConfig}
+            disableFuture
+          />
+          <DatePicker
+            label="Hasta"
+            value={
+              filters.fechaHasta
+                ? new Date(filters.fechaHasta + "T00:00:00")
+                : null
+            }
+            minDate={
+              filters.fechaDesde
+                ? new Date(filters.fechaDesde + "T00:00:00")
+                : undefined
+            }
+            onChange={(val) =>
+              setFilters({
+                ...filters,
+                fechaHasta: val ? format(val, "yyyy-MM-dd") : "",
+              })
+            }
+            {...datePickerConfig}
+            disableFuture
+          />
           <FormControl size="small" sx={{ minWidth: 200 }}>
             <InputLabel>Dificultad de misión</InputLabel>
             <Select
@@ -188,48 +230,6 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
             </Select>
           </FormControl>
 
-          <DatePicker
-            label="Fecha Desde"
-            value={
-              filters.fechaDesde
-                ? new Date(filters.fechaDesde + "T00:00:00")
-                : null
-            }
-            maxDate={
-              filters.fechaHasta
-                ? new Date(filters.fechaHasta + "T00:00:00")
-                : undefined
-            }
-            minDate={
-              filters.fechaDesde
-                ? new Date(filters.fechaDesde + "T00:00:00")
-                : undefined
-            }
-            onChange={(val) =>
-              setFilters({
-                ...filters,
-                fechaDesde: val ? format(val, "yyyy-MM-dd") : "",
-              })
-            }
-            {...datePickerConfig}
-            disableFuture
-          />
-          <DatePicker
-            label="Hasta"
-            value={
-              filters.fechaHasta
-                ? new Date(filters.fechaHasta + "T00:00:00")
-                : null
-            }
-            onChange={(val) =>
-              setFilters({
-                ...filters,
-                fechaHasta: val ? format(val, "yyyy-MM-dd") : "",
-              })
-            }
-            {...datePickerConfig}
-            disableFuture
-          />
           <Tooltip title="Limpiar filtros">
             <IconButton
               onClick={handleClearFilters}

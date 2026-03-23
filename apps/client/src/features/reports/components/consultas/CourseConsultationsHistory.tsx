@@ -8,7 +8,6 @@ import {
   CircularProgress,
   Button,
   Grid,
-  Divider,
   FormControl,
   InputLabel,
   Select,
@@ -16,8 +15,6 @@ import {
   Checkbox,
   ListItemText,
   OutlinedInput,
-  Autocomplete,
-  TextField,
   Chip,
   IconButton,
   Tooltip,
@@ -25,7 +22,10 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Divider,
   Rating,
+  Autocomplete,
+  TextField,
   type SelectChangeEvent,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -35,7 +35,6 @@ import { LineChart } from "@mui/x-charts/LineChart";
 import FunctionsIcon from "@mui/icons-material/Functions";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
-import DateRangeIcon from "@mui/icons-material/DateRange";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
@@ -44,8 +43,8 @@ import {
   type CourseConsultationsHistoryFilters,
 } from "../../service/reports.service";
 import { getStudentProgressList } from "../../../users/services/docentes.service";
-import { useDebounce } from "../../../../hooks/useDebounce";
 import { temas, estado_consulta } from "../../../../types";
+import { TemasLabels } from "../../../../types/traducciones";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import ReportStatCard from "../common/ReportStatCard";
 import { datePickerConfig } from "../../../../config/theme.config";
@@ -85,16 +84,11 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
   // Estados UI para filtros múltiples
   const [selectedTemas, setSelectedTemas] = useState<temas[]>([]);
   const [selectedEstados, setSelectedEstados] = useState<estado_consulta[]>([]);
-  const [selectedStudents, setSelectedStudents] = useState<
-    { id: string; nombre: string }[]
-  >([]);
+  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
 
-  // Buscador de alumnos
   const [studentOptions, setStudentOptions] = useState<
     { id: string; nombre: string }[]
   >([]);
-  const [studentSearch, setStudentSearch] = useState("");
-  const debouncedStudentSearch = useDebounce(studentSearch, 500);
 
   // Estado del Modal de Respuesta
   const [viewingResponse, setViewingResponse] = useState<any>(null);
@@ -103,10 +97,9 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
   useEffect(() => {
     getStudentProgressList(courseId, {
       page: 1,
-      limit: 50,
+      limit: 1000,
       sort: "nombre",
       order: "asc",
-      search: debouncedStudentSearch,
     }).then((res) => {
       setStudentOptions(
         res.data.map((s) => ({
@@ -115,7 +108,7 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
         })),
       );
     });
-  }, [courseId, debouncedStudentSearch]);
+  }, [courseId]);
 
   // --- Sincronizar Filtros UI con Filtros API ---
   useEffect(() => {
@@ -123,7 +116,7 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
       ...prev,
       temas: selectedTemas.join(","),
       estados: selectedEstados.join(","),
-      alumnos: selectedStudents.map((s) => s.id).join(","),
+      alumnos: selectedStudents.join(","),
     }));
   }, [selectedTemas, selectedEstados, selectedStudents]);
 
@@ -253,6 +246,7 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
               <IconButton
                 size="small"
                 disabled={!isAtendida}
+                color="primary"
                 onClick={() => setViewingResponse(params.row)}
               >
                 <VisibilityIcon fontSize="small" />
@@ -309,11 +303,6 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
                   ? new Date(filters.fechaHasta + "T00:00:00")
                   : undefined
               }
-              minDate={
-                filters.fechaDesde
-                  ? new Date(filters.fechaDesde + "T00:00:00")
-                  : undefined
-              }
               onChange={(val) =>
                 setFilters({
                   ...filters,
@@ -342,6 +331,11 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
                   ? new Date(filters.fechaHasta + "T00:00:00")
                   : null
               }
+              minDate={
+                filters.fechaDesde
+                  ? new Date(filters.fechaDesde + "T00:00:00")
+                  : undefined
+              }
               onChange={(val) =>
                 setFilters({
                   ...filters,
@@ -362,14 +356,16 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
                 },
               }}
             />
-            <FormControl size="small" sx={{ width: 200 }}>
-              <InputLabel>Temas</InputLabel>
+            <FormControl size="small" sx={{ width: 270 }}>
+              <InputLabel>Filtrar por Temas</InputLabel>
               <Select
                 multiple
                 value={selectedTemas}
                 onChange={handleTemasChange}
-                input={<OutlinedInput label="Temas" />}
-                renderValue={(selected) => selected.join(", ")}
+                input={<OutlinedInput label="Filtrar por Temas" />}
+                renderValue={(selected) =>
+                  selected.map((t) => TemasLabels[t as temas] || t).join(", ")
+                }
                 MenuProps={MenuProps}
               >
                 {Object.values(temas)
@@ -377,18 +373,18 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
                   .map((t) => (
                     <MenuItem key={t} value={t}>
                       <Checkbox checked={selectedTemas.indexOf(t) > -1} />
-                      <ListItemText primary={t} />
+                      <ListItemText primary={TemasLabels[t as temas] || t} />
                     </MenuItem>
                   ))}
               </Select>
             </FormControl>
-            <FormControl size="small" sx={{ width: 200 }}>
-              <InputLabel>Estados</InputLabel>
+            <FormControl size="small" sx={{ width: 270 }}>
+              <InputLabel>Filtrar por Estados</InputLabel>
               <Select
                 multiple
                 value={selectedEstados}
                 onChange={handleEstadosChange}
-                input={<OutlinedInput label="Estados" />}
+                input={<OutlinedInput label="Filtrar por Estados" />}
                 renderValue={(selected) => selected.join(", ")}
                 MenuProps={MenuProps}
               >
@@ -402,23 +398,50 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
             </FormControl>
             <Autocomplete
               multiple
+              disableCloseOnSelect
+              size="small"
               options={studentOptions}
               getOptionLabel={(option) => option.nombre}
-              value={selectedStudents}
-              onChange={(_, newValue) => setSelectedStudents(newValue)}
-              onInputChange={(_, newInputValue) =>
-                setStudentSearch(newInputValue)
-              }
-              filterOptions={(x) => x}
+              value={studentOptions.filter((s) =>
+                selectedStudents.includes(s.id),
+              )}
+              onChange={(_, newValue) => {
+                setSelectedStudents(newValue.map((v) => v.id));
+              }}
+              renderOption={(props, option, { selected }) => {
+                const { key, ...optionProps } = props as any;
+                return (
+                  <li key={key} {...optionProps}>
+                    <Checkbox checked={selected} sx={{ mr: 1, p: 0.5 }} />
+                    {option.nombre}
+                  </li>
+                );
+              }}
+              renderTags={(tagValue) => {
+                if (tagValue.length === 0) return null;
+                return (
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      ml: 1,
+                      maxWidth: 140,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {tagValue.map((v) => v.nombre).join(", ")}
+                  </Typography>
+                );
+              }}
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Filtrar por Alumnos"
-                  placeholder="Buscar..."
-                  size="small"
+                  label="Filtrar por Alumno"
+                  placeholder={selectedStudents.length === 0 ? "Buscar..." : ""}
                 />
               )}
-              sx={{ width: 300 }}
+              sx={{ width: 270 }}
             />
             <Tooltip title="Limpiar filtros">
               <IconButton
@@ -527,7 +550,7 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
             {/* --- Tabla Detallada --- */}
             <Paper
               elevation={3}
-              sx={{ height: 500, width: "100%", boxSizing: "border-box" }}
+              sx={{ width: "100%", boxSizing: "border-box" }}
             >
               <DataGrid
                 rows={data.tabla}
@@ -571,6 +594,23 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
               <Stack spacing={2}>
                 <Box>
                   <Typography variant="overline" color="text.secondary">
+                    Consulta del Alumno
+                  </Typography>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight="bold"
+                    lineHeight={1.2}
+                  >
+                    {viewingResponse.titulo}
+                  </Typography>
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    {viewingResponse.descripcion}
+                  </Typography>
+                </Box>
+                <Divider />
+
+                <Box>
+                  <Typography variant="overline" color="text.secondary">
                     Docente que atendió
                   </Typography>
                   <Typography variant="body1">
@@ -593,6 +633,7 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
                       "Esta consulta fue atendida verbalmente en una clase de consulta."}
                   </Typography>
                 </Box>
+                <Divider />
                 {viewingResponse.valoracion && (
                   <Box>
                     <Typography variant="overline" color="text.secondary">

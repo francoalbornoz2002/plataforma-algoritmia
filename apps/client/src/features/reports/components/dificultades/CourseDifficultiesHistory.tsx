@@ -347,11 +347,6 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
                   ? new Date(filters.fechaHasta + "T00:00:00")
                   : undefined
               }
-              minDate={
-                filters.fechaDesde
-                  ? new Date(filters.fechaDesde + "T00:00:00")
-                  : undefined
-              }
               onChange={(val) =>
                 setFilters({
                   ...filters,
@@ -379,6 +374,11 @@ export default function CourseDifficultiesHistory({ courseId }: Props) {
                 filters.fechaHasta
                   ? new Date(filters.fechaHasta + "T00:00:00")
                   : null
+              }
+              minDate={
+                filters.fechaDesde
+                  ? new Date(filters.fechaDesde + "T00:00:00")
+                  : undefined
               }
               onChange={(val) =>
                 setFilters({
