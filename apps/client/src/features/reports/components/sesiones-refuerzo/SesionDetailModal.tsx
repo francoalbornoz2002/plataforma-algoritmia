@@ -7,15 +7,14 @@ import {
   Typography,
   Box,
   Grid,
-  Chip,
   Divider,
-  List,
-  ListItem,
-  ListItemText,
+  Stack,
 } from "@mui/material";
 import { format } from "date-fns";
 import { estado_sesion } from "../../../../types";
 import ResultadoSesionView from "../../../sesiones-refuerzo/components/ResultadoSesionView";
+import PreguntaAccordion from "../../../preguntas/components/PreguntaAccordion";
+import EstadoSesionChip from "../../../sesiones-refuerzo/components/EstadoSesionChip";
 
 interface Props {
   open: boolean;
@@ -26,7 +25,9 @@ interface Props {
 export default function SesionDetailModal({ open, onClose, sesion }: Props) {
   if (!sesion) return null;
 
-  const isCompleted = sesion.estado === estado_sesion.Completada;
+  const isCompletedOrIncomplete =
+    sesion.estado === estado_sesion.Completada ||
+    sesion.estado === estado_sesion.Incompleta;
   const resultado = sesion.resultadoSesion;
 
   return (
@@ -62,17 +63,7 @@ export default function SesionDetailModal({ open, onClose, sesion }: Props) {
               Estado
             </Typography>
             <Box>
-              <Chip
-                label={sesion.estado.replace("_", " ")}
-                color={
-                  isCompleted
-                    ? "success"
-                    : sesion.estado === "Pendiente"
-                      ? "info"
-                      : "error"
-                }
-                size="small"
-              />
+              <EstadoSesionChip estado={sesion.estado} />
             </Box>
           </Grid>
           <Grid size={{ xs: 6, sm: 4 }}>
@@ -93,23 +84,30 @@ export default function SesionDetailModal({ open, onClose, sesion }: Props) {
 
         <Divider sx={{ mb: 2 }} />
 
-        {isCompleted && resultado ? (
+        {isCompletedOrIncomplete && resultado ? (
           <ResultadoSesionView sesion={sesion} />
         ) : (
           <Box>
             <Typography variant="h6" gutterBottom>
               Preguntas de la Sesión
             </Typography>
-            <List dense>
-              {sesion.preguntas?.map((p: any, index: number) => (
-                <ListItem key={p.pregunta.id} divider>
-                  <ListItemText
-                    primary={`${index + 1}. ${p.pregunta.enunciado}`}
-                    secondary={`${p.pregunta.opcionesRespuesta.length} opciones`}
+            <Stack spacing={1}>
+              {sesion.preguntas?.map((p: any) => {
+                const preguntaAdaptada = {
+                  ...p.pregunta,
+                  dificultad: sesion.dificultad,
+                  docenteCreador: p.pregunta.idDocente
+                    ? { nombre: "Docente", apellido: "" }
+                    : null,
+                };
+                return (
+                  <PreguntaAccordion
+                    key={p.pregunta.id}
+                    pregunta={preguntaAdaptada}
                   />
-                </ListItem>
-              ))}
-            </List>
+                );
+              })}
+            </Stack>
           </Box>
         )}
       </DialogContent>

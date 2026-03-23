@@ -6,7 +6,6 @@ import {
   Stack,
   Alert,
   CircularProgress,
-  Button,
   Autocomplete,
   TextField,
   Chip,
@@ -39,6 +38,7 @@ import SesionDetailModal from "./SesionDetailModal";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
+import EstadoSesionChip from "../../../sesiones-refuerzo/components/EstadoSesionChip";
 
 interface Props {
   courseId: string;
@@ -184,27 +184,7 @@ export default function CourseSessionsHistory({ courseId }: Props) {
       field: "estado",
       headerName: "Estado",
       width: 130,
-      renderCell: (params) => {
-        const colors: Record<
-          string,
-          "default" | "primary" | "success" | "error" | "warning" | "info"
-        > = {
-          [estado_sesion.Completada]: "success",
-          [estado_sesion.Pendiente]: "info",
-          [estado_sesion.No_realizada]: "error",
-          [estado_sesion.Incompleta]: "warning",
-          [estado_sesion.Cancelada]: "default",
-        };
-        return (
-          <Chip
-            label={
-              EstadoSesionLabels[params.value as estado_sesion] || params.value
-            }
-            color={colors[params.value] || "default"}
-            size="small"
-          />
-        );
-      },
+      renderCell: (params) => <EstadoSesionChip estado={params.value} />,
     },
     {
       field: "score",
@@ -315,11 +295,6 @@ export default function CourseSessionsHistory({ courseId }: Props) {
                   ? new Date(filters.fechaHasta + "T00:00:00")
                   : undefined
               }
-              minDate={
-                filters.fechaDesde
-                  ? new Date(filters.fechaDesde + "T00:00:00")
-                  : undefined
-              }
               onChange={(val) =>
                 setFilters({
                   ...filters,
@@ -347,6 +322,11 @@ export default function CourseSessionsHistory({ courseId }: Props) {
                 filters.fechaHasta
                   ? new Date(filters.fechaHasta + "T00:00:00")
                   : null
+              }
+              minDate={
+                filters.fechaDesde
+                  ? new Date(filters.fechaDesde + "T00:00:00")
+                  : undefined
               }
               onChange={(val) =>
                 setFilters({
@@ -577,7 +557,7 @@ export default function CourseSessionsHistory({ courseId }: Props) {
             {/* Tabla de Datos */}
             <Paper
               elevation={3}
-              sx={{ height: 600, width: "100%", boxSizing: "border-box" }}
+              sx={{ height: 450, width: "100%", boxSizing: "border-box" }}
             >
               <DataGrid
                 rows={data.sessions}

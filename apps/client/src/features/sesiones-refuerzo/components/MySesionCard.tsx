@@ -1,5 +1,4 @@
 import {
-  Card,
   CardContent,
   Typography,
   Box,
@@ -7,13 +6,11 @@ import {
   Divider,
   CardActions,
   Button,
-  Chip,
   Grid,
   Paper,
 } from "@mui/material";
 // Íconos
 import EventIcon from "@mui/icons-material/Event";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import PersonIcon from "@mui/icons-material/Person";
 import PsychologyIcon from "@mui/icons-material/Psychology";
 import TimerIcon from "@mui/icons-material/Timer";
@@ -25,7 +22,7 @@ import SmartToyIcon from "@mui/icons-material/SmartToy";
 import type { SesionRefuerzoResumen } from "../../../types";
 import { estado_sesion, grado_dificultad } from "../../../types";
 import { format } from "date-fns";
-import { EstadoSesionLabels } from "../../../types/traducciones";
+import EstadoSesionChip, { getEstadoSesionColor } from "./EstadoSesionChip";
 
 interface MySesionCardProps {
   sesion: SesionRefuerzoResumen;
@@ -52,6 +49,7 @@ export default function MySesionCard({
   const isPendiente = estado === estado_sesion.Pendiente;
   const isCancelada = estado === estado_sesion.Cancelada;
   const isCompletada = estado === estado_sesion.Completada;
+  const isIncompleta = estado === estado_sesion.Incompleta;
 
   // Validar si la fecha límite ya pasó
   const now = new Date();
@@ -69,22 +67,6 @@ export default function MySesionCard({
     ? `${docente.nombre} ${docente.apellido}`
     : "Sistema (Automática)";
 
-  const getEstadoChipColor = (currentEstado: estado_sesion) => {
-    switch (currentEstado) {
-      case estado_sesion.Pendiente:
-        return "info";
-      case estado_sesion.Completada:
-        return "success";
-      case estado_sesion.Incompleta:
-      case estado_sesion.No_realizada:
-        return "warning";
-      case estado_sesion.Cancelada:
-        return "error";
-      default:
-        return "default";
-    }
-  };
-
   return (
     <Paper
       elevation={2}
@@ -95,9 +77,9 @@ export default function MySesionCard({
         opacity: isCancelada ? 0.6 : 1,
         borderLeft: "5px solid",
         borderColor:
-          getEstadoChipColor(estado) === "default"
+          getEstadoSesionColor(estado) === "default"
             ? "divider"
-            : `${getEstadoChipColor(estado)}.main`,
+            : `${getEstadoSesionColor(estado)}.main`,
         transition: "transform 0.2s, box-shadow 0.2s",
         "&:hover": {
           transform: "translateY(-3px)",
@@ -122,12 +104,7 @@ export default function MySesionCard({
           >
             Sesión #{nroSesion}
           </Typography>
-          <Chip
-            label={EstadoSesionLabels[estado]}
-            color={getEstadoChipColor(estado)}
-            size="small"
-            sx={{ fontSize: "0.7rem" }}
-          />
+          <EstadoSesionChip estado={estado} />
         </Box>
 
         {/* Información Principal: Dificultad y Grado */}
@@ -255,7 +232,7 @@ export default function MySesionCard({
             Resolver
           </Button>
         )}
-        {isCompletada && (
+        {(isCompletada || isIncompleta) && sesion.resultadoSesion && (
           <Button
             size="small"
             color="primary"

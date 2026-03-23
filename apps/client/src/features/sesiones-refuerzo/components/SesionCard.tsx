@@ -7,7 +7,6 @@ import {
   CardActions,
   Tooltip,
   IconButton,
-  Chip,
   Button,
   Grid,
   Paper,
@@ -16,7 +15,6 @@ import {
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EventIcon from "@mui/icons-material/Event";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import PersonIcon from "@mui/icons-material/Person";
 import SchoolIcon from "@mui/icons-material/School"; // Para el alumno
 import PsychologyIcon from "@mui/icons-material/Psychology"; // Para dificultad
@@ -27,7 +25,7 @@ import InfoIcon from "@mui/icons-material/Info"; // Para ver detalles
 import type { SesionRefuerzoResumen } from "../../../types";
 import { estado_sesion, grado_dificultad } from "../../../types";
 import { format } from "date-fns";
-import { EstadoSesionLabels } from "../../../types/traducciones";
+import EstadoSesionChip, { getEstadoSesionColor } from "./EstadoSesionChip";
 
 interface SesionCardProps {
   sesion: SesionRefuerzoResumen;
@@ -71,23 +69,6 @@ export default function SesionCard({
     ? `${docente.nombre} ${docente.apellido}`
     : "Sistema (Automática)";
 
-  // Colores para el chip de estado
-  const getEstadoChipColor = (currentEstado: estado_sesion) => {
-    switch (currentEstado) {
-      case estado_sesion.Pendiente:
-        return "info";
-      case estado_sesion.Completada:
-        return "success";
-      case estado_sesion.Incompleta:
-      case estado_sesion.No_realizada:
-        return "warning";
-      case estado_sesion.Cancelada:
-        return "error";
-      default:
-        return "default";
-    }
-  };
-
   return (
     <Paper
       elevation={2}
@@ -98,9 +79,9 @@ export default function SesionCard({
         opacity: isCancelada ? 0.6 : 1,
         borderLeft: "5px solid",
         borderColor:
-          getEstadoChipColor(estado) === "default"
+          getEstadoSesionColor(estado) === "default"
             ? "divider"
-            : `${getEstadoChipColor(estado)}.main`,
+            : `${getEstadoSesionColor(estado)}.main`,
         transition: "transform 0.2s, box-shadow 0.2s",
         "&:hover": {
           transform: "translateY(-3px)",
@@ -125,12 +106,7 @@ export default function SesionCard({
           >
             Sesión #{nroSesion}
           </Typography>
-          <Chip
-            label={EstadoSesionLabels[estado]}
-            color={getEstadoChipColor(estado)}
-            size="small"
-            sx={{ fontSize: "0.7rem", fontWeight: "bold" }}
-          />
+          <EstadoSesionChip estado={estado} />
         </Box>
 
         {/* Información Principal: Alumno */}

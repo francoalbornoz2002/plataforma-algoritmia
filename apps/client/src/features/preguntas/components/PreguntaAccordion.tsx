@@ -29,8 +29,8 @@ import TemaChip from "../../../components/TemaChip";
 
 interface PreguntaAccordionProps {
   pregunta: PreguntaConDetalles;
-  onEdit: (pregunta: PreguntaConDetalles) => void;
-  onDelete: (pregunta: PreguntaConDetalles) => void;
+  onEdit?: (pregunta: PreguntaConDetalles) => void;
+  onDelete?: (pregunta: PreguntaConDetalles) => void;
 }
 
 export default function PreguntaAccordion({
@@ -135,7 +135,7 @@ export default function PreguntaAccordion({
           </Box>
 
           {/* Acciones */}
-          {!isDeleted && !isSistema && (
+          {!isDeleted && !isSistema && onEdit && onDelete && (
             <>
               <Divider />
               <CardActions sx={{ justifyContent: "flex-end", p: 0, pt: 1 }}>

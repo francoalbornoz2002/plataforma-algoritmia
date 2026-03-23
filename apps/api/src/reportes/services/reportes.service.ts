@@ -673,8 +673,12 @@ export class ReportesService {
     let progreso: any;
     let totalAlumnos = 0;
     let totalAlumnosInactivos = 0;
-    let studentStats: { nombre: string; apellido: string; misiones: number }[] =
-      [];
+    let studentStats: {
+      nombre: string;
+      apellido: string;
+      fotoPerfilUrl?: string | null;
+      misiones: number;
+    }[] = [];
 
     if (fechaCorte) {
       // --- MODO HISTÓRICO ---
@@ -716,7 +720,9 @@ export class ReportesService {
         },
         select: {
           idProgreso: true,
-          alumno: { select: { nombre: true, apellido: true } },
+          alumno: {
+            select: { nombre: true, apellido: true, fotoPerfilUrl: true },
+          },
         },
       });
       totalAlumnos = students.length;
@@ -745,6 +751,7 @@ export class ReportesService {
           return {
             nombre: s.alumno.nombre,
             apellido: s.alumno.apellido,
+            fotoPerfilUrl: s.alumno.fotoPerfilUrl,
             misiones: hist?.cantMisionesCompletadas || 0,
           };
         }),
@@ -763,7 +770,9 @@ export class ReportesService {
           estado: { in: [estado_simple.Activo, estado_simple.Finalizado] }, // <-- Incluimos Finalizados
         },
         select: {
-          alumno: { select: { nombre: true, apellido: true } },
+          alumno: {
+            select: { nombre: true, apellido: true, fotoPerfilUrl: true },
+          },
           progresoAlumno: { select: { cantMisionesCompletadas: true } },
         },
       });
@@ -777,6 +786,7 @@ export class ReportesService {
       studentStats = students.map((s) => ({
         nombre: s.alumno.nombre,
         apellido: s.alumno.apellido,
+        fotoPerfilUrl: s.alumno.fotoPerfilUrl,
         misiones: s.progresoAlumno?.cantMisionesCompletadas || 0,
       }));
     }
@@ -805,7 +815,9 @@ export class ReportesService {
       .sort((a, b) => b.misiones - a.misiones)
       .slice(0, 5)
       .map((s) => ({
-        nombre: `${s.nombre} ${s.apellido}`,
+        nombre: `${s.apellido} ${s.nombre}`,
+        inicialApellido: s.apellido.charAt(0).toUpperCase(),
+        fotoPerfilUrl: s.fotoPerfilUrl,
         misiones: s.misiones,
         diferenciaPorcentual: getPctDiff(s.misiones),
       }));
@@ -816,7 +828,9 @@ export class ReportesService {
       .sort((a, b) => a.misiones - b.misiones)
       .slice(0, 5)
       .map((s) => ({
-        nombre: `${s.nombre} ${s.apellido}`,
+        nombre: `${s.apellido} ${s.nombre}`,
+        inicialApellido: s.apellido.charAt(0).toUpperCase(),
+        fotoPerfilUrl: s.fotoPerfilUrl,
         misiones: s.misiones,
         diferenciaPorcentual: getPctDiff(s.misiones),
       }));
@@ -2027,6 +2041,7 @@ export class ReportesService {
       return {
         id: c.id,
         titulo: c.titulo,
+        descripcion: c.descripcion,
         tema: c.tema,
         fecha: c.createdAt,
         alumno: `${c.alumno.nombre} ${c.alumno.apellido}`,
@@ -2986,12 +3001,18 @@ export class ReportesService {
       // Lógica de fecha para el eje X según estado
       let fechaGrafico = s.createdAt; // Default: Pendiente
 
-      if (s.estado === estado_sesion.Completada && s.resultadoSesion) {
+      // Si fue completada o incompleta PERO tiene resultados, tomamos la fecha en que se envió la prueba
+      if (
+        (s.estado === estado_sesion.Completada ||
+          s.estado === estado_sesion.Incompleta) &&
+        s.resultadoSesion
+      ) {
         fechaGrafico = s.resultadoSesion.fechaCompletado;
       } else if (
         s.estado === estado_sesion.No_realizada ||
         s.estado === estado_sesion.Incompleta
       ) {
+        // Fallback: Si no tiene resultados (ej. cronjob la cerró), usamos la fecha límite
         fechaGrafico = s.fechaHoraLimite;
       }
 

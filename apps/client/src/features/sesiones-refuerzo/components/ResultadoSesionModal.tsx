@@ -8,7 +8,6 @@ import {
   CircularProgress,
   Alert,
   Divider,
-  Chip,
 } from "@mui/material";
 import { useState, useEffect } from "react";
 import { useCourseContext } from "../../../context/CourseContext";
@@ -19,6 +18,7 @@ import {
   estado_sesion,
 } from "../../../types";
 import ResultadoSesionView from "./ResultadoSesionView";
+import EstadoSesionChip from "./EstadoSesionChip";
 
 interface ResultadoSesionModalProps {
   open: boolean;
@@ -59,10 +59,8 @@ export default function ResultadoSesionModal({
       <DialogTitle>
         Resultados de la Sesión N° {sesionResumen.nroSesion}
         {sesionResumen.estado === estado_sesion.Incompleta && (
-          <Chip
-            label="Incompleta"
-            color="warning"
-            size="small"
+          <EstadoSesionChip
+            estado={sesionResumen.estado}
             sx={{ ml: 2, verticalAlign: "middle" }}
           />
         )}
