@@ -253,14 +253,13 @@ export default function DocenteDashboardPage() {
     setError(null);
     try {
       // 1. Cargar Alumnos (Traemos todos para filtrar en cliente en el sidebar)
-      const studentsRes = await getStudentProgressList(selectedCourse.id, {
-        page: 1,
-        limit: 100,
-        sort: "apellido",
-        order: "asc",
-      });
-      setStudents(studentsRes.data);
-      setFilteredStudents(studentsRes.data);
+      const studentsData = await getStudentProgressList(selectedCourse.id);
+      // Ordenamos alfabéticamente por apellido
+      const sortedStudents = studentsData.sort((a, b) =>
+        a.apellido.localeCompare(b.apellido),
+      );
+      setStudents(sortedStudents);
+      setFilteredStudents(sortedStudents);
 
       // 2. Cargar Estadísticas
       const statsRes = await getCourseDashboardStats(selectedCourse.id);

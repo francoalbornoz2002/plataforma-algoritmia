@@ -15,7 +15,6 @@ import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { roles } from '@prisma/client';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
-import { FindStudentProgressDto } from 'src/progress/dto/find-student-progress.dto';
 import { FindConsultasDto } from 'src/consultas/dto/find-consultas.dto';
 import { CreateRespuestaDto } from 'src/consultas/dto/create-respuesta.dto';
 import { ConsultasService } from 'src/consultas/services/consultas.service';
@@ -47,11 +46,10 @@ export class DocentesController {
   @Get('my/courses/:idCurso/progress-students')
   getStudentProgressList(
     @Param('idCurso', ParseUUIDPipe) idCurso: string,
-    @Query() dto: FindStudentProgressDto, // <-- Recibe los filtros
     @Req() req: AuthenticatedUserRequest,
   ) {
     const idDocente = req.user.userId;
-    return this.docentesService.getStudentProgressList(idCurso, dto, idDocente);
+    return this.docentesService.getStudentProgressList(idCurso, idDocente);
   }
 
   @Get('my/courses/:idCurso/difficulties-overview')

@@ -9,7 +9,6 @@ import { ConsultasService } from 'src/consultas/services/consultas.service';
 import { DifficultiesService } from 'src/difficulties/services/difficulties.service';
 import { dateToTime } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { FindStudentProgressDto } from 'src/progress/dto/find-student-progress.dto';
 import { ProgressService } from 'src/progress/services/progress.service';
 import {
   checkAlumnoAccess,
@@ -117,13 +116,9 @@ export class DocentesService {
   /**
    * Pide la lista de alumnos al ProgressService
    */
-  async getStudentProgressList(
-    idCurso: string,
-    dto: FindStudentProgressDto,
-    idDocente: string,
-  ) {
+  async getStudentProgressList(idCurso: string, idDocente: string) {
     await checkDocenteAccess(this.prisma, idDocente, idCurso);
-    return this.progressService.getStudentProgressList(idCurso, dto);
+    return this.progressService.getStudentProgressList(idCurso);
   }
 
   async getCourseDifficultiesOverview(idCurso: string, idDocente: string) {

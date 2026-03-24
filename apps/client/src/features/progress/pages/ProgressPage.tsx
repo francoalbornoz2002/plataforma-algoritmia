@@ -20,7 +20,6 @@ import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 import {
   DataGrid,
   type GridColDef,
-  type GridPaginationModel,
   type GridSortModel,
 } from "@mui/x-data-grid";
 import { formatDistanceToNow } from "date-fns";
@@ -33,18 +32,13 @@ import AssessmentIcon from "@mui/icons-material/Assessment";
 
 // 1. Hooks y Servicios
 import { useCourseContext } from "../../../context/CourseContext";
-import { useDebounce } from "../../../hooks/useDebounce"; // Asumo que tienes este hook
 import {
   getCourseOverview,
   getStudentProgressList,
 } from "../../users/services/docentes.service";
 
 // 2. Tipos
-import type {
-  ProgresoCurso,
-  ProgresoAlumnoDetallado,
-  FindStudentProgressParams,
-} from "../../../types";
+import type { ProgresoCurso, ProgresoAlumnoDetallado } from "../../../types";
 import {
   ActivityRange,
   AttemptsRange,
@@ -69,8 +63,7 @@ export default function ProgressPage() {
   const [overviewError, setOverviewError] = useState<string | null>(null);
 
   // Estado para la DataGrid
-  const [rows, setRows] = useState<ProgresoAlumnoDetallado[]>([]);
-  const [totalRows, setTotalRows] = useState(0);
+  const [allRows, setAllRows] = useState<ProgresoAlumnoDetallado[]>([]);
   const [gridLoading, setGridLoading] = useState(true);
   const [gridError, setGridError] = useState<string | null>(null);
 
@@ -93,9 +86,8 @@ export default function ProgressPage() {
     activityRange: "",
   });
 
-  // Estado local para el buscador (para debouncing)
+  // Estado local para el buscador
   const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   // Estado para el modal del detalle de las misiones del alumno
   const [viewingStudent, setViewingStudent] = useState<StudentRow | null>(null);
@@ -114,44 +106,125 @@ export default function ProgressPage() {
       .finally(() => setOverviewLoading(false));
   }, [selectedCourse]);
 
-  // Efecto para buscar los datos de la DataGrid (se activa con CUALQUIER filtro)
+  // Efecto para buscar los datos de la DataGrid (solo al montar o cambiar curso)
   useEffect(() => {
     if (!selectedCourse) return;
 
     setGridLoading(true);
     setGridError(null);
 
-    const params: FindStudentProgressParams = {
-      page: paginationModel.page + 1,
-      limit: paginationModel.pageSize,
-      sort: sortModel[0]?.field || "apellido",
-      order: (sortModel[0]?.sort as "asc" | "desc") || "asc",
-      search: debouncedSearchTerm,
-      progressRange: filters.progressRange as ProgressRange | "",
-      starsRange: filters.starsRange as StarsRange | "",
-      attemptsRange: filters.attemptsRange as AttemptsRange | "",
-      activityRange: filters.activityRange as ActivityRange | "",
-    };
-
-    getStudentProgressList(selectedCourse.id, params)
-      .then((response) => {
-        setRows(response.data);
-        setTotalRows(response.total);
+    getStudentProgressList(selectedCourse.id)
+      .then((data) => {
+        setAllRows(data);
       })
       .catch((err) => setGridError(err.message))
       .finally(() => setGridLoading(false));
-  }, [
-    selectedCourse,
-    paginationModel,
-    sortModel,
-    filters,
-    debouncedSearchTerm,
-  ]);
+  }, [selectedCourse]);
 
-  // Efecto para conectar el buscador con (debounce) a los filtros
+  // --- FILTRADO LOCAL ---
+  const filteredRows = useMemo(() => {
+    return allRows.filter((row) => {
+      // Filtro por Búsqueda (Texto)
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        if (
+          !row.nombre.toLowerCase().includes(term) &&
+          !row.apellido.toLowerCase().includes(term)
+        ) {
+          return false;
+        }
+      }
+
+      // Filtro de Progreso
+      if (filters.progressRange) {
+        const pct = row.pctMisionesCompletadas;
+        if (filters.progressRange === ProgressRange.ZERO && pct !== 0)
+          return false;
+        if (
+          filters.progressRange === ProgressRange.RANGE_1_25 &&
+          (pct < 1 || pct > 25)
+        )
+          return false;
+        if (
+          filters.progressRange === ProgressRange.RANGE_26_50 &&
+          (pct < 26 || pct > 50)
+        )
+          return false;
+        if (
+          filters.progressRange === ProgressRange.RANGE_51_75 &&
+          (pct < 51 || pct > 75)
+        )
+          return false;
+        if (
+          filters.progressRange === ProgressRange.RANGE_76_99 &&
+          (pct < 76 || pct > 99)
+        )
+          return false;
+        if (filters.progressRange === ProgressRange.FULL && pct !== 100)
+          return false;
+      }
+
+      // Filtro de Estrellas
+      if (filters.starsRange) {
+        const stars = row.promEstrellas;
+        if (filters.starsRange === StarsRange.LOW && stars > 1) return false;
+        if (
+          filters.starsRange === StarsRange.MEDIUM &&
+          (stars <= 1 || stars > 2)
+        )
+          return false;
+        if (filters.starsRange === StarsRange.HIGH && (stars <= 2 || stars > 3))
+          return false;
+      }
+
+      // Filtro de Intentos
+      if (filters.attemptsRange) {
+        const att = row.promIntentos;
+        if (filters.attemptsRange === AttemptsRange.FAST && att >= 3)
+          return false;
+        if (
+          filters.attemptsRange === AttemptsRange.NORMAL &&
+          (att < 3 || att > 6)
+        )
+          return false;
+        if (
+          filters.attemptsRange === AttemptsRange.MANY &&
+          (att <= 6 || att > 9)
+        )
+          return false;
+        if (filters.attemptsRange === AttemptsRange.TOO_MANY && att <= 9)
+          return false;
+      }
+
+      // Filtro de Última Actividad
+      if (filters.activityRange) {
+        const now = new Date();
+        const activityDate = row.ultimaActividad
+          ? new Date(row.ultimaActividad)
+          : new Date(0);
+        const diffDays =
+          (now.getTime() - activityDate.getTime()) / (1000 * 3600 * 24);
+
+        if (filters.activityRange === ActivityRange.INACTIVE && diffDays <= 7)
+          return false;
+        if (filters.activityRange === ActivityRange.LAST_24H && diffDays > 1)
+          return false;
+        if (filters.activityRange === ActivityRange.LAST_3D && diffDays > 3)
+          return false;
+        if (filters.activityRange === ActivityRange.LAST_5D && diffDays > 5)
+          return false;
+        if (filters.activityRange === ActivityRange.LAST_7D && diffDays > 7)
+          return false;
+      }
+
+      return true;
+    });
+  }, [allRows, searchTerm, filters]);
+
+  // Efecto para conectar el buscador a los filtros
   useEffect(() => {
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
-  }, [debouncedSearchTerm]);
+  }, [searchTerm]);
 
   // --- 4. HANDLERS (para la DataGrid y Filtros) ---
 
@@ -443,16 +516,12 @@ export default function ProgressPage() {
                 sx={{ height: 600, width: "100%", boxSizing: "border-box" }}
               >
                 <DataGrid
-                  rows={rows}
+                  rows={filteredRows}
                   columns={columns}
-                  rowCount={totalRows}
                   loading={gridLoading}
-                  // Paginación
-                  paginationMode="server"
                   paginationModel={paginationModel}
                   onPaginationModelChange={setPaginationModel}
                   pageSizeOptions={[5, 10, 25]}
-                  sortingMode="server"
                   sortModel={sortModel}
                   onSortModelChange={setSortModel}
                   disableRowSelectionOnClick

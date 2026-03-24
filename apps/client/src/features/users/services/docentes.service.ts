@@ -11,12 +11,11 @@ import type {
   estado_simple,
   AlumnoDificultadResumen,
   FindConsultasParams,
-  FindStudentProgressParams,
   MisionConEstado,
   PaginatedConsultasDocenteResponse,
-  PaginatedStudentProgressResponse,
   ProgresoCurso,
   CourseDashboardData,
+  ProgresoAlumnoDetallado,
 } from "../../../types";
 import type { CreateRespuestaFormValues } from "../../consultas/validations/createRespuesta.schema";
 
@@ -86,28 +85,10 @@ export const getCourseDashboardStats = async (
  */
 export const getStudentProgressList = async (
   idCurso: string,
-  params: FindStudentProgressParams,
-): Promise<PaginatedStudentProgressResponse> => {
+): Promise<ProgresoAlumnoDetallado[]> => {
   try {
-    // 1. Creamos una copia tipada de los parámetros
-    const cleanedParams: FindStudentProgressParams = { ...params };
-
-    // 2. Iteramos sobre las claves de forma segura para TypeScript
-    (
-      Object.keys(cleanedParams) as Array<keyof FindStudentProgressParams>
-    ).forEach((key) => {
-      // Comprobamos si el valor de esa clave es un string vacío
-      if (cleanedParams[key] === "") {
-        // Si lo es, eliminamos esa clave del objeto
-        delete cleanedParams[key];
-      }
-    });
-
     const response = await apiClient.get(
       `/docentes/my/courses/${idCurso}/progress-students`,
-      {
-        params: cleanedParams, // Axios convierte esto en query params (ej: ?page=1&limit=10)
-      },
     );
     return response.data;
   } catch (err: any) {

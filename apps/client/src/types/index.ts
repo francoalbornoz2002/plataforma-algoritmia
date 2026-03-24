@@ -279,23 +279,6 @@ export type ProgresoAlumno = Omit<
   "nombre" | "apellido"
 >;
 
-// Para los parámetros del servicio de la DataGrid
-export interface FindStudentProgressParams {
-  page: number;
-  limit: number;
-  sort: string;
-  order: "asc" | "desc";
-  search?: string;
-  progressRange?: ProgressRange | "";
-  starsRange?: StarsRange | "";
-  attemptsRange?: AttemptsRange | "";
-  activityRange?: ActivityRange | "";
-}
-
-// Para la respuesta paginada de la DataGrid
-export interface PaginatedStudentProgressResponse
-  extends PaginatedResponse<ProgresoAlumnoDetallado> {}
-
 // ----- DIFICULTADES ----- //
 
 // 1. Para el Resumen/KPIs de Dificultades (coincide con DificultadesCurso)

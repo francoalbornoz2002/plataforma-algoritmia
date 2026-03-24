@@ -5,13 +5,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import {
-  ActivityRange,
-  AttemptsRange,
-  FindStudentProgressDto,
-  ProgressRange,
-  StarsRange,
-} from '../dto/find-student-progress.dto';
 import { Prisma } from '@prisma/client';
 import { SubmitMissionDto } from '../dto/submit-mission.dto'; // (Importación existente)
 import { estado_simple } from '@prisma/client'; // Aseguramos importar el enum
@@ -63,23 +56,8 @@ export class ProgressService {
   /**
    * MÉTODO 2: Obtener la lista de alumnos para la DataGrid
    */
-  async getStudentProgressList(idCurso: string, dto: FindStudentProgressDto) {
-    const {
-      page,
-      limit,
-      sort,
-      order,
-      search,
-      progressRange,
-      starsRange,
-      attemptsRange,
-      activityRange,
-    } = dto;
-
-    const skip = (page - 1) * limit;
-    const take = limit;
-
-    // 0. Verificar estado del curso para saber si incluimos inactivos
+  // 0. Verificar estado del curso para saber si incluimos inactivos
+  async getStudentProgressList(idCurso: string) {
     const curso = await this.prisma.curso.findUnique({
       where: { id: idCurso },
       select: { deletedAt: true },
@@ -87,58 +65,45 @@ export class ProgressService {
     const includeInactive = !!curso?.deletedAt;
 
     try {
-      // 1. Construir el WHERE dinámicamente
-      const where = this.buildWhereClause(
-        idCurso,
-        search,
-        progressRange,
-        starsRange,
-        attemptsRange,
-        activityRange,
-        includeInactive,
-      );
+      const where: Prisma.AlumnoCursoWhereInput = {
+        idCurso: idCurso,
+      };
 
-      // 2. Construir el ORDER BY dinámicamente
-      const orderBy = this.buildOrderByClause(sort, order);
+      if (!includeInactive) {
+        where.estado = estado_simple.Activo;
+      } else {
+        where.estado = { in: [estado_simple.Activo, estado_simple.Finalizado] };
+      }
 
-      // 3. Ejecutar las consultas en paralelo
-      const [alumnos, total] = await this.prisma.$transaction([
-        // Consulta para obtener los datos
-        this.prisma.alumnoCurso.findMany({
-          where,
-          orderBy,
-          skip,
-          take,
-          include: {
-            alumno: {
-              select: {
-                nombre: true,
-                apellido: true,
-                fotoPerfilUrl: true,
-                dni: true,
-                fechaNacimiento: true,
-              },
+      const alumnos = await this.prisma.alumnoCurso.findMany({
+        where,
+        include: {
+          alumno: {
+            select: {
+              nombre: true,
+              apellido: true,
+              fotoPerfilUrl: true,
+              dni: true,
+              fechaNacimiento: true,
             },
-            // --- CAMBIO AQUÍ ---
-            progresoAlumno: {
-              include: {
-                // Traemos las especiales
-                misionesEspeciales: {
-                  orderBy: { fechaCompletado: 'desc' },
-                },
-                // Y las normales con sus detalles
-                misionesCompletadas: {
-                  include: { mision: true },
-                  orderBy: { fechaCompletado: 'desc' },
-                },
-              },
-            },
-            // -------------------
           },
-        }),
-        // Consulta para obtener el conteo total
-        this.prisma.alumnoCurso.count({ where }),
-      ]);
+          // --- CAMBIO AQUÍ ---
+          progresoAlumno: {
+            include: {
+              // Traemos las especiales
+              misionesEspeciales: {
+                orderBy: { fechaCompletado: 'desc' },
+              },
+              // Y las normales con sus detalles
+              misionesCompletadas: {
+                include: { mision: true },
+                orderBy: { fechaCompletado: 'desc' },
+              },
+            },
+          },
+          // -------------------
+        },
+      });
 
       // 4. Mapear la respuesta para el DataGrid
       // Mapear la respuesta y convertir los Decimal a Number
@@ -162,8 +127,7 @@ export class ProgressService {
         promIntentos: this.toNum(ac.progresoAlumno.promIntentos),
       }));
 
-      const totalPages = Math.ceil(total / limit);
-      return { data, total, page, totalPages };
+      return data;
     } catch (error) {
       console.error('Error en getStudentProgressList:', error);
       throw new InternalServerErrorException(
@@ -551,159 +515,6 @@ export class ProgressService {
         'Error al obtener el estado de las misiones.',
       );
     }
-  }
-
-  // --- MÉTODOS HELPER PRIVADOS ---
-
-  /**
-   * Construye la cláusula WHERE para la consulta de alumnos
-   */
-  private buildWhereClause(
-    idCurso: string,
-    search?: string,
-    progressRange?: ProgressRange,
-    starsRange?: StarsRange,
-    attemptsRange?: AttemptsRange,
-    activityRange?: ActivityRange,
-    includeInactive: boolean = false,
-  ): Prisma.AlumnoCursoWhereInput {
-    // Base: Siempre filtramos por curso y estado activo
-    const where: Prisma.AlumnoCursoWhereInput = {
-      idCurso: idCurso,
-    };
-
-    if (!includeInactive) {
-      // Curso Activo: Solo alumnos activos
-      where.estado = estado_simple.Activo;
-    } else {
-      // Curso Finalizado: Alumnos que terminaron (Finalizado) o quedaron Activos. Ocultamos Inactivos (Abandonos).
-      where.estado = { in: [estado_simple.Activo, estado_simple.Finalizado] };
-    }
-
-    // Filtro de Búsqueda (nombre/apellido)
-    if (search) {
-      where.alumno = {
-        OR: [
-          { nombre: { contains: search, mode: 'insensitive' } },
-          { apellido: { contains: search, mode: 'insensitive' } },
-        ],
-      };
-    }
-
-    // Objeto para los filtros de 'progresoAlumno'
-    const progressWhere: Prisma.ProgresoAlumnoWhereInput = {};
-
-    // Filtro de Progreso (%)
-    switch (progressRange) {
-      case ProgressRange.ZERO:
-        progressWhere.pctMisionesCompletadas = 0;
-        break;
-      case ProgressRange.RANGE_1_25:
-        progressWhere.pctMisionesCompletadas = { gte: 1, lte: 25 };
-        break;
-      case ProgressRange.RANGE_26_50:
-        progressWhere.pctMisionesCompletadas = { gte: 26, lte: 50 };
-        break;
-      case ProgressRange.RANGE_51_75:
-        progressWhere.pctMisionesCompletadas = { gte: 51, lte: 75 };
-        break;
-      case ProgressRange.RANGE_76_99:
-        progressWhere.pctMisionesCompletadas = { gte: 76, lte: 99 };
-        break;
-      case ProgressRange.FULL:
-        progressWhere.pctMisionesCompletadas = 100;
-        break;
-    }
-
-    // Filtro de Estrellas (Promedio)
-    switch (starsRange) {
-      case StarsRange.LOW:
-        progressWhere.promEstrellas = { gte: 0, lte: 1 };
-        break;
-      case StarsRange.MEDIUM:
-        progressWhere.promEstrellas = { gte: 1.1, lte: 2 };
-        break;
-      case StarsRange.HIGH:
-        progressWhere.promEstrellas = { gte: 2.1, lte: 3 };
-        break;
-    }
-
-    // Filtro de Intentos (Promedio)
-    switch (attemptsRange) {
-      case AttemptsRange.FAST:
-        progressWhere.promIntentos = { lt: 3 };
-        break;
-      case AttemptsRange.NORMAL:
-        progressWhere.promIntentos = { gte: 3, lte: 6 };
-        break;
-      case AttemptsRange.MANY:
-        progressWhere.promIntentos = { gte: 6, lte: 9 };
-        break;
-      case AttemptsRange.TOO_MANY:
-        progressWhere.promIntentos = { gte: 10 };
-        break;
-    }
-
-    // Filtro de Última Actividad
-    if (activityRange) {
-      const now = new Date();
-      const dateLimit = new Date();
-
-      switch (activityRange) {
-        case ActivityRange.INACTIVE:
-          dateLimit.setDate(now.getDate() - 7);
-          progressWhere.ultimaActividad = { lt: dateLimit };
-          break;
-        case ActivityRange.LAST_24H:
-          dateLimit.setDate(now.getDate() - 1);
-          progressWhere.ultimaActividad = { gte: dateLimit };
-          break;
-        case ActivityRange.LAST_3D:
-          dateLimit.setDate(now.getDate() - 3);
-          progressWhere.ultimaActividad = { gte: dateLimit };
-          break;
-        case ActivityRange.LAST_5D:
-          dateLimit.setDate(now.getDate() - 5);
-          progressWhere.ultimaActividad = { gte: dateLimit };
-          break;
-        case ActivityRange.LAST_7D:
-          dateLimit.setDate(now.getDate() - 7);
-          progressWhere.ultimaActividad = { gte: dateLimit };
-          break;
-      }
-    }
-
-    // Si agregamos algún filtro de progreso, lo añadimos al WHERE principal
-    if (Object.keys(progressWhere).length > 0) {
-      where.progresoAlumno = progressWhere;
-    }
-
-    return where;
-  }
-
-  /**
-   * Construye la cláusula ORDER BY
-   */
-  private buildOrderByClause(
-    sort: string,
-    order: 'asc' | 'desc',
-  ): Prisma.AlumnoCursoOrderByWithRelationInput {
-    // Si el 'sort' es 'nombre' o 'apellido', ordenamos por la relación 'alumno'
-    if (sort === 'nombre' || sort === 'apellido') {
-      return {
-        alumno: {
-          [sort]: order,
-        },
-      };
-    }
-
-    // Si no, ordenamos por la relación 'progresoAlumno'
-    // (Ej: promEstrellas, pctMisionesCompletadas, ultimaActividad)
-    return {
-      progresoAlumno: {
-        [sort]: order,
-      },
-    };
   }
 
   /**
