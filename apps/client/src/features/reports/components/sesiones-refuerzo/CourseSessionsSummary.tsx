@@ -119,7 +119,6 @@ export default function CourseSessionsSummary({ courseId }: Props) {
           icon={<PsychologyIcon />}
           filters={{
             ...filters,
-            courseId,
             agruparPor: chartGrouping,
             agruparPorContenido: chartGrouping2,
           }}

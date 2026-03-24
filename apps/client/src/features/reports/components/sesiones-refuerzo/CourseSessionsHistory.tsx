@@ -44,6 +44,17 @@ interface Props {
   courseId: string;
 }
 
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
+
 export default function CourseSessionsHistory({ courseId }: Props) {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any>(null);
@@ -116,21 +127,6 @@ export default function CourseSessionsHistory({ courseId }: Props) {
     });
   };
 
-  // Lógica para etiqueta dinámica de fecha
-  const getDateLabel = () => {
-    switch (filters.estado) {
-      case estado_sesion.Pendiente:
-        return "Fecha de Asignación";
-      case estado_sesion.Completada:
-        return "Fecha de Completado";
-      case estado_sesion.No_realizada:
-      case estado_sesion.Incompleta:
-        return "Fecha Límite";
-      default:
-        return "Fecha de Ref.";
-    }
-  };
-
   // Columnas DataGrid
   const columns: GridColDef[] = [
     {
@@ -141,15 +137,22 @@ export default function CourseSessionsHistory({ courseId }: Props) {
       width: 10,
     },
     {
-      field: "fechaGrafico",
-      headerName: getDateLabel(),
+      field: "fechaAsignacion",
+      headerName: "Fecha Asignación",
+      width: 130,
+      valueFormatter: (val) =>
+        val ? format(new Date(val), "dd/MM/yyyy") : "-",
+    },
+    {
+      field: "fechaCompletado",
+      headerName: "Fecha Completado",
       width: 130,
       valueFormatter: (val) =>
         val ? format(new Date(val), "dd/MM/yyyy") : "-",
     },
     {
       field: "alumno",
-      headerName: "Alumno",
+      headerName: "Alumno Asignado",
       width: 200,
       valueGetter: (_: any, row: any) =>
         `${row.alumno.nombre} ${row.alumno.apellido}`,
@@ -157,7 +160,9 @@ export default function CourseSessionsHistory({ courseId }: Props) {
     {
       field: "origen",
       headerName: "Origen",
-      width: 100,
+      headerAlign: "center",
+      align: "center",
+      width: 90,
       renderCell: (params) => (
         <Chip
           label={params.value}
@@ -178,12 +183,15 @@ export default function CourseSessionsHistory({ courseId }: Props) {
       field: "dificultad",
       headerName: "Dificultad",
       width: 360,
+      flex: 1,
       valueGetter: (_: any, row: any) => row.dificultad.nombre,
     },
     {
       field: "estado",
       headerName: "Estado",
-      width: 130,
+      align: "center",
+      headerAlign: "center",
+      width: 110,
       renderCell: (params) => <EstadoSesionChip estado={params.value} />,
     },
     {
@@ -241,7 +249,7 @@ export default function CourseSessionsHistory({ courseId }: Props) {
           title="Historial de Sesiones"
           description="Revisa el detalle de todas las sesiones de refuerzo asignadas, completadas o vencidas."
           icon={<HistoryIcon />}
-          filters={{ ...filters, courseId }}
+          filters={filters}
           endpointPathPdf={`/reportes/cursos/${courseId}/sesiones-refuerzo/historial/pdf`}
           endpointPathExcel={`/reportes/cursos/${courseId}/sesiones-refuerzo/historial/excel`}
           filenameExcel="historial_sesiones.xlsx"
@@ -251,26 +259,11 @@ export default function CourseSessionsHistory({ courseId }: Props) {
         {/* Alerta Informativa sobre Fechas */}
         <Alert severity="info" icon={<InfoIcon />}>
           <Typography variant="body2">
-            La <b>fecha mostrada</b> en el gráfico y la tabla varía según el
-            estado filtrado:
+            <b>Análisis Temporal:</b> El gráfico muestra simultáneamente las
+            fechas de asignación, completado y vencimiento de las sesiones. Si
+            aplicas un filtro de <b>Estado</b>, el gráfico se simplificará para
+            mostrar únicamente la fecha relevante a dicho estado.
           </Typography>
-          <ul
-            style={{
-              margin: "4px 0",
-              paddingLeft: "20px",
-              fontSize: "0.875rem",
-            }}
-          >
-            <li>
-              <b>Pendiente / Todos:</b> Fecha de asignación (creación).
-            </li>
-            <li>
-              <b>Completada:</b> Fecha en que el alumno completó la sesión.
-            </li>
-            <li>
-              <b>No realizada / Incompleta:</b> Fecha límite asignada.
-            </li>
-          </ul>
         </Alert>
 
         {/* --- Filtros --- */}
@@ -443,7 +436,7 @@ export default function CourseSessionsHistory({ courseId }: Props) {
               />
             )}
 
-            <FormControl size="small" sx={{ width: 200 }}>
+            <FormControl size="small" sx={{ width: 250 }}>
               <InputLabel>Tema</InputLabel>
               <Select
                 value={filters.tema}
@@ -467,7 +460,7 @@ export default function CourseSessionsHistory({ courseId }: Props) {
               </Select>
             </FormControl>
 
-            <FormControl size="small" sx={{ width: 250 }}>
+            <FormControl size="small" sx={{ width: 400 }}>
               <InputLabel>Dificultad</InputLabel>
               <Select
                 value={filters.dificultadId}
@@ -476,6 +469,7 @@ export default function CourseSessionsHistory({ courseId }: Props) {
                   setFilters({ ...filters, dificultadId: e.target.value })
                 }
                 disabled={allDifficulties.length === 0}
+                MenuProps={MenuProps}
               >
                 <MenuItem value="">Todas</MenuItem>
                 {filteredDifficulties.map((d: any) => (
@@ -512,10 +506,6 @@ export default function CourseSessionsHistory({ courseId }: Props) {
               <Typography variant="h6" gutterBottom>
                 Actividad en el Tiempo
               </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Cantidad de sesiones según fecha de referencia (Asignación,
-                Completado o Vencimiento).
-              </Typography>
               {data.chartData.length > 0 ? (
                 <LineChart
                   dataset={data.chartData}
@@ -528,19 +518,39 @@ export default function CourseSessionsHistory({ courseId }: Props) {
                   ]}
                   xAxis={[
                     {
-                      label: getDateLabel(),
+                      label: "Fecha",
                       scaleType: "point",
                       dataKey: "fecha",
                       valueFormatter: (val) => format(val, "dd/MM"),
                     },
                   ]}
-                  series={[
-                    {
-                      dataKey: "cantidad",
-                      label: "Sesiones",
-                      color: "#2196f3",
-                    },
-                  ]}
+                  series={
+                    !filters.estado
+                      ? [
+                          {
+                            dataKey: "asignadas",
+                            label: "Asignadas",
+                            color: "#1976d2", // Azul
+                          },
+                          {
+                            dataKey: "completadas",
+                            label: "Completadas",
+                            color: "#2e7d32", // Verde
+                          },
+                          {
+                            dataKey: "vencidas",
+                            label: "Canceladas / No realizadas",
+                            color: "#d32f2f", // Rojo
+                          },
+                        ]
+                      : [
+                          {
+                            dataKey: "cantidad",
+                            label: "Sesiones",
+                            color: "#2196f3",
+                          },
+                        ]
+                  }
                   height={300}
                 />
               ) : (
@@ -566,7 +576,7 @@ export default function CourseSessionsHistory({ courseId }: Props) {
                 initialState={{
                   pagination: { paginationModel: { pageSize: 10 } },
                   sorting: {
-                    sortModel: [{ field: "fechaGrafico", sort: "desc" }],
+                    sortModel: [{ field: "fechaAsignacion", sort: "desc" }],
                   },
                 }}
                 pageSizeOptions={[10, 25, 50]}

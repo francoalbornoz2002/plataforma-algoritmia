@@ -118,7 +118,7 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
           title="Resumen de Consultas"
           description="Consulta el estado y distribución de las dudas planteadas por los alumnos."
           icon={<CategoryIcon />}
-          filters={{ ...filters, courseId, agruparPor: chartGrouping }}
+          filters={{ ...filters, agruparPor: chartGrouping }}
           endpointPathPdf={`/reportes/cursos/${courseId}/consultas/resumen/pdf`}
           endpointPathExcel={`/reportes/cursos/${courseId}/consultas/resumen/excel`}
           filenameExcel="resumen_consultas.xlsx"

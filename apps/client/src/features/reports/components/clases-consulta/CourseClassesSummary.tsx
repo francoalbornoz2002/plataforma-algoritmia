@@ -107,7 +107,7 @@ export default function CourseClassesSummary({ courseId }: Props) {
           title="Resumen de Clases de Consulta"
           description="Analiza la efectividad y distribución de las clases de consulta realizadas en el curso."
           icon={<AssessmentIcon />}
-          filters={{ ...filters, courseId, agruparPor: chartGrouping }}
+          filters={{ ...filters, agruparPor: chartGrouping }}
           endpointPathPdf={`/reportes/cursos/${courseId}/clases-consulta/resumen/pdf`}
           endpointPathExcel={`/reportes/cursos/${courseId}/clases-consulta/resumen/excel`}
           filenameExcel="resumen_clases.xlsx"

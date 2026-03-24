@@ -2998,40 +2998,103 @@ export class ReportesService {
 
     // 4. Procesar para Gráfico y Tabla
     const processedSessions = sesiones.map((s) => {
-      // Lógica de fecha para el eje X según estado
-      let fechaGrafico = s.createdAt; // Default: Pendiente
-
-      // Si fue completada o incompleta PERO tiene resultados, tomamos la fecha en que se envió la prueba
+      let fechaCompletado;
       if (
         (s.estado === estado_sesion.Completada ||
           s.estado === estado_sesion.Incompleta) &&
         s.resultadoSesion
       ) {
-        fechaGrafico = s.resultadoSesion.fechaCompletado;
+        fechaCompletado = s.resultadoSesion.fechaCompletado;
+      }
+
+      let fechaVencida;
+      if (s.estado === estado_sesion.Cancelada) {
+        fechaVencida = s.deletedAt;
       } else if (
         s.estado === estado_sesion.No_realizada ||
-        s.estado === estado_sesion.Incompleta
+        (s.estado === estado_sesion.Incompleta && !s.resultadoSesion)
       ) {
-        // Fallback: Si no tiene resultados (ej. cronjob la cerró), usamos la fecha límite
-        fechaGrafico = s.fechaHoraLimite;
+        fechaVencida = s.fechaHoraLimite;
+      }
+
+      // Fecha dinámica para cuando SÍ hay filtro por estado (mantener eje X único)
+      let fechaGrafico = s.createdAt;
+      if (estado) {
+        if (estado === estado_sesion.Completada && fechaCompletado)
+          fechaGrafico = fechaCompletado;
+        else if (
+          (estado === estado_sesion.No_realizada ||
+            estado === estado_sesion.Cancelada ||
+            estado === estado_sesion.Incompleta) &&
+          fechaVencida
+        )
+          fechaGrafico = fechaVencida;
       }
 
       return {
         ...s,
         fechaGrafico,
+        fechaAsignacion: s.createdAt,
+        fechaCompletado,
+        fechaVencida,
         origen: s.idDocente ? 'Docente' : 'Sistema',
       };
     });
 
-    // Agrupar para el gráfico (Conteo por día)
-    const chartMap = new Map<string, number>();
+    // Agrupar para el gráfico
+    const chartMap = new Map<string, any>();
     processedSessions.forEach((s) => {
-      const key = s.fechaGrafico.toISOString().split('T')[0];
-      chartMap.set(key, (chartMap.get(key) || 0) + 1);
+      if (!estado) {
+        // SIN FILTRO: Contamos las 3 fechas por separado
+        const dAsig = s.fechaAsignacion.toISOString().split('T')[0];
+        if (!chartMap.has(dAsig))
+          chartMap.set(dAsig, {
+            asignadas: 0,
+            completadas: 0,
+            vencidas: 0,
+            cantidad: 0,
+          });
+        chartMap.get(dAsig).asignadas++;
+
+        if (s.fechaCompletado) {
+          const dComp = s.fechaCompletado.toISOString().split('T')[0];
+          if (!chartMap.has(dComp))
+            chartMap.set(dComp, {
+              asignadas: 0,
+              completadas: 0,
+              vencidas: 0,
+              cantidad: 0,
+            });
+          chartMap.get(dComp).completadas++;
+        }
+
+        if (s.fechaVencida) {
+          const dVenc = s.fechaVencida.toISOString().split('T')[0];
+          if (!chartMap.has(dVenc))
+            chartMap.set(dVenc, {
+              asignadas: 0,
+              completadas: 0,
+              vencidas: 0,
+              cantidad: 0,
+            });
+          chartMap.get(dVenc).vencidas++;
+        }
+      } else {
+        // CON FILTRO: Usamos fechaGrafico y lo ponemos en "cantidad"
+        const key = s.fechaGrafico.toISOString().split('T')[0];
+        if (!chartMap.has(key))
+          chartMap.set(key, {
+            asignadas: 0,
+            completadas: 0,
+            vencidas: 0,
+            cantidad: 0,
+          });
+        chartMap.get(key).cantidad++;
+      }
     });
 
     const chartData = Array.from(chartMap.entries())
-      .map(([fecha, cantidad]) => ({ fecha, cantidad }))
+      .map(([fecha, counts]) => ({ fecha, ...counts }))
       .sort(
         (a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime(),
       );

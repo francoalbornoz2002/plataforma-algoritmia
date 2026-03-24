@@ -246,7 +246,12 @@ export class PdfService {
 
     // 5. Formateamos los datos para Handlebars
     const clasesFormatted = data.tableData.map((c) => ({
-      fecha: c.fechaAgenda.toISOString().split('T')[0],
+      fecha: c.fechaAgenda
+        .toISOString()
+        .split('T')[0]
+        .split('-')
+        .reverse()
+        .join('/'),
       nombre: c.nombre,
       docente: c.docente,
       estado: c.estado.replace(/_/g, ' '),
@@ -1268,7 +1273,7 @@ export class PdfService {
 
     // 5. Formatear Tabla
     const consultasFormatted = data.tabla.map((c) => ({
-      fecha: c.fecha.toISOString().split('T')[0],
+      fecha: c.fecha.toISOString().split('T')[0].split('-').reverse().join('/'),
       titulo: c.titulo,
       tema: c.tema,
       alumno: c.alumno,
@@ -1730,22 +1735,50 @@ export class PdfService {
     // 4. Configurar Gráfico (Línea de tiempo)
     const chartJsContent = await this.getChartJsContent();
 
+    const datasets: any = [];
+    if (!dto.estado) {
+      datasets.push({
+        label: 'Asignadas',
+        data: data.chartData.map((d) => d.asignadas),
+        borderColor: '#1976d2',
+        backgroundColor: '#1976d2',
+        tension: 0.1,
+        fill: false,
+      });
+      datasets.push({
+        label: 'Completadas',
+        data: data.chartData.map((d) => d.completadas),
+        borderColor: '#2e7d32',
+        backgroundColor: '#2e7d32',
+        tension: 0.1,
+        fill: false,
+      });
+      datasets.push({
+        label: 'Canceladas/Vencidas',
+        data: data.chartData.map((d) => d.vencidas),
+        borderColor: '#d32f2f',
+        backgroundColor: '#d32f2f',
+        tension: 0.1,
+        fill: false,
+      });
+    } else {
+      datasets.push({
+        label: 'Sesiones',
+        data: data.chartData.map((d) => d.cantidad),
+        borderColor: '#2196f3',
+        backgroundColor: '#2196f3',
+        tension: 0.1,
+        fill: false,
+      });
+    }
+
     const chartConfig = {
       type: 'line',
       data: {
         labels: data.chartData.map((d) =>
           d.fecha.split('-').slice(1).reverse().join('/'),
         ),
-        datasets: [
-          {
-            label: 'Sesiones',
-            data: data.chartData.map((d) => d.cantidad),
-            borderColor: '#2196f3',
-            backgroundColor: '#2196f3',
-            tension: 0.1,
-            fill: false,
-          },
-        ],
+        datasets: datasets,
       },
       options: {
         scales: {
@@ -1755,15 +1788,18 @@ export class PdfService {
             title: { display: true, text: 'Cantidad de sesiones' },
           },
         },
-        plugins: {
-          legend: { display: false },
-        },
+        plugins: { legend: { display: !dto.estado } },
       },
     };
 
     // 5. Formatear Tabla
     const sesionesFormatted = data.sessions.map((s) => ({
-      fecha: s.fechaGrafico.toISOString().split('T')[0],
+      fecha: s.fechaAsignacion
+        .toISOString()
+        .split('T')[0]
+        .split('-')
+        .reverse()
+        .join('/'),
       alumno: `${s.alumno.nombre} ${s.alumno.apellido}`,
       origen: s.origen,
       tema: s.dificultad.tema,

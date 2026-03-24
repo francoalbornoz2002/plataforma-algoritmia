@@ -3676,22 +3676,41 @@ export class ExcelService {
     currentRow++;
 
     worksheet.getCell(`A${currentRow}`).value = 'Fecha';
-    worksheet.getCell(`B${currentRow}`).value = 'Cantidad Sesiones';
-    this.styleTableHeaders(worksheet.getRow(currentRow));
-    currentRow++;
 
-    data.chartData.forEach((d: any) => {
-      worksheet.getCell(`A${currentRow}`).value = new Date(
-        d.fecha,
-      ).toLocaleDateString();
-      worksheet.getCell(`B${currentRow}`).value = d.cantidad;
+    if (!dto.estado) {
+      worksheet.getCell(`B${currentRow}`).value = 'Asignadas';
+      worksheet.getCell(`C${currentRow}`).value = 'Completadas';
+      worksheet.getCell(`D${currentRow}`).value = 'Vencidas/Canceladas';
+      this.styleTableHeaders(worksheet.getRow(currentRow));
       currentRow++;
-    });
+
+      data.chartData.forEach((d: any) => {
+        worksheet.getCell(`A${currentRow}`).value = new Date(
+          d.fecha,
+        ).toLocaleDateString();
+        worksheet.getCell(`B${currentRow}`).value = d.asignadas;
+        worksheet.getCell(`C${currentRow}`).value = d.completadas;
+        worksheet.getCell(`D${currentRow}`).value = d.vencidas;
+        currentRow++;
+      });
+    } else {
+      worksheet.getCell(`B${currentRow}`).value = 'Cantidad Sesiones';
+      this.styleTableHeaders(worksheet.getRow(currentRow));
+      currentRow++;
+
+      data.chartData.forEach((d: any) => {
+        worksheet.getCell(`A${currentRow}`).value = new Date(
+          d.fecha,
+        ).toLocaleDateString();
+        worksheet.getCell(`B${currentRow}`).value = d.cantidad;
+        currentRow++;
+      });
+    }
 
     currentRow += 2;
 
     // 7. Detalle de Sesiones
-    worksheet.mergeCells(`A${currentRow}:H${currentRow}`);
+    worksheet.mergeCells(`A${currentRow}:I${currentRow}`);
     const listTitle = worksheet.getCell(`A${currentRow}`);
     listTitle.value = 'DETALLE DE SESIONES';
     listTitle.font = { bold: true, size: 12 };
@@ -3703,7 +3722,8 @@ export class ExcelService {
     currentRow++;
 
     const headers = [
-      'Fecha',
+      'Fecha Asignación',
+      'Fecha Completado',
       'Alumno',
       'Origen',
       'Tema',
@@ -3712,41 +3732,45 @@ export class ExcelService {
       'Pct. Aciertos',
     ];
     worksheet.getCell(`A${currentRow}`).value = headers[0];
-    worksheet.mergeCells(`B${currentRow}:C${currentRow}`);
     worksheet.getCell(`B${currentRow}`).value = headers[1];
-    worksheet.getCell(`D${currentRow}`).value = headers[2];
+    worksheet.mergeCells(`C${currentRow}:D${currentRow}`);
+    worksheet.getCell(`C${currentRow}`).value = headers[2];
     worksheet.getCell(`E${currentRow}`).value = headers[3];
     worksheet.getCell(`F${currentRow}`).value = headers[4];
     worksheet.getCell(`G${currentRow}`).value = headers[5];
     worksheet.getCell(`H${currentRow}`).value = headers[6];
+    worksheet.getCell(`I${currentRow}`).value = headers[7];
 
     this.styleTableHeaders(worksheet.getRow(currentRow));
     currentRow++;
 
     data.sessions.forEach((s: any) => {
       worksheet.getCell(`A${currentRow}`).value = new Date(
-        s.fechaGrafico,
+        s.fechaAsignacion,
       ).toLocaleDateString();
+      worksheet.getCell(`B${currentRow}`).value = s.fechaCompletado
+        ? new Date(s.fechaCompletado).toLocaleDateString()
+        : '-';
 
-      worksheet.mergeCells(`B${currentRow}:C${currentRow}`);
-      const cellAlumno = worksheet.getCell(`B${currentRow}`);
+      worksheet.mergeCells(`C${currentRow}:D${currentRow}`);
+      const cellAlumno = worksheet.getCell(`C${currentRow}`);
       cellAlumno.value = `${s.alumno.nombre} ${s.alumno.apellido}`;
       cellAlumno.alignment = { vertical: 'middle', wrapText: true };
 
-      worksheet.getCell(`D${currentRow}`).value = s.origen;
-      worksheet.getCell(`E${currentRow}`).value = s.dificultad.tema;
+      worksheet.getCell(`E${currentRow}`).value = s.origen;
+      worksheet.getCell(`F${currentRow}`).value = s.dificultad.tema;
 
-      const cellDificultad = worksheet.getCell(`F${currentRow}`);
+      const cellDificultad = worksheet.getCell(`G${currentRow}`);
       cellDificultad.value = s.dificultad.nombre;
       cellDificultad.alignment = { vertical: 'middle', wrapText: true };
 
-      worksheet.getCell(`G${currentRow}`).value = s.estado.replace(/_/g, ' ');
+      worksheet.getCell(`H${currentRow}`).value = s.estado.replace(/_/g, ' ');
 
       const score = s.resultadoSesion
         ? `${Number(s.resultadoSesion.pctAciertos).toFixed(0)}%`
         : '-';
-      worksheet.getCell(`H${currentRow}`).value = score;
-      worksheet.getCell(`H${currentRow}`).alignment = { horizontal: 'center' };
+      worksheet.getCell(`I${currentRow}`).value = score;
+      worksheet.getCell(`I${currentRow}`).alignment = { horizontal: 'center' };
 
       currentRow++;
     });
