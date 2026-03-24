@@ -14,9 +14,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Tooltip,
+  IconButton,
   Button,
-  Paper,
-  Typography,
 } from "@mui/material";
 import {
   grado_dificultad,
@@ -25,6 +25,8 @@ import {
 } from "../../../types";
 import { getStudentDifficultiesDetail } from "../../users/services/docentes.service";
 import DifficultyCard from "./DifficultyCard";
+import { TemasLabels } from "../../../types/traducciones";
+import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
 interface StudentDifficultyDetailModalProps {
   open: boolean;
@@ -48,8 +50,8 @@ export default function StudentDifficultyDetailModal({
   const [error, setError] = useState<string | null>(null);
 
   // Estados de filtro (locales para el modal)
-  const [temaFilter, setTemaFilter] = useState("Todos");
-  const [gradoFilter, setGradoFilter] = useState("Todos");
+  const [temaFilter, setTemaFilter] = useState("");
+  const [gradoFilter, setGradoFilter] = useState("");
 
   // Efecto de Fetch (se activa cuando el modal se abre)
   useEffect(() => {
@@ -58,8 +60,8 @@ export default function StudentDifficultyDetailModal({
       setError(null);
       setDifficulties([]);
       // Reseteamos filtros al abrir
-      setTemaFilter("Todos");
-      setGradoFilter("Todos");
+      setTemaFilter("");
+      setGradoFilter("");
 
       getStudentDifficultiesDetail(idCurso, idAlumno)
         .then((data) => {
@@ -77,15 +79,16 @@ export default function StudentDifficultyDetailModal({
   // Lógica de filtrado (copiada de MyDifficultiesPage)
   const filteredDifficulties = useMemo(() => {
     return difficulties.filter((d) => {
-      const matchesTema = temaFilter === "Todos" || d.tema === temaFilter;
-      const matchesGrado = gradoFilter === "Todos" || d.grado === gradoFilter;
+      const matchesTema = !temaFilter || d.tema === temaFilter;
+      const matchesGrado = !gradoFilter || d.grado === gradoFilter;
       return matchesTema && matchesGrado;
     });
   }, [difficulties, temaFilter, gradoFilter]);
 
-  const temasParaFiltrar = useMemo(() => {
-    return Object.values(temas).filter((tema) => tema !== "Ninguno");
-  }, []);
+  const handleClearFilters = () => {
+    setTemaFilter("");
+    setGradoFilter("");
+  };
 
   const handleTemaChange = (e: SelectChangeEvent<string>) => {
     setTemaFilter(e.target.value);
@@ -96,9 +99,17 @@ export default function StudentDifficultyDetailModal({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
-      <DialogTitle>Dificultades de {nombreAlumno}</DialogTitle>
-      <DialogContent>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="lg"
+      fullWidth
+      scroll="paper"
+    >
+      <DialogTitle bgcolor="primary.main" color="white">
+        Dificultades de {nombreAlumno}
+      </DialogTitle>
+      <DialogContent sx={{ bgcolor: "grey.100", height: 600 }}>
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
             <CircularProgress />
@@ -108,48 +119,58 @@ export default function StudentDifficultyDetailModal({
             {error}
           </Alert>
         ) : (
-          <Stack spacing={2} sx={{ mt: 2 }}>
+          <Stack spacing={2} mt={2}>
             {/* --- Filtros --- */}
-            <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
-              <FormControl size="small" sx={{ minWidth: 200 }}>
-                <InputLabel>Filtrar por Tema</InputLabel>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              <FormControl size="small" sx={{ width: 270 }}>
+                <InputLabel>Tema</InputLabel>
                 <Select
                   value={temaFilter}
-                  label="Filtrar por Tema"
+                  label="Tema"
                   onChange={handleTemaChange}
                 >
-                  <MenuItem value="Todos">Todos los Temas</MenuItem>
-                  {temasParaFiltrar.map((tema) => (
-                    <MenuItem key={tema} value={tema}>
-                      {tema}
-                    </MenuItem>
-                  ))}
+                  <MenuItem value="">Todos</MenuItem>
+                  {Object.values(temas)
+                    .filter((tema) => tema !== "Ninguno")
+                    .map((tema) => (
+                      <MenuItem key={tema} value={tema}>
+                        {TemasLabels[tema]}
+                      </MenuItem>
+                    ))}
                 </Select>
               </FormControl>
 
-              <FormControl size="small" sx={{ minWidth: 200 }}>
-                <InputLabel>Filtrar por Grado</InputLabel>
+              <FormControl size="small" sx={{ width: 150 }}>
+                <InputLabel>Grado</InputLabel>
                 <Select
                   value={gradoFilter}
-                  label="Filtrar por Grado"
+                  label="Grado"
                   onChange={handleGradoChange}
                 >
-                  <MenuItem value="Todos">Todos los Grados</MenuItem>
-                  {Object.values(grado_dificultad).map((grado) => (
-                    <MenuItem key={grado} value={grado}>
-                      {grado}
-                    </MenuItem>
-                  ))}
+                  <MenuItem value="">Todos</MenuItem>
+                  {Object.values(grado_dificultad)
+                    .filter((grado) => grado !== "Ninguno")
+                    .map((grado) => (
+                      <MenuItem key={grado} value={grado}>
+                        {grado}
+                      </MenuItem>
+                    ))}
                 </Select>
               </FormControl>
+              <Tooltip title="Limpiar filtros">
+                <IconButton
+                  onClick={handleClearFilters}
+                  size="small"
+                  color="primary"
+                >
+                  <FilterAltOffIcon />
+                </IconButton>
+              </Tooltip>
             </Stack>
 
             {/* --- Grid de Dificultades --- */}
             {filteredDifficulties.length === 0 ? (
-              <Alert
-                severity={difficulties.length === 0 ? "info" : "warning"}
-                sx={{ mt: 2 }}
-              >
+              <Alert severity="info" sx={{ mt: 2 }}>
                 {difficulties.length === 0
                   ? "Este alumno no tiene dificultades registradas."
                   : "No se encontraron dificultades con esos filtros."}

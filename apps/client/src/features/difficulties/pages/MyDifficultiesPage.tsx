@@ -1,17 +1,15 @@
 import { useState, useEffect, useMemo } from "react";
 import {
   Box,
-  Typography,
   CircularProgress,
   Alert,
   Stack,
-  Grid, // <-- Importar Grid
-  FormControl, // <-- Importar Filtros
+  Grid,
+  FormControl,
   InputLabel,
   Select,
   MenuItem,
   type SelectChangeEvent,
-  Paper,
   IconButton,
   Tooltip,
 } from "@mui/material";
@@ -26,7 +24,7 @@ import { getMyDifficulties } from "../../users/services/alumnos.service";
 import DifficultyCard from "../components/DifficultyCard";
 import { TemasLabels } from "../../../types/traducciones";
 import HeaderPage from "../../../components/HeaderPage";
-import { AssignmentLate, Warning, WarningAmber } from "@mui/icons-material";
+import { AssignmentLate } from "@mui/icons-material";
 
 export default function MyDifficultiesPage() {
   const { selectedCourse } = useCourseContext();
@@ -150,13 +148,13 @@ export default function MyDifficultiesPage() {
           </FormControl>
 
           <FormControl size="small" sx={{ minWidth: 200 }}>
-            <InputLabel>Filtrar por Grado</InputLabel>
+            <InputLabel>Grado</InputLabel>
             <Select
               value={gradoFilter}
-              label="Filtrar por Grado"
+              label="Grado"
               onChange={handleGradoChange}
             >
-              <MenuItem value="">Todos los Grados</MenuItem>
+              <MenuItem value="">Todos</MenuItem>
               {/* Iteramos sobre el enum 'grado_dificultad' */}
               {Object.values(grado_dificultad)
                 .filter((grado) => grado !== grado_dificultad.Ninguno)

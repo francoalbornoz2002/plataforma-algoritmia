@@ -11,13 +11,14 @@ import {
   Button,
   Typography,
   Divider,
-  Paper,
   Stack,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   type SelectChangeEvent,
+  Tooltip,
+  IconButton,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
@@ -28,7 +29,7 @@ import {
   dificultad_mision,
 } from "../../../types";
 import MissionCard from "./MissionCard";
-import { AutoAwesome, SportsEsports } from "@mui/icons-material";
+import { AutoAwesome, SportsEsports, FilterAltOff } from "@mui/icons-material";
 import { datePickerConfig } from "../../../config/theme.config";
 
 interface StudentProgressDetailModalProps {
@@ -119,12 +120,27 @@ export default function StudentProgressDetailModal({
     }));
   };
 
+  const handleClearFilters = () => {
+    setFilters({
+      fechaDesde: "",
+      fechaHasta: "",
+      dificultad: "",
+      estrellas: "",
+    });
+  };
+
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
-      <DialogTitle>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="lg"
+      fullWidth
+      scroll="paper"
+    >
+      <DialogTitle bgcolor="primary.main" color="white">
         Progreso de {studentData.nombre} {studentData.apellido}
       </DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ bgcolor: "grey.100", height: 600 }}>
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
             <CircularProgress />
@@ -134,7 +150,89 @@ export default function StudentProgressDetailModal({
             {error}
           </Alert>
         ) : (
-          <Stack spacing={2}>
+          <Stack spacing={2} mt={2}>
+            {/* --- FILTROS --- */}
+            <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+              <DatePicker
+                label="Fecha Desde"
+                value={
+                  filters.fechaDesde
+                    ? new Date(filters.fechaDesde + "T00:00:00")
+                    : null
+                }
+                maxDate={
+                  filters.fechaHasta
+                    ? new Date(filters.fechaHasta + "T00:00:00")
+                    : undefined
+                }
+                onChange={(val) =>
+                  setFilters({
+                    ...filters,
+                    fechaDesde: val ? format(val, "yyyy-MM-dd") : "",
+                  })
+                }
+                {...datePickerConfig}
+                disableFuture
+              />
+              <DatePicker
+                label="Fecha Hasta"
+                value={
+                  filters.fechaHasta
+                    ? new Date(filters.fechaHasta + "T00:00:00")
+                    : null
+                }
+                minDate={
+                  filters.fechaDesde
+                    ? new Date(filters.fechaDesde + "T00:00:00")
+                    : undefined
+                }
+                onChange={(val) =>
+                  setFilters({
+                    ...filters,
+                    fechaHasta: val ? format(val, "yyyy-MM-dd") : "",
+                  })
+                }
+                {...datePickerConfig}
+                disableFuture
+              />
+              <FormControl size="small" sx={{ minWidth: 160 }}>
+                <InputLabel>Dificultad</InputLabel>
+                <Select
+                  name="dificultad"
+                  value={filters.dificultad}
+                  label="Dificultad"
+                  onChange={handleFilterChange}
+                >
+                  <MenuItem value="">Todos</MenuItem>
+                  <MenuItem value={dificultad_mision.Facil}>Fácil</MenuItem>
+                  <MenuItem value={dificultad_mision.Medio}>Medio</MenuItem>
+                  <MenuItem value={dificultad_mision.Dificil}>Difícil</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl size="small" sx={{ minWidth: 160 }}>
+                <InputLabel>Estrellas</InputLabel>
+                <Select
+                  name="estrellas"
+                  value={filters.estrellas}
+                  label="Estrellas"
+                  onChange={handleFilterChange}
+                >
+                  <MenuItem value="">Todos</MenuItem>
+                  <MenuItem value={1}>1</MenuItem>
+                  <MenuItem value={2}>2</MenuItem>
+                  <MenuItem value={3}>3</MenuItem>
+                </Select>
+              </FormControl>
+              <Tooltip title="Limpiar filtros">
+                <IconButton
+                  onClick={handleClearFilters}
+                  size="small"
+                  color="primary"
+                >
+                  <FilterAltOff />
+                </IconButton>
+              </Tooltip>
+            </Stack>
             {/* --- SECCIÓN 1: CAMPAÑA --- */}
             <Stack spacing={1}>
               <Stack
@@ -144,91 +242,15 @@ export default function StudentProgressDetailModal({
                 color="primary.main"
               >
                 <SportsEsports fontSize="large" />
-                <Typography variant="h6" fontWeight="bold">
+                <Typography
+                  variant="overline"
+                  fontWeight="bold"
+                  fontSize={16}
+                  align="center"
+                >
                   Misiones de Campaña
                 </Typography>
               </Stack>
-
-              {/* --- FILTROS --- */}
-              <Paper elevation={1} sx={{ pt: 1, pb: 2, pr: 2, pl: 2, mb: 2 }}>
-                <Typography variant="overline" sx={{ fontSize: "14px" }}>
-                  Filtros de búsqueda
-                </Typography>
-                <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
-                  <DatePicker
-                    label="Fecha Desde"
-                    value={
-                      filters.fechaDesde
-                        ? new Date(filters.fechaDesde + "T00:00:00")
-                        : null
-                    }
-                    maxDate={
-                      filters.fechaHasta
-                        ? new Date(filters.fechaHasta + "T00:00:00")
-                        : undefined
-                    }
-                    minDate={
-                      filters.fechaDesde
-                        ? new Date(filters.fechaDesde + "T00:00:00")
-                        : undefined
-                    }
-                    onChange={(val) =>
-                      setFilters({
-                        ...filters,
-                        fechaDesde: val ? format(val, "yyyy-MM-dd") : "",
-                      })
-                    }
-                    {...datePickerConfig}
-                    disableFuture
-                  />
-                  <DatePicker
-                    label="Fecha Hasta"
-                    value={
-                      filters.fechaHasta
-                        ? new Date(filters.fechaHasta + "T00:00:00")
-                        : null
-                    }
-                    onChange={(val) =>
-                      setFilters({
-                        ...filters,
-                        fechaHasta: val ? format(val, "yyyy-MM-dd") : "",
-                      })
-                    }
-                    {...datePickerConfig}
-                    disableFuture
-                  />
-                  <FormControl size="small" sx={{ minWidth: 160 }}>
-                    <InputLabel>Dificultad</InputLabel>
-                    <Select
-                      name="dificultad"
-                      value={filters.dificultad}
-                      label="Dificultad"
-                      onChange={handleFilterChange}
-                    >
-                      <MenuItem value="">Todos</MenuItem>
-                      <MenuItem value={dificultad_mision.Facil}>Fácil</MenuItem>
-                      <MenuItem value={dificultad_mision.Medio}>Medio</MenuItem>
-                      <MenuItem value={dificultad_mision.Dificil}>
-                        Difícil
-                      </MenuItem>
-                    </Select>
-                  </FormControl>
-                  <FormControl size="small" sx={{ minWidth: 160 }}>
-                    <InputLabel>Estrellas</InputLabel>
-                    <Select
-                      name="estrellas"
-                      value={filters.estrellas}
-                      label="Estrellas"
-                      onChange={handleFilterChange}
-                    >
-                      <MenuItem value="">Todos</MenuItem>
-                      <MenuItem value={1}>1</MenuItem>
-                      <MenuItem value={2}>2</MenuItem>
-                      <MenuItem value={3}>3</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Stack>
-              </Paper>
 
               {normalMissions.length === 0 ? (
                 <Alert severity="info" sx={{ mb: 4 }}>
@@ -262,7 +284,12 @@ export default function StudentProgressDetailModal({
                 <Box sx={{ color: "#9c27b0", display: "flex" }}>
                   <AutoAwesome fontSize="large" />
                 </Box>
-                <Typography variant="h6" fontWeight="bold" color="#9c27b0">
+                <Typography
+                  variant="overline"
+                  fontWeight="bold"
+                  fontSize={16}
+                  color="#9c27b0"
+                >
                   Misiones Especiales
                 </Typography>
               </Stack>
