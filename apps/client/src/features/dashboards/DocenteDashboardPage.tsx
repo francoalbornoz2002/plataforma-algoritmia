@@ -545,6 +545,7 @@ export default function DocenteDashboardPage() {
               borderTop: "4px solid",
               borderColor: "success.main",
               height: "100%",
+              alignItems: "center",
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
@@ -609,7 +610,7 @@ export default function DocenteDashboardPage() {
                           setSelectedMission(stats.week.misionMasDificil)
                         }
                         title="Misión más difícil"
-                        description="Qué mas intentos acumula"
+                        description="Qué mas intentos lleva (semana)"
                       />
                     </Grid>
                   </Tooltip>
@@ -640,7 +641,7 @@ export default function DocenteDashboardPage() {
               alignItems: "center",
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
               <AssignmentLate color="error" sx={{ mr: 1 }} />
               <Typography variant="h6" color="error.main" fontWeight="bold">
                 Dificultades Detectadas
@@ -666,6 +667,7 @@ export default function DocenteDashboardPage() {
               <Grid size={{ xs: 6 }}>
                 <DashboardTextCard
                   title="Dificultad más frecuente"
+                  description="Detectada esta semana"
                   value={stats?.week.dificultadMasDetectada || "Ninguna"}
                   icon={<Warning />}
                   color="error"
@@ -674,7 +676,8 @@ export default function DocenteDashboardPage() {
               </Grid>
               <Grid size={{ xs: 6 }}>
                 <DashboardTextCard
-                  title="Alumno con más dificultades"
+                  title="Alumno Crítico"
+                  description="Que más dificultades tiene"
                   value={stats?.alumnoMasDificultades || "Ninguno"}
                   icon={<School />}
                   color="warning"
@@ -696,7 +699,6 @@ export default function DocenteDashboardPage() {
               borderColor: "#9c27b0",
               height: "100%",
               alignItems: "center",
-              alignContent: "center",
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
@@ -751,7 +753,6 @@ export default function DocenteDashboardPage() {
               borderColor: "info.main",
               height: "100%",
               alignItems: "center",
-              alignContent: "center",
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>

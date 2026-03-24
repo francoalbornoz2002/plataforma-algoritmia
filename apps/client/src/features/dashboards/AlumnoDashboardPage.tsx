@@ -242,7 +242,7 @@ export default function AlumnoDashboardPage() {
       {stats?.sesionPendiente && (
         <Alert
           severity="warning"
-          variant="standard"
+          variant="outlined"
           icon={<Warning />}
           action={
             <Button
@@ -254,7 +254,7 @@ export default function AlumnoDashboardPage() {
               Resolver
             </Button>
           }
-          sx={{ fontWeight: "bold", border: 1, borderColor: "warning.main" }}
+          sx={{ fontWeight: "bold" }}
         >
           Sesión de refuerzo pendiente:{" "}
           {stats.sesionPendiente.dificultad.nombre} (Vence:{" "}
