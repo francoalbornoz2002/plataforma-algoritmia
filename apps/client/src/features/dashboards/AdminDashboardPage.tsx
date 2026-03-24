@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Box,
   Typography,
@@ -17,14 +17,13 @@ import {
   Class,
   Event,
   Assessment,
-  CheckCircle,
-  Cancel,
   SupervisorAccount,
   People,
   TrendingUp,
   Edit, // Para el botón de editar
 } from "@mui/icons-material";
 import { useNavigate } from "react-router";
+import { keyframes } from "@mui/system";
 import { useAuth } from "../authentication/context/AuthProvider";
 import { getAdminDashboardStats } from "../users/services/user.service";
 import DashboardStatCard from "./components/DashboardStatCard";
@@ -34,6 +33,13 @@ import InstitutionForm from "../institution/components/InstitutionForm"; // Impo
 import { Dialog } from "@mui/material"; // Para el modal
 
 // --- Componentes Auxiliares Visuales ---
+
+// Define la animación de parpadeo
+const blinkAnimation = keyframes`
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+`;
 
 const DistributionBar = ({
   items,
@@ -148,6 +154,8 @@ export default function AdminDashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [isInstitutionFormModalOpen, setIsInstitutionFormModalOpen] =
     useState(false); // Estado para controlar el modal del formulario
+  const institutionSectionRef = useRef<HTMLDivElement>(null); // Ref para la sección de la institución
+  const [isBlinking, setIsBlinking] = useState(false); // Estado para controlar el parpadeo del botón
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -171,6 +179,20 @@ export default function AdminDashboardPage() {
       institution: newData,
     }));
     setIsInstitutionFormModalOpen(false); // Cierra el modal
+  };
+
+  const handleScrollToInstitutionForm = () => {
+    if (institutionSectionRef.current) {
+      institutionSectionRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+      setIsBlinking(true);
+      // Detener el parpadeo después de unos segundos
+      setTimeout(() => {
+        setIsBlinking(false);
+      }, 3000); // Parpadea por 3 segundos
+    }
   };
 
   if (loading) {
@@ -236,6 +258,30 @@ export default function AdminDashboardPage() {
           Ver Reportes
         </Button>
       </Stack>
+
+      {/* ALERTA: Institución no registrada */}
+      {!stats?.institution && (
+        <Alert
+          severity="info"
+          variant="outlined"
+          sx={{
+            mt: 2,
+            alignItems: "center",
+          }}
+          action={
+            <Button
+              color="inherit"
+              size="medium"
+              onClick={handleScrollToInstitutionForm}
+            >
+              Registrar Ahora
+            </Button>
+          }
+        >
+          No se han registrado los datos de la institución. Por favor, complete
+          la información.
+        </Alert>
+      )}
 
       {/* KPI ROW 1 */}
       <Grid container spacing={2}>
@@ -499,7 +545,7 @@ export default function AdminDashboardPage() {
       </Grid>
 
       {/* INSTITUCIÓN */}
-      <Paper elevation={2} sx={{ p: 3 }}>
+      <Paper elevation={2} sx={{ p: 3 }} ref={institutionSectionRef}>
         <Box
           sx={{
             display: "flex",
@@ -519,8 +565,15 @@ export default function AdminDashboardPage() {
             size="small"
             variant="outlined"
             onClick={() => setIsInstitutionFormModalOpen(true)}
+            sx={{
+              animation: isBlinking
+                ? `${blinkAnimation} 0.5s ease-in-out 6`
+                : "none", // Parpadea 6 veces (3 segundos)
+              borderColor: isBlinking ? "primary.main" : undefined, // Opcional: cambia el color del borde mientras parpadea
+              color: isBlinking ? "primary.main" : undefined,
+            }}
           >
-            Editar Info
+            {stats?.institution ? "Editar Info" : "Registrar Institución"}
           </Button>
         </Box>
         <InstitutionInfo

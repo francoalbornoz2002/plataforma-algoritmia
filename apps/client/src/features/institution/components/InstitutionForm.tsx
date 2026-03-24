@@ -1,15 +1,10 @@
 import { useEffect, useState } from "react";
 import {
-  Paper,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Button,
+  Autocomplete,
   CircularProgress,
   Alert,
-  FormHelperText,
   Box,
   Stack,
   Typography,
@@ -48,6 +43,16 @@ const VisuallyHiddenInput = styled("input")({
   whiteSpace: "nowrap",
   width: 1,
 });
+
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const PopperProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+    },
+  },
+};
 
 const baseUrl = import.meta.env.VITE_API_URL_WITHOUT_PREFIX;
 
@@ -190,62 +195,68 @@ export default function InstitutionForm({
       <Divider sx={{ mb: 3 }} />
       <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
         <Stack spacing={1.5} sx={{ mb: 2 }}>
-          <Stack spacing={1.5} direction="row">
+          <Stack spacing={2} direction="row">
             {/* --- 1. Provincia --- */}
-            <FormControl fullWidth error={!!errors.idProvincia}>
-              <InputLabel>Provincia</InputLabel>
-              <Controller
-                name="idProvincia"
-                control={control}
-                render={({ field }) => (
-                  <Select {...field} label="Provincia" disabled={isSubmitting}>
-                    <MenuItem value={0} disabled>
-                      Seleccione una provincia...
-                    </MenuItem>
-                    {provincias.map((p) => (
-                      <MenuItem key={p.id} value={p.id}>
-                        {p.provincia}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                )}
-              />
-              <FormHelperText sx={{ minHeight: "1.25em" }}>
-                {(errors.idProvincia?.message as string) || " "}
-              </FormHelperText>
-            </FormControl>
+            <Controller
+              name="idProvincia"
+              control={control}
+              render={({ field: { onChange, value, ...restField } }) => (
+                <Autocomplete
+                  {...restField}
+                  options={provincias}
+                  getOptionLabel={(option) => option.provincia || ""}
+                  isOptionEqualToValue={(option, val) => option.id === val.id}
+                  value={provincias.find((p) => p.id === value) || null}
+                  onChange={(_, newValue) => {
+                    onChange(newValue ? newValue.id : 0);
+                  }}
+                  disabled={isSubmitting}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Provincia"
+                      error={!!errors.idProvincia}
+                      helperText={errors.idProvincia?.message || " "}
+                    />
+                  )}
+                  fullWidth
+                  slotProps={{ popper: PopperProps }}
+                />
+              )}
+            />
 
             {/* --- 2. Localidad --- */}
-            <FormControl fullWidth error={!!errors.idLocalidad}>
-              <InputLabel>Localidad</InputLabel>
-              <Controller
-                name="idLocalidad"
-                control={control}
-                render={({ field }) => (
-                  <Select
-                    {...field}
-                    label="Localidad"
-                    disabled={
-                      !watchedProvinciaId ||
-                      isSubmitting ||
-                      localidades.length === 0
-                    }
-                  >
-                    <MenuItem value={0} disabled>
-                      Seleccione una localidad...
-                    </MenuItem>
-                    {localidades.map((l) => (
-                      <MenuItem key={l.id} value={l.id}>
-                        {l.localidad}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                )}
-              />
-              <FormHelperText sx={{ minHeight: "1.25em" }}>
-                {(errors.idLocalidad?.message as string) || " "}
-              </FormHelperText>
-            </FormControl>
+            <Controller
+              name="idLocalidad"
+              control={control}
+              render={({ field: { onChange, value, ...restField } }) => (
+                <Autocomplete
+                  {...restField}
+                  options={localidades}
+                  getOptionLabel={(option) => option.localidad || ""}
+                  isOptionEqualToValue={(option, val) => option.id === val.id}
+                  value={localidades.find((l) => l.id === value) || null}
+                  onChange={(_, newValue) => {
+                    onChange(newValue ? newValue.id : 0);
+                  }}
+                  disabled={
+                    !watchedProvinciaId ||
+                    isSubmitting ||
+                    localidades.length === 0
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Localidad"
+                      error={!!errors.idLocalidad}
+                      helperText={errors.idLocalidad?.message || " "}
+                    />
+                  )}
+                  fullWidth
+                  slotProps={{ popper: PopperProps }}
+                />
+              )}
+            />
           </Stack>
 
           <Stack spacing={1.5} direction="row">
@@ -421,7 +432,13 @@ export default function InstitutionForm({
             disabled={isSubmitting}
             sx={{ py: 1.5 }}
           >
-            {isSubmitting ? <CircularProgress size={24} /> : "Guardar Cambios"}
+            {isSubmitting ? (
+              <CircularProgress size={24} />
+            ) : initialData ? (
+              "Guardar Cambios"
+            ) : (
+              "Registrar Datos"
+            )}
           </Button>
         </Box>
       </Box>

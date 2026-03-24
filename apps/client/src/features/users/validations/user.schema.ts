@@ -20,7 +20,7 @@ const userBaseSchema = z.object({
     .min(new Date(1930, 1, 1), { error: "Muy viejo!" })
     .max(
       fechaLimite.setFullYear(fechaLimite.getFullYear() - 18),
-      "El usuario debe tener al menos 18 años."
+      "El usuario debe tener al menos 18 años.",
     ),
   genero: z.enum(generos, "Debe seleccionar un género"),
   email: z
@@ -68,9 +68,32 @@ export const updateUserSchema = userBaseSchema
     {
       message: "Las contraseñas no coinciden",
       path: ["confirmPassword"],
-    }
+    },
+  );
+
+// Esquema para el ProfileModal (solo género y contraseña)
+export const profileUpdateSchema = z
+  .object({
+    genero: z.enum(generos, "Debe seleccionar un género"),
+    password: z
+      .string()
+      .min(6, "La contraseña debe tener al menos 6 caracteres")
+      .max(100, "La contraseña no puede exceder los 100 caracteres")
+      .optional()
+      .or(z.literal("")), // Permite enviar string vacío para no cambiarla
+    confirmPassword: z.string().optional().or(z.literal("")),
+  })
+  .refine(
+    (data) => {
+      if (data.password) {
+        return data.password === data.confirmPassword;
+      }
+      return true;
+    },
+    { message: "Las contraseñas no coinciden", path: ["confirmPassword"] },
   );
 
 // Tipos inferidos desde los esquemas Zod
 export type CreateUserFormValues = z.infer<typeof createUserSchema>;
 export type UpdateUserFormValues = z.infer<typeof updateUserSchema>;
+export type ProfileFormValues = z.infer<typeof profileUpdateSchema>;

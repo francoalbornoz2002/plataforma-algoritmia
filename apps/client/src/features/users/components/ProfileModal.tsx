@@ -13,37 +13,19 @@ import {
   MenuItem,
   CircularProgress,
   Typography,
+  InputAdornment,
 } from "@mui/material";
-import { PhotoCamera } from "@mui/icons-material";
+import { PhotoCamera, Visibility, VisibilityOff } from "@mui/icons-material";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { useSnackbar } from "notistack";
 import { useAuth } from "../../authentication/context/AuthProvider";
 import { updateUserProfile } from "../services/user.service";
-import type { UserData } from "../../../types";
-
-// Esquema de validación
-const profileSchema = z
-  .object({
-    genero: z.enum(["Masculino", "Femenino", "Otro"]),
-    password: z.string().optional(),
-    confirmPassword: z.string().optional(),
-  })
-  .refine(
-    (data) => {
-      if (data.password && data.password !== data.confirmPassword) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: "Las contraseñas no coinciden",
-      path: ["confirmPassword"],
-    },
-  );
-
-type ProfileFormValues = z.infer<typeof profileSchema>;
+import {
+  profileUpdateSchema,
+  generos,
+  type ProfileFormValues,
+} from "../validations/user.schema";
 
 interface ProfileModalProps {
   open: boolean;
@@ -56,6 +38,9 @@ export default function ProfileModal({ open, onClose }: ProfileModalProps) {
   const baseUrl = import.meta.env.VITE_API_URL_WITHOUT_PREFIX;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   // Estado para la imagen seleccionada (preview)
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -66,8 +51,13 @@ export default function ProfileModal({ open, onClose }: ProfileModalProps) {
     reset,
     formState: { errors, isSubmitting },
   } = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileSchema),
+    // Usamos el tipo inferido del nuevo esquema
+    resolver: zodResolver(profileUpdateSchema), // Usamos el esquema importado
   });
+
+  const handleClickShowPassword = () => setShowPassword((show) => !show);
+  const handleClickShowConfirmPassword = () =>
+    setShowConfirmPassword((show) => !show);
 
   // Cargar datos iniciales cuando se abre el modal
   useEffect(() => {
@@ -225,20 +215,37 @@ export default function ProfileModal({ open, onClose }: ProfileModalProps) {
               select
               label="Género"
               fullWidth
-              defaultValue={profile?.genero || "Otro"}
+              value={profile?.genero || "Otro"} // Usamos value en lugar de defaultValue con reset
               {...register("genero")}
               error={!!errors.genero}
               helperText={errors.genero?.message}
             >
-              <MenuItem value="Masculino">Masculino</MenuItem>
-              <MenuItem value="Femenino">Femenino</MenuItem>
-              <MenuItem value="Otro">Otro</MenuItem>
+              {" "}
+              {/* Mapeamos desde el array 'generos' */}
+              {generos.map((genero) => (
+                <MenuItem key={genero} value={genero}>
+                  {genero}
+                </MenuItem>
+              ))}
             </TextField>
 
             <TextField
               label="Nueva Contraseña (Opcional)"
-              type="password"
+              type={showPassword ? "text" : "password"}
               fullWidth
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={handleClickShowPassword}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
               {...register("password")}
               error={!!errors.password}
               helperText={errors.password?.message}
@@ -246,8 +253,21 @@ export default function ProfileModal({ open, onClose }: ProfileModalProps) {
 
             <TextField
               label="Confirmar Nueva Contraseña"
-              type="password"
+              type={showConfirmPassword ? "text" : "password"}
               fullWidth
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle confirm password visibility"
+                      onClick={handleClickShowConfirmPassword}
+                      edge="end"
+                    >
+                      {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
               {...register("confirmPassword")}
               error={!!errors.confirmPassword}
               helperText={errors.confirmPassword?.message}
