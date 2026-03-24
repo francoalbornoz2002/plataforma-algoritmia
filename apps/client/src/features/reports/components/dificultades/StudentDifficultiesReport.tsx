@@ -14,7 +14,6 @@ import {
   Autocomplete,
   TextField,
   Chip,
-  Button,
   Checkbox,
   ListItemText,
   OutlinedInput,
@@ -242,11 +241,12 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
     if (!data) return;
     const item = data.summary.graficos.porTema[itemIdentifier.dataIndex];
     if (item) {
+      const labelAmigable = TemasLabels[item.label as temas] || item.label;
       setChartModal({
         open: true,
         filterType: "tema",
         filterValue: item.label,
-        title: `Dificultades del Tema: ${item.label}`,
+        title: `Dificultades del Tema: ${labelAmigable}`,
       });
     }
   };
@@ -281,6 +281,7 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
       headerName: "Tema",
       width: 200,
       valueGetter: (params, row) => row.dificultad?.tema || "-",
+      valueFormatter: (value: any) => TemasLabels[value as temas] || value,
     },
     {
       field: "gradoAnterior",
@@ -672,7 +673,10 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
                     <PieChart
                       series={[
                         {
-                          data: data.summary.graficos.porTema,
+                          data: data.summary.graficos.porTema.map((t: any) => ({
+                            ...t,
+                            label: TemasLabels[t.label as temas] || t.label,
+                          })),
                           innerRadius: 30,
                           paddingAngle: 2,
                           cornerRadius: 4,

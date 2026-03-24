@@ -11,7 +11,8 @@ import {
   Stack,
 } from "@mui/material";
 import { format } from "date-fns";
-import { estado_sesion } from "../../../../types";
+import { estado_sesion, temas } from "../../../../types";
+import { TemasLabels } from "../../../../types/traducciones";
 import ResultadoSesionView from "../../../sesiones-refuerzo/components/ResultadoSesionView";
 import PreguntaAccordion from "../../../preguntas/components/PreguntaAccordion";
 import EstadoSesionChip from "../../../sesiones-refuerzo/components/EstadoSesionChip";
@@ -35,7 +36,9 @@ export default function SesionDetailModal({ open, onClose, sesion }: Props) {
       <DialogTitle>
         Detalle de Sesión #{sesion.nroSesion}
         <Typography variant="subtitle2" color="text.secondary">
-          {sesion.dificultad.tema} - {sesion.dificultad.nombre}
+          {TemasLabels[sesion.dificultad.tema as temas] ||
+            sesion.dificultad.tema}{" "}
+          - {sesion.dificultad.nombre}
         </Typography>
       </DialogTitle>
       <DialogContent dividers>

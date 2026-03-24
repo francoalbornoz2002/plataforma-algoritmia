@@ -592,7 +592,7 @@ export default function CourseSessionsHistory({ courseId }: Props) {
                     </Stack>
                   ),
                 }}
-                sx={{ border: 0 }}
+                sx={{ borderRadius: "0.7em", border: 0 }}
               />
             </Paper>
           </Box>
