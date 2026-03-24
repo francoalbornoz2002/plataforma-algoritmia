@@ -9,13 +9,11 @@ import type {
   DificultadesCurso,
   DocenteBasico,
   estado_simple,
+  AlumnoDificultadResumen,
   FindConsultasParams,
-  FindStudentDifficultiesParams,
   FindStudentProgressParams,
   MisionConEstado,
   PaginatedConsultasDocenteResponse,
-  PaginatedConsultasResponse,
-  PaginatedStudentDifficultiesResponse,
   PaginatedStudentProgressResponse,
   ProgresoCurso,
   CourseDashboardData,
@@ -170,24 +168,10 @@ export async function getAllDifficulties(): Promise<DificultadConTema[]> {
  */
 export const getStudentDifficultyList = async (
   idCurso: string,
-  params: FindStudentDifficultiesParams,
-): Promise<PaginatedStudentDifficultiesResponse> => {
+): Promise<AlumnoDificultadResumen[]> => {
   try {
-    // Limpiamos los params vacíos (como hicimos en ProgressPage)
-    const cleanedParams = { ...params };
-    (
-      Object.keys(cleanedParams) as Array<keyof FindStudentDifficultiesParams>
-    ).forEach((key) => {
-      if (cleanedParams[key] === "") {
-        delete cleanedParams[key];
-      }
-    });
-
     const response = await apiClient.get(
       `/docentes/my/courses/${idCurso}/difficulties-list`,
-      {
-        params: cleanedParams,
-      },
     );
     return response.data;
   } catch (err: any) {

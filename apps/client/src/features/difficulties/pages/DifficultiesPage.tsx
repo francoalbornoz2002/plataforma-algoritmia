@@ -1,7 +1,6 @@
-import { useState, useEffect, useMemo, type ReactNode } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Box,
-  Typography,
   Grid,
   CircularProgress,
   Alert,
@@ -13,6 +12,7 @@ import {
   Select,
   MenuItem,
   Tooltip,
+  Autocomplete,
   type SelectChangeEvent,
   Button,
   IconButton,
@@ -20,12 +20,8 @@ import {
 import {
   DataGrid,
   type GridColDef,
-  type GridPaginationModel,
   type GridSortModel,
 } from "@mui/x-data-grid";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import CategoryIcon from "@mui/icons-material/Category";
 import TopicIcon from "@mui/icons-material/Topic";
 import SpeedIcon from "@mui/icons-material/Speed";
 import GroupIcon from "@mui/icons-material/Group";
@@ -33,7 +29,6 @@ import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
 // 1. Hooks y Servicios
 import { useCourseContext } from "../../../context/CourseContext";
-import { useDebounce } from "../../../hooks/useDebounce";
 import {
   getAllDifficulties,
   getCourseDifficultiesOverview,
@@ -43,7 +38,6 @@ import {
 // 2. Tipos
 import type {
   DificultadesCurso,
-  FindStudentDifficultiesParams,
   AlumnoDificultadResumen,
   DificultadConTema,
 } from "../../../types";
@@ -61,6 +55,16 @@ import { Warning } from "@mui/icons-material";
 // Tipo para la fila de la DataGrid
 type StudentRow = AlumnoDificultadResumen;
 
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const PopperProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+    },
+  },
+};
+
 export default function DifficultiesPage() {
   const { selectedCourse } = useCourseContext();
 
@@ -69,9 +73,8 @@ export default function DifficultiesPage() {
   const [overviewLoading, setOverviewLoading] = useState(true);
   const [overviewError, setOverviewError] = useState<string | null>(null);
 
-  // Estado para la DataGrid
-  const [rows, setRows] = useState<StudentRow[]>([]);
-  const [totalRows, setTotalRows] = useState(0);
+  // Estado para la DataGrid (ahora manejado localmente)
+  const [allRows, setAllRows] = useState<StudentRow[]>([]);
   const [gridLoading, setGridLoading] = useState(true);
   const [gridError, setGridError] = useState<string | null>(null);
 
@@ -97,7 +100,6 @@ export default function DifficultiesPage() {
   });
 
   const [searchTerm, setSearchTerm] = useState("");
-  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   const [allDifficulties, setAllDifficulties] = useState<DificultadConTema[]>(
     [],
@@ -137,42 +139,63 @@ export default function DifficultiesPage() {
   }, [allDifficulties, filters.tema]);
 
   // --- DATA FETCHING (DataGrid) ---
+  // Ahora solo se ejecuta al cargar la página o cambiar el curso
   useEffect(() => {
     if (!selectedCourse) return;
 
     setGridLoading(true);
     setGridError(null);
 
-    const params: FindStudentDifficultiesParams = {
-      page: paginationModel.page + 1,
-      limit: paginationModel.pageSize,
-      sort: sortModel[0]?.field || "apellido",
-      order: (sortModel[0]?.sort as "asc" | "desc") || "asc",
-      search: debouncedSearchTerm,
-      tema: filters.tema as temas | "",
-      dificultadId: filters.dificultadId,
-      grado: filters.grado as grado_dificultad | "",
-    };
-
-    getStudentDifficultyList(selectedCourse.id, params)
-      .then((response) => {
-        setRows(response.data);
-        setTotalRows(response.total);
+    getStudentDifficultyList(selectedCourse.id)
+      .then((data) => {
+        setAllRows(data);
       })
       .catch((err) => setGridError(err.message))
       .finally(() => setGridLoading(false));
-  }, [
-    selectedCourse,
-    paginationModel,
-    sortModel,
-    filters,
-    debouncedSearchTerm,
-  ]);
+  }, [selectedCourse]);
 
-  // Efecto para el buscador (debounce)
+  // --- FILTRADO LOCAL ---
+  const filteredRows = useMemo(() => {
+    return allRows.filter((row) => {
+      // Filtro por Búsqueda (Texto)
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        if (
+          !row.nombre.toLowerCase().includes(term) &&
+          !row.apellido.toLowerCase().includes(term)
+        ) {
+          return false;
+        }
+      }
+
+      // Filtros por Atributos (Tema, Dificultad, Grado)
+      // El alumno debe tener AL MENOS UNA dificultad que coincida con el filtro seleccionado
+      if (
+        filters.tema &&
+        !row.dificultadesDetalle?.some((d) => d.tema === filters.tema)
+      )
+        return false;
+      if (
+        filters.dificultadId &&
+        !row.dificultadesDetalle?.some(
+          (d) => d.idDificultad === filters.dificultadId,
+        )
+      )
+        return false;
+      if (
+        filters.grado &&
+        !row.dificultadesDetalle?.some((d) => d.grado === filters.grado)
+      )
+        return false;
+
+      return true;
+    });
+  }, [allRows, searchTerm, filters]);
+
+  // Efecto para el buscador
   useEffect(() => {
     setPaginationModel((prev) => ({ ...prev, page: 0 }));
-  }, [debouncedSearchTerm]);
+  }, [searchTerm]);
 
   // --- Handlers (para la DataGrid y Filtros) ---
   const handleFilterChange = (
@@ -386,48 +409,71 @@ export default function DifficultiesPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
             sx={{ flexGrow: 1, minWidth: 200 }}
           />
-          <FormControl size="small" sx={{ width: 200 }}>
-            <InputLabel>Tema</InputLabel>
-            <Select
-              name="tema"
-              value={filters.tema}
-              label="Tema"
-              onChange={handleFilterChange}
-            >
-              <MenuItem value="">Todos</MenuItem>
-              {Object.values(temas)
-                .filter((t) => t !== "Ninguno")
-                .map((t) => (
-                  <MenuItem key={t} value={t}>
-                    {TemasLabels[t]}
-                  </MenuItem>
-                ))}
-            </Select>
-          </FormControl>
-          <FormControl size="small" sx={{ width: 300 }}>
-            <InputLabel>Dificultad</InputLabel>
-            <Select
-              name="dificultadId"
-              value={filters.dificultadId}
-              label="Dificultad"
-              onChange={handleFilterChange}
-              disabled={allDifficulties.length === 0} // Deshabilitar si aún no carga
-            >
-              <MenuItem value="">Todas</MenuItem>
-              {filteredDifficulties.map((d) => (
-                <MenuItem key={d.id} value={d.id}>
-                  {d.nombre}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Autocomplete
+            size="small"
+            options={Object.values(temas).filter((t) => t !== "Ninguno")}
+            getOptionLabel={(option) => TemasLabels[option as temas] || option}
+            isOptionEqualToValue={(option, value) => option === value}
+            value={
+              filters.tema
+                ? Object.values(temas)
+                    .filter((t) => t !== "Ninguno")
+                    .find((t) => t === filters.tema) || null
+                : null
+            }
+            onChange={(_, newValue) =>
+              handleFilterChange({
+                target: { name: "tema", value: newValue || "" },
+              } as React.ChangeEvent<HTMLInputElement>)
+            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Tema"
+                placeholder="Filtrar por tema..."
+              />
+            )}
+            sx={{ width: 270 }}
+            slotProps={{ popper: PopperProps }}
+          />
+          <Autocomplete
+            size="small"
+            options={filteredDifficulties}
+            getOptionLabel={(option) => option.nombre || ""}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            value={
+              filters.dificultadId
+                ? filteredDifficulties.find(
+                    (d) => d.id === filters.dificultadId,
+                  ) || null
+                : null
+            }
+            onChange={(_, newValue) =>
+              handleFilterChange({
+                target: { name: "dificultadId", value: newValue?.id || "" },
+              } as React.ChangeEvent<HTMLInputElement>)
+            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Dificultad"
+                placeholder="Filtrar por dificultad..."
+              />
+            )}
+            disabled={allDifficulties.length === 0}
+            sx={{ width: 400 }}
+            slotProps={{ popper: PopperProps }}
+          />
           <FormControl size="small" sx={{ minWidth: 160 }}>
             <InputLabel>Grado</InputLabel>
             <Select
               name="grado"
               value={filters.grado}
               label="Grado"
-              onChange={handleFilterChange}
+              onChange={(e) =>
+                handleFilterChange(e as SelectChangeEvent<string>)
+              }
+              MenuProps={{ PaperProps: { style: { maxHeight: 200 } } }} // Controla la altura del menú del Select
             >
               <MenuItem value="">Todos</MenuItem>
               {Object.values(grado_dificultad)
@@ -463,15 +509,12 @@ export default function DifficultiesPage() {
             sx={{ height: 600, width: "100%", boxSizing: "border-box" }}
           >
             <DataGrid
-              rows={rows}
+              rows={filteredRows}
               columns={columns}
-              rowCount={totalRows}
               loading={gridLoading}
-              paginationMode="server"
               paginationModel={paginationModel}
               onPaginationModelChange={setPaginationModel}
               pageSizeOptions={[5, 10, 25]}
-              sortingMode="server"
               sortModel={sortModel}
               onSortModelChange={setSortModel}
               disableRowSelectionOnClick

@@ -7,7 +7,6 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { FindStudentDifficultiesDto } from '../dto/find-student-difficulties.dto';
 import {
   grado_dificultad,
   Prisma,
@@ -118,14 +117,7 @@ export class DifficultiesService {
   /**
    * MÉTODO 2: Obtener la lista de alumnos para la DataGrid (Resumen)
    */
-  async getStudentDifficultyList(
-    idCurso: string,
-    dto: FindStudentDifficultiesDto,
-  ) {
-    const { page, limit, sort, order, search, tema, dificultadId, grado } = dto;
-    const skip = (page - 1) * limit;
-    const take = limit;
-
+  async getStudentDifficultyList(idCurso: string) {
     // 0. Verificar estado del curso
     const curso = await this.prisma.curso.findUnique({
       where: { id: idCurso },
@@ -149,66 +141,25 @@ export class DifficultiesService {
         },
       };
 
-      if (search) {
-        where.OR = [
-          { nombre: { contains: search, mode: 'insensitive' } },
-          { apellido: { contains: search, mode: 'insensitive' } },
-        ];
-      }
-
-      // Filtros anidados en la relación 'dificultades' del USUARIO
-      if (tema || dificultadId || grado) {
-        where.dificultades = {
-          // <-- Esta relación SÍ existe en 'Usuario'
-          some: {
-            idCurso: idCurso, // Filtramos dificultades de ESTE curso
-            grado: grado,
-            idDificultad: dificultadId,
-            dificultad: {
-              tema: tema,
-            },
-          },
-        };
-      }
-
-      // 2. Construir el ORDER BY (para 'Usuario')
-      // (Mejorado para ordenar por 'totalDificultades')
-      let orderBy: Prisma.UsuarioOrderByWithRelationInput;
-      if (sort === 'totalDificultades') {
-        orderBy = {
+      // 2. Ejecutar consulta (sin paginación ni ordenamiento del lado del servidor)
+      const alumnos = await this.prisma.usuario.findMany({
+        where,
+        select: {
+          id: true,
+          nombre: true,
+          apellido: true,
           dificultades: {
-            _count: order,
-          },
-        };
-      } else {
-        // 'sort' por defecto es 'nombre' o 'apellido'
-        orderBy = {
-          [sort]: order,
-        };
-      }
-
-      // 3. Ejecutar transacciones (consultando 'usuario')
-      const [alumnos, total] = await this.prisma.$transaction([
-        this.prisma.usuario.findMany({
-          // <-- Consultamos 'usuario'
-          where,
-          orderBy,
-          skip,
-          take,
-          select: {
-            id: true,
-            nombre: true,
-            apellido: true,
-            dificultades: {
-              where: { idCurso: idCurso },
-              select: { grado: true },
+            where: { idCurso: idCurso },
+            select: {
+              grado: true,
+              idDificultad: true,
+              dificultad: { select: { tema: true } },
             },
           },
-        }),
-        this.prisma.usuario.count({ where }), // <-- Contamos 'usuario'
-      ]);
+        },
+      });
 
-      // 4. Mapear la respuesta Y CALCULAR LOS CONTEOS
+      // 3. Mapear la respuesta y calcular los conteos
       const data = alumnos.map((alumno) => {
         // Contamos los grados manualmente
         const alto = alumno.dificultades.filter(
@@ -233,11 +184,15 @@ export class DifficultiesService {
           gradoMedio: medio,
           gradoBajo: bajo,
           gradoNinguno: ninguno,
+          dificultadesDetalle: alumno.dificultades.map((d) => ({
+            idDificultad: d.idDificultad,
+            grado: d.grado,
+            tema: d.dificultad.tema,
+          })),
         };
       });
 
-      const totalPages = Math.ceil(total / limit);
-      return { data, total, page, totalPages };
+      return data;
     } catch (error) {
       console.error('Error en getStudentDifficultyList:', error);
       throw new InternalServerErrorException(

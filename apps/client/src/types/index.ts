@@ -322,19 +322,12 @@ export interface AlumnoDificultadResumen {
   gradoMedio: number;
   gradoBajo: number;
   gradoNinguno: number;
+  dificultadesDetalle?: {
+    idDificultad: string;
+    tema: temas;
+    grado: grado_dificultad;
+  }[];
 }
-
-// 3. Para los parámetros del servicio de la DataGrid
-export interface FindStudentDifficultiesParams extends BaseFilterParams {
-  search?: string;
-  tema?: temas | "";
-  dificultadId?: string | "";
-  grado?: grado_dificultad | "";
-}
-
-// 4. Para la respuesta paginada de la DataGrid
-export interface PaginatedStudentDifficultiesResponse
-  extends PaginatedResponse<AlumnoDificultadResumen> {}
 
 export interface DificultadSimple {
   id: string;

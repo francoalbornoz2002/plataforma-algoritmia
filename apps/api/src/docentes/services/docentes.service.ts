@@ -6,7 +6,6 @@ import {
 import { CreateRespuestaDto } from 'src/consultas/dto/create-respuesta.dto';
 import { FindConsultasDto } from 'src/consultas/dto/find-consultas.dto';
 import { ConsultasService } from 'src/consultas/services/consultas.service';
-import { FindStudentDifficultiesDto } from 'src/difficulties/dto/find-student-difficulties.dto';
 import { DifficultiesService } from 'src/difficulties/services/difficulties.service';
 import { dateToTime } from 'src/helpers';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -132,13 +131,9 @@ export class DocentesService {
     return this.difficultiesService.getCourseDifficultiesOverview(idCurso);
   }
 
-  async getStudentDifficultyList(
-    idCurso: string,
-    dto: FindStudentDifficultiesDto,
-    idDocente: string,
-  ) {
+  async getStudentDifficultyList(idCurso: string, idDocente: string) {
     await checkDocenteAccess(this.prisma, idDocente, idCurso);
-    return this.difficultiesService.getStudentDifficultyList(idCurso, dto);
+    return this.difficultiesService.getStudentDifficultyList(idCurso);
   }
 
   async getStudentDifficultiesDetail(

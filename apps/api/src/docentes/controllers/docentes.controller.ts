@@ -16,7 +16,6 @@ import { roles } from '@prisma/client';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
 import { FindStudentProgressDto } from 'src/progress/dto/find-student-progress.dto';
-import { FindStudentDifficultiesDto } from 'src/difficulties/dto/find-student-difficulties.dto';
 import { FindConsultasDto } from 'src/consultas/dto/find-consultas.dto';
 import { CreateRespuestaDto } from 'src/consultas/dto/create-respuesta.dto';
 import { ConsultasService } from 'src/consultas/services/consultas.service';
@@ -70,15 +69,10 @@ export class DocentesController {
   @Get('my/courses/:idCurso/difficulties-list')
   getStudentDifficultyList(
     @Param('idCurso', ParseUUIDPipe) idCurso: string,
-    @Query() dto: FindStudentDifficultiesDto,
     @Req() req: AuthenticatedUserRequest,
   ) {
     const idDocente = req.user.userId;
-    return this.docentesService.getStudentDifficultyList(
-      idCurso,
-      dto,
-      idDocente,
-    );
+    return this.docentesService.getStudentDifficultyList(idCurso, idDocente);
   }
 
   @Get('my/courses/:idCurso/student/:idAlumno/difficulties')
