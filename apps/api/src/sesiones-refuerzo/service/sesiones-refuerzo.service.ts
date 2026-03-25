@@ -345,7 +345,7 @@ export class SesionesRefuerzoService {
       include: {
         alumno: { select: { id: true, nombre: true, apellido: true } },
         docente: { select: { id: true, nombre: true, apellido: true } },
-        dificultad: { select: { id: true, nombre: true } },
+        dificultad: { select: { id: true, nombre: true, tema: true } },
         resultadoSesion: {
           include: {
             respuestasAlumno: true,
@@ -390,7 +390,7 @@ export class SesionesRefuerzoService {
           },
         },
         docente: { select: { id: true, nombre: true, apellido: true } },
-        dificultad: { select: { id: true, nombre: true } },
+        dificultad: { select: { id: true, nombre: true, tema: true } },
         curso: { select: { id: true, nombre: true } },
         resultadoSesion: {
           include: {
@@ -608,6 +608,7 @@ export class SesionesRefuerzoService {
             },
           },
           docente: { select: { id: true, nombre: true, apellido: true } },
+          dificultad: { select: { id: true, nombre: true, tema: true } },
           curso: { select: { id: true, nombre: true } },
           resultadoSesion: true,
         },
@@ -659,7 +660,7 @@ export class SesionesRefuerzoService {
         include: {
           alumno: { select: { email: true, nombre: true, apellido: true } },
           curso: { select: { nombre: true } },
-          dificultad: { select: { nombre: true } },
+          dificultad: { select: { nombre: true, tema: true } },
         },
       });
     };

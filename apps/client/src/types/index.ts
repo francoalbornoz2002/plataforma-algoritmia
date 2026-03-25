@@ -604,6 +604,7 @@ export interface SesionRefuerzoResumen {
   dificultad: {
     id: string;
     nombre: string;
+    tema: temas;
   };
   resultadoSesion: ResultadoSesion | null;
 }
