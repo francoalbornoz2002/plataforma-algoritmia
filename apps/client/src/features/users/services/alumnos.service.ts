@@ -298,9 +298,20 @@ export const findActiveAlumnos = async (
  * (es decir, que tienen al menos una dificultad registrada).
  * @param idCurso - El ID del curso.
  */
+export interface AlumnoElegible {
+  id: string;
+  nombre: string;
+  apellido: string;
+  fotoPerfilUrl: string | null;
+  totalDificultades: number;
+  gradoAlto: number;
+  gradoMedio: number;
+  gradoBajo: number;
+}
+
 export const findEligibleAlumnos = async (
   idCurso: string,
-): Promise<DocenteBasico[]> => {
+): Promise<AlumnoElegible[]> => {
   try {
     // NOTA: Asumimos que este endpoint existe para optimizar la carga.
     const response = await apiClient.get(

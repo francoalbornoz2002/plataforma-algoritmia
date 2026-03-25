@@ -47,36 +47,40 @@ export default function PreguntaSesionAccordion({
   return (
     <Accordion variant="outlined">
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Stack
-          direction="row"
-          spacing={2}
-          alignItems="center"
-          justifyContent="space-between"
-          sx={{ width: "100%" }}
-        >
-          {/* Columna Izquierda: Enunciado y nombre de la dificultad */}
-          <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
+        <Stack spacing={2} sx={{ width: "100%" }}>
+          {/* Fila 1: Nombre de la dificultad y chips metadatos */}
+          <Stack direction="row" spacing={0.5} justifyContent="space-between">
             <Typography variant="overline" color="text.secondary">
               {dificultad?.nombre || "Dificultad"}
             </Typography>
-            <Typography variant="subtitle2" sx={{ wordBreak: "break-word" }}>
-              {enunciado}
-            </Typography>
-          </Stack>
-
-          {/* Columna Derecha: Chips de metadatos */}
-          <Box sx={{ flexShrink: 0 }}>
-            <Stack direction="row" spacing={1}>
-              {dificultad?.tema && <TemaChip tema={dificultad.tema} small />}
-              <GradeChip grado={gradoDificultad} texto="Grado" small />
+            <Stack direction="row" spacing={0.5}>
+              {dificultad?.tema && (
+                <TemaChip
+                  tema={dificultad.tema}
+                  small
+                  sx={{ p: 0.5, fontSize: 10 }}
+                />
+              )}
+              <GradeChip
+                grado={gradoDificultad}
+                texto="Grado"
+                small
+                sx={{ p: 0.5, fontSize: 10 }}
+              />
               <Chip
                 icon={isSistema ? <ComputerIcon /> : <PersonIcon />}
                 label={isSistema ? "Sistema" : "Docente"}
                 variant="outlined"
                 size="small"
+                sx={{ p: 0.5, fontSize: 10 }}
               />
             </Stack>
-          </Box>
+          </Stack>
+
+          {/* Fila 2: Enunciado */}
+          <Typography variant="subtitle2" sx={{ wordBreak: "break-word" }}>
+            {enunciado}
+          </Typography>
         </Stack>
       </AccordionSummary>
 

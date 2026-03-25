@@ -6,9 +6,6 @@ import {
   Button,
   TextField,
   FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   FormHelperText,
   Stack,
   CircularProgress,
@@ -18,6 +15,7 @@ import {
   IconButton,
   Tooltip,
   Radio,
+  Autocomplete,
 } from "@mui/material";
 import {
   useForm,
@@ -43,6 +41,7 @@ import {
 } from "../validations/pregunta.schema";
 import { preguntasService } from "../service/preguntas.service";
 import { getAllDifficulties } from "../../users/services/docentes.service";
+import { TemasLabels } from "../../../types/traducciones";
 
 interface PreguntaFormDialogProps {
   open: boolean;
@@ -72,7 +71,7 @@ export default function PreguntaFormDialog({
 
   // Estados para la lógica del componente
   const [allDificultades, setAllDificultades] = useState<DificultadConTema[]>(
-    []
+    [],
   );
   const [filteredDificultades, setFilteredDificultades] = useState<
     DificultadConTema[]
@@ -94,6 +93,7 @@ export default function PreguntaFormDialog({
   });
 
   const selectedTema = watch("tema");
+  const selectedDificultad = watch("idDificultad");
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -132,14 +132,13 @@ export default function PreguntaFormDialog({
     // elegido (o si se deseleccionó el tema), la reseteamos.
     // Esto es crucial para que al cambiar de tema, el campo de dificultad se limpie,
     // pero no al cargar el formulario en modo edición.
-    const currentDificultadId = watch("idDificultad");
     if (
-      currentDificultadId &&
-      !newFiltered.some((d) => d.id === currentDificultadId)
+      selectedDificultad &&
+      !newFiltered.some((d) => d.id === selectedDificultad)
     ) {
       setValue("idDificultad", "", { shouldValidate: true });
     }
-  }, [selectedTema, allDificultades, setValue, watch]);
+  }, [selectedTema, allDificultades, setValue, selectedDificultad]);
 
   // Efecto para resetear el formulario al abrir/cerrar o si cambia el objeto a editar
   useEffect(() => {
@@ -219,72 +218,95 @@ export default function PreguntaFormDialog({
                 <Controller
                   name="tema"
                   control={control}
-                  render={({ field }) => (
-                    <FormControl fullWidth error={!!errors.tema}>
-                      <InputLabel>Tema *</InputLabel>
-                      <Select
-                        {...field}
-                        label="Tema"
-                        disabled={isSubmitting}
-                        required
-                      >
-                        {Object.values(temas)
-                          .filter((t) => t !== temas.Ninguno)
-                          .map((tema) => (
-                            <MenuItem key={tema} value={tema}>
-                              {tema}
-                            </MenuItem>
-                          ))}
-                      </Select>
-                      <FormHelperText>
-                        {errors.tema?.message || "Filtro para las dificultades"}
-                      </FormHelperText>
-                    </FormControl>
+                  render={({ field: { onChange, value, ...restField } }) => (
+                    <Autocomplete
+                      {...restField}
+                      options={Object.values(temas).filter(
+                        (t) => t !== temas.Ninguno,
+                      )}
+                      getOptionLabel={(option) =>
+                        TemasLabels[option as temas] || option
+                      }
+                      isOptionEqualToValue={(option, val) => option === val}
+                      value={value || null}
+                      onChange={(_, newValue) => {
+                        onChange(newValue || "");
+                      }}
+                      disabled={isSubmitting}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Tema"
+                          required
+                          error={!!errors.tema}
+                          helperText={
+                            errors.tema?.message ||
+                            "Filtro para las dificultades"
+                          }
+                        />
+                      )}
+                      fullWidth
+                    />
                   )}
                 />
                 <Controller
                   name="idDificultad"
                   control={control}
-                  render={({ field }) => (
-                    <FormControl fullWidth error={!!errors.idDificultad}>
-                      <InputLabel>Dificultad *</InputLabel>
-                      <Select
-                        {...field}
-                        label="Dificultad"
-                        disabled={isSubmitting || !selectedTema}
-                        required
-                      >
-                        {filteredDificultades.map((d) => (
-                          <MenuItem key={d.id} value={d.id}>
-                            {d.nombre}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                      <FormHelperText>
-                        {errors.idDificultad?.message || " "}
-                      </FormHelperText>
-                    </FormControl>
+                  render={({ field: { onChange, value, ...restField } }) => (
+                    <Autocomplete
+                      {...restField}
+                      options={filteredDificultades}
+                      getOptionLabel={(option) => option.nombre}
+                      isOptionEqualToValue={(option, val) =>
+                        option.id === val.id
+                      }
+                      value={
+                        filteredDificultades.find((d) => d.id === value) || null
+                      }
+                      onChange={(_, newValue) => {
+                        onChange(newValue ? newValue.id : "");
+                      }}
+                      disabled={isSubmitting || !selectedTema}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Dificultad"
+                          required
+                          error={!!errors.idDificultad}
+                          helperText={errors.idDificultad?.message || " "}
+                        />
+                      )}
+                      fullWidth
+                    />
                   )}
                 />
                 <Controller
                   name="gradoDificultad"
                   control={control}
-                  render={({ field }) => (
-                    <FormControl fullWidth error={!!errors.gradoDificultad}>
-                      <InputLabel>Grado *</InputLabel>
-                      <Select {...field} label="Grado" disabled={isSubmitting}>
-                        {Object.values(grado_dificultad)
-                          .filter((g) => g !== grado_dificultad.Ninguno)
-                          .map((g) => (
-                            <MenuItem key={g} value={g}>
-                              {g}
-                            </MenuItem>
-                          ))}
-                      </Select>
-                      <FormHelperText>
-                        {errors.gradoDificultad?.message || " "}
-                      </FormHelperText>
-                    </FormControl>
+                  render={({ field: { onChange, value, ...restField } }) => (
+                    <Autocomplete
+                      {...restField}
+                      options={Object.values(grado_dificultad).filter(
+                        (g) => g !== grado_dificultad.Ninguno,
+                      )}
+                      getOptionLabel={(option) => option}
+                      isOptionEqualToValue={(option, val) => option === val}
+                      value={value || null}
+                      onChange={(_, newValue) => {
+                        onChange(newValue || "");
+                      }}
+                      disabled={isSubmitting || !selectedDificultad}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Grado"
+                          required
+                          error={!!errors.gradoDificultad}
+                          helperText={errors.gradoDificultad?.message || " "}
+                        />
+                      )}
+                      fullWidth
+                    />
                   )}
                 />
               </Stack>
@@ -313,13 +335,13 @@ export default function PreguntaFormDialog({
                 <Typography variant="h6" gutterBottom>
                   Opciones de Respuesta
                 </Typography>
-                <Stack spacing={2}>
+                <Stack spacing={1}>
                   {fields.map((field, index) => (
                     <Stack
                       key={field.id}
                       direction="row"
                       spacing={1}
-                      alignItems="center"
+                      alignItems="flex-start"
                     >
                       <Tooltip title="Marcar como correcta">
                         <Radio

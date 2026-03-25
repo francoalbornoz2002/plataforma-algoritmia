@@ -16,9 +16,9 @@ export const preguntaFormSchema = z
       .min(10, "El enunciado debe tener al menos 10 caracteres."),
     idDificultad: z.string().min(1, "Debe seleccionar una dificultad"),
     gradoDificultad: z
-      .nativeEnum(grado_dificultad)
+      .enum(grado_dificultad, { message: "Debe seleccionar un grado" })
       .refine((val) => val !== grado_dificultad.Ninguno, {
-        message: "Debe seleccionar un grado de dificultad válido.",
+        message: "Debe seleccionar un grado",
       }),
     opcionesRespuesta: z
       .array(opcionRespuestaSchema)
@@ -27,7 +27,7 @@ export const preguntaFormSchema = z
       .refine(
         (opciones) =>
           opciones.filter((opcion) => opcion.esCorrecta).length === 1,
-        { message: "Debe marcar exactamente una respuesta como correcta." }
+        { message: "Debe marcar exactamente una respuesta como correcta." },
       ),
   })
   .superRefine((data, ctx) => {

@@ -33,6 +33,7 @@ import {
   grado_dificultad,
   type FindPreguntasParams,
 } from "../../../types";
+import { TemasLabels } from "../../../types/traducciones";
 
 // Components
 import PreguntaAccordion from "../../preguntas/components/PreguntaAccordion";
@@ -285,86 +286,96 @@ export default function AddExtraPreguntaModal({
 
   return (
     <>
-      <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg">
-        <DialogTitle>Añadir Preguntas Extra</DialogTitle>
-        <DialogContent sx={{ display: "flex", flexDirection: "column" }}>
+      <Dialog
+        open={open}
+        onClose={onClose}
+        fullWidth
+        maxWidth="lg"
+        scroll="paper"
+      >
+        <DialogTitle bgcolor="primary.main" color="white">
+          Añadir Preguntas Extra
+        </DialogTitle>
+        <DialogContent
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            bgcolor: "grey.100",
+            height: 600,
+          }}
+        >
           {/* --- Filtros --- */}
-          <Paper elevation={2} sx={{ p: 2, mb: 2, flexShrink: 0 }}>
-            <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
-              Filtros de búsqueda
-            </Typography>
-            <Stack direction="row" spacing={2} alignItems="center">
-              <TextField
-                label="Buscar por enunciado..."
-                variant="outlined"
-                size="small"
-                value={searchTerm}
-                onChange={handleSearchChange}
-                sx={{ flexGrow: 1 }}
-              />
-              <FormControl size="small" sx={{ minWidth: 160 }}>
-                <InputLabel>Tema</InputLabel>
-                <Select
-                  name="tema"
-                  value={filters.tema}
-                  label="Tema"
-                  disabled // Deshabilitado
-                  onChange={handleFilterChange}
-                >
-                  <MenuItem value="">Todos</MenuItem>
-                  {Object.values(temas)
-                    .filter((t) => t !== temas.Ninguno)
-                    .map((t) => (
-                      <MenuItem key={t} value={t}>
-                        {t}
-                      </MenuItem>
-                    ))}
-                </Select>
-              </FormControl>
-              <FormControl size="small" sx={{ width: 300 }}>
-                <InputLabel>Dificultad</InputLabel>
-                <Select
-                  name="idDificultad"
-                  value={filters.idDificultad}
-                  label="Dificultad"
-                  disabled // Deshabilitado
-                  onChange={handleFilterChange}
-                >
-                  <MenuItem value="">Todas</MenuItem>
-                  {filteredDifficulties.map((d) => (
-                    <MenuItem key={d.id} value={d.id}>
-                      {d.nombre}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl size="small" sx={{ minWidth: 100 }}>
-                <InputLabel>Grado</InputLabel>
-                <Select
-                  name="gradoDificultad"
-                  value={filters.gradoDificultad}
-                  label="Grado"
-                  // disabled eliminado
-                  onChange={handleFilterChange}
-                >
-                  <MenuItem value="">Todos</MenuItem>
-                  {getGradosPermitidos(gradoSesionFiltro).map((g) => (
-                    <MenuItem key={g} value={g}>
-                      {g}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <Box sx={{ flexGrow: 1 }} />
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleOpenCreatePregunta}
+          <Stack direction="row" spacing={1} alignItems="center" mt={3}>
+            <TextField
+              label="Buscar por enunciado..."
+              variant="outlined"
+              size="small"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              sx={{ flexGrow: 1 }}
+            />
+            <FormControl size="small" sx={{ mwidth: 270 }}>
+              <InputLabel>Tema</InputLabel>
+              <Select
+                name="tema"
+                value={filters.tema}
+                label="Tema"
+                disabled // Deshabilitado
+                onChange={handleFilterChange}
               >
-                Crear Pregunta
-              </Button>
-            </Stack>
-          </Paper>
+                <MenuItem value="">Todos</MenuItem>
+                {Object.values(temas)
+                  .filter((t) => t !== temas.Ninguno)
+                  .map((t) => (
+                    <MenuItem key={t} value={t}>
+                      {TemasLabels[t]}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ width: 400 }}>
+              <InputLabel>Dificultad</InputLabel>
+              <Select
+                name="idDificultad"
+                value={filters.idDificultad}
+                label="Dificultad"
+                disabled // Deshabilitado
+                onChange={handleFilterChange}
+              >
+                <MenuItem value="">Todas</MenuItem>
+                {filteredDifficulties.map((d) => (
+                  <MenuItem key={d.id} value={d.id}>
+                    {d.nombre}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: 100 }}>
+              <InputLabel>Grado</InputLabel>
+              <Select
+                name="gradoDificultad"
+                value=""
+                label="Grado"
+                // disabled eliminado
+                onChange={handleFilterChange}
+              >
+                <MenuItem value="">Todos</MenuItem>
+                {getGradosPermitidos(gradoSesionFiltro).map((g) => (
+                  <MenuItem key={g} value={g}>
+                    {g}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Box sx={{ flexGrow: 1 }} />
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleOpenCreatePregunta}
+            >
+              Crear Pregunta
+            </Button>
+          </Stack>
 
           {/* --- Lista de Preguntas --- */}
           <Box

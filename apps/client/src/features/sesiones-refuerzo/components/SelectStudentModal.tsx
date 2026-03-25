@@ -15,18 +15,26 @@ import {
   InputAdornment,
   Box,
   Typography,
+  Stack,
+  Chip,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import PersonIcon from "@mui/icons-material/Person";
-import { findEligibleAlumnos } from "../../users/services/alumnos.service";
-import type { DocenteBasico } from "../../../types";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import {
+  findEligibleAlumnos,
+  type AlumnoElegible,
+} from "../../users/services/alumnos.service";
 import { useCourseContext } from "../../../context/CourseContext";
+import StudentDifficultyDetailModal from "../../difficulties/components/StudentDifficultyDetailModal";
 
 interface SelectStudentModalProps {
   open: boolean;
   onClose: () => void;
-  onSelect: (student: DocenteBasico) => void;
+  onSelect: (student: AlumnoElegible) => void;
 }
+
+const baseUrl = import.meta.env.VITE_API_URL_WITHOUT_PREFIX;
 
 export default function SelectStudentModal({
   open,
@@ -34,10 +42,14 @@ export default function SelectStudentModal({
   onSelect,
 }: SelectStudentModalProps) {
   const { selectedCourse } = useCourseContext();
-  const [students, setStudents] = useState<DocenteBasico[]>([]);
-  const [filteredStudents, setFilteredStudents] = useState<DocenteBasico[]>([]);
+  const [students, setStudents] = useState<AlumnoElegible[]>([]);
+  const [filteredStudents, setFilteredStudents] = useState<AlumnoElegible[]>(
+    [],
+  );
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [viewingDifficultiesFor, setViewingDifficultiesFor] =
+    useState<AlumnoElegible | null>(null);
 
   useEffect(() => {
     if (open && selectedCourse) {
@@ -63,11 +75,12 @@ export default function SelectStudentModal({
   }, [searchTerm, students]);
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle>Seleccionar Alumno</DialogTitle>
       <DialogContent>
         <TextField
           fullWidth
+          size="small"
           placeholder="Buscar alumno..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -90,25 +103,100 @@ export default function SelectStudentModal({
               filteredStudents.map((student) => (
                 <ListItem
                   key={student.id}
-                  component="div"
-                  onClick={() => {
-                    onSelect(student);
-                    onClose();
-                  }}
+                  alignItems="flex-start"
                   sx={{
-                    cursor: "pointer",
-                    "&:hover": { bgcolor: "action.hover" },
-                    borderRadius: 1,
+                    borderRadius: 2,
+                    mb: 1,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    bgcolor: "background.paper",
                   }}
                 >
                   <ListItemAvatar>
-                    <Avatar>
-                      <PersonIcon />
+                    <Avatar
+                      src={
+                        student.fotoPerfilUrl
+                          ? `${baseUrl}${student.fotoPerfilUrl}`
+                          : undefined
+                      }
+                      sx={{ width: 48, height: 48, mr: 1, mt: 0.5 }}
+                    >
+                      {student.apellido[0]?.toUpperCase()}
                     </Avatar>
                   </ListItemAvatar>
                   <ListItemText
                     primary={`${student.apellido}, ${student.nombre}`}
+                    primaryTypographyProps={{ fontWeight: "bold" }}
+                    secondary={
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        mt={1}
+                        flexWrap="wrap"
+                        useFlexGap
+                      >
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ display: "flex", alignItems: "center", mr: 1 }}
+                        >
+                          {student.totalDificultades} dificultades:
+                        </Typography>
+                        {student.gradoAlto > 0 && (
+                          <Chip
+                            size="small"
+                            label={`${student.gradoAlto} Alto`}
+                            color="error"
+                            variant="outlined"
+                          />
+                        )}
+                        {student.gradoMedio > 0 && (
+                          <Chip
+                            size="small"
+                            label={`${student.gradoMedio} Medio`}
+                            color="warning"
+                            variant="outlined"
+                          />
+                        )}
+                        {student.gradoBajo > 0 && (
+                          <Chip
+                            size="small"
+                            label={`${student.gradoBajo} Bajo`}
+                            color="success"
+                            variant="outlined"
+                          />
+                        )}
+                      </Stack>
+                    }
                   />
+                  <Stack
+                    direction="column"
+                    spacing={1}
+                    alignItems="flex-end"
+                    ml={2}
+                  >
+                    <Button
+                      variant="contained"
+                      size="small"
+                      startIcon={<CheckCircleIcon />}
+                      onClick={() => {
+                        onSelect(student);
+                        onClose();
+                      }}
+                      sx={{ width: 130 }}
+                    >
+                      Seleccionar
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<VisibilityIcon />}
+                      onClick={() => setViewingDifficultiesFor(student)}
+                      sx={{ width: 130 }}
+                    >
+                      Dificultades
+                    </Button>
+                  </Stack>
                 </ListItem>
               ))
             ) : (
@@ -122,6 +210,17 @@ export default function SelectStudentModal({
       <DialogActions>
         <Button onClick={onClose}>Cancelar</Button>
       </DialogActions>
+
+      {/* Modal de detalles de dificultades */}
+      {viewingDifficultiesFor && selectedCourse && (
+        <StudentDifficultyDetailModal
+          open={!!viewingDifficultiesFor}
+          onClose={() => setViewingDifficultiesFor(null)}
+          idCurso={selectedCourse.id}
+          idAlumno={viewingDifficultiesFor.id}
+          nombreAlumno={`${viewingDifficultiesFor.nombre} ${viewingDifficultiesFor.apellido}`}
+        />
+      )}
     </Dialog>
   );
 }
