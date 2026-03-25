@@ -36,6 +36,7 @@ import {
   getAllDifficulties,
 } from "../../users/services/docentes.service";
 import ResultadoSesionModal from "../components/ResultadoSesionModal";
+import SesionDetailModal from "../../reports/components/sesiones-refuerzo/SesionDetailModal";
 import HeaderPage from "../../../components/HeaderPage";
 import { SwitchAccessShortcutAdd } from "@mui/icons-material";
 import { datePickerConfig } from "../../../config/theme.config";
@@ -403,13 +404,21 @@ export default function MisSesionesPage() {
       </Stack>
 
       {/* --- Modal de Resultados --- */}
-      {sesionToView && (
-        <ResultadoSesionModal
-          open={!!sesionToView}
-          onClose={() => setSesionToView(null)}
-          sesionResumen={sesionToView}
-        />
-      )}
+      {sesionToView &&
+        (sesionToView.estado === estado_sesion.Completada ||
+        sesionToView.estado === estado_sesion.Incompleta ? (
+          <ResultadoSesionModal
+            open={!!sesionToView}
+            onClose={() => setSesionToView(null)}
+            sesionResumen={sesionToView}
+          />
+        ) : (
+          <SesionDetailModal
+            open={!!sesionToView}
+            onClose={() => setSesionToView(null)}
+            sesion={sesionToView}
+          />
+        ))}
     </Box>
   );
 }
