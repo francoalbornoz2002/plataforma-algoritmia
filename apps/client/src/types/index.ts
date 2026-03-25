@@ -632,29 +632,6 @@ export type CreateSesionRefuerzoData = {
 // 5. Para actualizar una sesión de refuerzo
 export type UpdateSesionRefuerzoData = Partial<CreateSesionRefuerzoData>;
 
-// 6. Para los filtros de búsqueda
-export interface FindSesionesParams extends BaseFilterParams {
-  nroSesion?: number;
-  idAlumno?: string;
-  idDocente?: string;
-  idDificultad?: string;
-  gradoSesion?: grado_dificultad | "";
-  estado?: estado_sesion | "";
-  fechaDesde?: string;
-  fechaHasta?: string;
-}
-
-// 7. Para la respuesta paginada
-export interface PaginatedSesionesResponse {
-  data: SesionRefuerzoResumen[];
-  meta: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
-
 // 8. Para resolver una sesión (Payload)
 export interface ResolverSesionPayload {
   respuestas: {

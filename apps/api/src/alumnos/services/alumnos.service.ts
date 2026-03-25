@@ -326,6 +326,7 @@ export class AlumnosService {
         dificultades: {
           some: {
             idCurso: idCurso,
+            grado: { not: 'Ninguno' }, // Omitimos las superadas
           },
         },
       },
@@ -334,11 +335,33 @@ export class AlumnosService {
         nombre: true,
         apellido: true,
         fotoPerfilUrl: true,
+        dificultades: {
+          where: {
+            idCurso: idCurso,
+            grado: { not: 'Ninguno' },
+          },
+          select: { grado: true },
+        },
       },
       orderBy: [{ apellido: 'asc' }, { nombre: 'asc' }],
     });
 
-    return alumnosElegibles;
+    return alumnosElegibles.map((a) => {
+      const alto = a.dificultades.filter((d) => d.grado === 'Alto').length;
+      const medio = a.dificultades.filter((d) => d.grado === 'Medio').length;
+      const bajo = a.dificultades.filter((d) => d.grado === 'Bajo').length;
+
+      return {
+        id: a.id,
+        nombre: a.nombre,
+        apellido: a.apellido,
+        fotoPerfilUrl: a.fotoPerfilUrl,
+        totalDificultades: a.dificultades.length,
+        gradoAlto: alto,
+        gradoMedio: medio,
+        gradoBajo: bajo,
+      };
+    });
   }
 
   async findActiveCourseDifficulties(idAlumno: string) {

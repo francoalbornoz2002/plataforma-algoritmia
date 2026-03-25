@@ -6,17 +6,14 @@ import {
   Button,
   Stack,
   Divider,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormHelperText,
   TextField,
   CircularProgress,
   Typography,
   Box,
   Alert,
   InputAdornment,
+  Autocomplete,
+  FormHelperText,
 } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -171,6 +168,10 @@ export default function SesionFormModal({
           )
           .finally(() => setLoadingSystemPreguntas(false));
       }
+    } else if (!selectedDificultadId && !isEditMode) {
+      setValue("gradoSesion", grado_dificultad.Ninguno);
+      setSystemPreguntas([]);
+      setExtraPreguntas([]);
     }
   }, [selectedDificultadId, alumnoDificultades, setValue, isEditMode]);
 
@@ -298,119 +299,135 @@ export default function SesionFormModal({
                 <CircularProgress />
               </Box>
             ) : (
-              <Stack spacing={1} sx={{ mt: 1 }}>
-                {/* --- Fila 1: Alumno, Dificultad, Grado --- */}
-                <Stack direction="row" spacing={2}>
-                  <Box sx={{ width: "100%" }}>
-                    <TextField
-                      fullWidth
-                      label="Alumno"
-                      value={
-                        selectedStudent
-                          ? `${selectedStudent.apellido}, ${selectedStudent.nombre}`
-                          : ""
-                      }
-                      disabled
-                      error={!!errors.idAlumno}
-                      InputProps={{
-                        endAdornment: !isEditMode && (
-                          <InputAdornment position="end">
-                            <Button
-                              size="small"
-                              onClick={() => setIsSelectStudentModalOpen(true)}
-                              startIcon={<PersonSearchIcon />}
-                            >
-                              Seleccionar
-                            </Button>
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                    <FormHelperText error>
-                      {errors.idAlumno?.message}
-                    </FormHelperText>
-                  </Box>
+              <Stack spacing={2} sx={{ mt: 1 }}>
+                <Stack spacing={1}>
+                  {/* --- Fila 1: Alumno, Dificultad, Grado --- */}
+                  <Stack direction="row" spacing={2}>
+                    <Box sx={{ width: "100%" }}>
+                      <TextField
+                        fullWidth
+                        label="Alumno"
+                        value={
+                          selectedStudent
+                            ? `${selectedStudent.apellido}, ${selectedStudent.nombre}`
+                            : ""
+                        }
+                        disabled
+                        error={!!errors.idAlumno}
+                        InputProps={{
+                          endAdornment: !isEditMode && (
+                            <InputAdornment position="end">
+                              <Button
+                                size="small"
+                                onClick={() =>
+                                  setIsSelectStudentModalOpen(true)
+                                }
+                                startIcon={<PersonSearchIcon />}
+                              >
+                                Seleccionar
+                              </Button>
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
+                      <FormHelperText error>
+                        {errors.idAlumno?.message}
+                      </FormHelperText>
+                    </Box>
 
-                  <FormControl fullWidth error={!!errors.idDificultad}>
-                    <InputLabel>Dificultad</InputLabel>
                     <Controller
                       name="idDificultad"
                       control={control}
-                      defaultValue=""
-                      render={({ field }) => (
-                        <Select
-                          {...field}
-                          label="Dificultad"
+                      render={({
+                        field: { onChange, value, ...restField },
+                      }) => (
+                        <Autocomplete
+                          {...restField}
+                          options={alumnoDificultades}
+                          getOptionLabel={(option) =>
+                            `${option.nombre} (${option.grado})`
+                          }
+                          isOptionEqualToValue={(option, val) =>
+                            option.id === val.id
+                          }
+                          value={
+                            alumnoDificultades.find((d) => d.id === value) ||
+                            null
+                          }
+                          onChange={(_, newValue) => {
+                            onChange(newValue ? newValue.id : "");
+                          }}
                           disabled={
                             !selectedAlumnoId ||
                             loadingDificultades ||
                             isEditMode
                           }
-                        >
-                          {alumnoDificultades.map((d) => (
-                            <MenuItem key={d.id} value={d.id}>
-                              {d.nombre} ({d.grado})
-                            </MenuItem>
-                          ))}
-                        </Select>
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label="Dificultad"
+                              error={!!errors.idDificultad}
+                              helperText={errors.idDificultad?.message || " "}
+                            />
+                          )}
+                          fullWidth
+                        />
                       )}
                     />
-                    <FormHelperText>
-                      {errors.idDificultad?.message}
-                    </FormHelperText>
-                  </FormControl>
-                  <TextField
-                    fullWidth
-                    label="Grado"
-                    value={watch("gradoSesion") || ""}
-                    disabled
-                  />
+                  </Stack>
+                  {/* --- Fila 2: Fecha y Tiempo Límite --- */}
+                  <Stack direction="row" spacing={2}>
+                    <Controller
+                      name="fechaHoraLimite"
+                      control={control}
+                      render={({ field }) => (
+                        <DateTimePicker
+                          {...field}
+                          label="Fecha y Hora Límite"
+                          minDate={new Date()}
+                          disablePast
+                          {...datePickerConfig}
+                          slotProps={{
+                            textField: {
+                              ...datePickerConfig.slotProps.textField,
+                              size: "medium",
+                              error: !!errors.fechaHoraLimite,
+                              helperText: errors.fechaHoraLimite?.message,
+                              fullWidth: true,
+                            },
+                          }}
+                        />
+                      )}
+                    />
+                    <Controller
+                      name="tiempoLimite"
+                      control={control}
+                      render={({ field }) => (
+                        <TextField
+                          {...field}
+                          label="Tiempo Límite (minutos)"
+                          type="number"
+                          fullWidth
+                          error={!!errors.tiempoLimite}
+                          helperText={errors.tiempoLimite?.message}
+                          onChange={(e) =>
+                            field.onChange(parseInt(e.target.value, 10) || 0)
+                          }
+                        />
+                      )}
+                    />
+                    <TextField
+                      fullWidth
+                      label="Grado"
+                      value={watch("gradoSesion") || ""}
+                      disabled
+                    />
+                  </Stack>
                 </Stack>
-                {/* --- Fila 2: Fecha y Tiempo Límite --- */}
-                <Stack direction="row" spacing={2}>
-                  <Controller
-                    name="fechaHoraLimite"
-                    control={control}
-                    render={({ field }) => (
-                      <DateTimePicker
-                        {...field}
-                        label="Fecha y Hora Límite"
-                        minDate={new Date()}
-                        disablePast
-                        {...datePickerConfig}
-                        slotProps={{
-                          textField: {
-                            ...datePickerConfig.slotProps.textField,
-                            size: "medium",
-                            error: !!errors.fechaHoraLimite,
-                            helperText: errors.fechaHoraLimite?.message,
-                            fullWidth: true,
-                          },
-                        }}
-                      />
-                    )}
-                  />
-                  <Controller
-                    name="tiempoLimite"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        label="Tiempo Límite (minutos)"
-                        type="number"
-                        fullWidth
-                        error={!!errors.tiempoLimite}
-                        helperText={errors.tiempoLimite?.message}
-                        onChange={(e) =>
-                          field.onChange(parseInt(e.target.value, 10) || 0)
-                        }
-                      />
-                    )}
-                  />
-                </Stack>
+                <Divider />
                 {/* --- Fila 3: Lista de Preguntas --- */}
                 <Box>
-                  <Typography variant="subtitle1" gutterBottom>
+                  <Typography variant="h6" gutterBottom>
                     Preguntas de la Sesión
                   </Typography>
                   {loadingSystemPreguntas ? (
@@ -418,7 +435,7 @@ export default function SesionFormModal({
                   ) : systemPreguntas.length === 0 &&
                     extraPreguntas.length === 0 &&
                     !selectedDificultadId ? (
-                    <Alert severity="info" variant="outlined">
+                    <Alert severity="info">
                       Selecciona una dificultad para cargar las preguntas.
                     </Alert>
                   ) : (
@@ -444,6 +461,7 @@ export default function SesionFormModal({
                     </Stack>
                   )}
                   <Button
+                    sx={{ mt: 1 }}
                     startIcon={<AddCircleOutlineIcon />}
                     onClick={() => setIsExtraPreguntaModalOpen(true)}
                     disabled={

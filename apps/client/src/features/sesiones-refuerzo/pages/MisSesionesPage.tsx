@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Box,
-  Typography,
   CircularProgress,
   Alert,
   Stack,
@@ -10,15 +9,12 @@ import {
   Select,
   MenuItem,
   Grid,
-  Paper,
   Pagination,
   IconButton,
   Tooltip,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { format } from "date-fns";
 import { useNavigate } from "react-router";
-import HistoryIcon from "@mui/icons-material/History";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
 // Hooks, Services, Types
@@ -28,10 +24,8 @@ import {
   type SesionRefuerzoResumen,
   type DocenteBasico,
   type DificultadSimple,
-  type FindSesionesParams,
   estado_sesion,
   grado_dificultad,
-  type PaginatedSesionesResponse,
 } from "../../../types";
 import { EstadoSesionLabels } from "../../../types/traducciones";
 
@@ -51,17 +45,19 @@ export default function MisSesionesPage() {
   const navigate = useNavigate();
 
   // --- Data States ---
-  const [sesionesData, setSesionesData] =
-    useState<PaginatedSesionesResponse | null>(null);
+  const [allSesiones, setAllSesiones] = useState<SesionRefuerzoResumen[]>([]);
 
   // --- Filter States ---
   const [docentesList, setDocentesList] = useState<DocenteBasico[]>([]);
   const [dificultadesList, setDificultadesList] = useState<DificultadSimple[]>(
     [],
   );
-  const [filters, setFilters] = useState<
-    Omit<FindSesionesParams, "page" | "limit" | "sort" | "order">
-  >({});
+  const [filters, setFilters] = useState<{
+    idDocente?: string;
+    idDificultad?: string;
+    gradoSesion?: grado_dificultad | "";
+    estado?: estado_sesion | "";
+  }>({});
   const [dateFilters, setDateFilters] = useState<{
     fechaDesde: Date | null;
     fechaHasta: Date | null;
@@ -97,38 +93,8 @@ export default function MisSesionesPage() {
     setLoading(true);
     setError(null);
     try {
-      let sort = "nroSesion";
-      let order: "asc" | "desc" = "desc";
-
-      if (sortOption === "recent") {
-        sort = "createdAt";
-        order = "desc";
-      } else if (sortOption === "old") {
-        sort = "createdAt";
-        order = "asc";
-      } else if (sortOption === "nro_desc") {
-        sort = "nroSesion";
-        order = "desc";
-      } else if (sortOption === "nro_asc") {
-        sort = "nroSesion";
-        order = "asc";
-      }
-
-      const params: FindSesionesParams = {
-        ...pagination,
-        ...filters,
-        sort,
-        order,
-        fechaDesde: dateFilters.fechaDesde
-          ? format(dateFilters.fechaDesde, "yyyy-MM-dd")
-          : undefined,
-        fechaHasta: dateFilters.fechaHasta
-          ? format(dateFilters.fechaHasta, "yyyy-MM-dd")
-          : undefined,
-        // El backend filtra automáticamente por el ID del alumno logueado
-      };
-      const data = await findAllSesiones(selectedCourse.id, params);
-      setSesionesData(data);
+      const data = await findAllSesiones(selectedCourse.id);
+      setAllSesiones(data);
     } catch (err: any) {
       setError(
         err.response?.data?.message ||
@@ -137,7 +103,7 @@ export default function MisSesionesPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedCourse, pagination, filters, dateFilters, sortOption]);
+  }, [selectedCourse]);
 
   useEffect(() => {
     if (selectedCourse) {
@@ -148,6 +114,60 @@ export default function MisSesionesPage() {
   useEffect(() => {
     fetchSesiones();
   }, [fetchSesiones]);
+
+  // --- LÓGICA DE FILTRADO, ORDENAMIENTO Y PAGINACIÓN LOCAL ---
+  const filteredAndSortedSesiones = useMemo(() => {
+    let result = allSesiones.filter((sesion) => {
+      if (filters.idDocente && sesion.idDocente !== filters.idDocente)
+        return false;
+      if (filters.idDificultad && sesion.idDificultad !== filters.idDificultad)
+        return false;
+      if (filters.gradoSesion && sesion.gradoSesion !== filters.gradoSesion)
+        return false;
+      if (filters.estado && sesion.estado !== filters.estado) return false;
+
+      const sessionDate = new Date(sesion.createdAt);
+      sessionDate.setHours(0, 0, 0, 0);
+
+      if (dateFilters.fechaDesde) {
+        const from = new Date(dateFilters.fechaDesde);
+        from.setHours(0, 0, 0, 0);
+        if (sessionDate < from) return false;
+      }
+      if (dateFilters.fechaHasta) {
+        const to = new Date(dateFilters.fechaHasta);
+        to.setHours(0, 0, 0, 0);
+        if (sessionDate > to) return false;
+      }
+      return true;
+    });
+
+    return result.sort((a, b) => {
+      if (sortOption === "recent") {
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      } else if (sortOption === "old") {
+        return (
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+      } else if (sortOption === "nro_desc") {
+        return b.nroSesion - a.nroSesion;
+      } else if (sortOption === "nro_asc") {
+        return a.nroSesion - b.nroSesion;
+      }
+      return 0;
+    });
+  }, [allSesiones, filters, dateFilters, sortOption]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredAndSortedSesiones.length / pagination.limit),
+  );
+  const currentSesiones = filteredAndSortedSesiones.slice(
+    (pagination.page - 1) * pagination.limit,
+    pagination.page * pagination.limit,
+  );
 
   // --- Handlers ---
   const handleFilterChange = (e: any) => {
@@ -351,10 +371,10 @@ export default function MisSesionesPage() {
           <Alert severity="error">{error}</Alert>
         ) : (
           <Box>
-            {sesionesData && sesionesData.data.length > 0 ? (
+            {currentSesiones.length > 0 ? (
               <>
                 <Grid container spacing={2}>
-                  {sesionesData.data.map((sesion) => (
+                  {currentSesiones.map((sesion) => (
                     <Grid size={{ xs: 12, sm: 6, md: 4 }} key={sesion.id}>
                       <MySesionCard
                         sesion={sesion}
@@ -366,7 +386,7 @@ export default function MisSesionesPage() {
                 </Grid>
                 <Stack spacing={2} sx={{ mt: 3, alignItems: "center" }}>
                   <Pagination
-                    count={sesionesData.meta.totalPages}
+                    count={totalPages}
                     page={pagination.page}
                     onChange={handlePageChange}
                     color="primary"

@@ -20,7 +20,6 @@ import {
   fuente_cambio_dificultad,
 } from '@prisma/client';
 import { getDiaSemanaEnum } from 'src/helpers';
-import { FindAllSesionesDto } from '../dto/find-all-sesiones.dto';
 import { UserPayload } from 'src/interfaces/authenticated-user.interface';
 import { ResolverSesionDto } from '../dto/resolver-sesion.dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -320,24 +319,7 @@ export class SesionesRefuerzoService {
     return nuevaSesion;
   }
 
-  async findAll(idCurso: string, user: UserPayload, dto: FindAllSesionesDto) {
-    const {
-      page = 1,
-      limit = 10,
-      sort = 'nroSesion',
-      order = 'desc',
-      nroSesion,
-      idAlumno,
-      idDocente,
-      idDificultad,
-      gradoSesion,
-      estado,
-      fechaDesde,
-      fechaHasta,
-    } = dto;
-
-    const skip = (page - 1) * limit;
-
+  async findAll(idCurso: string, user: UserPayload) {
     // 1. Validar acceso al curso
     if (user.rol === roles.Docente) {
       await checkDocenteAccess(this.prisma, user.userId, idCurso);
@@ -351,58 +333,29 @@ export class SesionesRefuerzoService {
       deletedAt: null,
     };
 
-    // Filtro por rol: Alumno solo ve sus sesiones.
+    // Filtro de seguridad por rol: Alumno solo ve sus sesiones.
     if (user.rol === roles.Alumno) {
       where.idAlumno = user.userId;
-    } else if (idAlumno) {
-      // Docente puede filtrar por alumno
-      where.idAlumno = idAlumno;
     }
 
-    // Otros filtros
-    if (nroSesion) where.nroSesion = nroSesion;
-    if (idDocente) where.idDocente = idDocente;
-    if (idDificultad) where.idDificultad = idDificultad;
-    if (gradoSesion) where.gradoSesion = gradoSesion;
-    if (estado) where.estado = estado;
-
-    // Filtro por fecha de creación
-    if (fechaDesde || fechaHasta) {
-      where.createdAt = {};
-      if (fechaDesde) {
-        where.createdAt.gte = new Date(fechaDesde);
-      }
-      if (fechaHasta) {
-        const hasta = new Date(fechaHasta);
-        hasta.setDate(hasta.getDate() + 1); // Incluir todo el día
-        where.createdAt.lt = hasta;
-      }
-    }
-
-    // 3. Realizar las consultas a la BD en paralelo
-    const [total, sesiones] = await this.prisma.$transaction([
-      this.prisma.sesionRefuerzo.count({ where }),
-      this.prisma.sesionRefuerzo.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { [sort]: order },
-        include: {
-          alumno: { select: { id: true, nombre: true, apellido: true } },
-          docente: { select: { id: true, nombre: true, apellido: true } },
-          dificultad: { select: { id: true, nombre: true } },
-          resultadoSesion: {
-            include: {
-              respuestasAlumno: true, // <-- AÑADIDO: Incluye siempre las respuestas del alumno
-            },
+    // 3. Obtener todas las sesiones (sin paginación en BD)
+    const sesiones = await this.prisma.sesionRefuerzo.findMany({
+      where,
+      orderBy: { createdAt: 'desc' }, // Un orden base lógico
+      include: {
+        alumno: { select: { id: true, nombre: true, apellido: true } },
+        docente: { select: { id: true, nombre: true, apellido: true } },
+        dificultad: { select: { id: true, nombre: true } },
+        resultadoSesion: {
+          include: {
+            respuestasAlumno: true,
           },
         },
-      }),
-    ]);
+      },
+    });
 
-    // 4. Devolver la respuesta paginada
-    const totalPages = Math.ceil(total / limit);
-    return { data: sesiones, meta: { total, page, limit, totalPages } };
+    // 4. Devolver la respuesta plana
+    return sesiones;
   }
 
   async findOne(idCurso: string, idSesion: string, user: UserPayload) {

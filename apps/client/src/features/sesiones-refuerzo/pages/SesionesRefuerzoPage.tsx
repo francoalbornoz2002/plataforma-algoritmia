@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Box,
   CircularProgress,
@@ -13,12 +13,14 @@ import {
   Pagination,
   IconButton,
   Tooltip,
+  Autocomplete,
+  TextField,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { format } from "date-fns";
 import AddIcon from "@mui/icons-material/Add";
 import HistoryIcon from "@mui/icons-material/History";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
+import AutoAwesome from "@mui/icons-material/AutoAwesome";
 
 // 1. Hooks, Servicios y Tipos
 import { useCourseContext } from "../../../context/CourseContext";
@@ -29,10 +31,8 @@ import {
   type SesionRefuerzoResumen,
   type DocenteBasico,
   type DificultadSimple,
-  type FindSesionesParams,
   estado_sesion,
   grado_dificultad,
-  type PaginatedSesionesResponse,
 } from "../../../types";
 import { EstadoSesionLabels } from "../../../types/traducciones";
 
@@ -52,8 +52,7 @@ export default function SesionesRefuerzoPage() {
   const { selectedCourse, isReadOnly } = useCourseContext();
 
   // --- Estados de Datos ---
-  const [sesionesData, setSesionesData] =
-    useState<PaginatedSesionesResponse | null>(null);
+  const [allSesiones, setAllSesiones] = useState<SesionRefuerzoResumen[]>([]);
 
   // --- Estados para Filtros ---
   const [docentesList, setDocentesList] = useState<DocenteBasico[]>([]);
@@ -61,9 +60,13 @@ export default function SesionesRefuerzoPage() {
   const [dificultadesList, setDificultadesList] = useState<DificultadSimple[]>(
     [],
   );
-  const [filters, setFilters] = useState<
-    Omit<FindSesionesParams, "page" | "limit" | "sort" | "order">
-  >({});
+  const [filters, setFilters] = useState<{
+    idAlumno?: string;
+    idDocente?: string;
+    idDificultad?: string;
+    gradoSesion?: grado_dificultad | "";
+    estado?: estado_sesion | "";
+  }>({});
   const [dateFilters, setDateFilters] = useState<{
     fechaDesde: Date | null;
     fechaHasta: Date | null;
@@ -107,37 +110,8 @@ export default function SesionesRefuerzoPage() {
     setLoading(true);
     setError(null);
     try {
-      let sort = "nroSesion";
-      let order: "asc" | "desc" = "desc";
-
-      if (sortOption === "recent") {
-        sort = "createdAt";
-        order = "desc";
-      } else if (sortOption === "old") {
-        sort = "createdAt";
-        order = "asc";
-      } else if (sortOption === "nro_desc") {
-        sort = "nroSesion";
-        order = "desc";
-      } else if (sortOption === "nro_asc") {
-        sort = "nroSesion";
-        order = "asc";
-      }
-
-      const params: FindSesionesParams = {
-        ...pagination, // 3. Eliminado el debounce
-        ...filters,
-        sort,
-        order,
-        fechaDesde: dateFilters.fechaDesde
-          ? format(dateFilters.fechaDesde, "yyyy-MM-dd")
-          : undefined,
-        fechaHasta: dateFilters.fechaHasta
-          ? format(dateFilters.fechaHasta, "yyyy-MM-dd")
-          : undefined,
-      };
-      const data = await findAllSesiones(selectedCourse.id, params);
-      setSesionesData(data);
+      const data = await findAllSesiones(selectedCourse.id);
+      setAllSesiones(data);
     } catch (err: any) {
       setError(
         err.response?.data?.message ||
@@ -146,7 +120,7 @@ export default function SesionesRefuerzoPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedCourse, pagination, filters, dateFilters, sortOption]);
+  }, [selectedCourse]);
 
   useEffect(() => {
     if (selectedCourse) {
@@ -157,6 +131,73 @@ export default function SesionesRefuerzoPage() {
   useEffect(() => {
     fetchSesiones();
   }, [fetchSesiones]);
+
+  // --- LÓGICA DE FILTRADO, ORDENAMIENTO Y PAGINACIÓN LOCAL ---
+  const filteredAndSortedSesiones = useMemo(() => {
+    let result = allSesiones.filter((sesion) => {
+      if (filters.idAlumno && sesion.idAlumno !== filters.idAlumno)
+        return false;
+
+      // Lógica diferenciada para filtrar por Sistema o por Docente
+      if (filters.idDocente) {
+        if (filters.idDocente === "SISTEMA" && sesion.idDocente !== null) {
+          return false;
+        } else if (
+          filters.idDocente !== "SISTEMA" &&
+          sesion.idDocente !== filters.idDocente
+        ) {
+          return false;
+        }
+      }
+
+      if (filters.idDificultad && sesion.idDificultad !== filters.idDificultad)
+        return false;
+      if (filters.gradoSesion && sesion.gradoSesion !== filters.gradoSesion)
+        return false;
+      if (filters.estado && sesion.estado !== filters.estado) return false;
+
+      const sessionDate = new Date(sesion.createdAt);
+      sessionDate.setHours(0, 0, 0, 0);
+
+      if (dateFilters.fechaDesde) {
+        const from = new Date(dateFilters.fechaDesde);
+        from.setHours(0, 0, 0, 0);
+        if (sessionDate < from) return false;
+      }
+      if (dateFilters.fechaHasta) {
+        const to = new Date(dateFilters.fechaHasta);
+        to.setHours(0, 0, 0, 0);
+        if (sessionDate > to) return false;
+      }
+      return true;
+    });
+
+    return result.sort((a, b) => {
+      if (sortOption === "recent") {
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      } else if (sortOption === "old") {
+        return (
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+      } else if (sortOption === "nro_desc") {
+        return b.nroSesion - a.nroSesion;
+      } else if (sortOption === "nro_asc") {
+        return a.nroSesion - b.nroSesion;
+      }
+      return 0;
+    });
+  }, [allSesiones, filters, dateFilters, sortOption]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredAndSortedSesiones.length / pagination.limit),
+  );
+  const currentSesiones = filteredAndSortedSesiones.slice(
+    (pagination.page - 1) * pagination.limit,
+    pagination.page * pagination.limit,
+  );
 
   // --- Handlers ---
 
@@ -225,7 +266,7 @@ export default function SesionesRefuerzoPage() {
           alignItems="center"
         >
           <DatePicker
-            label="Fecha Desde"
+            label="F. Desde (Asig.)"
             disableFuture
             value={dateFilters.fechaDesde}
             maxDate={dateFilters.fechaHasta || undefined}
@@ -248,7 +289,7 @@ export default function SesionesRefuerzoPage() {
             }}
           />
           <DatePicker
-            label="Hasta"
+            label="F. Hasta (Asig.)"
             disableFuture
             value={dateFilters.fechaHasta}
             minDate={dateFilters.fechaDesde || undefined}
@@ -270,54 +311,101 @@ export default function SesionesRefuerzoPage() {
               },
             }}
           />
-          <FormControl sx={{ width: 200 }} size="small">
-            <InputLabel>Alumno</InputLabel>
-            <Select
-              name="idAlumno"
-              label="Alumno"
-              value={filters.idAlumno || ""}
-              onChange={handleFilterChange}
-            >
-              <MenuItem value="">Todos</MenuItem>
-              {alumnosList.map((a) => (
-                <MenuItem key={a.id} value={a.id}>
-                  {a.nombre} {a.apellido}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl sx={{ width: 200 }} size="small">
-            <InputLabel>Docente Creador</InputLabel>
-            <Select
-              name="idDocente"
-              label="Docente Creador"
-              value={filters.idDocente || ""}
-              onChange={handleFilterChange}
-            >
-              <MenuItem value="">Todos</MenuItem>
-              {docentesList.map((d) => (
-                <MenuItem key={d.id} value={d.id}>
-                  {d.nombre} {d.apellido}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl sx={{ minWidth: 300, flex: 1 }} size="small">
-            <InputLabel>Dificultad</InputLabel>
-            <Select
-              name="idDificultad"
-              label="Dificultad"
-              value={filters.idDificultad || ""}
-              onChange={handleFilterChange}
-            >
-              <MenuItem value="">Todas</MenuItem>
-              {dificultadesList.map((d) => (
-                <MenuItem key={d.id} value={d.id}>
-                  {d.nombre}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Autocomplete
+            size="small"
+            options={alumnosList}
+            getOptionLabel={(option) => `${option.nombre} ${option.apellido}`}
+            value={alumnosList.find((a) => a.id === filters.idAlumno) || null}
+            onChange={(_, newValue) => {
+              setFilters((prev) => ({
+                ...prev,
+                idAlumno: newValue?.id || undefined,
+              }));
+              setPagination((prev) => ({ ...prev, page: 1 }));
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Alumno Asignado"
+                placeholder="Buscar..."
+              />
+            )}
+            sx={{ width: 250 }}
+          />
+          <Autocomplete
+            size="small"
+            options={[
+              { id: "SISTEMA", nombre: "Sistema", apellido: "(Automático)" },
+              ...docentesList,
+            ]}
+            getOptionLabel={(option) => `${option.nombre} ${option.apellido}`}
+            value={
+              filters.idDocente === "SISTEMA"
+                ? { id: "SISTEMA", nombre: "Sistema", apellido: "(Automático)" }
+                : docentesList.find((d) => d.id === filters.idDocente) || null
+            }
+            onChange={(_, newValue) => {
+              setFilters((prev) => ({
+                ...prev,
+                idDocente: newValue?.id || undefined,
+              }));
+              setPagination((prev) => ({ ...prev, page: 1 }));
+            }}
+            renderOption={(props, option) => {
+              const { key, ...restProps } = props as any;
+              return (
+                <Box component="li" key={key} {...restProps}>
+                  {option.id === "SISTEMA" ? (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        color: "secondary.main",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      <AutoAwesome sx={{ mr: 1, fontSize: 20 }} />
+                      {option.nombre} {option.apellido}
+                    </Box>
+                  ) : (
+                    `${option.nombre} ${option.apellido}`
+                  )}
+                </Box>
+              );
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Origen / Creador"
+                placeholder="Buscar..."
+              />
+            )}
+            sx={{ width: 250 }}
+          />
+          <Autocomplete
+            size="small"
+            options={dificultadesList}
+            getOptionLabel={(option) => option.nombre}
+            value={
+              dificultadesList.find((d) => d.id === filters.idDificultad) ||
+              null
+            }
+            onChange={(_, newValue) => {
+              setFilters((prev) => ({
+                ...prev,
+                idDificultad: newValue?.id || undefined,
+              }));
+              setPagination((prev) => ({ ...prev, page: 1 }));
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Dificultad"
+                placeholder="Buscar..."
+              />
+            )}
+            sx={{ minWidth: 400, flex: 1 }}
+          />
           <FormControl sx={{ width: 100 }} size="small">
             <InputLabel>Grado</InputLabel>
             <Select
@@ -398,10 +486,10 @@ export default function SesionesRefuerzoPage() {
           <Alert severity="error">{error}</Alert>
         ) : (
           <Box>
-            {sesionesData && sesionesData.data.length > 0 ? (
+            {currentSesiones.length > 0 ? (
               <>
                 <Grid container spacing={2}>
-                  {sesionesData.data.map((sesion) => (
+                  {currentSesiones.map((sesion) => (
                     <Grid size={{ xs: 12, sm: 6, md: 4 }} key={sesion.id}>
                       <SesionCard
                         sesion={sesion}
@@ -414,7 +502,7 @@ export default function SesionesRefuerzoPage() {
                 </Grid>
                 <Stack spacing={2} sx={{ mt: 3, alignItems: "center" }}>
                   <Pagination
-                    count={sesionesData.meta.totalPages}
+                    count={totalPages}
                     page={pagination.page}
                     onChange={handlePageChange}
                     color="primary"

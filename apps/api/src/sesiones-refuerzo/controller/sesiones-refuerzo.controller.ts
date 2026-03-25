@@ -8,7 +8,6 @@ import {
   Delete,
   Req,
   UseGuards,
-  Query,
 } from '@nestjs/common';
 import { SesionesRefuerzoService } from '../service/sesiones-refuerzo.service';
 import { CreateSesionesRefuerzoDto } from '../dto/create-sesiones-refuerzo.dto';
@@ -17,7 +16,6 @@ import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { roles } from '@prisma/client';
-import { FindAllSesionesDto } from '../dto/find-all-sesiones.dto';
 import { ResolverSesionDto } from '../dto/resolver-sesion.dto';
 
 @UseGuards(RolesGuard)
@@ -41,10 +39,9 @@ export class SesionesRefuerzoController {
   @Roles(roles.Docente, roles.Alumno)
   findAll(
     @Param('idCurso') idCurso: string,
-    @Query() dto: FindAllSesionesDto,
     @Req() req: AuthenticatedUserRequest,
   ) {
-    return this.sesionesRefuerzoService.findAll(idCurso, req.user, dto);
+    return this.sesionesRefuerzoService.findAll(idCurso, req.user);
   }
 
   @Get(':idCurso/:id')
