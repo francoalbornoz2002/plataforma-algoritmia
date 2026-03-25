@@ -1,4 +1,4 @@
-import { Chip } from "@mui/material";
+import { Chip, type SxProps } from "@mui/material";
 import { temas } from "../types";
 import FormatListNumberedIcon from "@mui/icons-material/FormatListNumbered"; // Secuencia
 import AccountTreeIcon from "@mui/icons-material/AccountTree"; // Logica
@@ -11,9 +11,10 @@ import { TemasLabels } from "../types/traducciones";
 interface TemaChipProps {
   tema: temas;
   small?: boolean;
+  sx?: SxProps;
 }
 
-export default function TemaChip({ tema, small }: TemaChipProps) {
+export default function TemaChip({ tema, small, sx }: TemaChipProps) {
   let icon: React.ReactElement;
 
   // Hacemos un switch para asignar el ícono correcto
@@ -46,6 +47,7 @@ export default function TemaChip({ tema, small }: TemaChipProps) {
       label={TemasLabels[tema]}
       variant="outlined"
       size={small ? "small" : "medium"}
+      sx={sx}
     />
   );
 }

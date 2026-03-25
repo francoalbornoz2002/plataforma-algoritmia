@@ -1,4 +1,4 @@
-import { Chip, type ChipProps } from "@mui/material";
+import { Chip, type ChipProps, type SxProps } from "@mui/material";
 import { grado_dificultad } from "../types";
 import DangerousIcon from "@mui/icons-material/Dangerous";
 import WarningIcon from "@mui/icons-material/Warning";
@@ -9,9 +9,10 @@ interface GradeChipProps {
   texto?: string;
   grado: grado_dificultad;
   small?: boolean;
+  sx?: SxProps;
 }
 
-export default function GradeChip({ texto, grado, small }: GradeChipProps) {
+export default function GradeChip({ texto, grado, small, sx }: GradeChipProps) {
   let icon: React.ReactElement | undefined = undefined;
   let color: ChipProps["color"] = "default";
 
@@ -49,6 +50,7 @@ export default function GradeChip({ texto, grado, small }: GradeChipProps) {
       size={small ? "small" : "medium"}
       variant="filled"
       sx={{
+        ...sx,
         fontWeight: "bold",
       }}
     />
