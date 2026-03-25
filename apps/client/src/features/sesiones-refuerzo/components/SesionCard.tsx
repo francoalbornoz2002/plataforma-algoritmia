@@ -20,6 +20,7 @@ import SchoolIcon from "@mui/icons-material/School"; // Para el alumno
 import PsychologyIcon from "@mui/icons-material/Psychology"; // Para dificultad
 import TimerIcon from "@mui/icons-material/Timer"; // Para tiempo límite
 import InfoIcon from "@mui/icons-material/Info"; // Para ver detalles
+import AssessmentIcon from "@mui/icons-material/Assessment";
 
 // Tipos y Componentes
 import type { SesionRefuerzoResumen } from "../../../types";
@@ -55,6 +56,8 @@ export default function SesionCard({
 
   const isPendiente = estado === estado_sesion.Pendiente;
   const isCancelada = estado === estado_sesion.Cancelada;
+  const isCompletadaOrIncompleta =
+    estado === estado_sesion.Completada || estado === estado_sesion.Incompleta;
 
   // Solo se puede editar/borrar si está "Pendiente" y la fecha límite no ha pasado
   const canEditOrDelete = isPendiente && new Date() < new Date(fechaHoraLimite);
@@ -238,9 +241,11 @@ export default function SesionCard({
           size="small"
           variant="text"
           onClick={() => onViewDetails(sesion)}
-          startIcon={<InfoIcon />}
+          startIcon={
+            isCompletadaOrIncompleta ? <AssessmentIcon /> : <InfoIcon />
+          }
         >
-          Detalles
+          {isCompletadaOrIncompleta ? "Ver Resultados" : "Detalles"}
         </Button>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>

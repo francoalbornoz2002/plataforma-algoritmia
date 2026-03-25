@@ -16,6 +16,7 @@ import PsychologyIcon from "@mui/icons-material/Psychology";
 import TimerIcon from "@mui/icons-material/Timer";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import AssessmentIcon from "@mui/icons-material/Assessment";
+import InfoIcon from "@mui/icons-material/Info";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
 
 // Tipos y Utilidades
@@ -232,7 +233,7 @@ export default function MySesionCard({
             Resolver
           </Button>
         )}
-        {(isCompletada || isIncompleta) && sesion.resultadoSesion && (
+        {isCompletada || isIncompleta ? (
           <Button
             size="small"
             color="primary"
@@ -240,6 +241,15 @@ export default function MySesionCard({
             startIcon={<AssessmentIcon />}
           >
             Ver Resultados
+          </Button>
+        ) : (
+          <Button
+            size="small"
+            color="primary"
+            onClick={() => onViewDetails(sesion)}
+            startIcon={<InfoIcon />}
+          >
+            Detalles
           </Button>
         )}
       </CardActions>
