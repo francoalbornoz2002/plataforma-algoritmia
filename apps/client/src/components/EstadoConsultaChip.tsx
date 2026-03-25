@@ -25,11 +25,11 @@ export default function EstadoConsultaChip({
   switch (estado) {
     case estado_consulta.Pendiente:
       icon = <HourglassEmptyIcon />;
-      color = "default"; // Gris
+      color = "info";
       break;
     case estado_consulta.Revisada:
       icon = <VisibilityIcon />;
-      color = "info"; // Azul
+      color = "primary";
       break;
     case estado_consulta.Resuelta:
       icon = <CheckCircleIcon />;
@@ -37,7 +37,11 @@ export default function EstadoConsultaChip({
       break;
     case estado_consulta.No_resuelta:
       icon = <BlockIcon />;
-      color = "default"; // Gris/Default para indicar cierre
+      color = "error";
+      break;
+    case estado_consulta.A_revisar:
+      icon = <HelpOutline />;
+      color = "warning";
       break;
     default:
       icon = <HelpOutline />;
@@ -50,7 +54,7 @@ export default function EstadoConsultaChip({
       icon={icon}
       label={EstadoConsultaLabels[estado]}
       color={color}
-      variant="filled" // Usamos filled para que se destaque
+      variant="filled"
       size={small ? "small" : "medium"}
     />
   );

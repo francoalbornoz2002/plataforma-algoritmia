@@ -474,6 +474,7 @@ export interface ConsultaDocente extends Consulta {
   alumno: {
     nombre: string;
     apellido: string;
+    fotoPerfilUrl?: string | null;
   };
 }
 
@@ -702,6 +703,7 @@ export interface ConsultaSimple {
   alumno: {
     nombre: string;
     apellido: string;
+    fotoPerfilUrl?: string | null;
   };
 }
 

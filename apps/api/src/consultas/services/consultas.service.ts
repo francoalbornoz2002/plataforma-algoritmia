@@ -413,7 +413,7 @@ export class ConsultasService {
           take,
           include: {
             alumno: {
-              select: { nombre: true, apellido: true },
+              select: { nombre: true, apellido: true, fotoPerfilUrl: true },
             },
             respuestaConsulta: {
               include: {
@@ -489,7 +489,7 @@ export class ConsultasService {
           take,
           include: {
             alumno: {
-              select: { nombre: true, apellido: true },
+              select: { nombre: true, apellido: true, fotoPerfilUrl: true },
             },
             respuestaConsulta: {
               include: {

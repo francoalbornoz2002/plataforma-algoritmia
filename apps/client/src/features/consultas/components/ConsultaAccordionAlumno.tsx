@@ -87,12 +87,11 @@ export default function ConsultaAccordionAlumno({
               <Typography variant="h6" noWrap>
                 {titulo}
               </Typography>
-              <Divider orientation="vertical" flexItem />
-              <TemaChip tema={tema} />
             </Stack>
           </Box>
           {/* Columna Derecha: Estado */}
-          <Box>
+          {/* Columna Derecha: Tema y Estado */}
+          <Stack direction="row" spacing={1} alignItems="center">
             {isDeleted ? (
               <Chip
                 icon={<DeleteSweepIcon />}
@@ -102,9 +101,12 @@ export default function ConsultaAccordionAlumno({
                 variant="filled"
               />
             ) : (
-              <EstadoConsultaChip estado={estado} />
+              <>
+                <TemaChip tema={tema} small />
+                <EstadoConsultaChip estado={estado} small />
+              </>
             )}
-          </Box>
+          </Stack>
         </Stack>
       </AccordionSummary>
 

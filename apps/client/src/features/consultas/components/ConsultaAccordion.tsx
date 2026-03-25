@@ -11,6 +11,7 @@ import {
   Alert,
   Divider,
   Rating,
+  Avatar,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useForm, Controller, type SubmitHandler } from "react-hook-form";
@@ -40,6 +41,9 @@ export default function ConsultaAccordion({
   onResponseSuccess,
 }: ConsultaAccordionProps) {
   const [apiError, setApiError] = useState<string | null>(null);
+  const [showReplyForm, setShowReplyForm] = useState(false);
+
+  const baseUrl = import.meta.env.VITE_API_URL_WITHOUT_PREFIX;
 
   // Estado de RHF para el formulario de respuesta
   const {
@@ -64,6 +68,7 @@ export default function ConsultaAccordion({
       });
       if (onResponseSuccess) onResponseSuccess(); // Avisa a la página que refresque
       reset(); // Limpia el formulario
+      setShowReplyForm(false); // Oculta el formulario tras el éxito
     } catch (err: any) {
       setApiError(err.message || "Error al enviar la respuesta.");
       enqueueSnackbar(err.message || "Error al enviar la respuesta.", {
@@ -76,9 +81,16 @@ export default function ConsultaAccordion({
   const isRevisada = consulta.estado === estado_consulta.Revisada;
   const isResuelta = consulta.estado === estado_consulta.Resuelta;
 
-  // 1. Formateo de Fecha de Consulta (la del Alumno)
+  // 1. Formateo de Fecha de Consulta
   const dateC = new Date(consulta.createdAt);
-  const fechaConsultaFormateada = `${dateC.getDate().toString().padStart(2, "0")}/${(dateC.getMonth() + 1).toString().padStart(2, "0")}/${dateC.getFullYear()}`;
+  const diaSemana = new Intl.DateTimeFormat("es-ES", {
+    weekday: "long",
+  }).format(dateC);
+  const diaCapitalizado =
+    diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1);
+  const fechaCStr = `${dateC.getDate().toString().padStart(2, "0")}/${(dateC.getMonth() + 1).toString().padStart(2, "0")}/${dateC.getFullYear()}`;
+  const horaCStr = `${dateC.getHours().toString().padStart(2, "0")}:${dateC.getMinutes().toString().padStart(2, "0")}`;
+  const fechaConsultaFormateada = `${diaCapitalizado}, ${fechaCStr} a las ${horaCStr}`;
 
   // 2. Formateo de Fecha de Respuesta (la del Docente)
   let fechaRespuestaFormateada = ""; // Default
@@ -99,26 +111,39 @@ export default function ConsultaAccordion({
           justifyContent="space-between"
           sx={{ width: "100%" }}
         >
-          {/* Columna Izquierda: Alumno y Título */}
+          {/* Avatar del Alumno */}
+          <Avatar
+            src={
+              consulta.alumno.fotoPerfilUrl
+                ? `${baseUrl}${consulta.alumno.fotoPerfilUrl}`
+                : undefined
+            }
+            alt={`${consulta.alumno.nombre} ${consulta.alumno.apellido}`}
+          >
+            {!consulta.alumno.fotoPerfilUrl && consulta.alumno.nombre.charAt(0)}
+          </Avatar>
+
+          {/* Columna Central: Título, Tema, Alumno y Fecha */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              sx={{ mb: 1 }}
-              variant="overline"
-              color="text.secondary"
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              sx={{ mb: 0.5 }}
             >
-              Consulta de {consulta.alumno.nombre} {consulta.alumno.apellido} (
-              {fechaConsultaFormateada})
-            </Typography>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Typography variant="h6" noWrap>
+              <Typography variant="subtitle1" fontWeight="bold" noWrap>
                 {consulta.titulo}
               </Typography>
-              <Divider orientation="vertical" flexItem />
+              <TemaChip tema={consulta.tema} small />
             </Stack>
+            <Typography variant="body2" color="text.secondary" noWrap>
+              de {consulta.alumno.nombre} {consulta.alumno.apellido} -{" "}
+              {fechaConsultaFormateada}
+            </Typography>
           </Box>
-          {/* Columna Derecha: Tema y Estado */}
+
+          {/* Columna Derecha: Estado */}
           <Stack direction="row" spacing={1} alignItems="center">
-            <TemaChip tema={consulta.tema} small />
             <EstadoConsultaChip estado={consulta.estado} small />
           </Stack>
         </Stack>
@@ -137,15 +162,22 @@ export default function ConsultaAccordion({
 
           <Divider />
 
-          {/* Formulario de Respuesta (si está Pendiente) */}
-          {isPendiente && onResponseSuccess && (
+          {/* Botón de Responder o Formulario (si está Pendiente) */}
+          {isPendiente && onResponseSuccess && !showReplyForm && (
+            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+              <Button variant="text" onClick={() => setShowReplyForm(true)}>
+                Responder
+              </Button>
+            </Box>
+          )}
+
+          {isPendiente && onResponseSuccess && showReplyForm && (
             <Box
               component="form"
               onSubmit={handleSubmit(onSubmit)}
               id={`form-consulta-${consulta.id}`}
             >
-              <Stack spacing={2}>
-                <Typography variant="h6">Responder Consulta</Typography>
+              <Stack>
                 <Controller
                   name="descripcion"
                   control={control}
@@ -163,18 +195,30 @@ export default function ConsultaAccordion({
                   )}
                 />
                 {apiError && <Alert severity="error">{apiError}</Alert>}
-                <Button
-                  type="submit"
-                  variant="contained"
-                  disabled={isSubmitting}
-                  sx={{ alignSelf: "flex-end" }}
-                >
-                  {isSubmitting ? (
-                    <CircularProgress size={24} />
-                  ) : (
-                    "Enviar Respuesta"
-                  )}
-                </Button>
+
+                <Stack direction="row" spacing={1} justifyContent="flex-end">
+                  <Button
+                    disabled={isSubmitting}
+                    onClick={() => {
+                      setShowReplyForm(false);
+                      reset();
+                      setApiError(null);
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <CircularProgress size={24} />
+                    ) : (
+                      "Enviar Respuesta"
+                    )}
+                  </Button>
+                </Stack>
               </Stack>
             </Box>
           )}
