@@ -224,13 +224,17 @@ export default function ConsultaAccordion({
           )}
 
           {/* Respuesta (si ya está Revisada o Resuelta) */}
-          {(isRevisada || isResuelta) && respuestaConsulta && (
+          {(isRevisada || isResuelta) && (
             <Box>
               <Typography variant="overline" color="text.secondary">
-                Tu Respuesta ({fechaRespuestaFormateada})
+                {respuestaConsulta
+                  ? `Tu Respuesta (${fechaRespuestaFormateada})`
+                  : "Respuesta / Resolución"}
               </Typography>
               <Typography variant="body2" sx={{ fontStyle: "italic" }}>
-                {consulta.respuestaConsulta!.descripcion}
+                {respuestaConsulta
+                  ? respuestaConsulta.descripcion
+                  : "Esta consulta fue atendida verbalmente en una clase de consulta."}
               </Typography>
             </Box>
           )}

@@ -237,7 +237,7 @@ export default function ConsultasPage() {
             sx={{ minWidth: 200, flexGrow: 1 }}
           />
 
-          <FormControl size="small" sx={{ width: 200 }}>
+          <FormControl size="small" sx={{ width: 250 }}>
             <InputLabel>Tema</InputLabel>
             <Select
               name="tema"

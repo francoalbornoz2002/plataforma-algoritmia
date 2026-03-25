@@ -121,18 +121,22 @@ export default function ConsultaAccordionAlumno({
             <Typography variant="body2">{descripcion}</Typography>
           </Box>
 
-          {/* Respuesta (si existe) */}
-          {respuestaConsulta && (
+          {/* Respuesta o Resolución (si existe o fue revisada en clase) */}
+          {(respuestaConsulta ||
+            estado === estado_consulta.Revisada ||
+            estado === estado_consulta.Resuelta) && (
             <>
               <Divider />
               <Box>
                 <Typography variant="overline" color="text.secondary">
-                  Respuesta de {respuestaConsulta.docente.nombre}{" "}
-                  {respuestaConsulta.docente.apellido} (
-                  {fechaRespuestaFormateada})
+                  {respuestaConsulta
+                    ? `Respuesta de ${respuestaConsulta.docente.nombre} ${respuestaConsulta.docente.apellido} (${fechaRespuestaFormateada})`
+                    : "Respuesta / Resolución"}
                 </Typography>
                 <Typography variant="body2" sx={{ fontStyle: "italic" }}>
-                  {respuestaConsulta.descripcion}
+                  {respuestaConsulta
+                    ? respuestaConsulta.descripcion
+                    : "Esta consulta fue atendida verbalmente en una clase de consulta."}
                 </Typography>
               </Box>
             </>
