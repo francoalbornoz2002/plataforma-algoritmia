@@ -57,46 +57,58 @@ export default function PreguntaAccordion({
       sx={{ opacity: isDeleted ? 0.6 : 1.0 }}
     >
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Stack
-          direction="row"
-          spacing={2}
-          alignItems="center"
-          justifyContent="space-between"
-          sx={{ width: "100%" }}
-        >
-          {/* Columna Izquierda: Enunciado y nombre de la dificultad */}
-          <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
+        <Stack spacing={2} sx={{ width: "100%" }}>
+          {/* Fila 1: Nombre de la dificultad y chips metadatos */}
+          <Stack
+            direction="row"
+            spacing={0.5}
+            justifyContent="space-between"
+            alignItems="center"
+          >
             <Typography variant="overline" color="text.secondary">
-              {dificultad.nombre}
+              {dificultad?.nombre || "Dificultad"}
             </Typography>
-            <Typography variant="subtitle2" sx={{ wordBreak: "break-word" }}>
-              {enunciado}
-            </Typography>
+            <Box>
+              {isDeleted ? (
+                <Chip
+                  icon={<DeleteSweepIcon />}
+                  label="Dada de baja"
+                  color="error"
+                  size="small"
+                  variant="filled"
+                  sx={{ p: 0.5, fontSize: 10 }}
+                />
+              ) : (
+                <Stack direction="row" spacing={0.5}>
+                  {dificultad?.tema && (
+                    <TemaChip
+                      tema={dificultad.tema}
+                      small
+                      sx={{ p: 0.5, fontSize: 10 }}
+                    />
+                  )}
+                  <GradeChip
+                    grado={gradoDificultad}
+                    texto="Grado"
+                    small
+                    sx={{ p: 0.5, fontSize: 10 }}
+                  />
+                  <Chip
+                    icon={isSistema ? <ComputerIcon /> : <PersonIcon />}
+                    label={isSistema ? "Sistema" : "Docente"}
+                    variant="outlined"
+                    size="small"
+                    sx={{ p: 0.5, fontSize: 10 }}
+                  />
+                </Stack>
+              )}
+            </Box>
           </Stack>
 
-          {/* Columna Derecha: Chips de metadatos */}
-          <Box sx={{ flexShrink: 0 }}>
-            {isDeleted ? (
-              <Chip
-                icon={<DeleteSweepIcon />}
-                label="Dada de baja"
-                color="error"
-                size="small"
-                variant="filled"
-              />
-            ) : (
-              <Stack direction="row" spacing={1}>
-                <TemaChip tema={dificultad.tema} small />
-                <GradeChip grado={gradoDificultad} texto="Grado" small />
-                <Chip
-                  icon={isSistema ? <ComputerIcon /> : <PersonIcon />}
-                  label={isSistema ? "Sistema" : "Docente"}
-                  variant="outlined"
-                  size="small"
-                />
-              </Stack>
-            )}
-          </Box>
+          {/* Fila 2: Enunciado */}
+          <Typography variant="subtitle2" sx={{ wordBreak: "break-word" }}>
+            {enunciado}
+          </Typography>
         </Stack>
       </AccordionSummary>
 

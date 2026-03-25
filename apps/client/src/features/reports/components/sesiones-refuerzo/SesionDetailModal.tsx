@@ -137,21 +137,9 @@ export default function SesionDetailModal({
               Preguntas de la Sesión
             </Typography>
             <Stack spacing={1}>
-              {fullSesion.preguntas?.map((p: any) => {
-                const preguntaAdaptada = {
-                  ...p.pregunta,
-                  dificultad: fullSesion.dificultad,
-                  docenteCreador: p.pregunta.idDocente
-                    ? { nombre: "Docente", apellido: "" }
-                    : null,
-                };
-                return (
-                  <PreguntaAccordion
-                    key={p.pregunta.id}
-                    pregunta={preguntaAdaptada}
-                  />
-                );
-              })}
+              {fullSesion.preguntas?.map((p: any) => (
+                <PreguntaAccordion key={p.pregunta.id} pregunta={p.pregunta} />
+              ))}
               {(!fullSesion.preguntas || fullSesion.preguntas.length === 0) && (
                 <Typography variant="body2" color="text.secondary">
                   No hay preguntas asignadas a esta sesión.

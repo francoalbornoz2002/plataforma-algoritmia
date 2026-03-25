@@ -378,6 +378,8 @@ export class SesionesRefuerzoService {
             pregunta: {
               include: {
                 opcionesRespuesta: true,
+                dificultad: { select: { nombre: true, tema: true } },
+                docenteCreador: { select: { nombre: true, apellido: true } },
               },
             },
           },
@@ -596,6 +598,8 @@ export class SesionesRefuerzoService {
               pregunta: {
                 include: {
                   opcionesRespuesta: true,
+                  dificultad: { select: { nombre: true, tema: true } },
+                  docenteCreador: { select: { nombre: true, apellido: true } },
                 },
               },
             },
