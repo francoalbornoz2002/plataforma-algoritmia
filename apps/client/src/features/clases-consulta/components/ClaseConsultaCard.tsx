@@ -58,6 +58,7 @@ export default function ClaseConsultaCard({
     docenteResponsable,
     consultasEnClase,
     deletedAt,
+    createdAt,
   } = clase;
 
   // --- Reglas de Negocio (UI) ---
@@ -136,9 +137,9 @@ export default function ClaseConsultaCard({
     if (estadoVisual === estado_clase_consulta.Realizada) return "success.main";
     if (estadoVisual === estado_clase_consulta.No_realizada)
       return "error.main";
-    if (estadoVisual === estado_clase_consulta.Programada)
+    if (estadoVisual === estado_clase_consulta.Programada) return "info.main";
+    if (estadoVisual === estado_clase_consulta.Finalizada)
       return "secondary.main";
-    if (estadoVisual === estado_clase_consulta.Finalizada) return "info.main";
     return "divider";
   };
 
@@ -170,14 +171,19 @@ export default function ClaseConsultaCard({
             mb: 1,
           }}
         >
-          <Typography
-            variant="caption"
-            fontWeight="bold"
-            color="text.secondary"
-            sx={{ textTransform: "uppercase" }}
-          >
-            {modalidad}
-          </Typography>
+          <Stack direction="row" spacing={0.5} alignItems="center">
+            <Typography
+              variant="caption"
+              fontWeight="bold"
+              color="text.secondary"
+              sx={{ textTransform: "uppercase" }}
+            >
+              {modalidad}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              • Agendada el {format(new Date(createdAt), "dd/MM/yyyy")}
+            </Typography>
+          </Stack>
           <EstadoClaseChip
             estado={estadoVisual}
             sx={{
@@ -211,7 +217,7 @@ export default function ClaseConsultaCard({
           {descripcion}
         </Typography>
 
-        {/* --- NUEVO: Aviso visual extra si está En Curso --- */}
+        {/* --- Aviso visual extra si está En Curso --- */}
         {isEnCurso && (
           <Box
             sx={{

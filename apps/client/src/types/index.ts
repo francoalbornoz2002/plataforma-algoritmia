@@ -666,6 +666,7 @@ export interface ClaseConsulta {
   modalidad: modalidad;
   estadoClase: estado_clase_consulta;
   estadoActual?: estado_clase_consulta;
+  createdAt: string; // ISO
   deletedAt: string | null; // Llega como string ISO
   motivo?: string | null; // Motivo de cancelación o no realización
 

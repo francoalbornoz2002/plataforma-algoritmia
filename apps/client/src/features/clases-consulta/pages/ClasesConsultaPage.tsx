@@ -260,10 +260,18 @@ export default function ClasesConsultaPage() {
       clases = clases.filter((c) => c.estadoClase === estadoFiltro);
     }
     if (fechaDesde) {
-      clases = clases.filter((c) => new Date(c.fechaInicio) >= fechaDesde);
+      clases = clases.filter((c) => {
+        const d = new Date(c.createdAt);
+        d.setHours(0, 0, 0, 0);
+        return d >= fechaDesde;
+      });
     }
     if (fechaHasta) {
-      clases = clases.filter((c) => new Date(c.fechaInicio) <= fechaHasta);
+      clases = clases.filter((c) => {
+        const d = new Date(c.createdAt);
+        d.setHours(0, 0, 0, 0);
+        return d <= fechaHasta;
+      });
     }
 
     // 2. Ordenar
@@ -271,8 +279,7 @@ export default function ClasesConsultaPage() {
       case "fecha-asc":
         clases.sort(
           (a, b) =>
-            new Date(a.fechaInicio).getTime() -
-            new Date(b.fechaInicio).getTime(),
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
         );
         break;
       case "consultas-desc":
@@ -289,8 +296,7 @@ export default function ClasesConsultaPage() {
       default:
         clases.sort(
           (a, b) =>
-            new Date(b.fechaInicio).getTime() -
-            new Date(a.fechaInicio).getTime(),
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
         );
     }
 
@@ -396,7 +402,7 @@ export default function ClasesConsultaPage() {
           alignItems="center"
         >
           <DatePicker
-            label="Fecha Desde"
+            label="F. Desde (Agenda)"
             disableFuture
             value={fechaDesde}
             maxDate={fechaHasta || undefined}
@@ -407,16 +413,16 @@ export default function ClasesConsultaPage() {
                 InputProps: {
                   sx: {
                     ...datePickerConfig.slotProps.textField.InputProps.sx,
-                    width: 170,
+                    width: 180,
                   },
                 },
-                sx: { width: 170 },
+                sx: { width: 180 },
               },
             }}
           />
 
           <DatePicker
-            label="Fecha Hasta"
+            label="F. Hasta (Agenda)"
             disableFuture
             value={fechaHasta}
             minDate={fechaDesde || undefined}
@@ -427,19 +433,19 @@ export default function ClasesConsultaPage() {
                 InputProps: {
                   sx: {
                     ...datePickerConfig.slotProps.textField.InputProps.sx,
-                    width: 170,
+                    width: 180,
                   },
                 },
-                sx: { width: 170 },
+                sx: { width: 180 },
               },
             }}
           />
 
-          <FormControl size="small" sx={{ minWidth: 180 }}>
-            <InputLabel>Docente</InputLabel>
+          <FormControl size="small" sx={{ minWidth: 250 }}>
+            <InputLabel>Docente a cargo</InputLabel>
             <Select
               value={docenteFiltro}
-              label="Docente"
+              label="Docente a cargo"
               onChange={(e) => setDocenteFiltro(e.target.value)}
             >
               <MenuItem value="Todos">Todos</MenuItem>
@@ -477,9 +483,9 @@ export default function ClasesConsultaPage() {
               <MenuItem value="fecha-desc">Más Recientes</MenuItem>
               <MenuItem value="fecha-asc">Más Antiguas</MenuItem>
               <MenuItem value="consultas-desc">
-                Cant. Consultas (Mayor)
+                Cant. Consultas (Desc.)
               </MenuItem>
-              <MenuItem value="consultas-asc">Cant. Consultas (Menor)</MenuItem>
+              <MenuItem value="consultas-asc">Cant. Consultas (Asc.)</MenuItem>
             </Select>
           </FormControl>
 

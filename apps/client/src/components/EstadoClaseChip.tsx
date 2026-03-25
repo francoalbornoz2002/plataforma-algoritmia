@@ -28,7 +28,7 @@ export const EstadoClaseChip = ({ estado, sx }: EstadoClaseChipProps) => {
 
   switch (estado) {
     case estado_clase_consulta.Programada:
-      color = "secondary";
+      color = "info";
       icon = <ProgramadaIcon />;
       break;
     case estado_clase_consulta.Realizada:
@@ -45,7 +45,7 @@ export const EstadoClaseChip = ({ estado, sx }: EstadoClaseChipProps) => {
       icon = <EnCursoIcon />;
       break;
     case estado_clase_consulta.Finalizada:
-      color = "info";
+      color = "secondary";
       icon = <PorCerrarIcon />;
       break;
     default:
