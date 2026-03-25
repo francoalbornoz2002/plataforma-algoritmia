@@ -676,7 +676,8 @@ export interface ClaseConsulta {
     apellido: string;
   } | null;
   consultasEnClase: {
-    consulta: ConsultaSimple & { id: string };
+    consulta: ConsultaDocente;
+    revisadaEnClase?: boolean;
   }[];
 }
 

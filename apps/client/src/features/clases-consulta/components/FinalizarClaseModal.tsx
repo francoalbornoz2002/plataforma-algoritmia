@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -14,31 +14,14 @@ import {
   Box,
   Alert,
   CircularProgress,
-  Tooltip,
   Stack,
-  IconButton,
+  Typography,
+  Checkbox,
 } from "@mui/material";
-import {
-  DataGrid,
-  type GridColDef,
-  type GridRowSelectionModel,
-} from "@mui/x-data-grid";
-import { Description } from "@mui/icons-material";
 
 // Componentes y Tipos
-import type { ClaseConsulta, ConsultaSimple } from "../../../types"; // Asegúrate de importar ConsultaSimple
-import TemaChip from "../../../components/TemaChip";
-import ConsultaDetailInfoModal from "./ConsultaDetailInfoModal"; // Reutilizamos el mismo modal de detalle
-
-// Helper de fecha (mismo que en tu ejemplo)
-const formatFechaSimple = (fechaString: string | Date) => {
-  if (!fechaString) return "";
-  const date = new Date(fechaString);
-  const day = date.getDate().toString().padStart(2, "0");
-  const month = (date.getMonth() + 1).toString().padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
-};
+import type { ClaseConsulta } from "../../../types";
+import ConsultaAccordion from "../../consultas/components/ConsultaAccordion";
 
 interface Props {
   open: boolean;
@@ -63,24 +46,8 @@ export const FinalizarClaseModal = ({
   const [realizada, setRealizada] = useState<string>("si");
   const [motivo, setMotivo] = useState("");
 
-  // Estado del DataGrid
-  const [selectionModel, setSelectionModel] = useState<GridRowSelectionModel>({
-    type: "include",
-    ids: new Set(),
-  });
-
-  // Estado para ver detalles
-  const [viewingConsulta, setViewingConsulta] = useState<ConsultaSimple | null>(
-    null,
-  );
-
-  // 1. Preparamos los datos para el DataGrid
-  // Aplanamos la estructura: Clase -> ConsultasEnClase -> Consulta
-  const rows = useMemo(() => {
-    return (
-      clase?.consultasEnClase?.map((item: any) => item.consulta || item) || []
-    );
-  }, [clase]);
+  // Estado para los checkboxes
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // 2. Efecto de Inicialización
   useEffect(() => {
@@ -89,78 +56,29 @@ export const FinalizarClaseModal = ({
       setMotivo("");
 
       // Por defecto, marcamos TODAS las consultas como revisadas
-      const allIds = rows.map((r: any) => r.id);
-      setSelectionModel({
-        type: "include",
-        ids: new Set(allIds),
-      });
+      const allIds =
+        clase.consultasEnClase?.map((item: any) => item.consulta.id) || [];
+      setSelectedIds(allIds);
     }
-  }, [open, clase, rows]);
+  }, [open, clase]);
+
+  // Handler para seleccionar/deseleccionar
+  const handleToggle = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+    );
+  };
 
   // 3. Handler de confirmación
   const handleSubmit = () => {
     if (realizada === "no" && !motivo.trim()) return;
 
-    // Convertimos la selección del DataGrid a array de strings
-    const idsSelected = Array.from(selectionModel.ids).map(String);
-
     onConfirm({
       realizada: realizada === "si",
       motivo: realizada === "no" ? motivo : undefined,
-      consultasRevisadasIds: realizada === "si" ? idsSelected : undefined,
+      consultasRevisadasIds: realizada === "si" ? selectedIds : undefined,
     });
   };
-
-  // 4. Definición de Columnas
-  const columns: GridColDef[] = [
-    {
-      field: "titulo",
-      headerName: "Título",
-      flex: 1,
-      minWidth: 150,
-    },
-    {
-      field: "alumno",
-      headerName: "Alumno",
-      flex: 1,
-      minWidth: 150,
-      valueGetter: (value, row) =>
-        row.alumno ? `${row.alumno.nombre} ${row.alumno.apellido}` : "N/A",
-    },
-    {
-      field: "tema",
-      headerName: "Tema",
-      width: 120,
-      renderCell: (params) => <TemaChip tema={params.value} />,
-    },
-    {
-      field: "createdAt",
-      headerName: "Fecha",
-      width: 100,
-      valueFormatter: (value: string) => formatFechaSimple(value),
-    },
-    {
-      field: "actions",
-      headerName: "Ver",
-      width: 60,
-      sortable: false,
-      align: "center",
-      headerAlign: "center",
-      renderCell: (params) => (
-        <Tooltip title="Ver detalle">
-          <IconButton
-            size="small"
-            onClick={(e) => {
-              e.stopPropagation(); // Evitar que el click seleccione/deseleccione la fila
-              setViewingConsulta(params.row);
-            }}
-          >
-            <Description fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      ),
-    },
-  ];
 
   if (!clase) return null;
 
@@ -206,45 +124,46 @@ export const FinalizarClaseModal = ({
                 desmarques volverán a estado "Pendiente".
               </Alert>
 
-              <Box sx={{ height: 400, width: "100%" }}>
-                <DataGrid
-                  rows={rows}
-                  columns={columns}
-                  getRowId={(row) => row.id}
-                  checkboxSelection
-                  disableRowSelectionExcludeModel
-                  // Controlamos la selección con el estado
-                  rowSelectionModel={selectionModel}
-                  onRowSelectionModelChange={(newSelection) => {
-                    setSelectionModel(newSelection);
-                  }}
-                  slots={{
-                    noRowsOverlay: () => (
-                      <Stack
-                        height="100%"
-                        alignItems="center"
-                        justifyContent="center"
-                      >
-                        Esta clase no tiene consultas asignadas.
-                      </Stack>
-                    ),
-                  }}
-                  // Opciones visuales
-                  pageSizeOptions={[5, 10]}
-                  initialState={{
-                    pagination: { paginationModel: { pageSize: 5 } },
-                  }}
-                  sx={{
-                    "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within":
-                      {
-                        outline: "none",
-                      },
-                    "& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within":
-                      {
-                        outline: "none",
-                      },
-                  }}
-                />
+              <Box
+                sx={{ height: 400, width: "100%", overflowY: "auto", pr: 1 }}
+              >
+                {clase.consultasEnClase && clase.consultasEnClase.length > 0 ? (
+                  <Stack spacing={1.5}>
+                    {clase.consultasEnClase.map((item: any) => {
+                      const consulta = item.consulta;
+                      const isSelected = selectedIds.includes(consulta.id);
+                      return (
+                        <Box
+                          key={consulta.id}
+                          sx={{
+                            display: "flex",
+                            alignItems: "flex-start",
+                            gap: 1,
+                          }}
+                        >
+                          <Checkbox
+                            checked={isSelected}
+                            onChange={() => handleToggle(consulta.id)}
+                            sx={{ mt: 1 }}
+                          />
+                          <Box sx={{ flexGrow: 1 }}>
+                            <ConsultaAccordion consulta={consulta} />
+                          </Box>
+                        </Box>
+                      );
+                    })}
+                  </Stack>
+                ) : (
+                  <Stack
+                    height="100%"
+                    alignItems="center"
+                    justifyContent="center"
+                  >
+                    <Typography color="text.secondary">
+                      Esta clase no tiene consultas asignadas.
+                    </Typography>
+                  </Stack>
+                )}
               </Box>
             </Box>
           ) : (
@@ -287,22 +206,13 @@ export const FinalizarClaseModal = ({
             {isLoading ? (
               <CircularProgress size={24} color="inherit" />
             ) : realizada === "si" ? (
-              `Confirmar (${selectionModel.ids.size} revisadas)`
+              `Confirmar (${selectedIds.length} revisadas)`
             ) : (
               "Confirmar Cancelación"
             )}
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Modal de Detalle (Reutilizado) */}
-      {viewingConsulta && (
-        <ConsultaDetailInfoModal
-          open={!!viewingConsulta}
-          onClose={() => setViewingConsulta(null)}
-          consulta={viewingConsulta}
-        />
-      )}
     </>
   );
 };

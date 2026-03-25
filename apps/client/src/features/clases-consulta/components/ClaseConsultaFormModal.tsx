@@ -26,7 +26,7 @@ import { format, addDays } from "date-fns";
 // Tipos, Schemas y Servicios
 import {
   type DocenteBasico,
-  type ConsultaSimple,
+  type ConsultaDocente,
   type ClaseConsulta,
   type CreateClaseConsultaPayload, // <-- Importamos el tipo para tipar el payload
   modalidad,
@@ -34,7 +34,6 @@ import {
 import {
   createClaseConsultaSchema,
   updateClaseConsultaSchema,
-  type CreateClaseConsultaFormValues,
   type UpdateClaseConsultaFormValues,
 } from "../validations/clase-consulta.schema";
 import {
@@ -70,7 +69,7 @@ interface ClaseConsultaFormModalProps {
   claseToEdit: ClaseConsulta | null; // null = Modo Creación
   // Datos precargados
   docentesList: DocenteBasico[];
-  consultasList: ConsultaSimple[]; // Lista de "Pendientes"
+  consultasList: ConsultaDocente[]; // Lista de "Pendientes"
 }
 
 export default function ClaseConsultaFormModal({
@@ -275,7 +274,7 @@ export default function ClaseConsultaFormModal({
   // (Combina pendientes + ya seleccionadas)
   const mergedConsultasList = useMemo(() => {
     // Usamos un Map para evitar duplicados
-    const optionsMap = new Map<string, ConsultaSimple>();
+    const optionsMap = new Map<string, ConsultaDocente>();
 
     // 1. Añadimos todas las 'Pendientes' (de consultasList)
     consultasList.forEach((c) => {

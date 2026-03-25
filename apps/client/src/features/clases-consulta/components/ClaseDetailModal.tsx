@@ -1,36 +1,20 @@
-import { useState, useMemo } from "react"; // <-- 1. Añadir
 import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   Button,
-  IconButton,
-  Tooltip,
   Box,
-  Chip,
   Alert,
   Stack,
   Typography,
 } from "@mui/material";
-import DescriptionIcon from "@mui/icons-material/Description";
-import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import {
   estado_clase_consulta,
   type ClaseConsulta,
-  type ConsultaSimple,
+  type ConsultaDocente,
 } from "../../../types";
-import TemaChip from "../../../components/TemaChip";
-import ConsultaDetailInfoModal from "./ConsultaDetailInfoModal";
-import { Cancel, CheckCircle, HelpOutline } from "@mui/icons-material";
-
-// Helper de fecha
-const formatFechaSimple = (fechaISO: string) => {
-  if (!fechaISO) return "";
-  const fechaString = fechaISO.split("T")[0];
-  const [year, month, day] = fechaString.split("-");
-  return `${day}/${month}/${year}`;
-};
+import ConsultaAccordion from "../../consultas/components/ConsultaAccordion";
 
 interface ClaseDetailModalProps {
   open: boolean;
@@ -43,182 +27,58 @@ export default function ClaseDetailModal({
   onClose,
   clase,
 }: ClaseDetailModalProps) {
-  // 3. Estado para el modal de detalle (un modal dentro de otro)
-  const [viewingConsulta, setViewingConsulta] = useState<ConsultaSimple | null>(
-    null,
-  );
-
-  // 1. Preparar Filas: Aplanamos el objeto para incluir 'revisadaEnClase' en la fila
-  const rows = useMemo(() => {
-    if (!clase?.consultasEnClase) return [];
-
-    return clase.consultasEnClase.map((item: any) => ({
-      ...item.consulta, // Copiamos propiedades de la consulta (titulo, alumno, etc.)
-      // Agregamos la propiedad clave que viene de la tabla intermedia
-      revisada: item.revisadaEnClase || false,
-    }));
-  }, [clase]);
-
-  // Helper para saber si debemos mostrar la columna de estado
-  // (Solo tiene sentido si la clase ya se realizó)
-  const isRealizada = clase.estadoClase === estado_clase_consulta.Realizada;
-
-  // 5. Definimos las columnas (casi idénticas a SelectionModal)
-  const columns: GridColDef<ConsultaSimple>[] = [
-    {
-      field: "titulo",
-      headerName: "Título",
-      flex: 1.5,
-    },
-    {
-      field: "alumno",
-      headerName: "Alumno",
-      flex: 1,
-      valueGetter: (value, row: ConsultaSimple) =>
-        `${row.alumno.nombre} ${row.alumno.apellido}`,
-    },
-    {
-      field: "tema",
-      headerName: "Tema",
-      flex: 0.5,
-      renderCell: (params) => <TemaChip tema={params.value} />,
-    },
-    // --- NUEVA COLUMNA: ESTADO (Solo visible/relevante si la clase se realizó) ---
-    {
-      field: "revisada",
-      headerName: "Revisión",
-      width: 140,
-      align: "center",
-      headerAlign: "center",
-      renderCell: (params) => {
-        // Si la clase NO está realizada, mostramos algo neutro o nada
-        if (!isRealizada) {
-          return (
-            <Chip
-              label="Pendiente"
-              size="small"
-              variant="outlined"
-              icon={<HelpOutline />}
-            />
-          );
-        }
-
-        // Si SI está realizada, diferenciamos
-        if (params.value === true) {
-          return (
-            <Chip
-              label="Revisada"
-              color="success"
-              size="small"
-              icon={<CheckCircle />}
-              variant="filled"
-            />
-          );
-        } else {
-          return (
-            <Chip
-              label="No revisada"
-              color="default" // o 'error' si quieres ser más drástico
-              size="small"
-              icon={<Cancel />}
-              variant="outlined"
-            />
-          );
-        }
-      },
-    },
-    // -----------------------------------------------------------------------------
-    {
-      field: "fechaConsulta",
-      headerName: "Fecha",
-      flex: 0.5,
-      valueFormatter: (value: string) => formatFechaSimple(value),
-    },
-    {
-      field: "actions",
-      headerName: "Acciones",
-      align: "center",
-      headerAlign: "center",
-      sortable: false,
-      renderCell: (params) => (
-        <Tooltip title="Ver descripción completa">
-          <IconButton onClick={() => setViewingConsulta(params.row)}>
-            <DescriptionIcon />
-          </IconButton>
-        </Tooltip>
-      ),
-    },
-  ];
-
   return (
-    <>
-      {/* 6. Modal Principal (con la DataGrid) */}
-      <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-        <DialogTitle>
-          Consultas a revisar en la clase {clase.nombre}
-        </DialogTitle>
-        <DialogContent>
-          {/* Mostrar Motivo si existe (Cancelada o No Realizada) */}
-          {clase.motivo && (
-            <Alert severity="error" variant="outlined" sx={{ mt: 1, mb: 1 }}>
-              <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                Clase{" "}
-                {clase.estadoClase === estado_clase_consulta.Cancelada
-                  ? "Cancelada"
-                  : "No Realizada"}
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      scroll="paper"
+    >
+      <DialogTitle bgcolor="primary.main" color="white">
+        Consultas a revisar en la clase {clase.nombre}
+      </DialogTitle>
+      <DialogContent dividers sx={{ bgcolor: "grey.100", height: 600 }}>
+        {/* Mostrar Motivo si existe (Cancelada o No Realizada) */}
+        {clase.motivo && (
+          <Alert severity="error" variant="outlined" sx={{ mb: 2 }}>
+            <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+              Clase{" "}
+              {clase.estadoClase === estado_clase_consulta.Cancelada
+                ? "Cancelada"
+                : "No Realizada"}
+            </Typography>
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              Motivo dado por el docente:
+            </Typography>
+            <Typography variant="body2" sx={{ fontStyle: "italic", mt: 0.5 }}>
+              "{clase.motivo}"
+            </Typography>
+          </Alert>
+        )}
+
+        <Box sx={{ mt: 1 }}>
+          {clase.consultasEnClase && clase.consultasEnClase.length > 0 ? (
+            <Stack spacing={1}>
+              {clase.consultasEnClase.map((item: any) => (
+                <ConsultaAccordion
+                  key={item.consulta.id}
+                  consulta={item.consulta as ConsultaDocente}
+                />
+              ))}
+            </Stack>
+          ) : (
+            <Stack height={100} alignItems="center" justifyContent="center">
+              <Typography color="text.secondary">
+                No hay consultas asignadas a esta clase.
               </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                Motivo dado por el docente:
-              </Typography>
-              <Typography variant="body2" sx={{ fontStyle: "italic", mt: 0.5 }}>
-                "{clase.motivo}"
-              </Typography>
-            </Alert>
+            </Stack>
           )}
-
-          <Box sx={{ height: 450, width: "100%", mt: 2 }}>
-            <DataGrid
-              rows={rows}
-              columns={columns}
-              disableRowSelectionOnClick
-              slots={{
-                noRowsOverlay: () => (
-                  <Stack
-                    height="100%"
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    No hay consultas asignadas a esta clase.
-                  </Stack>
-                ),
-              }}
-              pageSizeOptions={[5, 10, 25]}
-              getRowId={(row) => row.id}
-              sx={{
-                "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
-                  outline: "none",
-                },
-                "& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within":
-                  {
-                    outline: "none",
-                  },
-              }}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose}>Cerrar</Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Modal de Detalle de la consulta individual */}
-      {viewingConsulta && (
-        <ConsultaDetailInfoModal
-          open={!!viewingConsulta}
-          onClose={() => setViewingConsulta(null)}
-          consulta={viewingConsulta}
-        />
-      )}
-    </>
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cerrar</Button>
+      </DialogActions>
+    </Dialog>
   );
 }

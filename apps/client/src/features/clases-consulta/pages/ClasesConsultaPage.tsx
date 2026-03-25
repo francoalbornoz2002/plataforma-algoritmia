@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import {
   Box,
-  Typography,
   CircularProgress,
   Alert,
   Stack,
@@ -11,7 +10,6 @@ import {
   MenuItem,
   Button,
   Grid,
-  Paper,
   IconButton,
   Tooltip,
 } from "@mui/material";
@@ -34,7 +32,7 @@ import {
 import {
   type ClaseConsulta,
   type DocenteBasico,
-  type ConsultaSimple,
+  type ConsultaDocente,
   estado_clase_consulta,
 } from "../../../types";
 
@@ -66,7 +64,7 @@ export default function ClasesConsultaPage() {
   // --- Estados de Datos (Precarga) ---
   const [allClases, setAllClases] = useState<ClaseConsulta[]>([]);
   const [docentesList, setDocentesList] = useState<DocenteBasico[]>([]);
-  const [consultasList, setConsultasList] = useState<ConsultaSimple[]>([]);
+  const [consultasList, setConsultasList] = useState<ConsultaDocente[]>([]);
 
   // --- Estados de Carga/Error ---
   const [loading, setLoading] = useState(true);

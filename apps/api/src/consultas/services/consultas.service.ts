@@ -617,15 +617,14 @@ export class ConsultasService {
         estado: estado_consulta.Pendiente,
         deletedAt: null,
       },
-      select: {
-        id: true,
-        titulo: true,
-        tema: true,
-        descripcion: true,
-        createdAt: true,
-        // (Incluimos el alumno para que el docente vea de quién es)
+      include: {
         alumno: {
-          select: { nombre: true, apellido: true },
+          select: { nombre: true, apellido: true, fotoPerfilUrl: true },
+        },
+        respuestaConsulta: {
+          include: {
+            docente: { select: { nombre: true, apellido: true } },
+          },
         },
       },
       orderBy: {

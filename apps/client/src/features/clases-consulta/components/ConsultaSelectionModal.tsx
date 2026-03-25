@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -6,35 +6,19 @@ import {
   DialogActions,
   Button,
   Box,
-  Tooltip,
   Stack,
-  IconButton,
+  Typography,
+  Checkbox,
+  Alert,
 } from "@mui/material";
-import {
-  DataGrid,
-  type GridColDef,
-  type GridRowSelectionModel,
-} from "@mui/x-data-grid";
-import type { ConsultaSimple } from "../../../types";
-import TemaChip from "../../../components/TemaChip";
-import { Description } from "@mui/icons-material";
-import ConsultaDetailInfoModal from "./ConsultaDetailInfoModal";
-
-// Helper de fecha
-const formatFechaSimple = (fechaString: string) => {
-  if (!fechaString) return "";
-  const date = new Date(fechaString);
-  const day = date.getDate().toString().padStart(2, "0");
-  const month = (date.getMonth() + 1).toString().padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
-};
+import type { ConsultaDocente } from "../../../types";
+import ConsultaAccordion from "../../consultas/components/ConsultaAccordion";
 
 interface ConsultaSelectionModalProps {
   open: boolean;
   onClose: () => void;
   onConfirm: (selectedIds: string[]) => void;
-  consultasList: ConsultaSimple[];
+  consultasList: ConsultaDocente[];
   initialSelection: string[];
 }
 
@@ -45,134 +29,76 @@ export default function ConsultaSelectionModal({
   consultasList,
   initialSelection,
 }: ConsultaSelectionModalProps) {
-  // --- 1. ESTADO (Vuelve a ser simple) ---
-  // El 'rowSelectionModel' (con la prop de abajo) SÍ es un array de IDs.
-  const [selectionModel, setSelectionModel] = useState<GridRowSelectionModel>({
-    type: "include",
-    ids: new Set(initialSelection), // <-- Usamos un Set
-  });
-
-  const [viewingConsulta, setViewingConsulta] = useState<ConsultaSimple | null>(
-    null,
-  );
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (open) {
-      setSelectionModel({
-        type: "include",
-        ids: new Set(initialSelection),
-      });
+      setSelectedIds(initialSelection);
     }
   }, [open, initialSelection]);
 
-  const handleConfirm = () => {
-    // 1. Convertimos el Set<GridRowId> a (string | number)[]
-    const idsArray = Array.from(selectionModel.ids);
-
-    // 2. Forzamos la conversión de (string | number)[] a string[]
-    const stringIdsArray = idsArray.map((id) => String(id));
-
-    // 3. Pasamos el array de strings puros
-    onConfirm(stringIdsArray);
+  const handleToggle = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
+    );
   };
 
-  // Columnas para el modal de selección
-  const columns: GridColDef<ConsultaSimple>[] = [
-    {
-      field: "titulo",
-      headerName: "Título",
-      flex: 1,
-    },
-    {
-      field: "alumno",
-      headerName: "Alumno",
-      flex: 1,
-      valueGetter: (value, row: ConsultaSimple) =>
-        `${row.alumno.nombre} ${row.alumno.apellido}`,
-    },
-    {
-      field: "tema",
-      headerName: "Tema",
-      flex: 0.5,
-      renderCell: (params) => <TemaChip tema={params.value} />,
-    },
-    {
-      field: "createdAt",
-      headerName: "Fecha",
-      flex: 0.5,
-      valueFormatter: (value: string) => formatFechaSimple(value),
-    },
-    {
-      field: "actions",
-      headerName: "Acciones",
-      align: "center",
-      headerAlign: "center",
-      sortable: false,
-      renderCell: (params) => (
-        <Tooltip title="Ver descripción completa">
-          <IconButton onClick={() => setViewingConsulta(params.row)}>
-            <Description />
-          </IconButton>
-        </Tooltip>
-      ),
-    },
-  ];
+  const handleConfirm = () => {
+    onConfirm(selectedIds);
+  };
 
   return (
-    <>
-      <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-        <DialogTitle>Seleccionar Consultas Pendientes</DialogTitle>
-        <DialogContent>
-          <Box sx={{ height: 450, width: "100%", mt: 2 }}>
-            <DataGrid
-              rows={consultasList}
-              columns={columns}
-              getRowId={(row) => row.id}
-              pageSizeOptions={[5, 10, 25]}
-              checkboxSelection
-              disableRowSelectionExcludeModel
-              onRowSelectionModelChange={(newSelection) => {
-                setSelectionModel(newSelection);
-              }}
-              slots={{
-                noRowsOverlay: () => (
-                  <Stack
-                    height="100%"
-                    alignItems="center"
-                    justifyContent="center"
-                  >
-                    No hay consultas disponibles para seleccionar.
-                  </Stack>
-                ),
-              }}
-              rowSelectionModel={selectionModel}
-              sx={{
-                "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
-                  outline: "none",
-                },
-                "& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within":
-                  {
-                    outline: "none",
-                  },
-              }}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleConfirm} variant="contained">
-            Aceptar ({selectionModel.ids.size} seleccionadas)
-          </Button>
-        </DialogActions>
-      </Dialog>
-      {/* --- 6. Renderizado del Modal de Detalle --- */}
-      {viewingConsulta && (
-        <ConsultaDetailInfoModal
-          open={!!viewingConsulta}
-          onClose={() => setViewingConsulta(null)}
-          consulta={viewingConsulta}
-        />
-      )}
-    </>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      scroll="paper"
+    >
+      <DialogTitle>Seleccionar Consultas Pendientes</DialogTitle>
+      <DialogContent dividers sx={{ bgcolor: "grey.50", height: 500 }}>
+        {consultasList.length === 0 ? (
+          <Stack height="100%" alignItems="center" justifyContent="center">
+            <Typography color="text.secondary">
+              No hay consultas disponibles para seleccionar.
+            </Typography>
+          </Stack>
+        ) : (
+          <Stack spacing={1.5}>
+            <Alert severity="info" sx={{ mb: 1 }}>
+              Selecciona las consultas que deseas abordar en esta clase.
+            </Alert>
+            {consultasList.map((consulta) => {
+              const isSelected = selectedIds.includes(consulta.id);
+              return (
+                <Box
+                  key={consulta.id}
+                  sx={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 1,
+                  }}
+                >
+                  <Checkbox
+                    checked={isSelected}
+                    onChange={() => handleToggle(consulta.id)}
+                    sx={{ mt: 2.5 }}
+                  />
+                  <Box sx={{ flexGrow: 1 }}>
+                    <ConsultaAccordion consulta={consulta} />
+                  </Box>
+                </Box>
+              );
+            })}
+          </Stack>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancelar</Button>
+        <Button onClick={handleConfirm} variant="contained">
+          Aceptar ({selectedIds.length} seleccionadas)
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }

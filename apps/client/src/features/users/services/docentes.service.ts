@@ -2,7 +2,6 @@ import apiClient from "../../../lib/axios";
 // Usamos el tipo que ya existe
 import type {
   Consulta,
-  ConsultaSimple,
   CursoParaEditar,
   DificultadConTema,
   DificultadAlumnoDetallada,
@@ -12,6 +11,7 @@ import type {
   AlumnoDificultadResumen,
   FindConsultasParams,
   MisionConEstado,
+  ConsultaDocente,
   PaginatedConsultasDocenteResponse,
   ProgresoCurso,
   CourseDashboardData,
@@ -295,7 +295,7 @@ export const findActiveDocentes = async (
  */
 export const findPendingConsultas = async (
   idCurso: string,
-): Promise<ConsultaSimple[]> => {
+): Promise<ConsultaDocente[]> => {
   try {
     const response = await apiClient.get(
       `/docentes/my/courses/${idCurso}/pending-consultas`,
