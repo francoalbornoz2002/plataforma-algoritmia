@@ -93,7 +93,7 @@ export default function ResultadoSesionView({
       {/* --- Resumen de Estadísticas --- */}
       <Paper variant="outlined" sx={{ p: 2 }}>
         <Typography variant="h6" gutterBottom align="center">
-          Resumen de la Sesión
+          Resultados de la Sesión
         </Typography>
         <Stack
           direction={{ xs: "column", sm: "row" }}

@@ -67,11 +67,6 @@ export default function SesionCard({
   const fechaLimiteStr = format(fechaLimiteObj, "dd/MM/yy");
   const horaLimiteStr = format(fechaLimiteObj, "HH:mm");
 
-  // Manejo seguro del docente
-  const nombreDocente = docente
-    ? `${docente.nombre} ${docente.apellido}`
-    : "Sistema (Automática)";
-
   return (
     <Paper
       elevation={2}
