@@ -403,7 +403,7 @@ export class SesionesRefuerzoService {
     });
 
     // 3. Validar si la sesión existe y si el usuario tiene permiso para verla
-    if (!sesion || sesion.deletedAt) {
+    if (!sesion) {
       throw new NotFoundException('Sesión de refuerzo no encontrada.');
     }
 

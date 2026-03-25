@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import {
   Box,
-  Typography,
   CircularProgress,
   Alert,
   Stack,
@@ -13,9 +12,9 @@ import {
   Button,
   type SelectChangeEvent,
   Pagination,
-  Paper,
   IconButton,
   Tooltip,
+  Autocomplete,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
@@ -48,6 +47,15 @@ export default function PreguntasPage() {
 
   // Estados de los modales
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const ITEM_HEIGHT = 48;
+  const ITEM_PADDING_TOP = 8;
+  const PopperProps = {
+    PaperProps: {
+      style: {
+        maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      },
+    },
+  };
   const [preguntaToEdit, setPreguntaToEdit] =
     useState<PreguntaConDetalles | null>(null);
   const [preguntaToDelete, setPreguntaToDelete] =
@@ -205,9 +213,9 @@ export default function PreguntasPage() {
             size="small"
             value={searchTerm}
             onChange={handleSearchChange}
-            sx={{ minWidth: 400 }}
+            sx={{ width: 320 }}
           />
-          <FormControl size="small" sx={{ width: 200 }}>
+          <FormControl size="small" sx={{ width: 225 }}>
             <InputLabel>Tema</InputLabel>
             <Select
               name="tema"
@@ -225,23 +233,34 @@ export default function PreguntasPage() {
                 ))}
             </Select>
           </FormControl>
-          <FormControl size="small" sx={{ width: 300 }}>
-            <InputLabel>Dificultad</InputLabel>
-            <Select
-              name="idDificultad"
-              value={filters.idDificultad}
-              label="Dificultad"
-              onChange={handleFilterChange}
-              disabled={allDifficulties.length === 0}
-            >
-              <MenuItem value="">Todas</MenuItem>
-              {filteredDifficulties.map((d) => (
-                <MenuItem key={d.id} value={d.id}>
-                  {d.nombre}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Autocomplete
+            size="small"
+            options={filteredDifficulties}
+            getOptionLabel={(option) => option.nombre}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            value={
+              filters.idDificultad
+                ? filteredDifficulties.find(
+                    (d) => d.id === filters.idDificultad,
+                  ) || null
+                : null
+            }
+            onChange={(_, newValue) =>
+              handleFilterChange({
+                target: { name: "idDificultad", value: newValue?.id || "" },
+              } as SelectChangeEvent<string>)
+            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Dificultad"
+                placeholder="Buscar..."
+              />
+            )}
+            disabled={allDifficulties.length === 0}
+            sx={{ width: 375 }}
+            slotProps={{ popper: PopperProps }}
+          />
           <FormControl size="small" sx={{ minWidth: 100 }}>
             <InputLabel>Grado</InputLabel>
             <Select
