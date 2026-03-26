@@ -731,6 +731,62 @@ export interface CourseDashboardData {
   sesionesPorOrigen: { sistema: number; docente: number };
 }
 
+export interface StudentDashboardStats {
+  misiones: { hoy: number; semana: number };
+  progresoPct: number;
+  misionMasDificil: {
+    mision: Mision;
+    intentos: number;
+    promedioHistorial: number;
+  } | null;
+  sesionPendiente: {
+    id: string;
+    fechaHoraLimite: string;
+    dificultad: { nombre: string };
+  } | null;
+  proximaClase: {
+    id: string;
+    fechaInicio: string;
+    fechaFin: string;
+    modalidad: string;
+    nombre: string;
+  } | null;
+  dificultades: {
+    activas: number;
+    distribucion: { label: string; value: number }[];
+    ultimaAlta: { nombre: string; gradoActual: string } | null;
+  };
+  consultas: {
+    total: number;
+    distribucion: { label: string; value: number }[];
+    recientes: {
+      id: string;
+      titulo: string;
+      estado: string;
+      updatedAt: string;
+    }[];
+    ultimaRealizada: {
+      id: string;
+      titulo: string;
+      descripcion: string;
+      estado: estado_consulta;
+      createdAt: string;
+    } | null;
+  };
+  sesiones: {
+    total: number;
+    distribucion: { label: string; value: number }[];
+    ultimoResultado: {
+      dificultadNombre: string;
+      pctAciertos: number;
+      gradoAnterior: string;
+      gradoNuevo: string;
+      nroSesion: number;
+    } | null;
+  };
+  cantidadAlumnosInscriptos: number;
+}
+
 // ---------- DASHBOARD ADMIN ---------- //
 export interface AdminDashboardStats {
   users: {

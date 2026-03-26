@@ -126,7 +126,7 @@ export default function JoinCourseModal({
             Cancelar
           </Button>
           <Button type="submit" variant="contained" disabled={isJoining}>
-            {isJoining ? <CircularProgress size={24} /> : "Unirse"}
+            {isJoining ? <CircularProgress size={24} /> : "Inscribirse"}
           </Button>
         </DialogActions>
       </form>

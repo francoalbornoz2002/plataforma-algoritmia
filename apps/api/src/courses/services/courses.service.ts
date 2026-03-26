@@ -974,11 +974,33 @@ export class CoursesService {
         where: { idAlumno_idCurso: { idAlumno, idCurso } },
         select: {
           progresoAlumno: {
-            select: { pctMisionesCompletadas: true },
+            select: { pctMisionesCompletadas: true, promIntentos: true },
           },
         },
       }),
     ]);
+
+    // Misión más difícil de la semana (la que requirió más intentos)
+    const misionMasDificilRecord = await this.prisma.misionCompletada.findFirst(
+      {
+        where: {
+          fechaCompletado: { gte: startOfWeek, lte: endOfWeek },
+          progresoAlumno: { alumnoCurso: { idAlumno, idCurso } },
+        },
+        include: { mision: true },
+        orderBy: { intentos: 'desc' },
+      },
+    );
+    let misionMasDificil;
+    if (misionMasDificilRecord) {
+      misionMasDificil = {
+        mision: misionMasDificilRecord.mision,
+        intentos: misionMasDificilRecord.intentos,
+        promedioHistorial: progreso?.progresoAlumno?.promIntentos
+          ? Number(progreso.progresoAlumno.promIntentos)
+          : 0,
+      };
+    }
 
     // 2. Sesión Pendiente (La más próxima)
     const sesionPendiente = await this.prisma.sesionRefuerzo.findFirst({
@@ -1010,24 +1032,137 @@ export class CoursesService {
         deletedAt: null,
       },
       orderBy: { fechaInicio: 'asc' },
-      select: { id: true, fechaInicio: true, fechaFin: true, modalidad: true },
+      select: {
+        id: true,
+        fechaInicio: true,
+        fechaFin: true,
+        modalidad: true,
+        nombre: true,
+      },
     });
 
     // 4. Dificultades
-    const [cantDificultadesActivas, ultimaDificultadAlta] = await Promise.all([
-      this.prisma.dificultadAlumno.count({
-        where: { idAlumno, idCurso, grado: { not: 'Ninguno' } },
-      }),
-      this.prisma.historialDificultadAlumno.findFirst({
+    const dificultadesDistribucion = await this.prisma.dificultadAlumno.groupBy(
+      {
+        by: ['grado'],
+        where: { idAlumno, idCurso },
+        _count: { idDificultad: true },
+      },
+    );
+    const cantDificultadesActivas = dificultadesDistribucion
+      .filter((d) => d.grado !== 'Ninguno')
+      .reduce((acc, curr) => acc + curr._count.idDificultad, 0);
+
+    const ultimaDificultadAlta =
+      await this.prisma.historialDificultadAlumno.findFirst({
         where: { idAlumno, idCurso, gradoNuevo: 'Alto' },
         orderBy: { fechaCambio: 'desc' },
-        select: { dificultad: { select: { nombre: true } }, fechaCambio: true },
-      }),
-    ]);
+        select: {
+          dificultad: { select: { id: true, nombre: true } },
+          fechaCambio: true,
+        },
+      });
+
+    let ultimaAltaInfo;
+    if (ultimaDificultadAlta) {
+      const estadoActual = await this.prisma.dificultadAlumno.findUnique({
+        where: {
+          idAlumno_idCurso_idDificultad: {
+            idAlumno,
+            idCurso,
+            idDificultad: ultimaDificultadAlta.dificultad.id,
+          },
+        },
+        select: { grado: true },
+      });
+      ultimaAltaInfo = {
+        nombre: ultimaDificultadAlta.dificultad.nombre,
+        gradoActual: estadoActual?.grado || 'Ninguno',
+      };
+    }
 
     // 5. Consultas
-    const totalConsultas = await this.prisma.consulta.count({
+    const consultasDistribucion = await this.prisma.consulta.groupBy({
+      by: ['estado'],
       where: { idAlumno, idCurso, deletedAt: null },
+      _count: { id: true },
+    });
+    const totalConsultas = consultasDistribucion.reduce(
+      (acc, curr) => acc + curr._count.id,
+      0,
+    );
+    const ultimaConsultaRealizada = await this.prisma.consulta.findFirst({
+      where: {
+        idAlumno,
+        idCurso,
+        deletedAt: null, // Solo consultas no eliminadas
+      },
+      orderBy: { createdAt: 'desc' }, // Ordenar por fecha de creación descendente
+      // Incluimos la descripción para la tarjeta del dashboard
+      select: {
+        id: true,
+        titulo: true,
+        descripcion: true,
+        estado: true,
+        createdAt: true,
+      },
+    });
+
+    // 6. Sesiones de Refuerzo
+    const sesionesDistribucion = await this.prisma.sesionRefuerzo.groupBy({
+      by: ['estado'],
+      where: { idAlumno, idCurso, deletedAt: null },
+      _count: { id: true },
+    });
+    const totalSesiones = sesionesDistribucion.reduce(
+      (acc, curr) => acc + curr._count.id,
+      0,
+    );
+
+    const ultimoResultado = await this.prisma.resultadoSesion.findFirst({
+      where: {
+        sesionRefuerzo: {
+          idAlumno,
+          idCurso,
+          deletedAt: null,
+        },
+      },
+      orderBy: { fechaCompletado: 'desc' },
+      include: {
+        sesionRefuerzo: {
+          select: {
+            dificultad: { select: { nombre: true } },
+            nroSesion: true,
+          },
+        },
+      },
+    });
+
+    let ultimoResultadoMapped;
+    if (ultimoResultado) {
+      ultimoResultadoMapped = {
+        dificultadNombre: ultimoResultado.sesionRefuerzo.dificultad.nombre,
+        pctAciertos: Number(ultimoResultado.pctAciertos),
+        gradoAnterior: ultimoResultado.gradoAnterior,
+        gradoNuevo: ultimoResultado.gradoNuevo,
+        nroSesion: ultimoResultado.sesionRefuerzo.nroSesion,
+      };
+    }
+
+    const ultimasConsultasRevisadas = await this.prisma.consulta.findMany({
+      where: {
+        idAlumno,
+        idCurso,
+        estado: { in: [estado_consulta.Revisada] },
+        deletedAt: null,
+      },
+      orderBy: { updatedAt: 'desc' },
+      take: 15,
+      select: { id: true, titulo: true, estado: true, updatedAt: true },
+    });
+
+    const cantidadAlumnosInscriptos = await this.prisma.alumnoCurso.count({
+      where: { idCurso, estado: estado_simple.Activo },
     });
 
     return {
@@ -1035,13 +1170,35 @@ export class CoursesService {
       progresoPct: progreso?.progresoAlumno?.pctMisionesCompletadas
         ? Number(progreso.progresoAlumno.pctMisionesCompletadas)
         : 0,
+      misionMasDificil,
       sesionPendiente,
       proximaClase,
       dificultades: {
         activas: cantDificultadesActivas,
-        ultimaAlta: ultimaDificultadAlta?.dificultad.nombre || null,
+        distribucion: dificultadesDistribucion.map((d) => ({
+          label: d.grado,
+          value: d._count.idDificultad,
+        })),
+        ultimaAlta: ultimaAltaInfo,
       },
-      totalConsultas,
+      consultas: {
+        total: totalConsultas,
+        distribucion: consultasDistribucion.map((c) => ({
+          label: c.estado,
+          value: c._count.id,
+        })),
+        recientes: ultimasConsultasRevisadas,
+        ultimaRealizada: ultimaConsultaRealizada,
+      },
+      sesiones: {
+        total: totalSesiones,
+        distribucion: sesionesDistribucion.map((s) => ({
+          label: s.estado,
+          value: s._count.id,
+        })),
+        ultimoResultado: ultimoResultadoMapped,
+      },
+      cantidadAlumnosInscriptos,
     };
   }
 
