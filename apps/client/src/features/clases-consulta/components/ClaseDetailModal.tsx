@@ -8,6 +8,7 @@ import {
   Alert,
   Stack,
   Typography,
+  AlertTitle,
 } from "@mui/material";
 import {
   estado_clase_consulta,
@@ -41,18 +42,15 @@ export default function ClaseDetailModal({
       <DialogContent dividers sx={{ bgcolor: "grey.100", height: 600 }}>
         {/* Mostrar Motivo si existe (Cancelada o No Realizada) */}
         {clase.motivo && (
-          <Alert severity="error" variant="outlined" sx={{ mb: 2 }}>
-            <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+          <Alert severity="error" variant="standard" sx={{ mb: 2 }}>
+            <AlertTitle>
               Clase{" "}
               {clase.estadoClase === estado_clase_consulta.Cancelada
                 ? "Cancelada"
                 : "No Realizada"}
-            </Typography>
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>
-              Motivo dado por el docente:
-            </Typography>
-            <Typography variant="body2" sx={{ fontStyle: "italic", mt: 0.5 }}>
-              "{clase.motivo}"
+            </AlertTitle>
+            <Typography variant="body2">
+              <strong>Motivo dado por el docente:</strong> {clase.motivo}
             </Typography>
           </Alert>
         )}

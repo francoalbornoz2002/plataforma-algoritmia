@@ -277,7 +277,7 @@ export class ClasesConsultaService {
               include: {
                 // E incluimos su 'alumno'
                 alumno: {
-                  select: { nombre: true, apellido: true },
+                  select: { nombre: true, apellido: true, fotoPerfilUrl: true },
                 },
               },
             },
@@ -522,12 +522,18 @@ export class ClasesConsultaService {
               consultasEnClase: {
                 select: {
                   consulta: {
-                    select: {
-                      id: true,
-                      titulo: true,
-                      alumno: { select: { nombre: true, email: true } },
+                    include: {
+                      alumno: {
+                        select: {
+                          nombre: true,
+                          apellido: true,
+                          email: true,
+                          fotoPerfilUrl: true,
+                        },
+                      },
                     },
                   },
+                  revisadaEnClase: true,
                 },
               },
             },

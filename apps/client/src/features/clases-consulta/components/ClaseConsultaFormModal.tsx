@@ -297,32 +297,45 @@ export default function ClaseConsultaFormModal({
   // 6. Fecha máxima (Tu feature)
   const maxDate = addDays(new Date(), 7);
 
+  // 7. Fecha mínima (deshabilitar hoy si ya pasó la hora máxima)
+  const effectiveMinDate = useMemo(() => {
+    const now = new Date();
+    if (
+      now.getHours() > 20 ||
+      (now.getHours() === 20 && now.getMinutes() >= 30)
+    ) {
+      return addDays(now, 1);
+    }
+    return now;
+  }, []);
+
   return (
     <>
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle align="center">
-          {isEditMode ? "Editar" : "Crear"} Clase de Consulta
+          {isEditMode ? "Editar" : "Agendar"} Clase de Consulta
         </DialogTitle>
         <Divider variant="middle" />
         <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
-          <DialogContent>
-            <Stack spacing={2} sx={{ mt: 1 }}>
-              {/* Fila 1: Nombre y Docente */}
-              <Stack direction="row" spacing={2}>
-                <Controller
-                  name="nombre"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Nombre de la Clase"
-                      fullWidth
-                      required
-                      error={!!errors.nombre}
-                      helperText={errors.nombre?.message || " "}
-                    />
-                  )}
-                />
+          <DialogContent sx={{ mb: -3 }}>
+            <Stack spacing={1}>
+              {/* Nombre de la clase */}
+              <Controller
+                name="nombre"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Nombre de la Clase"
+                    fullWidth
+                    required
+                    error={!!errors.nombre}
+                    helperText={errors.nombre?.message || " "}
+                  />
+                )}
+              />
+              <Stack direction="row" spacing={1}>
+                {/* Docente a cargo */}
                 <FormControl fullWidth error={!!errors.idDocente}>
                   <InputLabel>Docente a Cargo</InputLabel>
                   <Controller
@@ -346,89 +359,7 @@ export default function ClaseConsultaFormModal({
                     {errors.idDocente?.message || " "}
                   </FormHelperText>
                 </FormControl>
-              </Stack>
-
-              {/* Fila 2: Fecha, Horas y Modalidad */}
-              <Stack direction="row" spacing={2}>
-                <Controller
-                  name="fechaClase"
-                  control={control}
-                  render={({ field }) => (
-                    <DatePicker
-                      label="Fecha de la Clase"
-                      value={field.value ? parseLocalDate(field.value) : null}
-                      onChange={
-                        (newDate) =>
-                          field.onChange(
-                            newDate ? format(newDate, "yyyy-MM-dd") : "",
-                          ) // Guardamos string
-                      }
-                      maxDate={maxDate}
-                      disablePast
-                      slotProps={{
-                        textField: {
-                          InputProps: { readOnly: true }, // Evita escritura manual
-                          fullWidth: true,
-                          required: true,
-                          error: !!errors.fechaClase,
-                          helperText: errors.fechaClase?.message || " ",
-                        },
-                      }}
-                    />
-                  )}
-                />
-                <Controller
-                  name="horaInicio"
-                  control={control}
-                  render={({ field }) => (
-                    <TimePicker
-                      label="Hora Inicio"
-                      ampm={false}
-                      minTime={minStartTime}
-                      maxTime={maxStartTime}
-                      disablePast={isTodaySelected} // Condicionalmente deshabilitar pasado
-                      value={field.value ? timeToDate(field.value) : null}
-                      onChange={(newDate) =>
-                        field.onChange(newDate ? format(newDate, "HH:mm") : "")
-                      }
-                      slotProps={{
-                        textField: {
-                          InputProps: { readOnly: true }, // Evita escritura manual
-                          fullWidth: true,
-                          required: true,
-                          error: !!errors.horaInicio,
-                          helperText: errors.horaInicio?.message || " ",
-                        },
-                      }}
-                    />
-                  )}
-                />
-                <Controller
-                  name="horaFin"
-                  control={control}
-                  render={({ field }) => (
-                    <TimePicker
-                      label="Hora Fin"
-                      ampm={false}
-                      minTime={minEndTime}
-                      maxTime={maxEndTime}
-                      disablePast={isTodaySelected} // Condicionalmente deshabilitar pasado
-                      value={field.value ? timeToDate(field.value) : null}
-                      onChange={(newDate) =>
-                        field.onChange(newDate ? format(newDate, "HH:mm") : "")
-                      }
-                      slotProps={{
-                        textField: {
-                          InputProps: { readOnly: true }, // Evita escritura manual
-                          fullWidth: true,
-                          required: true,
-                          error: !!errors.horaFin,
-                          helperText: errors.horaFin?.message || " ",
-                        },
-                      }}
-                    />
-                  )}
-                />
+                {/* Modalidad */}
                 <FormControl fullWidth error={!!errors.modalidad}>
                   <InputLabel>Modalidad</InputLabel>
                   <Controller
@@ -454,7 +385,103 @@ export default function ClaseConsultaFormModal({
                 </FormControl>
               </Stack>
 
-              {/* Fila 3: Descripción */}
+              {/* Fecha de clase y Horas */}
+              <Stack direction="row" spacing={1}>
+                <Controller
+                  name="fechaClase"
+                  control={control}
+                  render={({ field }) => (
+                    <DatePicker
+                      label="Fecha de Clase"
+                      value={field.value ? parseLocalDate(field.value) : null}
+                      onChange={
+                        (newDate) =>
+                          field.onChange(
+                            newDate ? format(newDate, "yyyy-MM-dd") : "",
+                          ) // Guardamos string
+                      }
+                      maxDate={maxDate}
+                      disablePast
+                      minDate={effectiveMinDate}
+                      slotProps={{
+                        textField: {
+                          onKeyDown: (e) => {
+                            if (e.key !== "Tab") e.preventDefault();
+                          },
+                          InputProps: {
+                            sx: { borderRadius: "0.7em" },
+                          },
+                          required: true,
+                          error: !!errors.fechaClase,
+                          helperText: errors.fechaClase?.message || " ",
+                        },
+                      }}
+                    />
+                  )}
+                />
+                <Controller
+                  name="horaInicio"
+                  control={control}
+                  render={({ field }) => (
+                    <TimePicker
+                      label="Hora Inicio"
+                      ampm={false}
+                      minTime={minStartTime}
+                      maxTime={maxStartTime}
+                      disablePast={isTodaySelected} // Condicionalmente deshabilitar pasado
+                      value={field.value ? timeToDate(field.value) : null}
+                      onChange={(newDate) =>
+                        field.onChange(newDate ? format(newDate, "HH:mm") : "")
+                      }
+                      slotProps={{
+                        textField: {
+                          onKeyDown: (e) => {
+                            if (e.key !== "Tab") e.preventDefault();
+                          },
+                          InputProps: {
+                            sx: { borderRadius: "0.7em" },
+                          },
+                          required: true,
+                          error: !!errors.horaInicio,
+                          helperText: errors.horaInicio?.message || " ",
+                        },
+                      }}
+                    />
+                  )}
+                />
+                <Controller
+                  name="horaFin"
+                  control={control}
+                  render={({ field }) => (
+                    <TimePicker
+                      label="Hora Fin"
+                      ampm={false}
+                      minTime={minEndTime}
+                      maxTime={maxEndTime}
+                      disablePast={isTodaySelected} // Condicionalmente deshabilitar pasado
+                      value={field.value ? timeToDate(field.value) : null}
+                      onChange={(newDate) =>
+                        field.onChange(newDate ? format(newDate, "HH:mm") : "")
+                      }
+                      slotProps={{
+                        textField: {
+                          onKeyDown: (e) => {
+                            if (e.key !== "Tab") e.preventDefault();
+                          },
+                          InputProps: {
+                            sx: { borderRadius: "0.7em" },
+                          },
+                          required: true,
+                          error: !!errors.horaFin,
+                          helperText: errors.horaFin?.message || " ",
+                        },
+                      }}
+                    />
+                  )}
+                />
+              </Stack>
+
+              {/* Descripción */}
               <Controller
                 name="descripcion"
                 control={control}
@@ -474,14 +501,11 @@ export default function ClaseConsultaFormModal({
 
               {/* Fila 4: Selector de Consultas (Refactorizado) */}
               <FormControl fullWidth error={!!errors.consultasIds}>
-                <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500 }}>
-                  Consultas a Revisar*
-                </Typography>
                 <Button
                   variant="outlined"
                   onClick={() => setIsSelectModalOpen(true)}
                 >
-                  Seleccionar Consultas ({consultasIdsValue.length}{" "}
+                  Seleccionar Consultas a Revisar ({consultasIdsValue.length}{" "}
                   seleccionadas)
                 </Button>
                 <FormHelperText sx={{ minHeight: "1.25em" }}>
@@ -501,7 +525,7 @@ export default function ClaseConsultaFormModal({
               ) : isEditMode ? (
                 "Guardar Cambios"
               ) : (
-                "Crear Clase"
+                "Agendar Clase"
               )}
             </Button>
           </DialogActions>

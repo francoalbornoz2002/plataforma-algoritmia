@@ -504,7 +504,7 @@ export default function ClasesConsultaPage() {
               startIcon={<AddIcon />}
               onClick={handleOpenCreate}
             >
-              Crear Clase
+              Agendar Clase
             </Button>
           )}
         </Stack>

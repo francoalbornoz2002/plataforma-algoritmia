@@ -165,7 +165,17 @@ export default function AceptarManualModal({
   };
 
   // Límites de fecha (Hoy hasta +7 días)
-  const minDate = new Date();
+  const effectiveMinDate = useMemo(() => {
+    const now = new Date();
+    if (
+      now.getHours() > 20 ||
+      (now.getHours() === 20 && now.getMinutes() >= 30)
+    ) {
+      return addDays(now, 1);
+    }
+    return now;
+  }, []);
+
   const maxDate = addDays(new Date(), 7);
 
   return (
@@ -190,16 +200,18 @@ export default function AceptarManualModal({
                       newValue ? format(newValue, "yyyy-MM-dd") : "",
                     )
                   }
-                  minDate={minDate}
+                  minDate={effectiveMinDate}
                   maxDate={maxDate}
                   disablePast
                   slotProps={{
                     textField: {
+                      onKeyDown: (e) => {
+                        if (e.key !== "Tab") e.preventDefault();
+                      },
                       fullWidth: true,
                       required: true,
                       error: !!errors.fechaClase,
                       helperText: errors.fechaClase?.message || " ",
-                      InputProps: { readOnly: true },
                     },
                   }}
                 />
@@ -222,11 +234,13 @@ export default function AceptarManualModal({
                     }
                     slotProps={{
                       textField: {
+                        onKeyDown: (e) => {
+                          if (e.key !== "Tab") e.preventDefault();
+                        },
                         fullWidth: true,
                         required: true,
                         error: !!errors.horaInicio,
                         helperText: errors.horaInicio?.message || " ",
-                        InputProps: { readOnly: true },
                       },
                     }}
                   />
@@ -247,11 +261,13 @@ export default function AceptarManualModal({
                     }
                     slotProps={{
                       textField: {
+                        onKeyDown: (e) => {
+                          if (e.key !== "Tab") e.preventDefault();
+                        },
                         fullWidth: true,
                         required: true,
                         error: !!errors.horaFin,
                         helperText: errors.horaFin?.message || " ",
-                        InputProps: { readOnly: true },
                       },
                     }}
                   />
