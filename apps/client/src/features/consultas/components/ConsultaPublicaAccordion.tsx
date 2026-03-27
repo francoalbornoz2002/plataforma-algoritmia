@@ -11,6 +11,7 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { estado_consulta, type ConsultaDocente } from "../../../types";
 import TemaChip from "../../../components/TemaChip";
+import { formatDetailedDate } from "../../../utils/dateHelpers";
 
 interface ConsultaPublicaAccordionProps {
   consulta: ConsultaDocente;
@@ -24,21 +25,14 @@ export default function ConsultaPublicaAccordion({
   const baseUrl = import.meta.env.VITE_API_URL_WITHOUT_PREFIX;
 
   // 1. Formateo de Fecha de Consulta
-  const dateC = new Date(consulta.createdAt);
-  const diaSemana = new Intl.DateTimeFormat("es-ES", {
-    weekday: "long",
-  }).format(dateC);
-  const diaCapitalizado =
-    diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1);
-  const fechaCStr = `${dateC.getDate().toString().padStart(2, "0")}/${(dateC.getMonth() + 1).toString().padStart(2, "0")}/${dateC.getFullYear()}`;
-  const horaCStr = `${dateC.getHours().toString().padStart(2, "0")}:${dateC.getMinutes().toString().padStart(2, "0")}`;
-  const fechaConsultaFormateada = `${diaCapitalizado}, ${fechaCStr} a las ${horaCStr}`;
+  const fechaConsultaFormateada = formatDetailedDate(consulta.createdAt);
 
-  // Formateo de Fecha de Respuesta
+  // 2. Formateo de Fecha de Respuesta
   let fechaRespuestaFormateada = "";
   if (respuestaConsulta) {
-    const dateR = new Date(respuestaConsulta.fechaRespuesta);
-    fechaRespuestaFormateada = `${dateR.getDate().toString().padStart(2, "0")}/${(dateR.getMonth() + 1).toString().padStart(2, "0")}/${dateR.getFullYear()}`;
+    fechaRespuestaFormateada = formatDetailedDate(
+      respuestaConsulta.fechaRespuesta,
+    );
   }
 
   return (

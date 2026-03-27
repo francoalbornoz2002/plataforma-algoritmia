@@ -40,6 +40,7 @@ import {
   updateConsulta,
 } from "../../users/services/alumnos.service";
 import { enqueueSnackbar } from "notistack";
+import { TemasLabels } from "../../../types/traducciones";
 
 export default function ConsultaFormDialog({
   open,
@@ -107,7 +108,7 @@ export default function ConsultaFormDialog({
       } else {
         if (!idCurso) {
           throw new Error(
-            "El ID del curso es requerido para crear una consulta."
+            "El ID del curso es requerido para crear una consulta.",
           );
         }
         await createConsulta(idCurso, data as CreateConsultaFormValues);
@@ -132,14 +133,14 @@ export default function ConsultaFormDialog({
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
       <DialogTitle align="center">
         {isEditMode ? "Editar Consulta" : "Realizar una Nueva Consulta"}
       </DialogTitle>
       <Divider variant="middle" />
       <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
         <DialogContent>
-          <Stack spacing={3} sx={{ mt: 1 }}>
+          <Stack spacing={2} sx={{ mt: 1 }}>
             {/* Título */}
             <Controller
               name="titulo"
@@ -173,7 +174,7 @@ export default function ConsultaFormDialog({
                       .filter((t) => t !== temas.Ninguno)
                       .map((tema) => (
                         <MenuItem key={tema} value={tema}>
-                          {tema}
+                          {TemasLabels[tema]}
                         </MenuItem>
                       ))}
                   </Select>
@@ -194,7 +195,7 @@ export default function ConsultaFormDialog({
                   fullWidth
                   required
                   multiline
-                  rows={4}
+                  rows={5}
                   error={!!errors.descripcion}
                   helperText={errors.descripcion?.message || " "}
                   disabled={isSubmitting}

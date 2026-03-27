@@ -241,14 +241,6 @@ export default function MyConsultsPage() {
           />
         </Stack>
         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-          <TextField
-            label="Buscar por título o descripción..."
-            variant="outlined"
-            size="small"
-            value={searchTerm}
-            onChange={handleSearchChange}
-            sx={{ width: 260 }}
-          />
           <DatePicker
             label="Fecha Desde"
             disableFuture
@@ -295,6 +287,15 @@ export default function MyConsultsPage() {
               },
             }}
           />
+          <TextField
+            label="Buscar por título o descripción..."
+            variant="outlined"
+            size="small"
+            value={searchTerm}
+            onChange={handleSearchChange}
+            sx={{ width: 260 }}
+          />
+
           <FormControl size="small" sx={{ width: 220 }}>
             <InputLabel>Tema</InputLabel>
             <Select
@@ -313,19 +314,7 @@ export default function MyConsultsPage() {
                 ))}
             </Select>
           </FormControl>
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Ordenar por</InputLabel>
-            <Select
-              value={sortOption}
-              label="Ordenar por"
-              onChange={(e) => setSortOption(e.target.value)}
-            >
-              <MenuItem value="recent">Más recientes</MenuItem>
-              <MenuItem value="old">Más antiguas</MenuItem>
-              <MenuItem value="az">Título (A-Z)</MenuItem>
-              <MenuItem value="za">Título (Z-A)</MenuItem>
-            </Select>
-          </FormControl>
+
           {filters.scope === "mine" && (
             <FormControl size="small" sx={{ minWidth: 140 }}>
               <InputLabel>Estado</InputLabel>
@@ -344,6 +333,19 @@ export default function MyConsultsPage() {
               </Select>
             </FormControl>
           )}
+          <FormControl size="small" sx={{ minWidth: 150 }}>
+            <InputLabel>Ordenar por</InputLabel>
+            <Select
+              value={sortOption}
+              label="Ordenar por"
+              onChange={(e) => setSortOption(e.target.value)}
+            >
+              <MenuItem value="recent">Más recientes</MenuItem>
+              <MenuItem value="old">Más antiguas</MenuItem>
+              <MenuItem value="az">Título (A-Z)</MenuItem>
+              <MenuItem value="za">Título (Z-A)</MenuItem>
+            </Select>
+          </FormControl>
           <Tooltip title="Limpiar filtros">
             <IconButton
               onClick={handleClearFilters}

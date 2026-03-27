@@ -24,6 +24,7 @@ import { estado_consulta } from "../../../types";
 
 import TemaChip from "../../../components/TemaChip";
 import EstadoConsultaChip from "../../../components/EstadoConsultaChip";
+import { formatDetailedDate } from "../../../utils/dateHelpers";
 
 interface ConsultaAccordionAlumnoProps {
   consulta: Consulta;
@@ -51,14 +52,14 @@ export default function ConsultaAccordionAlumno({
   const isDeleted = !!deletedAt;
 
   // 1. Formateo de Fecha de Consulta (la del Alumno)
-  const dateC = new Date(consulta.createdAt);
-  const fechaConsultaFormateada = `${dateC.getDate().toString().padStart(2, "0")}/${(dateC.getMonth() + 1).toString().padStart(2, "0")}/${dateC.getFullYear()}`;
+  const fechaConsultaFormateada = formatDetailedDate(consulta.createdAt);
 
   // 2. Formateo de Fecha de Respuesta (la del Docente)
   let fechaRespuestaFormateada = ""; // Default
   if (respuestaConsulta) {
-    const dateR = new Date(respuestaConsulta.fechaRespuesta);
-    fechaRespuestaFormateada = `${dateR.getDate().toString().padStart(2, "0")}/${(dateR.getMonth() + 1).toString().padStart(2, "0")}/${dateR.getFullYear()}`;
+    fechaRespuestaFormateada = formatDetailedDate(
+      respuestaConsulta.fechaRespuesta,
+    );
   }
 
   return (
@@ -95,7 +96,7 @@ export default function ConsultaAccordionAlumno({
             {isDeleted ? (
               <Chip
                 icon={<DeleteSweepIcon />}
-                label="Dada de baja"
+                label="Borrada"
                 color="error"
                 size="small"
                 variant="filled"
@@ -160,7 +161,7 @@ export default function ConsultaAccordionAlumno({
                       </Tooltip>
                     )}
                     {onDelete && (
-                      <Tooltip title="Dar de baja consulta">
+                      <Tooltip title="Borrar consulta">
                         <IconButton
                           size="small"
                           onClick={() => onDelete(consulta)}

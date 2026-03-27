@@ -30,6 +30,7 @@ import { createRespuesta } from "../../users/services/docentes.service";
 import TemaChip from "../../../components/TemaChip";
 import EstadoConsultaChip from "../../../components/EstadoConsultaChip";
 import { enqueueSnackbar } from "notistack";
+import { formatDetailedDate } from "../../../utils/dateHelpers";
 
 interface ConsultaAccordionProps {
   consulta: ConsultaDocente;
@@ -82,21 +83,14 @@ export default function ConsultaAccordion({
   const isResuelta = consulta.estado === estado_consulta.Resuelta;
 
   // 1. Formateo de Fecha de Consulta
-  const dateC = new Date(consulta.createdAt);
-  const diaSemana = new Intl.DateTimeFormat("es-ES", {
-    weekday: "long",
-  }).format(dateC);
-  const diaCapitalizado =
-    diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1);
-  const fechaCStr = `${dateC.getDate().toString().padStart(2, "0")}/${(dateC.getMonth() + 1).toString().padStart(2, "0")}/${dateC.getFullYear()}`;
-  const horaCStr = `${dateC.getHours().toString().padStart(2, "0")}:${dateC.getMinutes().toString().padStart(2, "0")}`;
-  const fechaConsultaFormateada = `${diaCapitalizado}, ${fechaCStr} a las ${horaCStr}`;
+  const fechaConsultaFormateada = formatDetailedDate(consulta.createdAt);
 
   // 2. Formateo de Fecha de Respuesta (la del Docente)
   let fechaRespuestaFormateada = ""; // Default
   if (respuestaConsulta) {
-    const dateR = new Date(respuestaConsulta.fechaRespuesta);
-    fechaRespuestaFormateada = `${dateR.getDate().toString().padStart(2, "0")}/${(dateR.getMonth() + 1).toString().padStart(2, "0")}/${dateR.getFullYear()}`;
+    fechaRespuestaFormateada = formatDetailedDate(
+      respuestaConsulta.fechaRespuesta,
+    );
   }
 
   return (
