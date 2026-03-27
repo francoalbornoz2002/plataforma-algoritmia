@@ -54,6 +54,7 @@ export default function StudentProgressDetailModal({
     fechaHasta: "",
     dificultad: "",
     estrellas: "",
+    orden: "numero-asc",
   });
 
   const [loading, setLoading] = useState(true);
@@ -108,6 +109,45 @@ export default function StudentProgressDetailModal({
       result = result.filter((m) => m.estrellas === Number(filters.estrellas));
     }
 
+    // --- ORDENAMIENTO ---
+    result.sort((a, b) => {
+      switch (filters.orden) {
+        case "recientes": {
+          const dateA = a.fechaCompletado
+            ? new Date(a.fechaCompletado).getTime()
+            : 0;
+          const dateB = b.fechaCompletado
+            ? new Date(b.fechaCompletado).getTime()
+            : 0;
+          return dateB - dateA;
+        }
+        case "antiguas": {
+          const dateA = a.fechaCompletado
+            ? new Date(a.fechaCompletado).getTime()
+            : Infinity;
+          const dateB = b.fechaCompletado
+            ? new Date(b.fechaCompletado).getTime()
+            : Infinity;
+          return dateA - dateB;
+        }
+        case "estrellas-desc":
+          return b.estrellas - a.estrellas;
+        case "estrellas-asc":
+          return a.estrellas - b.estrellas;
+        case "intentos-desc":
+          return b.intentos - a.intentos;
+        case "intentos-asc":
+          return a.intentos - b.intentos;
+        case "exp-desc":
+          return b.exp - a.exp;
+        case "exp-asc":
+          return a.exp - b.exp;
+        case "numero-asc":
+        default:
+          return a.mision.numero - b.mision.numero;
+      }
+    });
+
     setFilteredMissions(result);
   }, [filters, normalMissions]);
 
@@ -126,6 +166,7 @@ export default function StudentProgressDetailModal({
       fechaHasta: "",
       dificultad: "",
       estrellas: "",
+      orden: "numero-asc",
     });
   };
 
@@ -223,6 +264,25 @@ export default function StudentProgressDetailModal({
                   <MenuItem value={3}>3</MenuItem>
                 </Select>
               </FormControl>
+              <FormControl size="small" sx={{ minWidth: 160 }}>
+                <InputLabel>Ordenar por</InputLabel>
+                <Select
+                  name="orden"
+                  value={filters.orden}
+                  label="Ordenar por"
+                  onChange={handleFilterChange}
+                >
+                  <MenuItem value="numero-asc">Por defecto</MenuItem>
+                  <MenuItem value="recientes">Más recientes</MenuItem>
+                  <MenuItem value="antiguas">Más antiguas</MenuItem>
+                  <MenuItem value="estrellas-desc">Estrellas (Desc.)</MenuItem>
+                  <MenuItem value="estrellas-asc">Estrellas (Asc.)</MenuItem>
+                  <MenuItem value="intentos-desc">Intentos (Desc.)</MenuItem>
+                  <MenuItem value="intentos-asc">Intentos (Asc.)</MenuItem>
+                  <MenuItem value="exp-desc">Experiencia (Desc.)</MenuItem>
+                  <MenuItem value="exp-asc">Experiencia (Asc.)</MenuItem>
+                </Select>
+              </FormControl>
               <Tooltip title="Limpiar filtros">
                 <IconButton
                   onClick={handleClearFilters}
@@ -259,7 +319,7 @@ export default function StudentProgressDetailModal({
               ) : (
                 <Grid container spacing={2} sx={{ mb: 4 }}>
                   {filteredMissions.map((m) => (
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={m.mision.id}>
+                    <Grid size={{ sm: 12, md: 6 }} key={m.mision.id}>
                       <MissionCard missionData={m} />
                     </Grid>
                   ))}
@@ -302,7 +362,7 @@ export default function StudentProgressDetailModal({
                 <Grid container spacing={2}>
                   {specialMissions.map((missionData) => (
                     <Grid
-                      size={{ xs: 12, sm: 6, md: 4 }}
+                      size={{ sm: 12, md: 6 }}
                       key={missionData.id} // UUID
                     >
                       {/* MissionCard ya es polimórfico y acepta MisionEspecial */}

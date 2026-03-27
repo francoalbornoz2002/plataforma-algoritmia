@@ -17,7 +17,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { formatDistanceToNow } from "date-fns";
-import { es } from "date-fns/locale";
+import { ar, es } from "date-fns/locale";
 import StarIcon from "@mui/icons-material/Star";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import BoltIcon from "@mui/icons-material/Bolt";
@@ -64,6 +64,7 @@ export default function MyProgressPage() {
     dificultad: "",
     estado: "",
     estrellas: "",
+    orden: "numero-asc",
   });
   const [filteredMissions, setFilteredMissions] = useState<MisionConEstado[]>(
     [],
@@ -127,6 +128,57 @@ export default function MyProgressPage() {
       );
     }
 
+    // Ordenamiento
+    result.sort((a, b) => {
+      switch (filters.orden) {
+        case "recientes": {
+          const dateA = a.completada?.fechaCompletado
+            ? new Date(a.completada.fechaCompletado).getTime()
+            : 0;
+          const dateB = b.completada?.fechaCompletado
+            ? new Date(b.completada.fechaCompletado).getTime()
+            : 0;
+          return dateB - dateA;
+        }
+        case "antiguas": {
+          const dateA = a.completada?.fechaCompletado
+            ? new Date(a.completada.fechaCompletado).getTime()
+            : Infinity;
+          const dateB = b.completada?.fechaCompletado
+            ? new Date(b.completada.fechaCompletado).getTime()
+            : Infinity;
+          return dateA - dateB;
+        }
+        case "estrellas-desc":
+          return (
+            (b.completada?.estrellas || -1) - (a.completada?.estrellas || -1)
+          );
+        case "estrellas-asc":
+          return (
+            (a.completada?.estrellas ?? Infinity) -
+            (b.completada?.estrellas ?? Infinity)
+          );
+        case "intentos-desc":
+          return (
+            (b.completada?.intentos || -1) - (a.completada?.intentos || -1)
+          );
+        case "intentos-asc":
+          return (
+            (a.completada?.intentos ?? Infinity) -
+            (b.completada?.intentos ?? Infinity)
+          );
+        case "exp-desc":
+          return (b.completada?.exp || -1) - (a.completada?.exp || -1);
+        case "exp-asc":
+          return (
+            (a.completada?.exp ?? Infinity) - (b.completada?.exp ?? Infinity)
+          );
+        case "numero-asc":
+        default:
+          return (a.mision.numero || 0) - (b.mision.numero || 0);
+      }
+    });
+
     setFilteredMissions(result);
   }, [filters, missions]);
 
@@ -146,6 +198,7 @@ export default function MyProgressPage() {
       dificultad: "",
       estado: "",
       estrellas: "",
+      orden: "numero-asc",
     });
   };
 
@@ -166,9 +219,8 @@ export default function MyProgressPage() {
 
   // Formateamos el valor de "Última Actividad"
   const ultimaActividadFormateada = progress?.ultimaActividad
-    ? `hace ${formatDistanceToNow(new Date(progress.ultimaActividad), {
+    ? `${formatDistanceToNow(new Date(progress.ultimaActividad), {
         locale: es,
-        addSuffix: false,
       })}`
     : "Nunca";
 
@@ -224,25 +276,25 @@ export default function MyProgressPage() {
                 color="primary"
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 2 }}>
+            <Grid size={{ xs: 12, sm: 1.8 }}>
               <DashboardStatCard
-                title="Promedio Estrellas"
+                title="Prom. Estrellas"
                 value={progress.promEstrellas.toFixed(1)}
                 icon={<StarIcon />}
                 color="warning"
                 subtitle="Por misión"
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 2 }}>
+            <Grid size={{ xs: 12, sm: 1.8 }}>
               <DashboardStatCard
-                title="Promedio Intentos"
+                title="Prom. Intentos"
                 value={progress.promIntentos.toFixed(1)}
                 icon={<ReplayIcon />}
                 color="info"
                 subtitle="Por misión"
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 2 }}>
+            <Grid size={{ xs: 12, sm: 2.4 }}>
               <DashboardTextCard
                 title="Última Actividad"
                 description="Completando una misión"
@@ -255,13 +307,6 @@ export default function MyProgressPage() {
 
           {/* --- SECCIÓN 1: MISIONES DE CAMPAÑA (Normales) --- */}
           <Stack spacing={2}>
-            <HeaderPage
-              title="Misiones de campaña"
-              icon={<SportsEsportsIcon />}
-              description="Revisa el estado de tus misiones completadas en el videojuego"
-              color="primary"
-            />
-
             <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
               <DatePicker
                 label="Fecha Desde"
@@ -275,11 +320,6 @@ export default function MyProgressPage() {
                     ? new Date(filters.fechaHasta + "T00:00:00")
                     : undefined
                 }
-                minDate={
-                  filters.fechaDesde
-                    ? new Date(filters.fechaDesde + "T00:00:00")
-                    : undefined
-                }
                 onChange={(val) =>
                   setFilters({
                     ...filters,
@@ -291,6 +331,11 @@ export default function MyProgressPage() {
               />
               <DatePicker
                 label="Fecha Hasta"
+                minDate={
+                  filters.fechaDesde
+                    ? new Date(filters.fechaDesde + "T00:00:00")
+                    : undefined
+                }
                 value={
                   filters.fechaHasta
                     ? new Date(filters.fechaHasta + "T00:00:00")
@@ -346,6 +391,25 @@ export default function MyProgressPage() {
                   <MenuItem value={3}>3</MenuItem>
                 </Select>
               </FormControl>
+              <FormControl size="small" sx={{ width: 190 }}>
+                <InputLabel>Ordenar por</InputLabel>
+                <Select
+                  name="orden"
+                  value={filters.orden}
+                  label="Ordenar por"
+                  onChange={handleFilterChange}
+                >
+                  <MenuItem value="numero-asc">Por defecto</MenuItem>
+                  <MenuItem value="recientes">Más recientes</MenuItem>
+                  <MenuItem value="antiguas">Más antiguas</MenuItem>
+                  <MenuItem value="estrellas-desc">Estrellas (Desc.)</MenuItem>
+                  <MenuItem value="estrellas-asc">Estrellas (Asc.)</MenuItem>
+                  <MenuItem value="intentos-desc">Intentos (Desc.)</MenuItem>
+                  <MenuItem value="intentos-asc">Intentos (Asc.)</MenuItem>
+                  <MenuItem value="exp-desc">Experiencia (Desc.)</MenuItem>
+                  <MenuItem value="exp-asc">Experiencia (Asc.)</MenuItem>
+                </Select>
+              </FormControl>
               <Tooltip title="Limpiar filtros">
                 <IconButton
                   onClick={handleClearFilters}
@@ -357,40 +421,69 @@ export default function MyProgressPage() {
               </Tooltip>
             </Stack>
 
-            <Grid container spacing={2}>
-              {filteredMissions.map((m) => (
-                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={m.mision.id}>
-                  <MissionCard missionData={m} />
-                </Grid>
-              ))}
-              {filteredMissions.length === 0 && missions.length > 0 && (
-                <Grid size={{ xs: 12 }}>
-                  <Alert severity="info" sx={{ width: "100%" }}>
-                    No se encontraron misiones con los filtros aplicados.
-                  </Alert>
-                </Grid>
-              )}
-              {missions.length === 0 && !loading && (
-                <Grid size={{ xs: 12 }}>
-                  <Alert severity="info" sx={{ width: "100%" }}>
-                    No hay misiones de campaña en este curso.
-                  </Alert>
-                </Grid>
-              )}
-            </Grid>
+            <Stack>
+              <Stack
+                direction="row"
+                spacing={1}
+                alignItems="center"
+                color="primary.main"
+              >
+                <SportsEsportsIcon fontSize="large" />
+                <Typography
+                  variant="overline"
+                  fontWeight="bold"
+                  fontSize={16}
+                  align="center"
+                >
+                  Misiones de Campaña
+                </Typography>
+              </Stack>
+
+              <Divider sx={{ mb: 2 }} />
+
+              <Grid container spacing={2}>
+                {filteredMissions.map((m) => (
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={m.mision.id}>
+                    <MissionCard missionData={m} />
+                  </Grid>
+                ))}
+                {filteredMissions.length === 0 && missions.length > 0 && (
+                  <Grid size={{ xs: 12 }}>
+                    <Alert severity="info" sx={{ width: "100%" }}>
+                      No se encontraron misiones con los filtros aplicados.
+                    </Alert>
+                  </Grid>
+                )}
+                {missions.length === 0 && !loading && (
+                  <Grid size={{ xs: 12 }}>
+                    <Alert severity="info" sx={{ width: "100%" }}>
+                      No hay misiones de campaña en este curso.
+                    </Alert>
+                  </Grid>
+                )}
+              </Grid>
+            </Stack>
           </Stack>
 
           {/* --- SECCIÓN 2: MISIONES ESPECIALES --- */}
-          <Paper elevation={2} sx={{ p: 3, borderLeft: "6px solid #9c27b0" }}>
-            <Stack direction="row" alignItems="center" spacing={1} mb={2}>
-              <Box sx={{ color: "#9c27b0", display: "flex" }}>
-                <AutoAwesomeIcon fontSize="large" />
-              </Box>
-              <Typography variant="h6" fontWeight="bold" color="#9c27b0">
+          <Stack>
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              color="primary.main"
+            >
+              <AutoAwesomeIcon fontSize="large" sx={{ color: "#9c27b0" }} />
+              <Typography
+                variant="overline"
+                fontWeight="bold"
+                fontSize={16}
+                color="#9c27b0"
+              >
                 Misiones Especiales
               </Typography>
             </Stack>
-            <Divider sx={{ mb: 3 }} />
+            <Divider sx={{ mt: 1, mb: 2 }} />
 
             <Grid container spacing={2}>
               {progress.misionesEspeciales?.map((m) => (
@@ -406,7 +499,7 @@ export default function MyProgressPage() {
                 </Grid>
               )}
             </Grid>
-          </Paper>
+          </Stack>
         </Stack>
       ) : null}
     </Box>
