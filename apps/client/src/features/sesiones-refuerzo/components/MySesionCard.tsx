@@ -45,6 +45,7 @@ export default function MySesionCard({
     fechaHoraLimite,
     tiempoLimite,
     estado,
+    createdAt,
   } = sesion;
 
   const isPendiente = estado === estado_sesion.Pendiente;
@@ -97,14 +98,19 @@ export default function MySesionCard({
             alignItems: "center",
           }}
         >
-          <Typography
-            variant="caption"
-            fontWeight="bold"
-            color="text.secondary"
-            sx={{ textTransform: "uppercase" }}
-          >
-            Sesión #{nroSesion}
-          </Typography>
+          <Stack direction="row" spacing={0.5} alignItems="center">
+            <Typography
+              variant="caption"
+              fontWeight="bold"
+              color="text.secondary"
+              sx={{ textTransform: "uppercase" }}
+            >
+              Sesión #{nroSesion}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              • Asignada el {format(new Date(createdAt), "dd/MM/yyyy")}
+            </Typography>
+          </Stack>
           <EstadoSesionChip estado={estado} />
         </Box>
 
@@ -233,7 +239,7 @@ export default function MySesionCard({
             Resolver
           </Button>
         )}
-        {isCompletada || isIncompleta ? (
+        {(isCompletada || isIncompleta) && (
           <Button
             size="small"
             color="primary"
@@ -241,15 +247,6 @@ export default function MySesionCard({
             startIcon={<AssessmentIcon />}
           >
             Ver Resultados
-          </Button>
-        ) : (
-          <Button
-            size="small"
-            color="primary"
-            onClick={() => onViewDetails(sesion)}
-            startIcon={<InfoIcon />}
-          >
-            Detalles
           </Button>
         )}
       </CardActions>

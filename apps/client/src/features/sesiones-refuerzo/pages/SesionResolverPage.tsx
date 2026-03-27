@@ -111,7 +111,7 @@ export default function SesionResolverPage() {
 
   // --- Sync Current Selection on Step Change ---
   useEffect(() => {
-    if (sesion) {
+    if (sesion && sesion.preguntas && sesion.preguntas.length > 0) {
       const currentQId = sesion.preguntas[activeStep].pregunta.id;
       // Load saved answer or empty if none
       setCurrentSelection(respuestas[currentQId] || "");
@@ -417,8 +417,8 @@ export default function SesionResolverPage() {
             </Alert>
             <Alert severity="warning">
               Una vez iniciada, el tiempo correrá y no podrás pausarlo. Si el
-              tiempo se agota, se enviarán las respuestas que hayas
-              seleccionado.
+              tiempo se agota, se enviarán las respuestas que hayas logrado
+              seleccionar y la sesión se marcará como incompleta.
             </Alert>
           </Stack>
           <Box sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
@@ -440,6 +440,17 @@ export default function SesionResolverPage() {
   }
 
   // VISTA 3: EXAMEN (Si está corriendo)
+  if (!sesion.preguntas || sesion.preguntas.length === 0) {
+    return (
+      <Container maxWidth="sm" sx={{ mt: 8 }}>
+        <Alert severity="error">
+          La sesión no tiene preguntas configuradas o no se pudieron cargar
+          correctamente.
+        </Alert>
+      </Container>
+    );
+  }
+
   return (
     <Container maxWidth="xl" sx={{ mt: 2, mb: 2 }}>
       {/* --- Botón Volver (Arriba Izquierda) --- */}

@@ -412,6 +412,20 @@ export class SesionesRefuerzoService {
       throw new ForbiddenException('No tienes permiso para ver esta sesión.');
     }
 
+    // Bloqueo de seguridad: Si el alumno está resolviendo una sesión que no está
+    // finalizada, ocultamos cuál es la opción correcta para evitar trampas inspeccionando la red.
+    if (
+      user.rol === roles.Alumno &&
+      sesion.estado !== estado_sesion.Completada &&
+      sesion.estado !== estado_sesion.Incompleta
+    ) {
+      sesion.preguntas.forEach((p) => {
+        p.pregunta.opcionesRespuesta.forEach((o) => {
+          o.esCorrecta = false;
+        });
+      });
+    }
+
     return sesion;
   }
 

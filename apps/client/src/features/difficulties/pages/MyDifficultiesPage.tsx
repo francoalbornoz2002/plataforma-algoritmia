@@ -39,6 +39,7 @@ export default function MyDifficultiesPage() {
   // --- ¡NUEVOS ESTADOS DE FILTRO! ---
   const [temaFilter, setTemaFilter] = useState("");
   const [gradoFilter, setGradoFilter] = useState("");
+  const [ordenFilter, setOrdenFilter] = useState("grado-desc");
 
   // Efecto de Fetch (sin cambios)
   useEffect(() => {
@@ -63,14 +64,33 @@ export default function MyDifficultiesPage() {
       });
   }, [selectedCourse]);
 
-  // --- ¡NUEVA LÓGICA DE FILTRADO! ---
   const filteredDifficulties = useMemo(() => {
-    return difficulties.filter((d) => {
+    let result = difficulties.filter((d) => {
       const matchesTema = !temaFilter || d.tema === temaFilter;
       const matchesGrado = !gradoFilter || d.grado === gradoFilter;
       return matchesTema && matchesGrado;
     });
-  }, [difficulties, temaFilter, gradoFilter]);
+
+    // Ordenamiento
+    result.sort((a, b) => {
+      const weights: Record<string, number> = {
+        Ninguno: 0,
+        Bajo: 1,
+        Medio: 2,
+        Alto: 3,
+      };
+
+      if (ordenFilter === "grado-desc") {
+        return (weights[b.grado] ?? 0) - (weights[a.grado] ?? 0);
+      }
+      if (ordenFilter === "grado-asc") {
+        return (weights[a.grado] ?? 0) - (weights[b.grado] ?? 0);
+      }
+      return 0; // Por defecto
+    });
+
+    return result;
+  }, [difficulties, temaFilter, gradoFilter, ordenFilter]);
 
   // Handlers para los filtros
   const handleTemaChange = (e: SelectChangeEvent<string>) => {
@@ -81,9 +101,14 @@ export default function MyDifficultiesPage() {
     setGradoFilter(e.target.value);
   };
 
+  const handleOrdenChange = (e: SelectChangeEvent<string>) => {
+    setOrdenFilter(e.target.value);
+  };
+
   const handleClearFilters = () => {
     setTemaFilter("");
     setGradoFilter("");
+    setOrdenFilter("grado-desc");
   };
 
   // --- RENDERIZADO ---
@@ -156,13 +181,23 @@ export default function MyDifficultiesPage() {
             >
               <MenuItem value="">Todos</MenuItem>
               {/* Iteramos sobre el enum 'grado_dificultad' */}
-              {Object.values(grado_dificultad)
-                .filter((grado) => grado !== grado_dificultad.Ninguno)
-                .map((grado) => (
-                  <MenuItem key={grado} value={grado}>
-                    {grado}
-                  </MenuItem>
-                ))}
+              {Object.values(grado_dificultad).map((grado) => (
+                <MenuItem key={grado} value={grado}>
+                  {grado}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <InputLabel>Ordenar por</InputLabel>
+            <Select
+              value={ordenFilter}
+              label="Ordenar por"
+              onChange={handleOrdenChange}
+            >
+              <MenuItem value="grado-desc">Grado (Desc.)</MenuItem>
+              <MenuItem value="grado-asc">Grado (Asc.)</MenuItem>
             </Select>
           </FormControl>
           <Tooltip title="Limpiar filtros">
@@ -189,7 +224,7 @@ export default function MyDifficultiesPage() {
         ) : (
           <Grid container spacing={2}>
             {filteredDifficulties.map((dificultad) => (
-              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={dificultad.id}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={dificultad.id}>
                 <DifficultyCard dificultad={dificultad} />
               </Grid>
             ))}

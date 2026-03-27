@@ -50,6 +50,7 @@ export default function SesionCard({
     fechaHoraLimite,
     tiempoLimite,
     estado,
+    createdAt,
   } = sesion;
 
   // --- Reglas de Negocio (UI) ---
@@ -96,14 +97,19 @@ export default function SesionCard({
             alignItems: "center",
           }}
         >
-          <Typography
-            variant="caption"
-            fontWeight="bold"
-            color="text.secondary"
-            sx={{ textTransform: "uppercase" }}
-          >
-            Sesión #{nroSesion}
-          </Typography>
+          <Stack direction="row" spacing={0.5} alignItems="center">
+            <Typography
+              variant="caption"
+              fontWeight="bold"
+              color="text.secondary"
+              sx={{ textTransform: "uppercase" }}
+            >
+              Sesión #{nroSesion}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              • Asignada el {format(new Date(createdAt), "dd/MM/yyyy")}
+            </Typography>
+          </Stack>
           <EstadoSesionChip estado={estado} />
         </Box>
 

@@ -12,10 +12,13 @@ import {
   Pagination,
   IconButton,
   Tooltip,
+  Autocomplete,
+  TextField,
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { useNavigate } from "react-router";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
+import AutoAwesome from "@mui/icons-material/AutoAwesome";
 
 // Hooks, Services, Types
 import { useCourseContext } from "../../../context/CourseContext";
@@ -118,8 +121,17 @@ export default function MisSesionesPage() {
   // --- LÓGICA DE FILTRADO, ORDENAMIENTO Y PAGINACIÓN LOCAL ---
   const filteredAndSortedSesiones = useMemo(() => {
     let result = allSesiones.filter((sesion) => {
-      if (filters.idDocente && sesion.idDocente !== filters.idDocente)
-        return false;
+      // Lógica diferenciada para filtrar por Sistema o por Docente
+      if (filters.idDocente) {
+        if (filters.idDocente === "SISTEMA" && sesion.idDocente !== null) {
+          return false;
+        } else if (
+          filters.idDocente !== "SISTEMA" &&
+          sesion.idDocente !== filters.idDocente
+        ) {
+          return false;
+        }
+      }
       if (filters.idDificultad && sesion.idDificultad !== filters.idDificultad)
         return false;
       if (filters.gradoSesion && sesion.gradoSesion !== filters.gradoSesion)
@@ -222,40 +234,113 @@ export default function MisSesionesPage() {
         />
 
         {/* --- SECCIÓN DE FILTROS --- */}
-        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-          <FormControl sx={{ width: 200 }} size="small">
-            <InputLabel>Docente Asignador</InputLabel>
-            <Select
-              name="idDocente"
-              label="Docente Asignador"
-              value={filters.idDocente || ""}
-              onChange={handleFilterChange}
-            >
-              <MenuItem value="">Todos</MenuItem>
-              {docentesList.map((d) => (
-                <MenuItem key={d.id} value={d.id}>
-                  {d.nombre} {d.apellido}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl sx={{ width: 250 }} size="small">
-            <InputLabel>Dificultad</InputLabel>
-            <Select
-              name="idDificultad"
-              label="Dificultad"
-              value={filters.idDificultad || ""}
-              onChange={handleFilterChange}
-            >
-              <MenuItem value="">Todas</MenuItem>
-              {dificultadesList.map((d) => (
-                <MenuItem key={d.id} value={d.id}>
-                  {d.nombre}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl sx={{ width: 120 }} size="small">
+        <Stack
+          direction="row"
+          spacing={1}
+          flexWrap="wrap"
+          useFlexGap
+          rowGap={2}
+          alignItems="center"
+        >
+          <DatePicker
+            label="F. Desde (Asig.)"
+            disableFuture
+            value={dateFilters.fechaDesde}
+            maxDate={dateFilters.fechaHasta || undefined}
+            onChange={(newValue) => {
+              setDateFilters((prev) => ({ ...prev, fechaDesde: newValue }));
+              setPagination((prev) => ({ ...prev, page: 1 }));
+            }}
+            {...datePickerConfig}
+            sx={{ width: 170 }}
+          />
+          <DatePicker
+            label="F. Hasta (Asig.)"
+            disableFuture
+            value={dateFilters.fechaHasta}
+            minDate={dateFilters.fechaDesde || undefined}
+            onChange={(newValue) => {
+              setDateFilters((prev) => ({ ...prev, fechaHasta: newValue }));
+              setPagination((prev) => ({ ...prev, page: 1 }));
+            }}
+            {...datePickerConfig}
+            sx={{ width: 170 }}
+          />
+          <Autocomplete
+            size="small"
+            options={[
+              { id: "SISTEMA", nombre: "Sistema", apellido: "(Automático)" },
+              ...docentesList,
+            ]}
+            getOptionLabel={(option) => `${option.nombre} ${option.apellido}`}
+            value={
+              filters.idDocente === "SISTEMA"
+                ? { id: "SISTEMA", nombre: "Sistema", apellido: "(Automático)" }
+                : docentesList.find((d) => d.id === filters.idDocente) || null
+            }
+            onChange={(_, newValue) => {
+              setFilters((prev) => ({
+                ...prev,
+                idDocente: newValue?.id || undefined,
+              }));
+              setPagination((prev) => ({ ...prev, page: 1 }));
+            }}
+            renderOption={(props, option) => {
+              const { key, ...restProps } = props as any;
+              return (
+                <Box component="li" key={key} {...restProps}>
+                  {option.id === "SISTEMA" ? (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        color: "secondary.main",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      <AutoAwesome sx={{ mr: 1, fontSize: 20 }} />
+                      {option.nombre} {option.apellido}
+                    </Box>
+                  ) : (
+                    `${option.nombre} ${option.apellido}`
+                  )}
+                </Box>
+              );
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Origen / Asignador"
+                placeholder="Buscar..."
+              />
+            )}
+            sx={{ width: 250 }}
+          />
+          <Autocomplete
+            size="small"
+            options={dificultadesList}
+            getOptionLabel={(option) => option.nombre}
+            value={
+              dificultadesList.find((d) => d.id === filters.idDificultad) ||
+              null
+            }
+            onChange={(_, newValue) => {
+              setFilters((prev) => ({
+                ...prev,
+                idDificultad: newValue?.id || undefined,
+              }));
+              setPagination((prev) => ({ ...prev, page: 1 }));
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Dificultad"
+                placeholder="Buscar..."
+              />
+            )}
+            sx={{ minWidth: 350, flex: 1 }}
+          />
+          <FormControl sx={{ width: 100 }} size="small">
             <InputLabel>Grado</InputLabel>
             <Select
               name="gradoSesion"
@@ -273,7 +358,7 @@ export default function MisSesionesPage() {
                 ))}
             </Select>
           </FormControl>
-          <FormControl sx={{ width: 150 }} size="small">
+          <FormControl sx={{ width: 140 }} size="small">
             <InputLabel>Estado</InputLabel>
             <Select
               name="estado"
@@ -291,52 +376,6 @@ export default function MisSesionesPage() {
                 ))}
             </Select>
           </FormControl>
-          <DatePicker
-            label="Fecha Desde"
-            disableFuture
-            value={dateFilters.fechaDesde}
-            maxDate={dateFilters.fechaHasta || undefined}
-            onChange={(newValue) => {
-              setDateFilters((prev) => ({ ...prev, fechaDesde: newValue }));
-              setPagination((prev) => ({ ...prev, page: 1 }));
-            }}
-            {...datePickerConfig}
-            slotProps={{
-              textField: {
-                ...datePickerConfig.slotProps.textField,
-                InputProps: {
-                  sx: {
-                    ...datePickerConfig.slotProps.textField.InputProps.sx,
-                    width: 165,
-                  },
-                },
-                sx: { width: 165 },
-              },
-            }}
-          />
-          <DatePicker
-            label="Hasta"
-            disableFuture
-            value={dateFilters.fechaHasta}
-            minDate={dateFilters.fechaDesde || undefined}
-            onChange={(newValue) => {
-              setDateFilters((prev) => ({ ...prev, fechaHasta: newValue }));
-              setPagination((prev) => ({ ...prev, page: 1 }));
-            }}
-            {...datePickerConfig}
-            slotProps={{
-              textField: {
-                ...datePickerConfig.slotProps.textField,
-                InputProps: {
-                  sx: {
-                    ...datePickerConfig.slotProps.textField.InputProps.sx,
-                    width: 165,
-                  },
-                },
-                sx: { width: 165 },
-              },
-            }}
-          />
 
           <FormControl size="small" sx={{ minWidth: 180 }}>
             <InputLabel>Ordenar por</InputLabel>
@@ -347,8 +386,8 @@ export default function MisSesionesPage() {
             >
               <MenuItem value="recent">Más recientes</MenuItem>
               <MenuItem value="old">Más antiguas</MenuItem>
-              <MenuItem value="nro_desc">N° Sesión (Mayor a menor)</MenuItem>
-              <MenuItem value="nro_asc">N° Sesión (Menor a mayor)</MenuItem>
+              <MenuItem value="nro_asc">N° Sesión (Asc.)</MenuItem>
+              <MenuItem value="nro_desc">N° Sesión (Des.)</MenuItem>
             </Select>
           </FormControl>
           <Tooltip title="Limpiar filtros">
