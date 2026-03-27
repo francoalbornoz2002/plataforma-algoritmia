@@ -19,6 +19,8 @@ import type {
   MisionEspecial,
 } from "../../../types";
 import MissionDifficultyChip from "../../../components/MissionDifficultyChip";
+import { Event } from "@mui/icons-material";
+import { format } from "date-fns/format";
 
 type MissionItem = MisionConEstado | MisionCompletada | MisionEspecial;
 
@@ -30,7 +32,7 @@ interface MissionCardProps {
 // --- Helper para mostrar los Stats si está completada ---
 function CompletedStats({ data }: { data: MisionCompletada | MisionEspecial }) {
   return (
-    <Stack direction="row" spacing={2} justifyContent="space-around">
+    <Stack direction="row" spacing={1} justifyContent="space-around">
       <Chip
         icon={<StarIcon />}
         label={`${data.estrellas} Estrellas`}
@@ -51,6 +53,17 @@ function CompletedStats({ data }: { data: MisionCompletada | MisionEspecial }) {
         size="small"
         variant="outlined"
         color="default"
+      />
+      <Chip
+        icon={<Event />}
+        label={
+          data.fechaCompletado
+            ? format(new Date(data.fechaCompletado), "dd/MM/yyyy")
+            : "N/A"
+        }
+        size="small"
+        variant="outlined"
+        color="info"
       />
     </Stack>
   );
@@ -103,9 +116,9 @@ export default function MissionCard({
 
   return (
     <Card
+      variant="elevation"
       sx={{
         height: "100%",
-        variant: "outlined",
         opacity: isCompleted || hideStatus ? 1.0 : 0.6,
         display: "flex",
         flexDirection: "column",

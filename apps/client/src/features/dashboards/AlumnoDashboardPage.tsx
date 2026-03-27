@@ -116,42 +116,6 @@ const DistributionBar = ({
   );
 };
 
-const ProgressItem = ({
-  title,
-  percent,
-  color,
-  valueText,
-}: {
-  title: string;
-  percent: number;
-  color:
-    | "primary"
-    | "secondary"
-    | "error"
-    | "info"
-    | "success"
-    | "warning"
-    | "inherit";
-  valueText: string;
-}) => (
-  <Box sx={{ mb: 1 }}>
-    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-      <Typography variant="body2" color="text.secondary" fontWeight="medium">
-        {title}
-      </Typography>
-      <Typography variant="body2" color="text.secondary" fontWeight="bold">
-        {valueText}
-      </Typography>
-    </Box>
-    <LinearProgress
-      variant="determinate"
-      value={percent}
-      color={color}
-      sx={{ height: 8, borderRadius: 4 }}
-    />
-  </Box>
-);
-
 const getDificultadColor = (label: string) => {
   if (label === "Bajo") return "#4caf50";
   if (label === "Medio") return "#ff9800";
@@ -455,7 +419,7 @@ export default function AlumnoDashboardPage() {
             >
               <NotificationsActive color="warning" sx={{ mr: 1 }} />
               <Typography variant="h6" color="warning.main" fontWeight="bold">
-                Centro de Tareas
+                Actividad y Pendientes
               </Typography>
             </Box>
             <List sx={{ flexGrow: 1, overflowY: "auto", p: 0, maxHeight: 280 }}>
@@ -543,7 +507,7 @@ export default function AlumnoDashboardPage() {
             <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
               <Assessment color="success" sx={{ mr: 1 }} />
               <Typography variant="h6" color="success.main" fontWeight="bold">
-                Mi Rendimiento
+                Mi Progreso
               </Typography>
             </Box>
             <Grid container spacing={2} alignItems="center">
@@ -553,7 +517,7 @@ export default function AlumnoDashboardPage() {
               >
                 <Gauge
                   value={stats?.progresoPct ?? 0}
-                  height={200}
+                  height={220}
                   cornerRadius="50%"
                   text={({ value }) => `${value?.toFixed(1)}%`}
                   sx={{
@@ -573,15 +537,21 @@ export default function AlumnoDashboardPage() {
                 >
                   Actividad Reciente
                 </Typography>
-                <ProgressItem
-                  title="Misiones: Hoy vs Semana"
-                  percent={
-                    stats?.misiones.semana
-                      ? (stats.misiones.hoy / stats.misiones.semana) * 100
-                      : 0
-                  }
-                  color="success"
-                  valueText={`${stats?.misiones.hoy ?? 0} / ${stats?.misiones.semana ?? 0}`}
+                <DistributionBar
+                  items={[
+                    {
+                      label: "Hoy",
+                      value: stats?.misiones.hoy ?? 0,
+                      color: "#4caf50", // Success
+                    },
+                    {
+                      label: "Resto de la semana",
+                      value:
+                        (stats?.misiones.semana ?? 0) -
+                        (stats?.misiones.hoy ?? 0),
+                      color: "#8fd490", // Un color neutro
+                    },
+                  ]}
                 />
                 <Divider sx={{ my: 2 }} />
                 <DashboardTextCard
