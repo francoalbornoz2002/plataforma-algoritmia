@@ -83,7 +83,7 @@ export default function ChangePasswordModal({
       console.error("Error updating password:", error);
       enqueueSnackbar(
         error.response?.data?.message || "Error al actualizar la contraseña.",
-        { variant: "error" }
+        { variant: "error" },
       );
     }
   };

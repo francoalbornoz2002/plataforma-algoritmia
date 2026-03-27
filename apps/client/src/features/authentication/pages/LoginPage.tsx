@@ -26,7 +26,12 @@ import apiClient from "../../../lib/axios";
 
 // --- Importamos el Schema y el Resolver ---
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema, type LoginFormInputs } from "../validations/login.schema";
+import { z } from "zod";
+import {
+  loginSchema,
+  type LoginFormInputs,
+  forgotPasswordSchema,
+} from "../validations/login.schema";
 import { Lock, Mail, Visibility, VisibilityOff } from "@mui/icons-material";
 
 export default function LoginPage() {
@@ -34,6 +39,7 @@ export default function LoginPage() {
   const [openForgotDialog, setOpenForgotDialog] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [isSendingForgot, setIsSendingForgot] = useState(false);
+  const [forgotEmailError, setForgotEmailError] = useState<string | null>(null);
 
   const { enqueueSnackbar } = useSnackbar();
   const { login } = useAuth();
@@ -61,21 +67,42 @@ export default function LoginPage() {
   const handleOpenDialog = () => setOpenDialog(true);
   const handleCloseDialog = () => setOpenDialog(false);
 
-  const handleOpenForgotDialog = () => setOpenForgotDialog(true);
-  const handleCloseForgotDialog = () => setOpenForgotDialog(false);
+  const handleOpenForgotDialog = () => {
+    setForgotEmail("");
+    setForgotEmailError(null);
+    setOpenForgotDialog(true);
+  };
+  const handleCloseForgotDialog = () => {
+    setOpenForgotDialog(false);
+    setForgotEmail("");
+    setForgotEmailError(null);
+  };
 
   const handleSendForgotPassword = async () => {
-    if (!forgotEmail) return;
+    setForgotEmailError(null);
+
+    try {
+      forgotPasswordSchema.parse({ email: forgotEmail });
+    } catch (err: any) {
+      if (err instanceof z.ZodError) {
+        setForgotEmailError(err.issues[0].message);
+        return;
+      }
+    }
+
     setIsSendingForgot(true);
     try {
       await apiClient.post("/auth/forgot-password", { email: forgotEmail });
       enqueueSnackbar(
-        "Si el correo existe, recibirás un enlace para restablecer tu contraseña.",
+        "Se ha enviado un enlace para restablecer tu contraseña.",
         { variant: "success" },
       );
       handleCloseForgotDialog();
-    } catch (error) {
-      enqueueSnackbar("Error al procesar la solicitud.", { variant: "error" });
+    } catch (error: any) {
+      enqueueSnackbar(
+        error.response?.data?.message || "Error al procesar la solicitud.",
+        { variant: "error" },
+      );
     } finally {
       setIsSendingForgot(false);
     }
@@ -312,6 +339,9 @@ export default function LoginPage() {
             variant="outlined"
             value={forgotEmail}
             onChange={(e) => setForgotEmail(e.target.value)}
+            error={!!forgotEmailError}
+            helperText={forgotEmailError || " "}
+            disabled={isSendingForgot}
           />
         </DialogContent>
         <DialogActions>

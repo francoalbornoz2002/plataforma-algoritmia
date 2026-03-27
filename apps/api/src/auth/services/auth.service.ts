@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -81,22 +82,24 @@ export class AuthService {
   async forgotPassword(email: string) {
     const user = await this.prisma.usuario.findUnique({ where: { email } });
 
-    // Por seguridad, no indicamos si el usuario existe o no, pero si existe enviamos el mail.
-    if (user && !user.deletedAt) {
-      // Generamos un token de corta duración (15 min) específico para recuperación
-      const payload = { sub: user.id, type: 'recovery' };
-      const token = this.jwtService.sign(payload, { expiresIn: '15m' });
-
-      await this.mailService.enviarRestablecerContrasena(
-        user.email,
-        user.nombre,
-        token,
+    if (!user || user.deletedAt) {
+      throw new NotFoundException(
+        'El correo electrónico no existe o el usuario está inactivo.',
       );
     }
 
+    // Generamos un token de corta duración (15 min) específico para recuperación
+    const payload = { sub: user.id, type: 'recovery' };
+    const token = this.jwtService.sign(payload, { expiresIn: '15m' });
+
+    await this.mailService.enviarRestablecerContrasena(
+      user.email,
+      user.nombre,
+      token,
+    );
+
     return {
-      message:
-        'Si el correo electrónico está registrado, recibirás un enlace para restablecer tu contraseña.',
+      message: 'Se ha enviado un enlace para restablecer tu contraseña.',
     };
   }
 

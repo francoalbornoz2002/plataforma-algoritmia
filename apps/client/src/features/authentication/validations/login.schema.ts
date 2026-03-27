@@ -10,3 +10,10 @@ export const loginSchema = z.object({
 });
 
 export type LoginFormInputs = z.infer<typeof loginSchema>;
+
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .min(1, "El email es obligatorio")
+    .email("Debe ingresar un correo válido"),
+});
