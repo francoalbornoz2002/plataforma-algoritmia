@@ -508,7 +508,12 @@ export class PdfService {
     );
 
     sortedHistory.forEach((h) => {
-      const dateKey = h.fecha.toISOString().split('T')[0];
+      const dateKey = h.fecha
+        .toISOString()
+        .split('T')[0]
+        .split('-')
+        .reverse()
+        .join('/');
       if (!timelineMap.has(dateKey)) {
         timelineMap.set(dateKey, { altas: 0, bajas: 0 });
       }
@@ -560,7 +565,7 @@ export class PdfService {
 
     // Formatear tabla para la vista (fechas legibles)
     const historyFormatted = history.map((h) => ({
-      fecha: h.fecha.toISOString().split('T')[0],
+      fecha: h.fecha.toISOString().split('T')[0].split('-').reverse().join('/'),
       nombre: h.nombre,
       apellido: h.apellido,
       email: h.email,
@@ -660,7 +665,7 @@ export class PdfService {
     };
 
     const historyFormatted = history.map((h) => ({
-      fecha: h.fecha.toISOString().split('T')[0],
+      fecha: h.fecha.toISOString().split('T')[0].split('-').reverse().join('/'),
       curso: h.curso,
       tipo: h.tipo,
       esAlta: h.tipo === 'Alta',
@@ -764,7 +769,12 @@ export class PdfService {
       estado: c.estado,
       alumnosActivos: c.alumnos.activos,
       docentesActivos: c.docentes.activos,
-      createdAt: c.createdAt.toISOString().split('T')[0],
+      createdAt: c.createdAt
+        .toISOString()
+        .split('T')[0]
+        .split('-')
+        .reverse()
+        .join('/'),
     }));
 
     const commonData = this.buildCommonTemplateData(
@@ -831,7 +841,12 @@ export class PdfService {
     );
 
     sortedEvents.forEach((e) => {
-      const dateKey = e.fecha.toISOString().split('T')[0];
+      const dateKey = e.fecha
+        .toISOString()
+        .split('T')[0]
+        .split('-')
+        .reverse()
+        .join('/');
       if (!timelineMap.has(dateKey)) {
         timelineMap.set(dateKey, { inscripciones: 0, bajas: 0 });
       }
@@ -882,7 +897,7 @@ export class PdfService {
 
     // Formatear tabla
     const historyFormatted = events.map((e) => ({
-      fecha: e.fecha.toISOString().split('T')[0],
+      fecha: e.fecha.toISOString().split('T')[0].split('-').reverse().join('/'),
       tipo: e.tipo,
       esInscripcion: e.tipo === 'Inscripción',
       alumno: e.alumno,
@@ -952,7 +967,12 @@ export class PdfService {
     );
 
     sortedEvents.forEach((e) => {
-      const dateKey = e.fecha.toISOString().split('T')[0];
+      const dateKey = e.fecha
+        .toISOString()
+        .split('T')[0]
+        .split('-')
+        .reverse()
+        .join('/');
       if (!timelineMap.has(dateKey)) {
         timelineMap.set(dateKey, { asignaciones: 0, bajas: 0 });
       }
@@ -1003,7 +1023,7 @@ export class PdfService {
 
     // Formatear tabla
     const historyFormatted = events.map((e) => ({
-      fecha: e.fecha.toISOString().split('T')[0],
+      fecha: e.fecha.toISOString().split('T')[0].split('-').reverse().join('/'),
       tipo: e.tipo,
       esAsignacion: e.tipo === 'Asignación',
       docente: e.docente,
@@ -2720,7 +2740,12 @@ export class PdfService {
 
       return {
         fecha:
-          log.fechaHora.toISOString().split('T')[0] +
+          log.fechaHora
+            .toISOString()
+            .split('T')[0]
+            .split('-')
+            .reverse()
+            .join('/') +
           ' ' +
           log.fechaHora.toISOString().split('T')[1].substring(0, 8),
         usuario: log.usuarioModifico

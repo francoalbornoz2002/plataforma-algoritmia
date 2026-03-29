@@ -2499,6 +2499,19 @@ export class ReportesService {
             .trim();
 
           let displayValue = value;
+
+          // --- Formateo especial para fechas ---
+          if (
+            (key === 'fechaCorte' ||
+              key === 'fechaDesde' ||
+              key === 'fechaHasta') &&
+            typeof value === 'string' &&
+            value.match(/^\d{4}-\d{2}-\d{2}/) // Asegurarse que es un formato YYYY-MM-DD
+          ) {
+            const [year, month, day] = value.split('T')[0].split('-');
+            displayValue = `${day}/${month}/${year}`;
+          }
+
           if (key === 'agruparPor' && value === 'AMBOS') {
             displayValue = 'ROL y ESTADO';
           }
