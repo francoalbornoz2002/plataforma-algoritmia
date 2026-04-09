@@ -2954,11 +2954,14 @@ export class ReportesService {
       createdAt: { gte: start, lte: end },
     };
 
-    if (origen === 'SISTEMA') where.idDocente = null;
-    if (origen === 'DOCENTE') {
+    if (origen === 'SISTEMA') {
+      where.idDocente = null;
+    } else if (origen === 'DOCENTE') {
       where.idDocente = { not: null };
-      if (docenteId) where.idDocente = docenteId;
     }
+
+    // El filtro por docente específico debe aplicarse independientemente del origen
+    if (docenteId) where.idDocente = docenteId;
 
     if (alumnoId) where.idAlumno = alumnoId;
     if (tema) where.dificultad = { tema: tema as temas };

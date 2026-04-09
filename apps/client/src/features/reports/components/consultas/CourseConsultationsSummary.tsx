@@ -37,6 +37,8 @@ import ReportStatCard from "../common/ReportStatCard";
 import ReportTextualCard from "../common/ReportTextualCard";
 import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
+import { temas } from "../../../../types";
+import { TemasLabels } from "../../../../types/traducciones";
 
 interface Props {
   courseId: string;
@@ -259,7 +261,10 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
                 <ReportTextualCard
                   icon={<CategoryIcon />}
                   title="Tema más consultado"
-                  value={data.topTopic.name}
+                  value={
+                    TemasLabels[data.topTopic.name as temas] ||
+                    data.topTopic.name
+                  }
                   description={
                     <>
                       Concentra <b>{data.topTopic.count}</b> consultas (
@@ -371,7 +376,11 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
                           data:
                             chartGrouping === "ESTADO"
                               ? data.graficoEstados
-                              : data.graficoTemas,
+                              : data.graficoTemas.map((t: any) => ({
+                                  ...t,
+                                  label:
+                                    TemasLabels[t.label as temas] || t.label,
+                                })),
                           innerRadius: 30,
                           paddingAngle: 2,
                           cornerRadius: 4,
@@ -393,9 +402,9 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
                       height={280}
                       slotProps={{
                         legend: {
-                          direction: "horizontal",
+                          direction: "vertical",
                           position: {
-                            vertical: "bottom",
+                            vertical: "middle",
                             horizontal: "center",
                           },
                         },

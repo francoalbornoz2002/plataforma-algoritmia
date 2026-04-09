@@ -95,14 +95,9 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
 
   // --- Carga de Alumnos ---
   useEffect(() => {
-    getStudentProgressList(courseId, {
-      page: 1,
-      limit: 1000,
-      sort: "nombre",
-      order: "asc",
-    }).then((res) => {
+    getStudentProgressList(courseId).then((res) => {
       setStudentOptions(
-        res.data.map((s) => ({
+        res.map((s) => ({
           id: s.idAlumno,
           nombre: `${s.nombre} ${s.apellido}`,
         })),
@@ -197,7 +192,12 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
       },
     },
     { field: "titulo", headerName: "Título", flex: 1, minWidth: 150 },
-    { field: "tema", headerName: "Tema", width: 130 },
+    {
+      field: "tema",
+      headerName: "Tema",
+      width: 220,
+      valueFormatter: (value: any) => TemasLabels[value as temas] || value,
+    },
     { field: "alumno", headerName: "Alumno", flex: 1, width: 180 },
     {
       field: "estado",
@@ -548,10 +548,7 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
             </Paper>
 
             {/* --- Tabla Detallada --- */}
-            <Paper
-              elevation={3}
-              sx={{ width: "100%", boxSizing: "border-box" }}
-            >
+            <Paper elevation={3} sx={{ width: "100%", height: 455 }}>
               <DataGrid
                 rows={data.tabla}
                 columns={columns}
@@ -575,7 +572,7 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
                     </Stack>
                   ),
                 }}
-                sx={{ borderRadius: "12px", border: 0 }}
+                sx={{ height: "100%", borderRadius: "0.7em" }}
               />
             </Paper>
           </Box>

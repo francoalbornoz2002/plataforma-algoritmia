@@ -6,9 +6,7 @@ import {
   Stack,
   Alert,
   CircularProgress,
-  Button,
   Grid,
-  Divider,
   FormControl,
   Select,
   MenuItem,
@@ -38,6 +36,8 @@ import ReportTextualCard from "../common/ReportTextualCard";
 import ReportStatCard from "../common/ReportStatCard";
 import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
+import { TemasLabels } from "../../../../types/traducciones";
+import type { temas } from "../../../../types";
 
 interface Props {
   courseId: string;
@@ -236,7 +236,10 @@ export default function CourseClassesSummary({ courseId }: Props) {
                 <ReportTextualCard
                   icon={<CategoryIcon />}
                   title="Tema de consulta más frecuente en clases"
-                  value={data.topTopic.name}
+                  value={
+                    TemasLabels[data.topTopic.name as temas] ||
+                    data.topTopic.name
+                  }
                   description={
                     <>
                       Presente en <b>{data.topTopic.count}</b> consultas

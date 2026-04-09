@@ -16,7 +16,7 @@ import {
   InputAdornment,
 } from "@mui/material";
 import { PhotoCamera, Visibility, VisibilityOff } from "@mui/icons-material";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSnackbar } from "notistack";
 import { useAuth } from "../../authentication/context/AuthProvider";
@@ -49,6 +49,7 @@ export default function ProfileModal({ open, onClose }: ProfileModalProps) {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<ProfileFormValues>({
     // Usamos el tipo inferido del nuevo esquema
@@ -211,23 +212,26 @@ export default function ProfileModal({ open, onClose }: ProfileModalProps) {
             </Typography>
 
             {/* Campos del formulario */}
-            <TextField
-              select
-              label="Género"
-              fullWidth
-              value={profile?.genero || "Otro"} // Usamos value en lugar de defaultValue con reset
-              {...register("genero")}
-              error={!!errors.genero}
-              helperText={errors.genero?.message}
-            >
-              {" "}
-              {/* Mapeamos desde el array 'generos' */}
-              {generos.map((genero) => (
-                <MenuItem key={genero} value={genero}>
-                  {genero}
-                </MenuItem>
-              ))}
-            </TextField>
+            <Controller
+              name="genero"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  select
+                  label="Género"
+                  fullWidth
+                  error={!!errors.genero}
+                  helperText={errors.genero?.message}
+                >
+                  {generos.map((genero) => (
+                    <MenuItem key={genero} value={genero}>
+                      {genero}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
+            />
 
             <TextField
               label="Nueva Contraseña (Opcional)"
