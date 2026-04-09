@@ -41,7 +41,6 @@ import {
   type StudentDifficultiesReportFilters,
 } from "../../service/reports.service";
 import { getStudentProgressList } from "../../../users/services/docentes.service";
-import { useDebounce } from "../../../../hooks/useDebounce";
 import {
   temas,
   fuente_cambio_dificultad,
@@ -99,10 +98,6 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any>(null);
 
-  // Estado para el buscador de alumnos
-  const [studentSearch, setStudentSearch] = useState("");
-  const debouncedStudentSearch = useDebounce(studentSearch, 500);
-
   // Estado para el modal de detalle de gráficos
   const [chartModal, setChartModal] = useState<{
     open: boolean;
@@ -134,21 +129,15 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
 
   // --- Carga de Alumnos (con búsqueda) ---
   useEffect(() => {
-    getStudentProgressList(courseId, {
-      page: 1,
-      limit: 100,
-      sort: "nombre",
-      order: "asc",
-      search: debouncedStudentSearch,
-    }).then((res) => {
+    getStudentProgressList(courseId).then((res) => {
       setStudents(
-        res.data.map((s) => ({
+        res.map((s) => ({
           id: s.idAlumno,
           nombre: `${s.nombre} ${s.apellido}`,
         })),
       );
     });
-  }, [courseId, debouncedStudentSearch]);
+  }, [courseId]);
 
   // --- Sincronizar Filtros ---
   useEffect(() => {
@@ -404,10 +393,6 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
                   setData(null);
                 }
               }}
-              onInputChange={(_, newInputValue) =>
-                setStudentSearch(newInputValue)
-              }
-              filterOptions={(x) => x}
               renderInput={(params) => (
                 <TextField
                   {...params}

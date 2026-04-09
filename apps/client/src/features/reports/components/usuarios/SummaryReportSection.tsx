@@ -447,50 +447,22 @@ export default function SummaryReportSection() {
 
               {/* Tabla de Usuarios */}
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Paper
-                  elevation={3}
-                  sx={{
-                    p: 2,
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                >
-                  <Stack
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    sx={{ mb: 2 }}
-                  >
-                    <Typography variant="h6">Detalle de Usuarios</Typography>
-                    {chartFilter && (
-                      <Chip
-                        label={`Filtro: ${chartFilter.rol || ""} ${
-                          chartFilter.estado || ""
-                        }`}
-                        onDelete={() => setChartFilter(null)}
-                        color="primary"
-                        size="small"
-                      />
-                    )}
-                  </Stack>
-                  <Box sx={{ flex: 1, width: "100%" }}>
-                    <DataGrid
-                      rows={filteredUsers}
-                      columns={columns}
-                      loading={loading}
-                      initialState={{
-                        pagination: { paginationModel: { pageSize: 10 } },
-                        sorting: {
-                          sortModel: [{ field: "createdAt", sort: "desc" }],
-                        },
-                      }}
-                      pageSizeOptions={[10, 25, 50]}
-                      disableRowSelectionOnClick
-                      density="compact"
-                      sx={{ height: "100%" }}
-                    />
-                  </Box>
+                <Paper elevation={3} sx={{ height: 455, width: "100%" }}>
+                  <DataGrid
+                    rows={filteredUsers}
+                    columns={columns}
+                    loading={loading}
+                    initialState={{
+                      pagination: { paginationModel: { pageSize: 10 } },
+                      sorting: {
+                        sortModel: [{ field: "createdAt", sort: "desc" }],
+                      },
+                    }}
+                    pageSizeOptions={[10, 25, 50]}
+                    disableRowSelectionOnClick
+                    density="compact"
+                    sx={{ height: "100%", borderRadius: "0.7em" }}
+                  />
                 </Paper>
               </Box>
             </Stack>

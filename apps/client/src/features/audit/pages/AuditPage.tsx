@@ -496,7 +496,7 @@ export default function AuditPage() {
                   {
                     outline: "none",
                   },
-                border: 0,
+                borderRadius: "0.7em",
               }}
               disableColumnResize
             />

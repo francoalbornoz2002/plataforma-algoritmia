@@ -280,7 +280,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                   }}
                 >
                   <Typography variant="h6" align="center" gutterBottom>
-                    Cantidad de alumnos afectados de cada Dificultad
+                    Distribución de incidencias por Dificultad
                   </Typography>
                   <PieChart
                     series={[
@@ -296,7 +296,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                             totalDifficulties > 0
                               ? ((val / totalDifficulties) * 100).toFixed(1)
                               : "0.0";
-                          return `${val} (${pct}%)`;
+                          return `${val} casos detectados (${pct}% del total)`;
                         },
                       },
                     ]}
@@ -326,7 +326,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                     }}
                   >
                     <Typography variant="h6" align="center" gutterBottom>
-                      Cantidad de alumnos con dificultades activas por Tema
+                      Distribución de incidencias por Tema
                     </Typography>
                     <PieChart
                       series={[
@@ -342,7 +342,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                               totalTemas > 0
                                 ? ((val / totalTemas) * 100).toFixed(1)
                                 : "0.0";
-                            return `${val} (${pct}%)`;
+                            return `${val} casos detectados (${pct}% del total)`;
                           },
                         },
                       ]}
@@ -369,7 +369,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                     }}
                   >
                     <Typography variant="h6" align="center" gutterBottom>
-                      Cantidad de alumnos afectados por Grado de Dificultad
+                      Distribución de incidencias por Grado de Dificultad
                     </Typography>
                     <PieChart
                       series={[
@@ -385,7 +385,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                               totalGrados > 0
                                 ? ((val / totalGrados) * 100).toFixed(1)
                                 : "0.0";
-                            return `${val} (${pct}%)`;
+                            return `${val} casos detectados (${pct}% del total)`;
                           },
                         },
                       ]}

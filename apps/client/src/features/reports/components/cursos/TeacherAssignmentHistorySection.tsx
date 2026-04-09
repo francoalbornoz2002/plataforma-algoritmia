@@ -332,7 +332,7 @@ export default function TeacherAssignmentHistorySection() {
         >
           {/* Tabla */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Paper elevation={3} sx={{ height: 450, width: "100%" }}>
+            <Paper elevation={3} sx={{ height: 455, width: "100%" }}>
               <DataGrid
                 rows={data}
                 columns={columns}
@@ -343,6 +343,7 @@ export default function TeacherAssignmentHistorySection() {
                 pageSizeOptions={[10, 25, 50]}
                 disableRowSelectionOnClick
                 density="compact"
+                sx={{ height: "100%", borderRadius: "0.7em" }}
               />
             </Paper>
           </Box>

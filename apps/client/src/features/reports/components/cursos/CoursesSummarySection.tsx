@@ -142,16 +142,14 @@ export default function CoursesSummarySection() {
     {
       field: "createdAt",
       headerName: "Fecha de alta",
-      width: 150,
+      width: 140,
       valueFormatter: (value: any) =>
         value ? format(new Date(value), "dd/MM/yyyy") : "-",
     },
-    { field: "nombre", headerName: "Nombre", flex: 1.5, minWidth: 150 },
+    { field: "nombre", headerName: "Nombre", flex: 1, minWidth: 150 },
     {
       field: "estado",
       headerName: "Estado",
-      headerAlign: "center",
-      align: "center",
       width: 100,
       renderCell: (params) => <EstadoCursoChip estado={params.value} small />,
     },
@@ -310,48 +308,22 @@ export default function CoursesSummarySection() {
 
               {/* Derecha: Tabla de Cursos */}
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Paper
-                  elevation={3}
-                  sx={{
-                    p: 2,
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                >
-                  <Stack
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    sx={{ mb: 2 }}
-                  >
-                    <Typography variant="h6">Detalle de Cursos</Typography>
-                    {chartFilter && (
-                      <Chip
-                        label={`Filtro: ${chartFilter.estado}`}
-                        onDelete={() => setChartFilter(null)}
-                        color="primary"
-                        size="small"
-                      />
-                    )}
-                  </Stack>
-                  <Box sx={{ flex: 1, width: "100%", minHeight: 400 }}>
-                    <DataGrid
-                      rows={filteredCourses}
-                      columns={columns}
-                      loading={loading}
-                      initialState={{
-                        pagination: { paginationModel: { pageSize: 10 } },
-                        sorting: {
-                          sortModel: [{ field: "createdAt", sort: "desc" }],
-                        },
-                      }}
-                      pageSizeOptions={[10, 25, 50]}
-                      disableRowSelectionOnClick
-                      density="compact"
-                      sx={{ height: "100%" }}
-                    />
-                  </Box>
+                <Paper elevation={3} sx={{ height: 455, width: "100%" }}>
+                  <DataGrid
+                    rows={filteredCourses}
+                    columns={columns}
+                    loading={loading}
+                    initialState={{
+                      pagination: { paginationModel: { pageSize: 10 } },
+                      sorting: {
+                        sortModel: [{ field: "createdAt", sort: "desc" }],
+                      },
+                    }}
+                    pageSizeOptions={[10, 25, 50]}
+                    disableRowSelectionOnClick
+                    density="compact"
+                    sx={{ height: "100%", borderRadius: "0.7em" }}
+                  />
                 </Paper>
               </Box>
             </Stack>

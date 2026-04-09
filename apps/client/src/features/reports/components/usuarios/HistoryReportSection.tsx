@@ -315,7 +315,7 @@ export default function HistoryReportSection() {
         >
           {/* Tabla (Izquierda) */}
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Paper elevation={3} sx={{ height: 450, width: "100%" }}>
+            <Paper elevation={3} sx={{ height: 455, width: "100%" }}>
               <DataGrid
                 rows={data}
                 columns={columns}
@@ -348,6 +348,7 @@ export default function HistoryReportSection() {
                         new Date(date + "T00:00:00").toLocaleDateString(),
                     },
                   ]}
+                  yAxis={[{ tickMinStep: 1 }]}
                   series={[
                     ...(type === TipoMovimientoUsuario.ALTA ||
                     type === TipoMovimientoUsuario.TODOS
