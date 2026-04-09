@@ -101,7 +101,13 @@ export default function LoginPage() {
     } catch (error: any) {
       enqueueSnackbar(
         error.response?.data?.message || "Error al procesar la solicitud.",
-        { variant: "error" },
+        {
+          variant: "error",
+          anchorOrigin: {
+            vertical: "top",
+            horizontal: "center",
+          },
+        },
       );
     } finally {
       setIsSendingForgot(false);

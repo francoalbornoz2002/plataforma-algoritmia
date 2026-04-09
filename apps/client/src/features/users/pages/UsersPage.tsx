@@ -501,7 +501,6 @@ export default function UsersPage() {
               sx={{
                 height: 476,
                 borderRadius: "14px",
-                border: 0,
                 "& .MuiDataGrid-cell:focus": {
                   outline: "none",
                 },
