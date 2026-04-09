@@ -479,6 +479,7 @@ export class DifficultiesService {
         grado: true,
         dificultad: { select: { tema: true } }, // Hacemos JOIN con 'dificultad'
       },
+      orderBy: { idDificultad: 'asc' }, // Orden determinista para empates
     });
 
     // 2.1. Contar el total de alumnos activos/finalizados para el cálculo del promedio
@@ -520,40 +521,49 @@ export class DifficultiesService {
 
     // KPI: Promedio de dificultades por alumno
     // Dividimos por el total de alumnos del curso, no solo los que tienen dificultades
+    // (Incluye superadas para coincidir con el reporte general)
     const promDificultades = allDifAlumnos.length / totalAlumnos;
 
-    // KPI: Dificultad más frecuente (Moda)
-    const difCounts = new Map<string, number>();
-    allDifAlumnos.forEach((d) =>
-      difCounts.set(d.idDificultad, (difCounts.get(d.idDificultad) || 0) + 1),
-    );
-    const dificultadModaId = [...difCounts.entries()].reduce((a, b) =>
-      b[1] > a[1] ? b : a,
-    )[0];
-
-    // KPI: Tema más frecuente (Moda)
-    const temaCounts = new Map<temas, number>();
-    allDifAlumnos.forEach((d) =>
-      temaCounts.set(
-        d.dificultad.tema,
-        (temaCounts.get(d.dificultad.tema) || 0) + 1,
-      ),
-    );
-    const temaModa = [...temaCounts.entries()].reduce((a, b) =>
-      b[1] > a[1] ? b : a,
-    )[0];
-
-    // KPI: Grado promedio (con pesos)
-    const pesos = { Ninguno: 0, Bajo: 1, Medio: 2, Alto: 3 };
-    let sumaPesos = 0;
-    allDifAlumnos.forEach((d) => (sumaPesos += pesos[d.grado]));
-    const promNumerico = sumaPesos / allDifAlumnos.length;
-
     let promGrado: grado_dificultad = 'Ninguno';
-    if (promNumerico > 2.5) promGrado = 'Alto';
-    else if (promNumerico > 1.5)
-      promGrado = 'Medio'; // 1.51 a 2.5
-    else if (promNumerico > 0) promGrado = 'Bajo'; // 0.1 a 1.5
+    let dificultadModaId: string | null = null;
+    let temaModa: temas = temas.Ninguno;
+
+    // Filtramos solo las activas para las Modas y el Grado Promedio
+    const activeDifAlumnos = allDifAlumnos.filter(
+      (d) => d.grado !== grado_dificultad.Ninguno,
+    );
+
+    if (activeDifAlumnos.length > 0) {
+      // KPI: Dificultad más frecuente (Moda de activas)
+      const difCounts = new Map<string, number>();
+      activeDifAlumnos.forEach((d) =>
+        difCounts.set(d.idDificultad, (difCounts.get(d.idDificultad) || 0) + 1),
+      );
+      dificultadModaId = [...difCounts.entries()].reduce((a, b) =>
+        b[1] > a[1] ? b : a,
+      )[0];
+
+      // KPI: Tema más frecuente (Contamos alumnos únicos por tema, igual que en el reporte)
+      const temaCounts = new Map<temas, Set<string>>();
+      activeDifAlumnos.forEach((d) => {
+        if (!temaCounts.has(d.dificultad.tema))
+          temaCounts.set(d.dificultad.tema, new Set());
+        temaCounts.get(d.dificultad.tema)!.add(d.idAlumno);
+      });
+      temaModa = [...temaCounts.entries()].reduce((a, b) =>
+        b[1].size > a[1].size ? b : a,
+      )[0];
+
+      // KPI: Grado promedio (con pesos, solo de las activas)
+      const pesos = { Ninguno: 0, Bajo: 1, Medio: 2, Alto: 3 };
+      let sumaPesos = 0;
+      activeDifAlumnos.forEach((d) => (sumaPesos += pesos[d.grado]));
+      const promNumerico = sumaPesos / activeDifAlumnos.length;
+
+      if (promNumerico > 2.5) promGrado = grado_dificultad.Alto;
+      else if (promNumerico > 1.5) promGrado = grado_dificultad.Medio;
+      else if (promNumerico > 0) promGrado = grado_dificultad.Bajo;
+    }
 
     // 4. Actualizar la tabla DificultadesCurso
     const actualizado = await tx.dificultadesCurso.update({

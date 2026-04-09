@@ -444,8 +444,7 @@ export default function DocenteDashboardPage() {
               overflow: "hidden",
               borderTop: 5,
               borderColor: "primary.main",
-              maxHeight: { md: "calc(100vh - 324px)" }, // Altura máxima para permitir scroll sin forzar espacio
-              top: { md: 16 },
+              height: { md: "calc(100vh - 324px)" }, // Altura máxima para permitir scroll sin forzar espacio
             }}
           >
             <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>

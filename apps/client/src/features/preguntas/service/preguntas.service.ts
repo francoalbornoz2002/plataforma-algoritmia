@@ -9,16 +9,23 @@ import type {
 } from "../../../types";
 
 const findAll = async (
-  params: FindPreguntasParams
+  params: FindPreguntasParams,
 ): Promise<PaginatedPreguntasResponse> => {
   try {
     // Usamos la opción 'params' de axios para construir la query string
-    const response = await apiClient.get("/preguntas/all", { params });
+    const response = await apiClient.get("/preguntas/all", {
+      params,
+      headers: {
+        "Cache-Control": "no-cache",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+    });
     return response.data;
   } catch (error: any) {
     console.error(
       "Error al buscar las preguntas:",
-      error.response?.data || error.message
+      error.response?.data || error.message,
     );
     throw error.response?.data || new Error("Error al buscar las preguntas.");
   }
@@ -31,14 +38,14 @@ const findOne = async (id: string): Promise<PreguntaConDetalles> => {
   } catch (error: any) {
     console.error(
       `Error al buscar la pregunta ${id}:`,
-      error.response?.data || error.message
+      error.response?.data || error.message,
     );
     throw error.response?.data || new Error("Error al buscar la pregunta.");
   }
 };
 
 const create = async (
-  data: CreatePreguntaData
+  data: CreatePreguntaData,
 ): Promise<PreguntaConDetalles> => {
   try {
     const response = await apiClient.post("/preguntas/create", data);
@@ -46,7 +53,7 @@ const create = async (
   } catch (error: any) {
     console.error(
       "Error al crear la pregunta:",
-      error.response?.data || error.message
+      error.response?.data || error.message,
     );
     throw error.response?.data || new Error("Error al crear la pregunta.");
   }
@@ -54,7 +61,7 @@ const create = async (
 
 const update = async (
   id: string,
-  data: UpdatePreguntaData
+  data: UpdatePreguntaData,
 ): Promise<PreguntaConDetalles> => {
   try {
     const response = await apiClient.patch(`/preguntas/edit/${id}`, data);
@@ -62,7 +69,7 @@ const update = async (
   } catch (error: any) {
     console.error(
       `Error al actualizar la pregunta ${id}:`,
-      error.response?.data || error.message
+      error.response?.data || error.message,
     );
     throw error.response?.data || new Error("Error al actualizar la pregunta.");
   }
@@ -75,14 +82,14 @@ const remove = async (id: string): Promise<PreguntaConDetalles> => {
   } catch (error: any) {
     console.error(
       `Error al eliminar la pregunta ${id}:`,
-      error.response?.data || error.message
+      error.response?.data || error.message,
     );
     throw error.response?.data || new Error("Error al eliminar la pregunta.");
   }
 };
 
 export const findSystemPreguntasForSesion = async (
-  params: FindSystemPreguntasParams
+  params: FindSystemPreguntasParams,
 ): Promise<PreguntaConDetalles[]> => {
   try {
     const response = await apiClient.get("/preguntas/sistema/for-sesion", {
@@ -92,7 +99,7 @@ export const findSystemPreguntasForSesion = async (
   } catch (error: any) {
     console.error(
       "Error al buscar preguntas de sistema:",
-      error.response?.data || error.message
+      error.response?.data || error.message,
     );
     throw (
       error.response?.data || new Error("Error al buscar preguntas de sistema.")

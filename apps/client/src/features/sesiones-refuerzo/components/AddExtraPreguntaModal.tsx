@@ -98,6 +98,9 @@ export default function AddExtraPreguntaModal({
   const [preguntaToDelete, setPreguntaToDelete] =
     useState<PreguntaConDetalles | null>(null);
 
+  const [isReady, setIsReady] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
   // --- Data Fetching para filtros ---
   useEffect(() => {
     if (open) {
@@ -128,6 +131,11 @@ export default function AddExtraPreguntaModal({
         gradoDificultad: gradoSesionFiltro,
         tema: dificultadSeleccionada?.tema || "",
       });
+      setIsReady(true);
+    } else if (open && !idDificultadFiltro) {
+      setIsReady(true);
+    } else if (!open) {
+      setIsReady(false);
     }
   }, [open, idDificultadFiltro, gradoSesionFiltro, allDifficulties]);
 
@@ -178,10 +186,10 @@ export default function AddExtraPreguntaModal({
 
   // Efecto que reacciona a los filtros, búsqueda y paginación
   useEffect(() => {
-    if (open) {
+    if (open && isReady) {
       fetchPreguntas(page);
     }
-  }, [open, page, fetchPreguntas]);
+  }, [open, isReady, page, refreshKey, fetchPreguntas]);
 
   // Efecto para inicializar la selección cuando se abre el modal
   useEffect(() => {
@@ -227,8 +235,8 @@ export default function AddExtraPreguntaModal({
 
   const handleSavePreguntaSuccess = () => {
     setIsPreguntaFormOpen(false);
-    // Recargamos la página actual para ver el cambio
-    fetchPreguntas(page);
+    setPage(1); // Volvemos a la página 1 para ver la nueva pregunta
+    setRefreshKey((prev) => prev + 1); // Forzamos actualización
   };
 
   const handleDeletePreguntaSuccess = () => {
@@ -237,8 +245,7 @@ export default function AddExtraPreguntaModal({
     setSelectedPreguntas((prev) =>
       prev.filter((p) => p.id !== preguntaToDelete.id),
     );
-    // 2. Refetch the list of available questions to update the view
-    fetchPreguntas(page);
+    setRefreshKey((prev) => prev + 1);
   };
 
   const handleToggleSelection = (pregunta: PreguntaConDetalles) => {
@@ -354,7 +361,7 @@ export default function AddExtraPreguntaModal({
               <InputLabel>Grado</InputLabel>
               <Select
                 name="gradoDificultad"
-                value=""
+                value={filters.gradoDificultad}
                 label="Grado"
                 // disabled eliminado
                 onChange={handleFilterChange}
