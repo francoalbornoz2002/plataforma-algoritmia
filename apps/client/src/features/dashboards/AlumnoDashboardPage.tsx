@@ -32,7 +32,7 @@ import { useAuth } from "../authentication/context/AuthProvider";
 import { useCourseContext } from "../../context/CourseContext";
 import { getStudentDashboardStats } from "../courses/services/courses.service";
 import CourseInfoCard from "./components/CourseInfoCard";
-import { getGameDownload } from "../game/services/game.service";
+import { getGameDownloadUrl } from "../game/services/game.service";
 import DashboardTextCard from "./components/DashboardTextCard";
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 import {
@@ -266,26 +266,14 @@ export default function AlumnoDashboardPage() {
   }
 
   const handleDownloadGame = async () => {
-    setIsDownloading(true);
-    setError(null);
-    try {
-      const blob = await getGameDownload();
-      const url = window.URL.createObjectURL(new Blob([blob]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "algoritmia-game.zip");
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode?.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    } catch (error: any) {
-      console.error("Error downloading game:", error);
-      setError(
-        error.response?.data?.message || "Error al descargar el videojuego.",
-      );
-    } finally {
-      setIsDownloading(false);
-    }
+    const url = getGameDownloadUrl();
+
+    // Creamos un enlace temporal para iniciar la descarga nativamente
+    const link = document.createElement("a");
+    link.href = url;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   if (!selectedCourse) {

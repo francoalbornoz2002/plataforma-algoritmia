@@ -2,14 +2,13 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
-  StreamableFile,
 } from '@nestjs/common';
-import { createReadStream, existsSync } from 'fs';
+import { existsSync } from 'fs';
 import { join } from 'path';
 
 @Injectable()
 export class GameService {
-  async getGameFile(): Promise<StreamableFile> {
+  getGameFilePath(): string {
     const filePath = join(
       process.cwd(),
       'storage',
@@ -23,13 +22,6 @@ export class GameService {
       );
     }
 
-    try {
-      const file = createReadStream(filePath);
-      return new StreamableFile(file);
-    } catch (error) {
-      throw new InternalServerErrorException(
-        'No se pudo procesar el archivo del videojuego.',
-      );
-    }
+    return filePath;
   }
 }

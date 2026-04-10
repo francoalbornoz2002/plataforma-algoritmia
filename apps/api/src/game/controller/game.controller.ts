@@ -12,14 +12,24 @@ export class GameController {
   @UseGuards(RolesGuard)
   @Roles(userRoles.Alumno)
   @Get('download')
-  async downloadGame(@Res({ passthrough: true }) res: Response) {
-    const file = await this.gameService.getGameFile();
+  downloadGame(@Res() res: Response) {
+    const filePath = this.gameService.getGameFilePath();
 
-    res.set({
-      'Content-Type': 'application/zip',
-      'Content-Disposition': 'attachment; filename="algoritmia-game.zip"',
-    });
-
-    return file;
+    res.sendFile(
+      filePath,
+      {
+        headers: {
+          'Content-Type': 'application/zip',
+          'Content-Disposition': 'attachment; filename="algoritmia-game.zip"',
+        },
+      },
+      (err) => {
+        if (err && !res.headersSent) {
+          res
+            .status(500)
+            .json({ message: 'Error interno al enviar el archivo.' });
+        }
+      },
+    );
   }
 }
