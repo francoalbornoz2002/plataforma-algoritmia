@@ -25,6 +25,9 @@ export const theme = createTheme({
       contrastText: "#ffffff",
     },
   },
+  typography: {
+    fontFamily: ["Poppins", "sans-serif"].join(","),
+  },
   components: {
     MuiButton: {
       styleOverrides: {
