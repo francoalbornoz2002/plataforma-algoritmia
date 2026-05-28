@@ -20,9 +20,8 @@ import {
   SupervisorAccount,
   People,
   TrendingUp,
-  Edit, // Para el botón de editar
+  Edit,
 } from "@mui/icons-material";
-import { useNavigate } from "react-router";
 import { keyframes } from "@mui/system";
 import { useAuth } from "../authentication/context/AuthProvider";
 import { getAdminDashboardStats } from "../users/services/user.service";
@@ -148,7 +147,6 @@ const ProgressItem = ({
 
 export default function AdminDashboardPage() {
   const { profile } = useAuth();
-  const navigate = useNavigate();
 
   const [stats, setStats] = useState<AdminDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);

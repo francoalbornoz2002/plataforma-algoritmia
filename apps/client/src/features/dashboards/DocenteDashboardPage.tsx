@@ -7,7 +7,6 @@ import {
   IconButton,
   Tooltip,
   Grid,
-  Button,
   Stack,
   Avatar,
   List,
@@ -33,7 +32,6 @@ import {
 import ConfirmationDialog from "../../components/ConfirmationDialog";
 import CourseFormDialog from "../courses/components/CourseFormDialog";
 import { enqueueSnackbar } from "notistack";
-import { useNavigate } from "react-router";
 import {
   type CourseDashboardData,
   type Mision,
@@ -44,7 +42,6 @@ import { useAuth } from "../authentication/context/AuthProvider";
 import {
   Assessment,
   AssignmentLate,
-  Class,
   Delete,
   Event,
   Info,
@@ -52,7 +49,6 @@ import {
   School,
   Search,
   SwitchAccessShortcutAdd,
-  TrendingUp,
   Warning,
 } from "@mui/icons-material";
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
@@ -222,8 +218,7 @@ const formatClassTime = (inicio: string, fin: string) => {
 
 export default function DocenteDashboardPage() {
   const { selectedCourse, isReadOnly, refreshCourse } = useCourseContext();
-  const { profile } = useAuth(); // <-- Usamos 'profile' que tiene el nombre completo
-  const navigate = useNavigate();
+  const { profile } = useAuth();
 
   const baseUrl = import.meta.env.VITE_API_URL_WITHOUT_PREFIX;
 
