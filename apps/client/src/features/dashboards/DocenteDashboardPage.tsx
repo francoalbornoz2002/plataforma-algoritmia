@@ -62,6 +62,7 @@ import {
   EstadoSesionLabels,
 } from "../../types/traducciones";
 import InfoAlumno from "./components/InfoAlumno";
+import DashboardHeader from "./components/DashboardHeader";
 
 // --- Componentes Auxiliares Visuales ---
 
@@ -337,88 +338,7 @@ export default function DocenteDashboardPage() {
   return (
     <Stack spacing={3}>
       {/* HEADER */}
-      <Paper
-        elevation={2}
-        sx={{ p: 2, borderLeft: "5px solid", borderColor: "primary.main" }}
-      >
-        <Stack spacing={1}>
-          <Typography variant="h4" color="primary.main" fontWeight="bold">
-            ¡Hola, {profile?.nombre}! 👋
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Bienvenido al panel de control de:{" "}
-            <strong>{selectedCourse.nombre}</strong>. Estas son algunas acciones
-            rápidas que puedes realizar:
-          </Typography>
-        </Stack>
-      </Paper>
-      {/* ACCIONES RÁPIDAS */}
-      <Stack spacing={3} direction="row">
-        <Button
-          fullWidth
-          variant="outlined"
-          color="success"
-          startIcon={<TrendingUp />}
-          onClick={() => navigate("/course/progress")}
-          sx={{ justifyContent: "flex-start", bgcolor: "background.paper" }}
-        >
-          Ver Progreso
-        </Button>
-        <Button
-          fullWidth
-          variant="outlined"
-          color="error"
-          startIcon={<Warning />}
-          onClick={() => navigate("/course/difficulties")}
-          sx={{ justifyContent: "flex-start", bgcolor: "background.paper" }}
-        >
-          Ver Dificultades
-        </Button>
-        <Button
-          fullWidth
-          variant="outlined"
-          color="info"
-          startIcon={<MarkUnreadChatAlt />}
-          onClick={() => navigate("/course/consults")}
-          sx={{ justifyContent: "flex-start", bgcolor: "background.paper" }}
-        >
-          Ver Consultas
-        </Button>
-        <Button
-          fullWidth
-          variant="outlined"
-          startIcon={<Class />}
-          onClick={() => navigate("/course/sessions")}
-          sx={{
-            justifyContent: "flex-start",
-            bgcolor: "background.paper",
-            borderColor: "#9c27b0",
-            color: "#9c27b0",
-          }}
-        >
-          Asignar Sesión
-        </Button>
-        <Button
-          fullWidth
-          variant="outlined"
-          color="primary"
-          startIcon={<Event />}
-          onClick={() => navigate("/course/consult-classes")}
-          sx={{ justifyContent: "flex-start", bgcolor: "background.paper" }}
-        >
-          Agendar Clase
-        </Button>
-        <Button
-          fullWidth
-          variant="outlined"
-          color="warning"
-          startIcon={<Assessment />}
-          onClick={() => navigate("/course/reports")}
-          sx={{ justifyContent: "flex-start", bgcolor: "background.paper" }}
-        >
-          Ver Reportes
-        </Button>
-      </Stack>
+      <DashboardHeader nombre={profile?.nombre} curso={selectedCourse.nombre} />
 
       {error && <Alert severity="error">{error}</Alert>}
 

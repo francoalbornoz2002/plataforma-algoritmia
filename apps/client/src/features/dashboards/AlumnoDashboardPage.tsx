@@ -45,6 +45,7 @@ import {
   EstadoSesionLabels,
 } from "../../types/traducciones";
 import ReportTextualCard from "../reports/components/common/ReportTextualCard";
+import DashboardHeader from "./components/DashboardHeader";
 
 // --- Componentes Auxiliares Visuales ---
 
@@ -293,87 +294,9 @@ export default function AlumnoDashboardPage() {
   return (
     <Stack spacing={3}>
       {/* HEADER */}
-      <Paper
-        elevation={3}
-        sx={{ p: 2, borderLeft: "4px solid", borderColor: "primary.main" }}
-      >
-        <Stack spacing={1}>
-          <Typography variant="h4" color="primary.main" fontWeight="bold">
-            ¡Hola, {profile?.nombre}! 👋
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Bienvenido al panel de control de:{" "}
-            <strong>{selectedCourse.nombre}</strong>. Estas son algunas acciones
-            rápidas que puedes realizar:
-          </Typography>
-        </Stack>
-      </Paper>
+      <DashboardHeader nombre={profile?.nombre} curso={selectedCourse.nombre} />
 
       {error && <Alert severity="error">{error}</Alert>}
-
-      <Stack spacing={2} direction="row">
-        <Button
-          fullWidth
-          variant="outlined"
-          color="primary"
-          startIcon={
-            isDownloading ? (
-              <CircularProgress size={20} color="inherit" />
-            ) : (
-              <VideogameAsset />
-            )
-          }
-          onClick={handleDownloadGame}
-          disabled={isDownloading}
-          sx={{ justifyContent: "flex-start", bgcolor: "background.paper" }}
-        >
-          {isDownloading ? "Descargando..." : "Descargar Videojuego"}
-        </Button>
-        <Button
-          fullWidth
-          variant="outlined"
-          color="success"
-          startIcon={<Assessment />}
-          onClick={() => navigate("/my/progress")}
-          sx={{ justifyContent: "flex-start", bgcolor: "background.paper" }}
-        >
-          Ver mi Progreso
-        </Button>
-        <Button
-          fullWidth
-          variant="outlined"
-          color="error"
-          startIcon={<AssignmentLate />}
-          onClick={() => navigate("/my/difficulties")}
-          sx={{ justifyContent: "flex-start", bgcolor: "background.paper" }}
-        >
-          Ver mis Dificultades
-        </Button>
-        <Button
-          fullWidth
-          variant="outlined"
-          startIcon={<SwitchAccessShortcutAdd />}
-          onClick={() => navigate("/my/sessions")}
-          sx={{
-            justifyContent: "flex-start",
-            color: "#9c27b0",
-            borderColor: "#9c27b0",
-            bgcolor: "background.paper",
-          }}
-        >
-          Ver mis Sesiones
-        </Button>
-        <Button
-          fullWidth
-          variant="outlined"
-          color="info"
-          startIcon={<MarkUnreadChatAlt />}
-          onClick={() => navigate("/my/consults")}
-          sx={{ justifyContent: "flex-start", bgcolor: "background.paper" }}
-        >
-          Realizar Consulta
-        </Button>
-      </Stack>
 
       <Grid container spacing={3}>
         {/* ROW 1: INFO DEL CURSO Y TAREAS PENDIENTES */}

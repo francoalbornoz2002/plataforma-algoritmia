@@ -31,6 +31,7 @@ import InstitutionInfo from "../institution/components/InstitutionInfo"; // Impo
 import InstitutionForm from "../institution/components/InstitutionForm"; // Importamos el componente de formulario
 import { Dialog } from "@mui/material"; // Para el modal
 import StatCard from "../../components/StatCard";
+import DashboardHeader from "./components/DashboardHeader";
 
 // --- Componentes Auxiliares Visuales ---
 
@@ -211,54 +212,7 @@ export default function AdminDashboardPage() {
     <Stack spacing={3}>
       {/* Eliminamos height: "100%" para evitar scroll innecesario */}
       {/* HEADER */}
-      <Paper
-        elevation={3}
-        sx={{ p: 2, borderLeft: "5px solid", borderColor: "primary.main" }}
-      >
-        <Stack spacing={1}>
-          <Typography variant="h4" color="primary.main" fontWeight="bold">
-            ¡Hola, {profile?.nombre}! 👋
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Bienvenido al panel de administración general del sistema. Estas son
-            algunas acciones rápidas que puedes realizar:
-          </Typography>
-        </Stack>
-      </Paper>
-      {/* ACCIONES RÁPIDAS */}
-      <Stack spacing={1} direction="row">
-        <Button
-          fullWidth
-          variant="outlined"
-          color="primary"
-          startIcon={<People />}
-          onClick={() => navigate("/dashboard/users")}
-          sx={{ justifyContent: "flex-start", bgcolor: "background.paper" }}
-        >
-          Gestionar Usuarios
-        </Button>
-        <Button
-          fullWidth
-          variant="outlined"
-          color="secondary"
-          startIcon={<School />}
-          onClick={() => navigate("/dashboard/courses")}
-          sx={{ justifyContent: "flex-start", bgcolor: "background.paper" }}
-        >
-          Gestionar Cursos
-        </Button>
-        <Button
-          fullWidth
-          variant="outlined"
-          color="warning"
-          startIcon={<Assessment />}
-          onClick={() => navigate("/dashboard/reports")}
-          sx={{ justifyContent: "flex-start", bgcolor: "background.paper" }}
-        >
-          Ver Reportes
-        </Button>
-      </Stack>
-
+      <DashboardHeader nombre={profile?.nombre} />
       {/* ALERTA: Institución no registrada */}
       {!stats?.institution && (
         <Alert
