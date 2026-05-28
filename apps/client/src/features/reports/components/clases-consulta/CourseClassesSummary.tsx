@@ -33,11 +33,11 @@ import {
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import ReportTotalCard from "../common/ReportTotalCard";
 import ReportTextualCard from "../common/ReportTextualCard";
-import ReportStatCard from "../common/ReportStatCard";
 import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
 import { TemasLabels } from "../../../../types/traducciones";
 import type { temas } from "../../../../types";
+import StatCard from "../../../../components/StatCard";
 
 interface Props {
   courseId: string;
@@ -222,11 +222,11 @@ export default function CourseClassesSummary({ courseId }: Props) {
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 2.5 }}>
-                <ReportStatCard
+                <StatCard
                   icon={<FunctionsIcon />}
                   title="Promedio Consultas por Clase"
                   subtitle="Consultas agendadas por clase activa."
-                  count={data.kpis.promConsultasPorClase.toFixed(1)}
+                  value={data.kpis.promConsultasPorClase.toFixed(1)}
                   color="primary"
                 />
               </Grid>

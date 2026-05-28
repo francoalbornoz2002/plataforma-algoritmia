@@ -46,7 +46,7 @@ import { getStudentProgressList } from "../../../users/services/docentes.service
 import { temas, estado_consulta } from "../../../../types";
 import { TemasLabels } from "../../../../types/traducciones";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
-import ReportStatCard from "../common/ReportStatCard";
+import StatCard from "../../../../components/StatCard";
 import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
 import { History } from "@mui/icons-material";
@@ -472,29 +472,29 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
             {/* --- Stats Cards --- */}
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 4 }}>
-                <ReportStatCard
+                <StatCard
                   icon={<FunctionsIcon fontSize="small" />}
                   title="Total de Consultas"
                   subtitle="Consultas realizadas en el periodo indicado"
-                  count={data.stats.total}
+                  value={data.stats.total}
                   color="primary"
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
-                <ReportStatCard
+                <StatCard
                   icon={<CalendarTodayIcon fontSize="small" />}
                   title="Promedio Diario"
                   subtitle="Consultas realizadas por día en el periodo indicado"
-                  count={Number(data.stats.promedioDiario.toFixed(1))}
+                  value={Number(data.stats.promedioDiario.toFixed(1))}
                   color="info"
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
-                <ReportStatCard
+                <StatCard
                   icon={<CheckCircleIcon fontSize="small" />}
                   title="Prom. Atendidas/Día"
                   subtitle="Consultas revisadas o resueltas por día"
-                  count={Number(data.stats.promedioAtendidasDiario.toFixed(1))}
+                  value={Number(data.stats.promedioAtendidasDiario.toFixed(1))}
                   color="success"
                 />
               </Grid>

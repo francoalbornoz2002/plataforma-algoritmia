@@ -23,7 +23,7 @@ import {
 import { dificultad_mision } from "../../../../types";
 import { useOptionalCourseContext } from "../../../../context/CourseContext";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
-import ReportStatCard from "../common/ReportStatCard";
+import StatCard from "../../../../components/StatCard";
 import ReportTextualCard from "../common/ReportTextualCard";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
@@ -225,11 +225,11 @@ export default function CourseMissionsReport({ courseId }: Props) {
           {data && (
             <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
               <Box sx={{ flex: 1 }}>
-                <ReportStatCard
+                <StatCard
                   icon={<TaskAltIcon />}
                   title="Misiones Completadas"
                   subtitle="Total en el período"
-                  count={data.kpis.totalCompletions}
+                  value={data.kpis.totalCompletions}
                   color="info"
                 />
               </Box>

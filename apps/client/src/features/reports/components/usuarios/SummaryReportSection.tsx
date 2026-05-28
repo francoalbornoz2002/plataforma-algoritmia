@@ -27,7 +27,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
 import ReportTotalCard from "../common/ReportTotalCard";
-import ReportStatCard from "../common/ReportStatCard";
+import StatCard from "../../../../components/StatCard";
 
 // Definimos colores constantes para mantener consistencia
 const ROLE_COLORS: Record<string, string> = {
@@ -354,11 +354,11 @@ export default function SummaryReportSection() {
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
-                <ReportStatCard
+                <StatCard
                   title="Usuarios Activos"
                   subtitle="En la plataforma"
                   small
-                  count={summaryData.activos}
+                  value={summaryData.activos}
                   percentage={
                     summaryData.total > 0
                       ? (summaryData.activos / summaryData.total) * 100
@@ -369,11 +369,11 @@ export default function SummaryReportSection() {
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
-                <ReportStatCard
+                <StatCard
                   title="Usuarios Inactivos"
                   subtitle="Dados de baja"
                   small
-                  count={summaryData.inactivos}
+                  value={summaryData.inactivos}
                   percentage={
                     summaryData.total > 0
                       ? (summaryData.inactivos / summaryData.total) * 100

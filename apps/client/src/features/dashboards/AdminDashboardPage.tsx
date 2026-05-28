@@ -26,11 +26,11 @@ import { useNavigate } from "react-router";
 import { keyframes } from "@mui/system";
 import { useAuth } from "../authentication/context/AuthProvider";
 import { getAdminDashboardStats } from "../users/services/user.service";
-import DashboardStatCard from "./components/DashboardStatCard";
 import type { AdminDashboardStats, Institucion } from "../../types"; // Importamos el tipo AdminDashboardStats y Institucion
 import InstitutionInfo from "../institution/components/InstitutionInfo"; // Importamos el componente de información
 import InstitutionForm from "../institution/components/InstitutionForm"; // Importamos el componente de formulario
 import { Dialog } from "@mui/material"; // Para el modal
+import StatCard from "../../components/StatCard";
 
 // --- Componentes Auxiliares Visuales ---
 
@@ -286,7 +286,7 @@ export default function AdminDashboardPage() {
       {/* KPI ROW 1 */}
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <DashboardStatCard
+          <StatCard
             title="Total Usuarios"
             value={stats?.users.total ?? 0}
             subtitle="Registrados en el sistema"
@@ -295,7 +295,7 @@ export default function AdminDashboardPage() {
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <DashboardStatCard
+          <StatCard
             title="Cursos Activos"
             value={stats?.courses.active ?? 0}
             subtitle={`De ${stats?.courses.total ?? 0} totales`}
@@ -304,7 +304,7 @@ export default function AdminDashboardPage() {
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <DashboardStatCard
+          <StatCard
             title="Clases del Mes"
             value={stats?.classes.month.total ?? 0}
             subtitle="Programadas y realizadas"
@@ -313,7 +313,7 @@ export default function AdminDashboardPage() {
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <DashboardStatCard
+          <StatCard
             title="Sesiones del Mes"
             value={stats?.sessions.month.total ?? 0}
             subtitle="Refuerzos generados"
@@ -415,7 +415,7 @@ export default function AdminDashboardPage() {
 
             <Grid container spacing={2}>
               <Grid size={{ xs: 6 }}>
-                <DashboardStatCard
+                <StatCard
                   title="Promedio"
                   value={
                     stats?.courses.active
@@ -431,7 +431,7 @@ export default function AdminDashboardPage() {
                 />
               </Grid>
               <Grid size={{ xs: 6 }}>
-                <DashboardStatCard
+                <StatCard
                   title="Promedio"
                   value={
                     stats?.courses.active

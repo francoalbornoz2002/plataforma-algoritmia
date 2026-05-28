@@ -48,9 +48,9 @@ import StudentDifficultyDetailModal from "../components/StudentDifficultyDetailM
 import GradeChip from "../../../components/GradeChip";
 import { TemasLabels } from "../../../types/traducciones";
 import HeaderPage from "../../../components/HeaderPage";
-import DashboardStatCard from "../../dashboards/components/DashboardStatCard";
 import DashboardTextCard from "../../dashboards/components/DashboardTextCard";
 import { Warning } from "@mui/icons-material";
+import StatCard from "../../../components/StatCard";
 
 // Tipo para la fila de la DataGrid
 type StudentRow = AlumnoDificultadResumen;
@@ -337,7 +337,7 @@ export default function DifficultiesPage() {
             {overviewLoading ? (
               <CircularProgress />
             ) : (
-              <DashboardStatCard
+              <StatCard
                 title="Promedio por Alumno"
                 value={overview ? overview.promDificultades.toFixed(1) : 0}
                 subtitle="Dificultades activas / alumno"
@@ -380,7 +380,7 @@ export default function DifficultiesPage() {
             {overviewLoading ? (
               <CircularProgress />
             ) : (
-              <DashboardStatCard
+              <StatCard
                 title="Grado Promedio"
                 subtitle="De las dificultades de los alumnos"
                 value={overview?.promGrado || "N/A"}

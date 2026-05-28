@@ -24,7 +24,7 @@ import {
 import { dificultad_mision } from "../../../../types";
 import { useOptionalCourseContext } from "../../../../context/CourseContext";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
-import ReportStatCard from "../common/ReportStatCard";
+import StatCard from "../../../../components/StatCard";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import PersonIcon from "@mui/icons-material/Person";
 import StarIcon from "@mui/icons-material/Star";
@@ -257,39 +257,39 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
           <Stack spacing={2}>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <ReportStatCard
+                <StatCard
                   icon={<TaskAltIcon fontSize="small" />}
                   title="Veces Completada"
                   subtitle="Total de ejecuciones"
-                  count={data.stats.vecesCompletada}
+                  value={data.stats.vecesCompletada}
                   color="success"
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <ReportStatCard
+                <StatCard
                   icon={<PersonIcon fontSize="small" />}
                   title="Alumnos que completaron"
                   subtitle="Total de alumnos distintos"
-                  count={data.stats.alumnosCompletaron}
+                  value={data.stats.alumnosCompletaron}
                   percentage={data.stats.pctAlumnos}
                   color="primary"
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <ReportStatCard
+                <StatCard
                   icon={<StarIcon fontSize="small" />}
                   title="Prom. Estrellas"
                   subtitle="Calificación promedio"
-                  count={data.stats.promEstrellas.toFixed(1)}
+                  value={data.stats.promEstrellas.toFixed(1)}
                   color="warning"
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <ReportStatCard
+                <StatCard
                   icon={<ReplayIcon fontSize="small" />}
                   title="Prom. Intentos"
                   subtitle="Intentos promedio"
-                  count={data.stats.promIntentos.toFixed(1)}
+                  value={data.stats.promIntentos.toFixed(1)}
                   color="info"
                 />
               </Grid>

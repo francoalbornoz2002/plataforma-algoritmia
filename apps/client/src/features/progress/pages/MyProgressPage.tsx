@@ -43,11 +43,11 @@ import {
   dificultad_mision,
 } from "../../../types";
 import MissionCard from "../components/MissionCard";
-import DashboardStatCard from "../../dashboards/components/DashboardStatCard";
 import DashboardTextCard from "../../dashboards/components/DashboardTextCard";
 import { Assessment } from "@mui/icons-material";
 import HeaderPage from "client/src/components/HeaderPage";
 import { datePickerConfig } from "../../../config/theme.config";
+import StatCard from "../../../components/StatCard";
 
 export default function MyProgressPage() {
   // --- 1. CONTEXTO ---
@@ -249,7 +249,7 @@ export default function MyProgressPage() {
           />
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 2 }}>
-              <DashboardStatCard
+              <StatCard
                 title="Misiones Completadas"
                 subtitle="Acumuladas en el curso"
                 value={`${progress.cantMisionesCompletadas} / ${TOTAL_MISIONES}`}
@@ -259,7 +259,7 @@ export default function MyProgressPage() {
             </Grid>
 
             <Grid size={{ xs: 12, sm: 2 }}>
-              <DashboardStatCard
+              <StatCard
                 title="Estrellas Totales"
                 subtitle="Acumuladas en el curso"
                 value={`${progress.totalEstrellas} / ${TOTAL_ESTRELLAS}`}
@@ -268,7 +268,7 @@ export default function MyProgressPage() {
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 2 }}>
-              <DashboardStatCard
+              <StatCard
                 title="Experiencia Total"
                 subtitle="Acumuladas en el curso"
                 value={progress.totalExp}
@@ -277,7 +277,7 @@ export default function MyProgressPage() {
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 1.8 }}>
-              <DashboardStatCard
+              <StatCard
                 title="Prom. Estrellas"
                 value={progress.promEstrellas.toFixed(1)}
                 icon={<StarIcon />}
@@ -286,7 +286,7 @@ export default function MyProgressPage() {
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 1.8 }}>
-              <DashboardStatCard
+              <StatCard
                 title="Prom. Intentos"
                 value={progress.promIntentos.toFixed(1)}
                 icon={<ReplayIcon />}

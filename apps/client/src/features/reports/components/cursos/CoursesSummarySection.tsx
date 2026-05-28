@@ -27,7 +27,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import ReportTotalCard from "../common/ReportTotalCard";
-import ReportStatCard from "../common/ReportStatCard";
+import StatCard from "../../../../components/StatCard";
 
 export default function CoursesSummarySection() {
   const [filters, setFilters] = useState<CoursesSummaryFilters>({
@@ -235,10 +235,10 @@ export default function CoursesSummarySection() {
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <ReportStatCard
+                <StatCard
                   title="Cursos Activos"
                   subtitle="En curso actualmente"
-                  count={summaryData.activos}
+                  value={summaryData.activos}
                   percentage={
                     summaryData.total > 0
                       ? (summaryData.activos / summaryData.total) * 100
@@ -250,10 +250,10 @@ export default function CoursesSummarySection() {
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <ReportStatCard
+                <StatCard
                   title="Cursos Inactivos"
                   subtitle="Dados de baja"
-                  count={summaryData.inactivos}
+                  value={summaryData.inactivos}
                   percentage={
                     summaryData.total > 0
                       ? (summaryData.inactivos / summaryData.total) * 100
@@ -265,10 +265,10 @@ export default function CoursesSummarySection() {
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <ReportStatCard
+                <StatCard
                   title="Cursos Finalizados"
                   subtitle="Ciclo lectivo cerrado"
-                  count={summaryData.finalizados}
+                  value={summaryData.finalizados}
                   percentage={
                     summaryData.total > 0
                       ? (summaryData.finalizados / summaryData.total) * 100

@@ -24,7 +24,6 @@ import PercentIcon from "@mui/icons-material/Percent";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
-import PersonIcon from "@mui/icons-material/Person";
 import { LineChart } from "@mui/x-charts/LineChart";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
@@ -33,7 +32,7 @@ import {
   type CourseProgressSummaryFilters,
 } from "../../service/reports.service";
 import ReportTotalCard from "../common/ReportTotalCard";
-import ReportStatCard from "../common/ReportStatCard";
+import StatCard from "../../../../components/StatCard";
 import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
 import { Assessment } from "@mui/icons-material";
@@ -158,44 +157,44 @@ export default function CourseProgressSummary({ courseId }: Props) {
 
               {/* Misiones */}
               <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                <ReportStatCard
+                <StatCard
                   icon={<TaskAltIcon fontSize="small" />}
                   title="Misiones completadas"
                   subtitle="Acumuladas por el curso"
-                  count={data.resumen.misionesCompletadas}
+                  value={data.resumen.misionesCompletadas}
                   color="info"
                 />
               </Grid>
 
               {/* Estrellas */}
               <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                <ReportStatCard
+                <StatCard
                   icon={<StarIcon fontSize="small" />}
                   title="Estrellas totales"
                   subtitle="Acumuladas por el curso"
-                  count={data.resumen.estrellasTotales}
+                  value={data.resumen.estrellasTotales}
                   color="warning"
                 />
               </Grid>
 
               {/* Intentos */}
               <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                <ReportStatCard
+                <StatCard
                   icon={<ReplayIcon fontSize="small" />}
                   title="Intentos totales"
                   subtitle="Acumulados por el curso"
-                  count={data.resumen.intentosTotales}
+                  value={data.resumen.intentosTotales}
                   color="secondary"
                 />
               </Grid>
 
               {/* Exp */}
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <ReportStatCard
+                <StatCard
                   icon={<BoltIcon fontSize="small" />}
                   title="Experiencia total"
                   subtitle="Puntos EXP acumulados por el curso"
-                  count={data.resumen.expTotal}
+                  value={data.resumen.expTotal}
                   color="primary"
                 />
               </Grid>
@@ -290,20 +289,20 @@ export default function CourseProgressSummary({ courseId }: Props) {
                   {/* Promedios */}
                   <Grid container spacing={2}>
                     <Grid size={{ xs: 6 }}>
-                      <ReportStatCard
+                      <StatCard
                         icon={<StarIcon fontSize="small" />}
                         title="Estrellas Promedio"
                         subtitle="Por alumno"
-                        count={data.resumen.promEstrellas.toFixed(1)}
+                        value={data.resumen.promEstrellas.toFixed(1)}
                         color="warning"
                       />
                     </Grid>
                     <Grid size={{ xs: 6 }}>
-                      <ReportStatCard
+                      <StatCard
                         icon={<ReplayIcon fontSize="small" />}
                         title="Intentos Promedio"
                         subtitle="Por alumno"
-                        count={data.resumen.promIntentos.toFixed(1)}
+                        value={data.resumen.promIntentos.toFixed(1)}
                         color="info"
                       />
                     </Grid>

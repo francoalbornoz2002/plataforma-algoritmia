@@ -46,8 +46,8 @@ import {
   StarsRange,
 } from "../../../types/progress-filters";
 import StudentProgressDetailModal from "../components/StudentProgressDetailModal";
-import DashboardStatCard from "../../dashboards/components/DashboardStatCard";
 import HeaderPage from "client/src/components/HeaderPage";
+import StatCard from "../../../components/StatCard";
 
 type StudentRow = ProgresoAlumnoDetallado;
 
@@ -372,7 +372,7 @@ export default function ProgressPage() {
             {/* KPIs */}
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 2 }}>
-                <DashboardStatCard
+                <StatCard
                   title="Misiones Completadas"
                   value={overview.misionesCompletadas}
                   icon={<TaskAltIcon />}
@@ -381,7 +381,7 @@ export default function ProgressPage() {
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 2 }}>
-                <DashboardStatCard
+                <StatCard
                   title="Estrellas"
                   value={overview.totalEstrellas}
                   icon={<StarIcon />}
@@ -390,7 +390,7 @@ export default function ProgressPage() {
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 2 }}>
-                <DashboardStatCard
+                <StatCard
                   title="Intentos"
                   value={overview.totalIntentos}
                   icon={<ReplayIcon />}
@@ -399,7 +399,7 @@ export default function ProgressPage() {
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 2 }}>
-                <DashboardStatCard
+                <StatCard
                   title="Experiencia"
                   value={overview.totalExp}
                   icon={<BoltIcon />}
@@ -408,7 +408,7 @@ export default function ProgressPage() {
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 2 }}>
-                <DashboardStatCard
+                <StatCard
                   title="Promedio Estrellas"
                   value={overview.promEstrellas.toFixed(1)}
                   icon={<StarIcon />}
@@ -417,7 +417,7 @@ export default function ProgressPage() {
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 2 }}>
-                <DashboardStatCard
+                <StatCard
                   title="Promedio Intentos"
                   value={overview.promIntentos.toFixed(1)}
                   icon={<ReplayIcon />}

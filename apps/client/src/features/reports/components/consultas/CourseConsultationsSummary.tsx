@@ -6,7 +6,6 @@ import {
   Stack,
   Alert,
   CircularProgress,
-  Button,
   Grid,
   FormControl,
   Select,
@@ -33,7 +32,7 @@ import {
 } from "../../service/reports.service";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import ReportTotalCard from "../common/ReportTotalCard";
-import ReportStatCard from "../common/ReportStatCard";
+import StatCard from "../../../../components/StatCard";
 import ReportTextualCard from "../common/ReportTextualCard";
 import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
@@ -235,11 +234,11 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
               </Grid>
               <Grid size={{ xs: 12, md: 3 }}>
                 {/* --- Consultas resueltas --- */}
-                <ReportStatCard
+                <StatCard
                   icon={<CheckCircleIcon fontSize="small" />}
                   title="Consultas resueltas"
                   subtitle="Que poseen respuesta y valoración"
-                  count={data.kpis.resueltas.count}
+                  value={data.kpis.resueltas.count}
                   percentage={data.kpis.resueltas.percentage}
                   color="success"
                 />
@@ -247,11 +246,11 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
 
               {/* --- Consultas por atender --- */}
               <Grid size={{ xs: 12, md: 3 }}>
-                <ReportStatCard
+                <StatCard
                   icon={<PendingIcon fontSize="small" />}
                   title="Consultas por atender"
                   subtitle="Pendientes o a revisar"
-                  count={data.kpis.pendientes.count}
+                  value={data.kpis.pendientes.count}
                   percentage={data.kpis.pendientes.percentage}
                   color="warning"
                 />
@@ -449,11 +448,11 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
                   <Grid container spacing={2}>
                     {/* --- Atendidas en clases de consulta --- */}
                     <Grid size={{ xs: 12, md: 6 }}>
-                      <ReportStatCard
+                      <StatCard
                         icon={<ClassIcon fontSize="small" />}
                         title="Atendidas en Clases de Consulta"
                         subtitle="Consultas revisadas en vivo durante una clase"
-                        count={data.kpis.impactoClases.revisadas.count}
+                        value={data.kpis.impactoClases.revisadas.count}
                         percentage={
                           data.kpis.impactoClases.revisadas.percentage
                         }
@@ -463,11 +462,11 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
 
                     {/* --- Resueltas via clase --- */}
                     <Grid size={{ xs: 12, md: 6 }}>
-                      <ReportStatCard
+                      <StatCard
                         icon={<CheckCircleIcon fontSize="small" />}
                         title="Resueltas vía Clase"
                         subtitle="Consultas resueltas tras ser revisadas en clase"
-                        count={data.kpis.impactoClases.resueltas.count}
+                        value={data.kpis.impactoClases.resueltas.count}
                         percentage={
                           data.kpis.impactoClases.resueltas.percentage
                         }

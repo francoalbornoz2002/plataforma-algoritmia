@@ -1,25 +1,25 @@
 import { Paper, Stack, Typography, Box } from "@mui/material";
 import type { ReactNode } from "react";
 
-interface ReportStatCardProps {
+interface StatCardProps {
   icon: ReactNode;
   title: string;
-  subtitle: string;
-  count: number | string;
+  subtitle?: string;
+  value: number | string;
   percentage?: number;
   color: "primary" | "secondary" | "error" | "info" | "success" | "warning";
   small?: boolean;
 }
 
-export default function ReportStatCard({
+export default function StatCardProps({
   icon,
   title,
   subtitle,
-  count,
+  value,
   percentage,
   color,
   small = false,
-}: ReportStatCardProps) {
+}: StatCardProps) {
   return (
     <Paper
       elevation={2}
@@ -66,7 +66,7 @@ export default function ReportStatCard({
             color={`${color}.main`}
             fontWeight="bold"
           >
-            {count}
+            {value}
           </Typography>
           {percentage !== undefined && (
             <Typography variant="caption" color={`${color}.main`}>
