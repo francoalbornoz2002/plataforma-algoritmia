@@ -2,12 +2,10 @@ import { useState } from "react";
 import { Box, Tab, Tabs, Button, Tooltip } from "@mui/material";
 import GroupIcon from "@mui/icons-material/Group";
 import SchoolIcon from "@mui/icons-material/School";
-import VpnKeyIcon from "@mui/icons-material/VpnKey";
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import UsersReportTab from "../components/usuarios/UsersReportTab";
 import CoursesReportTab from "../components/cursos/CoursesReportTab";
-import AuditPage from "../../audit/pages/AuditPage";
 import ReportContextDialog from "../components/ReportContextDialog";
 import CourseReportsView from "../components/CourseReportsView";
 
@@ -142,12 +140,6 @@ export default function ReportsPage() {
                 }
                 onClick={() => handleTabClick(1)}
               />
-              <Tab
-                icon={<VpnKeyIcon />}
-                iconPosition="start"
-                label="Auditoría"
-                onClick={() => handleTabClick(2)}
-              />
             </Tabs>
             {changeViewButton}
           </Box>
@@ -156,9 +148,6 @@ export default function ReportsPage() {
           </CustomTabPanel>
           <CustomTabPanel value={value} index={1}>
             <CoursesReportTab trigger={tabTriggers[1] || 0} />
-          </CustomTabPanel>
-          <CustomTabPanel value={value} index={2}>
-            <AuditPage />
           </CustomTabPanel>
         </>
       )}

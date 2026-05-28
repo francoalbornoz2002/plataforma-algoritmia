@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
-import { Box, Typography, Grid, CircularProgress, Alert } from "@mui/material";
+import { Box, Typography, Alert } from "@mui/material";
 
 export default function SettingsPage() {
   return (
-    <Box sx={{ p: 4 }}>
+    <Box sx={{ p: 0 }}>
       <Alert severity="info">
         La configuración de la institución ahora se gestiona desde el Dashboard
         de Administrador.

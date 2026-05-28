@@ -3,14 +3,12 @@ import LoginPage from "./features/authentication/pages/LoginPage";
 import { Navigate, Route, Routes } from "react-router";
 import UsersPage from "./features/users/pages/UsersPage";
 import CoursesPage from "./features/courses/pages/CoursesPage";
-import AccountPage from "./features/users/pages/AccountPage";
 import ProtectedRoute from "./features/authentication/guards/ProtectedRoute";
 import RoleProtectedRoute from "./features/authentication/guards/RoleProtectedRoute";
 import MyProgressPage from "./features/progress/pages/MyProgressPage";
 import DifficultiesPage from "./features/difficulties/pages/DifficultiesPage";
 import ProgressPage from "./features/progress/pages/ProgressPage";
 import MyDifficultiesPage from "./features/difficulties/pages/MyDifficultiesPage";
-import SidebarLayout from "./layout/SidebarLayout";
 import AdminDashboardPage from "./features/dashboards/AdminDashboardPage";
 import DocenteDashboardPage from "./features/dashboards/DocenteDashboardPage";
 import AlumnoDashboardPage from "./features/dashboards/AlumnoDashboardPage";
@@ -27,9 +25,11 @@ import CourseReportsPage from "./features/reports/pages/CourseReportsPage";
 import ReportsPage from "./features/reports/pages/ReportsPage";
 import ResetPasswordPage from "./features/authentication/pages/ResetPasswordPage";
 import { useAuth } from "./features/authentication/context/AuthProvider";
+import AuditPage from "./features/audit/pages/AuditPage";
 import ChangePasswordModal from "./features/authentication/components/ChangePasswordModal";
 import { ThemeProvider } from "@mui/material";
 import { theme } from "./config/theme.config";
+import Layout from "./layout/Layout";
 
 export const AppRouter: React.FC<{}> = () => {
   const { mustChangePassword, setMustChangePassword, user } = useAuth();
@@ -43,23 +43,19 @@ export const AppRouter: React.FC<{}> = () => {
         <Route path="/" element={<Navigate to="/login" replace />} />
         {/* 2. Grupo de Rutas Protegidas (Autenticación) */}
         <Route element={<ProtectedRoute />}>
-          {/* Ruta común para todos, para modificar su cuenta */}
-          <Route path="my/account" element={<AccountPage />} />
           {/* GRUPO 1: ADMIN (/dashboard) */}
           {/* Primero validamos el ROL */}
           <Route
-            path="/dashboard"
             element={
               <RoleProtectedRoute allowedRoles={[Roles.Administrador]} />
             }
           >
-            {/* Si el ROL es correcto, renderiza este layout
-              que a su vez renderiza un <Outlet /> para las páginas */}
-            <Route element={<SidebarLayout />}>
-              <Route index element={<AdminDashboardPage />} />
+            <Route element={<Layout />}>
+              <Route path="dashboard" element={<AdminDashboardPage />} />
               <Route path="users" element={<UsersPage />} />
               <Route path="courses" element={<CoursesPage />} />
               <Route path="reports" element={<ReportsPage />} />
+              <Route path="audit" element={<AuditPage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
           </Route>
@@ -71,7 +67,7 @@ export const AppRouter: React.FC<{}> = () => {
             element={<RoleProtectedRoute allowedRoles={[Roles.Docente]} />}
           >
             {/* Si el ROL es correcto, renderiza el DashboardLayout */}
-            <Route element={<SidebarLayout />}>
+            <Route element={<Layout />}>
               <Route path="dashboard" element={<DocenteDashboardPage />} />
               <Route path="progress" element={<ProgressPage />} />
               <Route path="difficulties" element={<DifficultiesPage />} />
@@ -89,8 +85,7 @@ export const AppRouter: React.FC<{}> = () => {
             path="/my"
             element={<RoleProtectedRoute allowedRoles={[Roles.Alumno]} />}
           >
-            {/* Si el ROL es correcto, renderiza el DashboardLayout */}
-            <Route element={<SidebarLayout />}>
+            <Route element={<Layout />}>
               <Route path="dashboard" element={<AlumnoDashboardPage />} />
               <Route path="progress" element={<MyProgressPage />} />
               <Route path="difficulties" element={<MyDifficultiesPage />} />
