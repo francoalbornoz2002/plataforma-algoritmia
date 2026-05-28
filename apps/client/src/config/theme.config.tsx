@@ -9,20 +9,38 @@ export const theme = createTheme({
   palette: {
     mode: "light",
     primary: {
-      main: "#0C1A4C",
+      main: "#0c1e60",
+      "100": "#c0c6df",
+      "50": "#e6e8f2",
     },
     secondary: {
-      main: "#29524A",
+      main: "#0c4860",
+      "100": "#b3dcf0",
+      "50": "#d5f2ff",
     },
     text: {
       primary: "rgba(4,4,4,0.8)",
     },
+    success: {
+      main: "#2e7d32",
+      "100": "#c8e6c9",
+      "50": "#e8f5e9",
+    },
     error: {
       main: "#c62828",
+      "100": "#ffcdd2",
+      "50": "#ffebee",
     },
     warning: {
       main: "#fb8c00",
+      "100": "#ffdfb2",
+      "50": "#fff3e0",
       contrastText: "#ffffff",
+    },
+    info: {
+      main: "#0288d1",
+      "100": "#b3e5fc",
+      "50": "#e1f5fe",
     },
   },
   typography: {
