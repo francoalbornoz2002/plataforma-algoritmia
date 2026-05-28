@@ -1,4 +1,3 @@
-import Sidebar from "./sidebar/Sidebar";
 import { Outlet } from "react-router";
 import {
   Assessment,
@@ -8,31 +7,35 @@ import {
   Dashboard,
   MarkUnreadChatAlt,
   People,
-  QueryStats,
   Quiz,
   School,
+  Settings,
   SwitchAccessShortcutAdd,
+  VpnKey,
 } from "@mui/icons-material";
 import type { MenuItemType } from "../types";
 
 import CourseContextLayout from "./CourseContextLayout";
 import { Box, CircularProgress } from "@mui/material"; // Para el 'loading'
 import { useAuth } from "../features/authentication/context/AuthProvider";
+import AdminLayout from "./AdminLayout";
 
-export default function SidebarLayout() {
+export default function Layout() {
   const { user, profile } = useAuth(); // Usamos 'profile' que tiene los datos completos
   const baseUrl = import.meta.env.VITE_API_URL_WITHOUT_PREFIX;
 
   // --- 1. LISTA DE ADMIN (prefijo /dashboard) ---
   const itemsAdmin: MenuItemType[] = [
     { text: "Dashboard", icon: <Dashboard />, path: "/dashboard" },
-    { text: "Usuarios", icon: <People />, path: "/dashboard/users" },
-    { text: "Cursos", icon: <School />, path: "/dashboard/courses" },
+    { text: "Usuarios", icon: <People />, path: "/users" },
+    { text: "Cursos", icon: <School />, path: "/courses" },
     {
       text: "Reportes y estadísticas",
       icon: <Assignment />,
-      path: "/dashboard/reports",
+      path: "/reports",
     },
+    { text: "Auditoría", icon: <VpnKey />, path: "/audit" },
+    { text: "Configuración", icon: <Settings />, path: "/settings" },
   ];
 
   // --- 2. LISTA DE DOCENTE (prefijo /course) ---
@@ -87,7 +90,7 @@ export default function SidebarLayout() {
     {
       text: "Sesiones de refuerzo",
       icon: <SwitchAccessShortcutAdd />,
-      path: "/my/sessions", // (Ruta futura)
+      path: "/my/sessions",
     },
     {
       text: "Consultas",
@@ -124,7 +127,7 @@ export default function SidebarLayout() {
   // 1. Si es Admin, renderiza el layout simple
   if (user.rol === "Administrador") {
     return (
-      <Sidebar
+      <AdminLayout
         menuItems={sidebarItems}
         userInitial={(profile?.nombre || "U")[0]}
         userPhotoUrl={
@@ -133,7 +136,7 @@ export default function SidebarLayout() {
         // No pasamos 'onOpenCourseSwitcher', así que el botón no aparecerá
       >
         <Outlet />
-      </Sidebar>
+      </AdminLayout>
     );
   }
 

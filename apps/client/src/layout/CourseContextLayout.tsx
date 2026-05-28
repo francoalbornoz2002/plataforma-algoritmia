@@ -3,8 +3,8 @@ import { Box, CircularProgress } from "@mui/material";
 import { CourseProvider, useCourseContext } from "../context/CourseContext";
 import { useAuth } from "../features/authentication/context/AuthProvider";
 import type { UserData, MenuItemType } from "../types";
-import Sidebar from "./sidebar/Sidebar";
 import CourseSelectionModal from "../features/courses/components/CourseSelectionModal";
+import GeneralLayout from "./GeneralLayout";
 
 // --- Este es el componente interno que tiene la lógica ---
 function ContextLayout({
@@ -63,14 +63,14 @@ function ContextLayout({
           flexDirection: "column",
         }}
       >
-        <Sidebar
+        <GeneralLayout
           menuItems={menuItems}
           userInitial={(user?.nombre || "U")[0]} // Pasamos la inicial
           userPhotoUrl={userPhotoUrl} // Pasamos la foto
           onOpenCourseSwitcher={openCourseSwitcher} // Pasamos la función
         >
           {children} {/* El <Outlet /> de DashboardLayout irá aquí */}
-        </Sidebar>
+        </GeneralLayout>
       </Box>
     </>
   );

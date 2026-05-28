@@ -27,10 +27,10 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import MenuIcon from "@mui/icons-material/Menu";
 import SideBarList from "./SidebarList";
 import { AccountCircle, School } from "@mui/icons-material";
-import { useCourseContext } from "../../context/CourseContext";
-import type { MenuItemType } from "../../types";
-import { useAuth } from "../../features/authentication/context/AuthProvider";
-import ProfileModal from "../../features/users/components/ProfileModal";
+import { useCourseContext } from "../context/CourseContext";
+import type { MenuItemType } from "../types";
+import { useAuth } from "../features/authentication/context/AuthProvider";
+import ProfileModal from "../features/users/components/ProfileModal";
 import { useLocation } from "react-router";
 
 const drawerWidth = 240;
@@ -124,7 +124,7 @@ const Drawer = styled(MuiDrawer, {
 
 // --- INTERFACES PARA PROPS ---
 
-export interface SidebarLayoutProps {
+export interface GeneralLayoutProps {
   menuItems: MenuItemType[]; // Array de elementos del menú
   userInitial?: string; // Inicial del usuario (opcional)
   userPhotoUrl?: string | null; // <-- Nueva prop para la foto
@@ -133,13 +133,13 @@ export interface SidebarLayoutProps {
 }
 
 // Componente principal Sidebar
-export default function Sidebar({
+export default function GeneralLayout({
   menuItems,
   userInitial = "U",
   userPhotoUrl,
   children,
   onOpenCourseSwitcher,
-}: SidebarLayoutProps) {
+}: GeneralLayoutProps) {
   const [open, setOpen] = useState(false);
   const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
   const [openProfileModal, setOpenProfileModal] = useState(false); // Estado del modal
