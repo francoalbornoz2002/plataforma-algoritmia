@@ -20,7 +20,6 @@ import {
   PlayCircleFilled,
   MarkUnreadChatAlt,
   SwitchAccessShortcutAdd,
-  VideogameAsset,
   Assessment,
   AssignmentLate,
   CheckCircle,
@@ -31,7 +30,6 @@ import { useAuth } from "../authentication/context/AuthProvider";
 import { useCourseContext } from "../../context/CourseContext";
 import { getStudentDashboardStats } from "../courses/services/courses.service";
 import CourseInfoCard from "./components/CourseInfoCard";
-import { getGameDownloadUrl } from "../game/services/game.service";
 import DashboardTextCard from "./components/DashboardTextCard";
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 import {
@@ -173,7 +171,6 @@ export default function AlumnoDashboardPage() {
 
   const [stats, setStats] = useState<StudentDashboardStats | null>(null);
   const [loading, setLoading] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -264,17 +261,6 @@ export default function AlumnoDashboardPage() {
         : originalDescription;
     ultimaConsultaValue = stats.consultas.ultimaRealizada.titulo;
   }
-
-  const handleDownloadGame = async () => {
-    const url = getGameDownloadUrl();
-
-    // Creamos un enlace temporal para iniciar la descarga nativamente
-    const link = document.createElement("a");
-    link.href = url;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
   if (!selectedCourse) {
     return (

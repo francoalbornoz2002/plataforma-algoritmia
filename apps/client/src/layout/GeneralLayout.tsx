@@ -1,126 +1,34 @@
 import React, { useMemo, useState } from "react";
-import {
-  styled,
-  useTheme,
-  type Theme,
-  type CSSObject,
-} from "@mui/material/styles";
-import MuiDrawer from "@mui/material/Drawer";
+import { alpha } from "@mui/material/styles";
 import Box from "@mui/material/Box";
-import Divider from "@mui/material/Divider";
-import IconButton from "@mui/material/IconButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Avatar from "@mui/material/Avatar";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
+import {
+  Container,
+  Toolbar,
+  Typography,
+  Alert,
+  Tabs,
+  Tab,
+} from "@mui/material";
+import AppBar from "@mui/material/AppBar";
+import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
-import { Container, Toolbar, Typography, Alert } from "@mui/material";
-import MuiAppBar, {
-  type AppBarProps as MuiAppBarProps,
-} from "@mui/material/AppBar";
 
 // Iconos
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import LogoutIcon from "@mui/icons-material/Logout";
-import MenuIcon from "@mui/icons-material/Menu";
-import SideBarList from "./SidebarList";
-import { AccountCircle, School } from "@mui/icons-material";
+import { AccountCircle } from "@mui/icons-material";
+import SchoolIcon from "@mui/icons-material/School";
+import VideogameAssetIcon from "@mui/icons-material/VideogameAsset";
 import { useCourseContext } from "../context/CourseContext";
 import type { MenuItemType } from "../types";
 import { useAuth } from "../features/authentication/context/AuthProvider";
 import ProfileModal from "../features/users/components/ProfileModal";
-import { useLocation } from "react-router";
-
-const drawerWidth = 240;
-const closedDrawerWidth = (theme: Theme) => `calc(${theme.spacing(7)} + 1px)`;
-const closedDrawerWidthSmUp = (theme: Theme) =>
-  `calc(${theme.spacing(8)} + 1px)`;
-
-// Funciones de estilo para la animación del Drawer
-const openedMixin = (theme: Theme): CSSObject => ({
-  width: drawerWidth,
-  transition: theme.transitions.create("width", {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.enteringScreen,
-  }),
-  overflowX: "hidden",
-});
-
-const closedMixin = (theme: Theme): CSSObject => ({
-  transition: theme.transitions.create("width", {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  overflowX: "hidden",
-  width: closedDrawerWidth(theme),
-  [theme.breakpoints.up("sm")]: {
-    width: closedDrawerWidthSmUp(theme),
-  },
-});
-
-const DrawerHeader = styled("div")(({ theme }) => ({
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "flex-end",
-  padding: theme.spacing(0, 1),
-  ...theme.mixins.toolbar,
-}));
-
-interface AppBarProps extends MuiAppBarProps {
-  open?: boolean;
-}
-
-// Estilos del AppBar
-const AppBar = styled(MuiAppBar, {
-  shouldForwardProp: (prop) => prop !== "open",
-})<AppBarProps>(({ theme }) => ({
-  zIndex: theme.zIndex.drawer + 1,
-  transition: theme.transitions.create(["width", "margin"], {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  variants: [
-    {
-      props: ({ open }) => open,
-      style: {
-        marginLeft: drawerWidth,
-        width: `calc(100% - ${drawerWidth}px)`,
-        transition: theme.transitions.create(["width", "margin"], {
-          easing: theme.transitions.easing.sharp,
-          duration: theme.transitions.duration.enteringScreen,
-        }),
-      },
-    },
-  ],
-}));
-
-// Estilos del Sidebar
-const Drawer = styled(MuiDrawer, {
-  shouldForwardProp: (prop) => prop !== "open",
-})(({ theme }) => ({
-  width: drawerWidth,
-  flexShrink: 0,
-  whiteSpace: "nowrap",
-  boxSizing: "border-box",
-  variants: [
-    {
-      props: ({ open }) => open,
-      style: {
-        ...openedMixin(theme),
-        "& .MuiDrawer-paper": openedMixin(theme),
-      },
-    },
-    {
-      props: ({ open }) => !open,
-      style: {
-        ...closedMixin(theme),
-        "& .MuiDrawer-paper": closedMixin(theme),
-      },
-    },
-  ],
-}));
+import { Link, useLocation } from "react-router";
+import { getGameDownloadUrl } from "../features/game/services/game.service";
 
 // --- INTERFACES PARA PROPS ---
 
@@ -132,7 +40,7 @@ export interface GeneralLayoutProps {
   onOpenCourseSwitcher?: () => void; // Función para el botón del avatar
 }
 
-// Componente principal Sidebar
+// Componente principal Layout General
 export default function GeneralLayout({
   menuItems,
   userInitial = "U",
@@ -140,12 +48,10 @@ export default function GeneralLayout({
   children,
   onOpenCourseSwitcher,
 }: GeneralLayoutProps) {
-  const [open, setOpen] = useState(false);
   const [anchorElUser, setAnchorElUser] = useState<null | HTMLElement>(null);
   const [openProfileModal, setOpenProfileModal] = useState(false); // Estado del modal
-  const theme = useTheme();
   const location = useLocation();
-  const { logout } = useAuth();
+  const { logout, profile } = useAuth();
 
   // Detectar si estamos en la página de reportes para ajustar el layout
   const isReportsPage =
@@ -170,39 +76,18 @@ export default function GeneralLayout({
     isReadOnlyMode = false;
   }
 
-  // --- OBTENER EL TÍTULO ACTUAL DE LA PÁGINA --- //
-  const currentPageTitle = useMemo(() => {
-    // Busca el item del menú cuya ruta coincida exactamente o sea el prefijo más largo
-    let bestMatch = menuItems.find((item) => item.path === location.pathname);
-    if (!bestMatch) {
-      // Si no hay coincidencia exacta, busca el prefijo más específico
-      const matchingItems = menuItems.filter((item) =>
-        location.pathname.startsWith(
-          item.path + (item.path === "/dashboard" ? "" : "/"),
-        ),
-      );
-      // Ordena por longitud de path descendente para encontrar el más específico
-      bestMatch = matchingItems.sort(
-        (a, b) => b.path.length - a.path.length,
-      )[0];
+  // Calculamos cuál es el path activo comparando con la URL actual para las pestañas
+  const activePath = useMemo(() => {
+    const matches = menuItems.filter(
+      (item) =>
+        location.pathname === item.path ||
+        location.pathname.startsWith(`${item.path}/`),
+    );
+    if (matches.length > 0) {
+      return matches.sort((a, b) => b.path.length - a.path.length)[0].path;
     }
-    const pageTitle = bestMatch ? bestMatch.text : "Plataforma Algoritmia";
-
-    // Si tenemos un nombre de curso (somos Alumno o Docente), lo añadimos
-    if (selectedCourseName) {
-      return `${selectedCourseName} - ${pageTitle}`;
-    }
-
-    return pageTitle; // Fallback para Admin
-  }, [location.pathname, menuItems, selectedCourseName]);
-
-  const handleDrawerOpen = () => {
-    setOpen(true);
-  };
-
-  const handleDrawerClose = () => {
-    setOpen(false);
-  };
+    return null;
+  }, [location.pathname, menuItems]);
 
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElUser(event.currentTarget);
@@ -222,41 +107,176 @@ export default function GeneralLayout({
     handleCloseUserMenu();
   };
 
+  const handleDownloadGame = () => {
+    const url = getGameDownloadUrl();
+    // Creamos un enlace temporal para iniciar la descarga nativamente
+    const link = document.createElement("a");
+    link.href = url;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "grey.100" }}>
-      <AppBar position="fixed" open={open} style={{ borderRadius: 0 }}>
-        <Toolbar>
-          {/* Icono para abrir la Sidebar */}
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            onClick={handleDrawerOpen}
-            edge="start"
-            sx={[
-              {
-                marginRight: 5,
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100vh",
+        bgcolor: "grey.100",
+      }}
+    >
+      <AppBar
+        position="sticky"
+        sx={{ bgcolor: "primary.main", color: "#ffffff", borderRadius: 0 }}
+      >
+        <Toolbar disableGutters sx={{ px: 1, gap: 3 }}>
+          {/* Logo */}
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <Box
+              component="img"
+              src="/logo_web.png"
+              alt="Logo Plataforma Algoritmia"
+              sx={{
+                height: 50,
+                width: "auto",
+                objectFit: "contain",
+              }}
+            />
+          </Box>
+
+          {/* Tabs de Navegación */}
+          <Tabs
+            value={activePath || false}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
+            TabIndicatorProps={{ style: { display: "none" } }} // Ocultamos la línea de abajo
+            sx={{
+              maxWidth: { xs: "calc(100vw - 200px)", md: "60vw", lg: 850 }, // Limitamos el ancho fijo
+              minWidth: 0, // Permite que se contraiga en pantallas pequeñas
+              minHeight: "auto",
+              "& .MuiTabs-scrollButtons": {
+                color: "white",
+                "&.Mui-disabled": { opacity: 0.2 }, // Flechas semi-transparentes cuando no se puede scrollear más
               },
-              open && { display: "none" },
-            ]}
+              "& .MuiTabs-flexContainer": {
+                gap: 1,
+                alignItems: "center",
+              },
+            }}
           >
-            <MenuIcon />
-          </IconButton>
-          {/* Título de la página */}
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            {currentPageTitle}
-          </Typography>
+            {menuItems.map((item) => (
+              <Tab
+                key={item.text}
+                component={Link}
+                to={item.path}
+                value={item.path}
+                icon={item.icon}
+                iconPosition="start"
+                label={item.text}
+                disableRipple // Quitamos el efecto de onda para que parezca un botón normal
+                sx={{
+                  minHeight: "auto",
+                  p: "8px 16px",
+                  borderRadius: "0.7em",
+                  textTransform: "none",
+                  fontWeight: 500,
+                  minWidth: "max-content",
+                  color: alpha("#ffffff", 0.7),
+                  opacity: 1, // Mantenemos el color constante, MUI Tabs baja la opacidad por defecto
+                  "& .MuiTab-iconWrapper": {
+                    color: alpha("#ffffff", 0.7),
+                    marginRight: 1,
+                  },
+                  "&:hover": {
+                    bgcolor: alpha("#ffffff", 0.1),
+                    color: "#ffffff",
+                    "& .MuiTab-iconWrapper": { color: "#ffffff" },
+                  },
+                  "&.Mui-selected": {
+                    bgcolor: "#ffffff",
+                    color: "primary.main",
+                    "& .MuiTab-iconWrapper": { color: "primary.main" },
+                    "&:hover": { bgcolor: alpha("#ffffff", 0.9) },
+                  },
+                }}
+              />
+            ))}
+          </Tabs>
+
           {/* Avatar del usuario */}
-          <Box sx={{ flexShrink: 0 }}>
-            <Tooltip title="Opciones de Usuario">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar
-                  src={userPhotoUrl || undefined}
-                  sx={{ width: 32, height: 32 }}
+          <Box
+            sx={{
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              ml: "auto",
+              gap: 1.5,
+            }}
+          >
+            {/* Acciones Rápidas (Iconos) */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              {profile?.rol === "Alumno" && (
+                <Tooltip title="Descargar Videojuego">
+                  <IconButton color="inherit" onClick={handleDownloadGame}>
+                    <VideogameAssetIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
+              {onOpenCourseSwitcher && (
+                <Tooltip title="Cambiar de curso">
+                  <IconButton color="inherit" onClick={onOpenCourseSwitcher}>
+                    <SchoolIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Box>
+
+            <Box
+              onClick={handleOpenUserMenu}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                cursor: "pointer",
+                p: 0.5,
+                borderRadius: "0.7em",
+                transition: "background-color 0.2s",
+                "&:hover": { bgcolor: alpha("#ffffff", 0.1) },
+              }}
+            >
+              <Box
+                sx={{
+                  textAlign: "right",
+                  display: { xs: "none", sm: "block" },
+                  p: 0.5,
+                  maxWidth: 200,
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  noWrap
+                  sx={{ fontWeight: "bold", lineHeight: 1.2 }}
                 >
-                  {userInitial}
-                </Avatar>
-              </IconButton>
-            </Tooltip>
+                  {profile?.nombre} {profile?.apellido}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  noWrap
+                  component="div"
+                  sx={{ color: alpha("#ffffff", 0.7) }}
+                >
+                  {profile?.email}
+                </Typography>
+              </Box>
+              <Avatar
+                src={userPhotoUrl || undefined}
+                sx={{ width: 40, height: 40, bgcolor: alpha("#ffffff", 0.2) }}
+              >
+                {userInitial}
+              </Avatar>
+            </Box>
             {/* Menú desplegable del usuario */}
             <Menu
               sx={{ mt: "45px" }}
@@ -275,44 +295,20 @@ export default function GeneralLayout({
                 </ListItemIcon>
                 <ListItemText>Mi cuenta</ListItemText>
               </MenuItem>
-              {onOpenCourseSwitcher && (
-                <MenuItem
-                  onClick={() => {
-                    onOpenCourseSwitcher();
-                    handleCloseUserMenu();
-                  }}
-                >
-                  <ListItemIcon>
-                    <School fontSize="small" />
-                  </ListItemIcon>
-                  <ListItemText>Cambiar de curso</ListItemText>
-                </MenuItem>
-              )}
               <MenuItem onClick={handleLogout}>
                 <ListItemIcon>
-                  <LogoutIcon fontSize="small" />
+                  <LogoutIcon color="error" fontSize="small" />
                 </ListItemIcon>
-                <ListItemText>Cerrar sesión</ListItemText>
+                <ListItemText sx={{ color: "error.main" }}>
+                  Cerrar sesión
+                </ListItemText>
               </MenuItem>
             </Menu>
           </Box>
         </Toolbar>
       </AppBar>
-      {/* Sidebar */}
-      <Drawer variant="permanent" open={open}>
-        <DrawerHeader>
-          <IconButton onClick={handleDrawerClose}>
-            {theme.direction === "rtl" ? (
-              <ChevronRightIcon />
-            ) : (
-              <ChevronLeftIcon />
-            )}
-          </IconButton>
-        </DrawerHeader>
-        <Divider />
-        <SideBarList menuItems={menuItems} open={open}></SideBarList>
-        <Divider />
-      </Drawer>
+
+      {/* Contenido Principal */}
       <Container
         component="main"
         maxWidth={isReportsPage ? false : "xl"} // Sin límite de ancho en reportes
@@ -320,9 +316,10 @@ export default function GeneralLayout({
         sx={{
           flexGrow: 1,
           p: isReportsPage ? 0 : 3,
+          display: "flex",
+          flexDirection: "column",
         }}
       >
-        <DrawerHeader />
         {isReadOnlyMode && (
           <Alert severity="info" sx={{ mb: 2 }}>
             Este curso ha finalizado. Estás viendo una versión histórica de solo

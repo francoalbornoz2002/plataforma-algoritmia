@@ -85,13 +85,15 @@ export default function AdminLayout({
         <Box sx={{ p: 2, display: "flex", alignItems: "center", gap: 2 }}>
           <Avatar
             variant="rounded"
+            src="/icono-plataforma.png"
+            alt="Ícono de la Plataforma Algoritmia"
             sx={{
               bgcolor: "#ffffff",
+              border: "1px solid #ffffff",
               color: "primary.main",
-              fontWeight: "bold",
               width: 48,
               height: 48,
-              borderRadius: "0.5em",
+              borderRadius: "0.7em",
             }}
           >
             PA
@@ -158,10 +160,10 @@ export default function AdminLayout({
                 textOverflow: "ellipsis",
               }}
             >
-              Mi cuenta
+              Administrador
             </Typography>
             <Typography variant="caption" sx={{ color: alpha("#ffffff", 0.7) }}>
-              Administrador
+              admin@mail.com
             </Typography>
           </Box>
         </Box>
@@ -208,7 +210,7 @@ export default function AdminLayout({
           disableGutters // Desactivamos gutters por defecto para controlar el padding manualmente
           sx={{
             flexGrow: 1,
-            p: isReportsPage ? 0 : 4,
+            p: isReportsPage ? 0 : 3,
             display: "flex",
             flexDirection: "column",
           }}
