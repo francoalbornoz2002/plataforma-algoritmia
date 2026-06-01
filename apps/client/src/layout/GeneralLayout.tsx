@@ -58,23 +58,8 @@ export default function GeneralLayout({
     location.pathname.startsWith("/dashboard/reports") ||
     location.pathname.startsWith("/course/reports");
 
-  // --- OBTENER EL CONTEXTO DEL CURSO --- //
-  // (La envolvemos en un try/catch porque el Admin NO tiene este contexto)
-  let selectedCourseName: string | null = null;
-  let isReadOnlyMode = false;
-  try {
-    // Si somos Alumno o Docente
-    const { selectedCourse, isLoading, isReadOnly } = useCourseContext();
-    if (selectedCourse && !isLoading) {
-      // Obtenemos el nombre del curso para mostrarlo en el título de la página
-      selectedCourseName = selectedCourse.nombre;
-      isReadOnlyMode = isReadOnly;
-    }
-  } catch (e) {
-    // Si falla (somos Admin), selectedCourseName se queda 'null',
-    selectedCourseName = null;
-    isReadOnlyMode = false;
-  }
+  // Obtenemos el estado de solo lectura del contexto del curso
+  const { isReadOnly: isReadOnlyMode } = useCourseContext();
 
   // Calculamos cuál es el path activo comparando con la URL actual para las pestañas
   const activePath = useMemo(() => {

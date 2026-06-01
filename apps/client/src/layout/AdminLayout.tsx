@@ -182,7 +182,7 @@ export default function AdminLayout({
             <ListItemIcon>
               <AccountCircle fontSize="small" />
             </ListItemIcon>
-            <ListItemText>Perfil</ListItemText>
+            <ListItemText>Mi cuenta</ListItemText>
           </MenuItem>
           <MenuItem onClick={handleLogout}>
             <ListItemIcon>
