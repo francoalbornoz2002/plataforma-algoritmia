@@ -36,7 +36,7 @@ export default function DifficultyCard({ dificultad }: DificultadCardProps) {
       }}
     >
       <Stack spacing={1} alignItems="center">
-        <CardIcon icon={icon} color={color} large />
+        <CardIcon icon={icon} color={color} size="large" />
 
         <Typography
           fontWeight="bold"

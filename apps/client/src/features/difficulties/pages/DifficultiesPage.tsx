@@ -326,7 +326,6 @@ export default function DifficultiesPage() {
           description="Identifica los temas más complejos y visualiza el estado de dificultades de tus alumnos."
           icon={<Warning />}
           color="primary"
-          sx={{ mb: 3 }}
         />
 
         {/* --- A. Resumen (KPIs) --- */}

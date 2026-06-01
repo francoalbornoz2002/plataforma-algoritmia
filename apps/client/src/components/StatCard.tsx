@@ -30,7 +30,11 @@ export default function StatCard({
     >
       <Stack spacing={small ? 0.25 : 0.5}>
         <Stack direction="row" alignItems="center" spacing={1}>
-          <CardIcon icon={icon} color={color} small={small} />
+          <CardIcon
+            icon={icon}
+            color={color}
+            size={small ? "small" : "medium"}
+          />
           <Typography
             variant={small ? "body2" : "subtitle2"}
             sx={{ lineHeight: 1.2 }}

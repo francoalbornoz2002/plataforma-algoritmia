@@ -4,20 +4,32 @@ import type { ReactNode } from "react";
 interface CardIconProps {
   icon: ReactNode;
   color: string;
-  small?: boolean;
-  large?: boolean;
+  size?: "small" | "medium" | "large" | "xl";
 }
 
-export default function CardIcon({ icon, color, small, large }: CardIconProps) {
+export default function CardIcon({
+  icon,
+  color,
+  size = "medium",
+}: CardIconProps) {
   return (
     <Box
       sx={{
         color: `${color}.main`,
         display: "flex",
         bgcolor: `${color}.50`,
-        p: 0.5,
+        p: size === "xl" ? 1.5 : size === "large" ? 1 : 0.5,
         borderRadius: "15%",
-        "& svg": { fontSize: large ? "2.5em" : small ? "1.2rem" : "1.5rem" },
+        "& svg": {
+          fontSize:
+            size === "xl"
+              ? "2.5em"
+              : size === "large"
+                ? "2em"
+                : size === "small"
+                  ? "1.2rem"
+                  : "1.5rem",
+        },
       }}
     >
       {icon}

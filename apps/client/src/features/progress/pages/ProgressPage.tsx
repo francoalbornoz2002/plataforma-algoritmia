@@ -360,7 +360,6 @@ export default function ProgressPage() {
           description="Visualiza el rendimiento global del curso y el detalle individual de cada alumno."
           icon={<AssessmentIcon />}
           color="primary"
-          sx={{ mb: 4 }}
         />
         {/* --- A. Resumen (KPIs) --- */}
         {overviewError && <Alert severity="error">{overviewError}</Alert>}
