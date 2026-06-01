@@ -1,17 +1,11 @@
-import {
-  Card,
-  CardContent,
-  Box,
-  Typography,
-  Stack,
-  Paper,
-} from "@mui/material";
+import { Typography, Stack, Paper, Box } from "@mui/material";
 import {
   grado_dificultad,
   type DificultadAlumnoDetallada,
 } from "../../../types";
-import GradeChip from "../../../components/GradeChip";
-import TemaChip from "../../../components/TemaChip";
+import CardIcon from "../../../components/CardIcon";
+import { TemasLabels } from "../../../types/traducciones";
+import { useDifficultyIcon } from "../hooks/useDifficultyIcon";
 
 interface DificultadCardProps {
   dificultad: DificultadAlumnoDetallada;
@@ -20,46 +14,52 @@ interface DificultadCardProps {
 export default function DifficultyCard({ dificultad }: DificultadCardProps) {
   const { nombre, grado, tema, descripcion } = dificultad;
 
+  // Obtenemos el ícono correspondiente según el nombre de la dificultad
+  const icon = useDifficultyIcon(nombre);
+
+  // Determinamos el color basado en el grado de dificultad
+  const color =
+    grado === grado_dificultad.Alto
+      ? "error"
+      : grado === grado_dificultad.Medio
+        ? "warning"
+        : grado === grado_dificultad.Bajo
+          ? "success"
+          : "info"; // Fallback para grado "Ninguno"
+
   return (
     <Paper
       elevation={2}
       sx={{
+        p: 2.5,
         height: "100%",
-        borderTop: "4px solid",
-        borderColor:
-          grado === grado_dificultad.Bajo
-            ? "success.main"
-            : grado === grado_dificultad.Medio
-              ? "warning.main"
-              : grado === grado_dificultad.Alto
-                ? "error.main"
-                : "divider",
       }}
     >
-      <CardContent>
-        {/* Fila 1: Título y Grado */}
-        <Stack
-          direction="row"
-          spacing={0.5}
-          justifyContent="space-between"
-          alignItems="flex-start"
+      <Stack spacing={1} alignItems="center">
+        <CardIcon icon={icon} color={color} large />
+
+        <Typography
+          fontWeight="bold"
+          align="center"
+          sx={{ lineHeight: 1.2, fontSize: 18 }}
         >
-          <Typography variant="h6" component="div" sx={{ lineHeight: 1.3 }}>
-            {nombre}
-          </Typography>
-          <GradeChip grado={grado} small />
-        </Stack>
+          {nombre}
+        </Typography>
 
-        {/* Fila 2: Tema */}
-        <Stack direction="row" spacing={1} sx={{ mt: 1, mb: 2 }}>
-          <TemaChip tema={tema} />
-        </Stack>
+        <Typography variant="caption" align="center" fontWeight="bold">
+          <Box component="span" sx={{ color: `${color}.main` }}>
+            GRADO {grado.toUpperCase()}
+          </Box>
+          <Box component="span" sx={{ color: "text.secondary" }}>
+            {" - "}
+            {TemasLabels[tema].toUpperCase()}
+          </Box>
+        </Typography>
 
-        {/* Fila 3: Descripción */}
-        <Typography variant="body2" color="text.secondary">
+        <Typography align="center" variant="body2" color="text.secondary">
           {descripcion}
         </Typography>
-      </CardContent>
+      </Stack>
     </Paper>
   );
 }
