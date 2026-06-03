@@ -32,7 +32,6 @@ import {
 } from "../../service/reports.service";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import ReportTotalCard from "../common/ReportTotalCard";
-import ReportTextualCard from "../common/ReportTextualCard";
 import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
 import { TemasLabels } from "../../../../types/traducciones";
@@ -233,7 +232,7 @@ export default function CourseClassesSummary({ courseId }: Props) {
 
               {/* Tema de consulta más frecuente en clases */}
               <Grid size={{ xs: 12, md: 3.5 }}>
-                <ReportTextualCard
+                <StatCard
                   icon={<CategoryIcon />}
                   title="Tema de consulta más frecuente en clases"
                   value={
@@ -252,7 +251,7 @@ export default function CourseClassesSummary({ courseId }: Props) {
               </Grid>
               <Grid size={{ xs: 12, md: 3.5 }}>
                 {/* Top Docente */}
-                <ReportTextualCard
+                <StatCard
                   icon={<SchoolIcon />}
                   title="Docente con más clases realizadas"
                   value={data.topTeacher.name}
@@ -379,7 +378,7 @@ export default function CourseClassesSummary({ courseId }: Props) {
               <Grid size={{ xs: 12, md: 6 }}>
                 <Stack spacing={2} sx={{ height: "100%" }}>
                   {/* Top Topic */}
-                  <ReportTextualCard
+                  <StatCard
                     icon={<FactCheckIcon />}
                     title="Efectividad de Revisión en Vivo"
                     value={`${data.efectividad.promedioRevisadasPct.toFixed(1)}%`}
@@ -396,7 +395,7 @@ export default function CourseClassesSummary({ courseId }: Props) {
                   />
 
                   {/* Impacto en Resolución */}
-                  <ReportTextualCard
+                  <StatCard
                     icon={<CheckCircleIcon />}
                     title="Impacto en Resolución"
                     value={`${data.impacto.porcentaje.toFixed(1)}%`}
@@ -411,7 +410,7 @@ export default function CourseClassesSummary({ courseId }: Props) {
                   />
 
                   {/* Efectividad Sistema */}
-                  <ReportTextualCard
+                  <StatCard
                     icon={<AutoAwesomeIcon />}
                     title="Efectividad de Clases de Consulta Automáticas"
                     value={`${data.kpis.origen.pctSistemaRealizadas.toFixed(1)}%`}

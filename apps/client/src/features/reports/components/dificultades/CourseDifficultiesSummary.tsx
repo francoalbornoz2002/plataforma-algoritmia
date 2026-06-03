@@ -24,12 +24,12 @@ import {
   getCourseDifficultiesReport,
   type CourseDifficultiesReportFilters,
 } from "../../service/reports.service";
-import ReportTextualCard from "../common/ReportTextualCard";
 import { temas } from "../../../../types";
 import { TemasLabels } from "../../../../types/traducciones";
 import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
 import ReportTotalCard from "../common/ReportTotalCard";
+import StatCard from "../../../../components/StatCard";
 
 interface Props {
   courseId: string;
@@ -217,7 +217,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 2.6 }}>
-                <ReportTextualCard
+                <StatCard
                   icon={<TopicIcon />}
                   title="Tema Más Frecuente"
                   value={TemasLabels[data.kpis.temaFrecuente.nombre as temas]}
@@ -231,7 +231,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4.2 }}>
-                <ReportTextualCard
+                <StatCard
                   icon={<WarningIcon />}
                   title="Dificultad Más Frecuente"
                   value={data.kpis.dificultadFrecuente.nombre}
@@ -248,7 +248,7 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 2.5 }}>
-                <ReportTextualCard
+                <StatCard
                   icon={<TrendingUpIcon />}
                   title="Dificultades en Grado Alto"
                   value={`${data.kpis.gradoAlto.porcentaje.toFixed(1)}%`}

@@ -43,7 +43,6 @@ import {
   dificultad_mision,
 } from "../../../types";
 import MissionCard from "../components/MissionCard";
-import DashboardTextCard from "../../dashboards/components/DashboardTextCard";
 import { Assessment } from "@mui/icons-material";
 import HeaderPage from "client/src/components/HeaderPage";
 import { datePickerConfig } from "../../../config/theme.config";
@@ -295,7 +294,7 @@ export default function MyProgressPage() {
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 2.4 }}>
-              <DashboardTextCard
+              <StatCard
                 title="Última Actividad"
                 description="Completando una misión"
                 value={ultimaActividadFormateada}

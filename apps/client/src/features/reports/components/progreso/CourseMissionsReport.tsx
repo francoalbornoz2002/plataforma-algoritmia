@@ -24,7 +24,6 @@ import { dificultad_mision } from "../../../../types";
 import { useOptionalCourseContext } from "../../../../context/CourseContext";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import StatCard from "../../../../components/StatCard";
-import ReportTextualCard from "../common/ReportTextualCard";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import ListAltIcon from "@mui/icons-material/ListAlt";
@@ -233,7 +232,7 @@ export default function CourseMissionsReport({ courseId }: Props) {
                 />
               </Box>
               <Box sx={{ flex: 1 }}>
-                <ReportTextualCard
+                <StatCard
                   icon={<EmojiEventsIcon />}
                   title="Misión Destacada"
                   value={data.kpis.topMission.nombre}

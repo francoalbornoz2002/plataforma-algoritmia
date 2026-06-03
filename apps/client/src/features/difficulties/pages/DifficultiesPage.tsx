@@ -48,7 +48,6 @@ import StudentDifficultyDetailModal from "../components/StudentDifficultyDetailM
 import GradeChip from "../../../components/GradeChip";
 import { TemasLabels } from "../../../types/traducciones";
 import HeaderPage from "../../../components/HeaderPage";
-import DashboardTextCard from "../../dashboards/components/DashboardTextCard";
 import { AssignmentLate, Warning } from "@mui/icons-material";
 import StatCard from "../../../components/StatCard";
 
@@ -349,7 +348,7 @@ export default function DifficultiesPage() {
             {overviewLoading ? (
               <CircularProgress />
             ) : (
-              <DashboardTextCard
+              <StatCard
                 title="Dificultad más frecuente"
                 description="Dificultad que afecta a más alumnos"
                 value={overview?.dificultadModa?.nombre || "N/A"}
@@ -362,7 +361,7 @@ export default function DifficultiesPage() {
             {overviewLoading ? (
               <CircularProgress />
             ) : (
-              <DashboardTextCard
+              <StatCard
                 title="Tema de dificultad más frecuente"
                 description="Tema que afecta a más alumnos"
                 value={

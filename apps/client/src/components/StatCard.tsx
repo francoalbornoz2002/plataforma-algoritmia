@@ -5,11 +5,12 @@ import CardIcon from "./CardIcon";
 interface StatCardProps {
   icon: ReactNode;
   title: string;
-  description?: string;
-  value: number | string;
+  description?: ReactNode;
+  value: ReactNode;
   percentage?: number;
   color: string;
   small?: boolean;
+  onClick?: () => void;
 }
 
 export default function StatCard({
@@ -20,12 +21,15 @@ export default function StatCard({
   percentage,
   color,
   small = false,
+  onClick,
 }: StatCardProps) {
   return (
     <Paper
+      onClick={onClick}
       sx={{
         p: small ? 1.5 : 2,
         height: "100%",
+        cursor: onClick ? "pointer" : "default",
       }}
     >
       <Stack spacing={small ? 0.25 : 0.5}>
@@ -57,16 +61,18 @@ export default function StatCard({
             </Typography>
           )}
         </Stack>
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{
-            fontSize: small ? "0.7rem" : undefined,
-            lineHeight: small ? 1.2 : undefined,
-          }}
-        >
-          {description}
-        </Typography>
+        {description && (
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{
+              fontSize: small ? "0.7rem" : undefined,
+              lineHeight: small ? 1.2 : undefined,
+            }}
+          >
+            {description}
+          </Typography>
+        )}
       </Stack>
     </Paper>
   );

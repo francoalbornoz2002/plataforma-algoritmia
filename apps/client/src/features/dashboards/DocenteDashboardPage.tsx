@@ -19,7 +19,6 @@ import {
   LinearProgress,
   Divider,
 } from "@mui/material";
-import DashboardTextCard from "./components/DashboardTextCard";
 import CourseInfoCard from "./components/CourseInfoCard";
 
 import { useCourseContext } from "../../context/CourseContext";
@@ -59,6 +58,7 @@ import {
 } from "../../types/traducciones";
 import InfoAlumno from "./components/InfoAlumno";
 import DashboardHeader from "./components/DashboardHeader";
+import StatCard from "../../components/StatCard";
 
 // --- Componentes Auxiliares Visuales ---
 
@@ -509,7 +509,7 @@ export default function DocenteDashboardPage() {
                 <Grid container spacing={2}>
                   <Tooltip title="Ver detalles de la misión">
                     <Grid size={{ xs: 6 }}>
-                      <DashboardTextCard
+                      <StatCard
                         value={
                           stats?.week.misionMasDificil
                             ? `Misión N° ${stats.week.misionMasDificil.numero}`
@@ -528,7 +528,7 @@ export default function DocenteDashboardPage() {
                     </Grid>
                   </Tooltip>
                   <Grid size={{ xs: 6 }}>
-                    <DashboardTextCard
+                    <StatCard
                       title="Alumno más activo"
                       description="En la semana actual"
                       value={stats?.week.alumnoMasActivo || "Ninguno"}
@@ -578,7 +578,7 @@ export default function DocenteDashboardPage() {
 
             <Grid container spacing={2}>
               <Grid size={{ xs: 6 }}>
-                <DashboardTextCard
+                <StatCard
                   title="Dificultad más frecuente"
                   description="Detectada esta semana"
                   value={stats?.week.dificultadMasDetectada || "Ninguna"}
@@ -588,7 +588,7 @@ export default function DocenteDashboardPage() {
                 />
               </Grid>
               <Grid size={{ xs: 6 }}>
-                <DashboardTextCard
+                <StatCard
                   title="Alumno Crítico"
                   description="Que más dificultades tiene"
                   value={stats?.alumnoMasDificultades || "Ninguno"}
@@ -707,7 +707,7 @@ export default function DocenteDashboardPage() {
                 />
               </Grid>
               <Grid size={{ xs: 6 }}>
-                <DashboardTextCard
+                <StatCard
                   title="Próxima Clase"
                   value={
                     stats?.nextClass

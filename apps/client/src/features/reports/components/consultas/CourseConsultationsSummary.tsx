@@ -33,7 +33,6 @@ import {
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import ReportTotalCard from "../common/ReportTotalCard";
 import StatCard from "../../../../components/StatCard";
-import ReportTextualCard from "../common/ReportTextualCard";
 import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
 import { temas } from "../../../../types";
@@ -257,7 +256,7 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
               </Grid>
               <Grid size={{ xs: 12, md: 3 }}>
                 {/* Top Tema */}
-                <ReportTextualCard
+                <StatCard
                   icon={<CategoryIcon />}
                   title="Tema más consultado"
                   value={
@@ -415,7 +414,7 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
               <Grid size={{ xs: 12, md: 6 }}>
                 <Stack spacing={2}>
                   {/* Top Docente */}
-                  <ReportTextualCard
+                  <StatCard
                     icon={<SchoolIcon />}
                     title="Docente más qué más consultas responde"
                     value={data.topTeacher.name}
@@ -430,7 +429,7 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
                     color="primary"
                   />
                   {/* Top Alumno */}
-                  <ReportTextualCard
+                  <StatCard
                     icon={<PersonIcon />}
                     title="Alumno con más consultas realizadas"
                     value={data.topStudent.name}

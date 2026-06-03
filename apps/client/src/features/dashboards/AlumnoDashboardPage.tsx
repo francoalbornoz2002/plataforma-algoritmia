@@ -30,7 +30,6 @@ import { useAuth } from "../authentication/context/AuthProvider";
 import { useCourseContext } from "../../context/CourseContext";
 import { getStudentDashboardStats } from "../courses/services/courses.service";
 import CourseInfoCard from "./components/CourseInfoCard";
-import DashboardTextCard from "./components/DashboardTextCard";
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 import {
   estado_consulta,
@@ -41,8 +40,8 @@ import {
   EstadoConsultaLabels,
   EstadoSesionLabels,
 } from "../../types/traducciones";
-import ReportTextualCard from "../reports/components/common/ReportTextualCard";
 import DashboardHeader from "./components/DashboardHeader";
+import StatCard from "../../components/StatCard";
 
 // --- Componentes Auxiliares Visuales ---
 
@@ -450,7 +449,7 @@ export default function AlumnoDashboardPage() {
                   ]}
                 />
                 <Divider sx={{ my: 2 }} />
-                <DashboardTextCard
+                <StatCard
                   title="Misión más difícil"
                   description={descMision}
                   value={
@@ -496,7 +495,7 @@ export default function AlumnoDashboardPage() {
             />
             <Divider sx={{ my: 2 }} />
             <Grid size={{ xs: 12 }}>
-              <ReportTextualCard
+              <StatCard
                 title="Última dificultad en grado alto registrada"
                 description={
                   stats?.dificultades.ultimaAlta
@@ -556,7 +555,7 @@ export default function AlumnoDashboardPage() {
             />
             <Divider sx={{ my: 2 }} />
             <Grid size={{ xs: 12 }}>
-              <ReportTextualCard
+              <StatCard
                 title={ultimaConsultaTitle}
                 description={ultimaConsultaDescription}
                 value={ultimaConsultaValue}
@@ -598,7 +597,7 @@ export default function AlumnoDashboardPage() {
             />
             <Divider sx={{ my: 2 }} />
             <Grid size={{ xs: 12 }}>
-              <ReportTextualCard
+              <StatCard
                 title={sesionTitle}
                 description={sesionDescription}
                 value={sesionValue}

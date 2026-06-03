@@ -36,9 +36,9 @@ import { temas } from "../../../../types";
 import { TemasLabels } from "../../../../types/traducciones";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import ReportTotalCard from "../common/ReportTotalCard";
-import ReportTextualCard from "../common/ReportTextualCard";
 import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
+import StatCard from "../../../../components/StatCard";
 
 interface Props {
   courseId: string;
@@ -233,7 +233,7 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <ReportTextualCard
+                <StatCard
                   icon={<TopicIcon />}
                   title="Tema más frecuente"
                   value={
@@ -249,7 +249,7 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 4.5 }}>
-                <ReportTextualCard
+                <StatCard
                   icon={<WarningIcon />}
                   title="Dificultad más frecuente en sesiones"
                   value={data.tops.dificultad.name}
@@ -262,7 +262,7 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 1.9 }}>
-                <ReportTextualCard
+                <StatCard
                   icon={<WarningIcon />}
                   title="Grado Promedio "
                   description="Por sesión"
@@ -498,7 +498,7 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                     Actores con mayor participación en sesiones de refuerzo
                   </Typography>
                   <Stack spacing={2}>
-                    <ReportTextualCard
+                    <StatCard
                       icon={<PersonIcon />}
                       title="Alumno con más sesiones"
                       value={data.tops.alumno.name}
@@ -510,7 +510,7 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                       }
                       color="primary"
                     />
-                    <ReportTextualCard
+                    <StatCard
                       icon={<SchoolIcon />}
                       title="Docente que más asigna"
                       value={data.tops.docente.name}
