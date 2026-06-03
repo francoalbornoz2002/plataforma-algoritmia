@@ -26,7 +26,6 @@ import SchoolIcon from "@mui/icons-material/School";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
-import ReportTotalCard from "../common/ReportTotalCard";
 import StatCard from "../../../../components/StatCard";
 
 export default function CoursesSummarySection() {
@@ -227,11 +226,11 @@ export default function CoursesSummarySection() {
             {/* Fila 1: KPIs Generales */}
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <ReportTotalCard
-                  resourceName="Cursos Totales"
-                  total={summaryData.total}
-                  icon={<SchoolIcon fontSize="small" />}
-                  small
+                <StatCard
+                  icon={<SchoolIcon />}
+                  title="Cursos Totales"
+                  value={summaryData.total}
+                  color="primary"
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -246,7 +245,6 @@ export default function CoursesSummarySection() {
                   }
                   color="success"
                   icon={<CheckCircleIcon fontSize="small" />}
-                  small
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -261,7 +259,6 @@ export default function CoursesSummarySection() {
                   }
                   color="error"
                   icon={<CancelIcon fontSize="small" />}
-                  small
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -276,7 +273,6 @@ export default function CoursesSummarySection() {
                   }
                   color="info"
                   icon={<TaskAltIcon fontSize="small" />}
-                  small
                 />
               </Grid>
             </Grid>

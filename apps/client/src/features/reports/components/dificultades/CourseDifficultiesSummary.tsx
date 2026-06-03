@@ -28,7 +28,6 @@ import { temas } from "../../../../types";
 import { TemasLabels } from "../../../../types/traducciones";
 import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
-import ReportTotalCard from "../common/ReportTotalCard";
 import StatCard from "../../../../components/StatCard";
 
 interface Props {
@@ -207,13 +206,24 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
             {/* KPIs */}
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 2.7 }}>
-                <ReportTotalCard
-                  icon={<FunctionsIcon fontSize="small" />}
-                  resourceName="Prom. Dificultades por Alumno"
-                  total={data.kpis.promDificultades.toFixed(1)}
-                  active={data.kpis.totalAlumnos}
-                  inactive={data.kpis.totalAlumnosInactivos}
-                  activeLabelPrefix="Alumnos"
+                <StatCard
+                  icon={<FunctionsIcon />}
+                  title="Prom. Dificultades por Alumno"
+                  value={data.kpis.promDificultades.toFixed(1)}
+                  color="primary"
+                  description={
+                    <Box component="span" sx={{ display: "flex", gap: 1.5 }}>
+                      <Box
+                        component="span"
+                        sx={{ color: "success.main", fontWeight: "bold" }}
+                      >
+                        Alumnos Activos: {data.kpis.totalAlumnos}
+                      </Box>
+                      <Box component="span" sx={{ color: "text.disabled" }}>
+                        Inactivos: {data.kpis.totalAlumnosInactivos}
+                      </Box>
+                    </Box>
+                  }
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 2.6 }}>

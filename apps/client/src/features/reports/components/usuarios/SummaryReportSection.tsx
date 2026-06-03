@@ -26,7 +26,6 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
-import ReportTotalCard from "../common/ReportTotalCard";
 import StatCard from "../../../../components/StatCard";
 
 // Definimos colores constantes para mantener consistencia
@@ -346,18 +345,17 @@ export default function SummaryReportSection() {
             {/* Fila 1: KPIs Generales */}
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 4 }}>
-                <ReportTotalCard
-                  resourceName="Usuarios Totales"
-                  small
-                  total={summaryData.total}
-                  icon={<PeopleIcon fontSize="small" />}
+                <StatCard
+                  icon={<PeopleIcon />}
+                  title="Usuarios Totales"
+                  value={summaryData.total}
+                  color="primary"
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
                 <StatCard
                   title="Usuarios Activos"
                   description="En la plataforma"
-                  small
                   value={summaryData.activos}
                   percentage={
                     summaryData.total > 0
@@ -372,7 +370,6 @@ export default function SummaryReportSection() {
                 <StatCard
                   title="Usuarios Inactivos"
                   description="Dados de baja"
-                  small
                   value={summaryData.inactivos}
                   percentage={
                     summaryData.total > 0

@@ -31,7 +31,6 @@ import {
   getCourseProgressSummary,
   type CourseProgressSummaryFilters,
 } from "../../service/reports.service";
-import ReportTotalCard from "../common/ReportTotalCard";
 import StatCard from "../../../../components/StatCard";
 import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
@@ -145,13 +144,24 @@ export default function CourseProgressSummary({ courseId }: Props) {
             <Grid container spacing={2}>
               {/* Progreso Total */}
               <Grid size={{ xs: 12, md: 3 }}>
-                <ReportTotalCard
-                  resourceName="Progreso del Curso"
-                  total={`${data.resumen.progresoTotal.toFixed(1)}%`}
-                  active={data.resumen.totalAlumnos}
-                  inactive={data.resumen.totalAlumnosInactivos}
-                  icon={<PercentIcon fontSize="small" />}
-                  activeLabelPrefix="Alumnos"
+                <StatCard
+                  icon={<PercentIcon />}
+                  title="Progreso del Curso"
+                  value={`${data.resumen.progresoTotal.toFixed(1)}%`}
+                  color="primary"
+                  description={
+                    <Box component="span" sx={{ display: "flex", gap: 1.5 }}>
+                      <Box
+                        component="span"
+                        sx={{ color: "success.main", fontWeight: "bold" }}
+                      >
+                        Alumnos Activos: {data.resumen.totalAlumnos}
+                      </Box>
+                      <Box component="span" sx={{ color: "text.disabled" }}>
+                        Inactivos: {data.resumen.totalAlumnosInactivos}
+                      </Box>
+                    </Box>
+                  }
                 />
               </Grid>
 

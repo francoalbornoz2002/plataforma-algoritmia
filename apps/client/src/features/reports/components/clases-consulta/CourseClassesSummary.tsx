@@ -31,7 +31,6 @@ import {
   type CourseClassesSummaryFilters,
 } from "../../service/reports.service";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
-import ReportTotalCard from "../common/ReportTotalCard";
 import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
 import { TemasLabels } from "../../../../types/traducciones";
@@ -209,15 +208,24 @@ export default function CourseClassesSummary({ courseId }: Props) {
             {/* KPIs Generales */}
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, md: 2.5 }}>
-                <ReportTotalCard
-                  resourceName="Total de Clases"
-                  total={data.kpis.totalClases}
-                  active={data.kpis.activas}
-                  inactive={data.kpis.inactivas}
-                  activeLabelPrefix="Clases"
-                  activeLabel="Activas"
-                  inactiveLabel="Inactivas"
-                  icon={<FunctionsIcon fontSize="small" />}
+                <StatCard
+                  icon={<FunctionsIcon />}
+                  title="Total de Clases"
+                  value={data.kpis.totalClases}
+                  color="primary"
+                  description={
+                    <Box component="span" sx={{ display: "flex", gap: 1.5 }}>
+                      <Box
+                        component="span"
+                        sx={{ color: "success.main", fontWeight: "bold" }}
+                      >
+                        Clases Activas: {data.kpis.activas}
+                      </Box>
+                      <Box component="span" sx={{ color: "text.disabled" }}>
+                        Inactivas: {data.kpis.inactivas}
+                      </Box>
+                    </Box>
+                  }
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 2.5 }}>
