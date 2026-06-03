@@ -6,7 +6,14 @@ interface HeaderPageProps {
   title: string;
   description: string;
   icon: ReactNode;
-  color?: "primary" | "secondary" | "error" | "info" | "success" | "warning";
+  color?:
+    | "primary"
+    | "secondary"
+    | "error"
+    | "info"
+    | "success"
+    | "warning"
+    | string;
   action?: ReactNode; // Agregamos la prop action
 }
 
@@ -32,7 +39,7 @@ export default function HeaderPage({
       <Stack direction="row" alignItems="center" spacing={2}>
         <CardIcon icon={icon} color={color} size="large" />
         <Stack justifyContent="center">
-          <Typography variant="h6" color={`${color}.main`} fontWeight="bold">
+          <Typography variant="h6" fontWeight="bold">
             {title}
           </Typography>
           <Typography variant="caption" color="text.secondary">

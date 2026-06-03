@@ -356,7 +356,7 @@ export default function ProgressPage() {
     >
       <Stack spacing={2} sx={{ height: "100%", minWidth: 0 }}>
         <HeaderPage
-          title={`Progreso del Curso: ${selectedCourse.nombre}`}
+          title={`Progreso del Curso ${selectedCourse.nombre}`}
           description="Visualiza el rendimiento global del curso y el detalle individual de cada alumno."
           icon={<AssessmentIcon />}
           color="primary"

@@ -53,11 +53,6 @@ export default function Layout() {
       path: "/course/sessions",
     },
     {
-      text: "Preguntas para sesiones",
-      icon: <Quiz />,
-      path: "/course/questions",
-    },
-    {
       text: "Consultas",
       icon: <MarkUnreadChatAlt />,
       path: "/course/consults",
@@ -66,6 +61,11 @@ export default function Layout() {
       text: "Clases de consulta",
       icon: <Class />,
       path: "/course/consult-classes",
+    },
+    {
+      text: "Preguntas para sesiones",
+      icon: <Quiz />,
+      path: "/course/questions",
     },
     {
       text: "Reportes y estadísticas",

@@ -148,7 +148,7 @@ export default function MyDifficultiesPage() {
           title={`Mis dificultades en ${selectedCourse.nombre}`}
           description="Consulta aquellos temas y conceptos que te están resultando desafiantes."
           icon={<AssignmentLate />}
-          color="primary"
+          color="error"
         />
         {/* --- SECCIÓN DE FILTROS --- */}
         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>

@@ -230,7 +230,7 @@ export default function MisSesionesPage() {
           title={`Mis Sesiones en ${selectedCourse.nombre}`}
           description="Revisa y resuelve tus sesiones de refuerzo asignadas para mejorar en los temas que te resultan difíciles."
           icon={<SwitchAccessShortcutAdd />}
-          color="primary"
+          color="success"
         />
 
         {/* --- SECCIÓN DE FILTROS --- */}

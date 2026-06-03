@@ -138,7 +138,7 @@ export default function GeneralLayout({
             allowScrollButtonsMobile
             TabIndicatorProps={{ style: { display: "none" } }} // Ocultamos la línea de abajo
             sx={{
-              maxWidth: { xs: "calc(100vw - 200px)", md: "60vw", lg: 850 }, // Limitamos el ancho fijo
+              maxWidth: { xs: "calc(100vw - 200px)", md: "60vw", lg: 900 }, // Limitamos el ancho fijo
               minWidth: 0, // Permite que se contraiga en pantallas pequeñas
               minHeight: "auto",
               "& .MuiTabs-scrollButtons": {

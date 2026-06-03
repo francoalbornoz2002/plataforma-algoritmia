@@ -49,7 +49,7 @@ import GradeChip from "../../../components/GradeChip";
 import { TemasLabels } from "../../../types/traducciones";
 import HeaderPage from "../../../components/HeaderPage";
 import DashboardTextCard from "../../dashboards/components/DashboardTextCard";
-import { Warning } from "@mui/icons-material";
+import { AssignmentLate, Warning } from "@mui/icons-material";
 import StatCard from "../../../components/StatCard";
 
 // Tipo para la fila de la DataGrid
@@ -322,10 +322,10 @@ export default function DifficultiesPage() {
     >
       <Stack spacing={2} sx={{ height: "100%", minWidth: 0 }}>
         <HeaderPage
-          title={`Dificultades del Curso: ${selectedCourse.nombre}`}
+          title={`Dificultades del Curso ${selectedCourse.nombre}`}
           description="Identifica los temas más complejos y visualiza el estado de dificultades de tus alumnos."
-          icon={<Warning />}
-          color="primary"
+          icon={<AssignmentLate />}
+          color="error"
         />
 
         {/* --- A. Resumen (KPIs) --- */}

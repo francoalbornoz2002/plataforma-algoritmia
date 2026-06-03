@@ -18,7 +18,6 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import AddIcon from "@mui/icons-material/Add";
-import HistoryIcon from "@mui/icons-material/History";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 import AutoAwesome from "@mui/icons-material/AutoAwesome";
 
@@ -47,6 +46,8 @@ import SesionFormModal from "../components/SesionFormModal";
 import SesionDetailModal from "../../reports/components/sesiones-refuerzo/SesionDetailModal";
 import HeaderPage from "../../../components/HeaderPage";
 import { datePickerConfig } from "../../../config/theme.config";
+import { SwitchAccessShortcutAdd } from "@mui/icons-material";
+import { purple } from "@mui/material/colors";
 
 export default function SesionesRefuerzoPage() {
   const { selectedCourse, isReadOnly } = useCourseContext();
@@ -252,8 +253,8 @@ export default function SesionesRefuerzoPage() {
         <HeaderPage
           title={`Sesiones de Refuerzo en ${selectedCourse.nombre}`}
           description="Gestiona y asigna sesiones de refuerzo a los alumnos."
-          icon={<HistoryIcon />}
-          color="primary"
+          icon={<SwitchAccessShortcutAdd />}
+          color="success"
         />
 
         {/* --- SECCIÓN DE FILTROS --- */}

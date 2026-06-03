@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
-import { School } from "@mui/icons-material";
+import { Class } from "@mui/icons-material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 // 1. Hooks, Servicios y Tipos
@@ -387,8 +387,19 @@ export default function ClasesConsultaPage() {
         <HeaderPage
           title={`Clases de Consulta en ${selectedCourse.nombre}`}
           description="Gestiona las clases de consulta programadas para resolver dudas de los alumnos."
-          icon={<School />}
-          color="primary"
+          icon={<Class />}
+          color="secondary"
+          action={
+            !isReadOnly && (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={handleOpenCreate}
+              >
+                Agendar Clase
+              </Button>
+            )
+          }
         />
 
         {/* --- 1. Filtros y Orden --- */}
@@ -411,10 +422,10 @@ export default function ClasesConsultaPage() {
                 InputProps: {
                   sx: {
                     ...datePickerConfig.slotProps.textField.InputProps.sx,
-                    width: 180,
+                    width: 200,
                   },
                 },
-                sx: { width: 180 },
+                sx: { width: 200 },
               },
             }}
           />
@@ -431,10 +442,10 @@ export default function ClasesConsultaPage() {
                 InputProps: {
                   sx: {
                     ...datePickerConfig.slotProps.textField.InputProps.sx,
-                    width: 180,
+                    width: 200,
                   },
                 },
-                sx: { width: 180 },
+                sx: { width: 200 },
               },
             }}
           />
@@ -498,15 +509,6 @@ export default function ClasesConsultaPage() {
           </Tooltip>
 
           <Box sx={{ flexGrow: 1 }} />
-          {!isReadOnly && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleOpenCreate}
-            >
-              Agendar Clase
-            </Button>
-          )}
         </Stack>
 
         {/* --- 2. Lista de Clases (Cards) --- */}

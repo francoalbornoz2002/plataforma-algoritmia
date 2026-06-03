@@ -215,7 +215,7 @@ export default function MyConsultsPage() {
           description="Gestiona tus consultas y revisa las realizadas por tus
                 compañeros de curso."
           icon={<MarkUnreadChatAlt />}
-          color="primary"
+          color="info"
         />
         {/* --- 1. Filtros --- */}
         <Stack direction="row" alignItems="center" spacing={1}>

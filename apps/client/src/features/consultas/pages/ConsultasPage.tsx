@@ -176,7 +176,7 @@ export default function ConsultasPage() {
           title={`Consultas en ${selectedCourse.nombre}`}
           description="Gestiona y responde las dudas planteadas por los alumnos del curso."
           icon={<MarkUnreadChatAlt />}
-          color="primary"
+          color="info"
         />
 
         {/* --- 1. Filtros y Orden --- */}

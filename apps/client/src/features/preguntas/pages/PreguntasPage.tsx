@@ -204,7 +204,7 @@ export default function PreguntasPage() {
           title={"Preguntas para sesiones de refuerzo"}
           description="Gestiona las preguntas que desees agregar como extra a las sesiones de refuerzo"
           icon={<Quiz />}
-          color="primary"
+          color="warning"
         />
         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
           <TextField
