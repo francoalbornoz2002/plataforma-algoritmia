@@ -47,7 +47,6 @@ import SesionDetailModal from "../../reports/components/sesiones-refuerzo/Sesion
 import HeaderPage from "../../../components/HeaderPage";
 import { datePickerConfig } from "../../../config/theme.config";
 import { SwitchAccessShortcutAdd } from "@mui/icons-material";
-import { purple } from "@mui/material/colors";
 
 export default function SesionesRefuerzoPage() {
   const { selectedCourse, isReadOnly } = useCourseContext();

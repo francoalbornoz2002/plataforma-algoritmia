@@ -21,7 +21,6 @@ import {
   type CourseMissionsReportFilters,
 } from "../../service/reports.service";
 import { dificultad_mision } from "../../../../types";
-import { useOptionalCourseContext } from "../../../../context/CourseContext";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
 import StatCard from "../../../../components/StatCard";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
@@ -44,12 +43,6 @@ export default function CourseMissionsReport({ courseId }: Props) {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const courseContext = useOptionalCourseContext();
-
-  const courseCreatedAt =
-    courseContext?.selectedCourse?.id === courseId
-      ? courseContext?.selectedCourse?.createdAt
-      : undefined;
 
   const maxMisiones =
     data?.grafico && data.grafico.length > 0

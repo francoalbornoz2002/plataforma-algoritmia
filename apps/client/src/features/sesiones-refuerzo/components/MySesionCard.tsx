@@ -16,7 +16,6 @@ import PsychologyIcon from "@mui/icons-material/Psychology";
 import TimerIcon from "@mui/icons-material/Timer";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import AssessmentIcon from "@mui/icons-material/Assessment";
-import InfoIcon from "@mui/icons-material/Info";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
 
 // Tipos y Utilidades

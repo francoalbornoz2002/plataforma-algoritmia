@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import {
   Box,
-  Typography,
   CircularProgress,
   Alert,
   Stack,
@@ -12,7 +11,6 @@ import {
   MenuItem,
   type SelectChangeEvent,
   Pagination,
-  Paper,
   Tooltip,
   IconButton, // <-- Usaremos paginación
 } from "@mui/material";

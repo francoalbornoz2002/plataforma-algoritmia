@@ -17,7 +17,6 @@ import {
   Autocomplete,
   Checkbox,
   ListItemText,
-  Paper,
   IconButton,
   Tooltip,
 } from "@mui/material";

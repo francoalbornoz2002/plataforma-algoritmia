@@ -1,15 +1,7 @@
 // apps/client/src/features/reports/components/CoursesSummarySection.tsx
 
 import { useState, useEffect, useMemo } from "react";
-import {
-  Box,
-  Typography,
-  Alert,
-  Paper,
-  Stack,
-  Chip,
-  Grid,
-} from "@mui/material";
+import { Box, Typography, Alert, Paper, Stack, Grid } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
 import { BarChart } from "@mui/x-charts/BarChart";

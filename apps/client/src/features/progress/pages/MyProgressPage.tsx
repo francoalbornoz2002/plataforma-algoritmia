@@ -10,14 +10,13 @@ import {
   MenuItem,
   type SelectChangeEvent,
   Alert,
-  Paper,
   Stack,
   Divider,
   IconButton,
   Tooltip,
 } from "@mui/material";
 import { formatDistanceToNow } from "date-fns";
-import { ar, es } from "date-fns/locale";
+import { es } from "date-fns/locale";
 import StarIcon from "@mui/icons-material/Star";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import BoltIcon from "@mui/icons-material/Bolt";

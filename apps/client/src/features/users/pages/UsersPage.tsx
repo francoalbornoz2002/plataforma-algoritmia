@@ -22,7 +22,6 @@ import type { estado_simple, UserData } from "../../../types";
 import {
   Alert,
   Checkbox,
-  CircularProgress,
   FormControl,
   InputLabel,
   ListItemText,

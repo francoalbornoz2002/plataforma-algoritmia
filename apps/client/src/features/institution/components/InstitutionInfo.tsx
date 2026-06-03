@@ -2,12 +2,8 @@ import {
   CardContent,
   Typography,
   Box,
-  Divider,
   Stack,
   CircularProgress,
-  ListItemIcon,
-  ListItemText,
-  Button,
 } from "@mui/material";
 import BusinessIcon from "@mui/icons-material/Business";
 import PlaceIcon from "@mui/icons-material/Place";

@@ -369,7 +369,6 @@ export default function SesionResolverPage() {
   if (finalResultData || sesion.estado === estado_sesion.Completada) {
     // Priorizamos los datos frescos del resultado final, si no, usamos los de la sesión cargada.
     const sesionData = finalResultData ? finalResultData.sesion : sesion;
-    const nuevoGradoData = finalResultData ? finalResultData.nuevoGrado : null;
 
     return (
       <Container maxWidth="md" sx={{ mt: 4 }}>
@@ -383,10 +382,7 @@ export default function SesionResolverPage() {
                 : "¡Sesión Completada!"}
           </Typography>
           <Box sx={{ my: 3 }}>
-            <ResultadoSesionView
-              sesion={sesionData}
-              nuevoGrado={nuevoGradoData}
-            />
+            <ResultadoSesionView sesion={sesionData} />
           </Box>
           <Button
             variant="contained"

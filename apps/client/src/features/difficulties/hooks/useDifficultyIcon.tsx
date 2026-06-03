@@ -17,9 +17,6 @@ import {
   RunningWithErrors,
   TravelExplore,
 } from "@mui/icons-material";
-// TODO: Importa aquí los íconos definitivos de Material UI
-// import LoopIcon from "@mui/icons-material/Loop";
-// import AltRouteIcon from "@mui/icons-material/AltRoute";
 
 export const useDifficultyIcon = (nombre: string) => {
   return useMemo(() => {

@@ -25,12 +25,10 @@ import GradeChip from "../../../components/GradeChip";
 
 interface ResultadoSesionViewProps {
   sesion: SesionRefuerzoConDetalles;
-  nuevoGrado?: grado_dificultad | null;
 }
 
 export default function ResultadoSesionView({
   sesion,
-  nuevoGrado,
 }: ResultadoSesionViewProps) {
   if (!sesion.resultadoSesion) {
     return <Typography>Esta sesión aún no tiene resultados.</Typography>;

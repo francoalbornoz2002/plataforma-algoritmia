@@ -1,11 +1,7 @@
 import { useState } from "react";
 import { Box, Tab, Tabs, Tooltip } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import WarningIcon from "@mui/icons-material/Warning";
-import QuestionAnswerIcon from "@mui/icons-material/QuestionAnswer";
 import ClassIcon from "@mui/icons-material/Class";
-import SchoolIcon from "@mui/icons-material/School";
 
 // Importamos los componentes de las pestañas (asumiendo que existen en la ruta relativa correcta desde aquí)
 import ProgressReportTab from "./progreso/ProgressReportTab";
