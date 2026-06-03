@@ -251,7 +251,7 @@ export default function MyProgressPage() {
             <Grid size={{ xs: 12, sm: 2 }}>
               <StatCard
                 title="Misiones Completadas"
-                subtitle="Acumuladas en el curso"
+                description="Acumuladas en el curso"
                 value={`${progress.cantMisionesCompletadas} / ${TOTAL_MISIONES}`}
                 icon={<TaskAltIcon />}
                 color="success"
@@ -261,7 +261,7 @@ export default function MyProgressPage() {
             <Grid size={{ xs: 12, sm: 2 }}>
               <StatCard
                 title="Estrellas Totales"
-                subtitle="Acumuladas en el curso"
+                description="Acumuladas en el curso"
                 value={`${progress.totalEstrellas} / ${TOTAL_ESTRELLAS}`}
                 icon={<StarIcon />}
                 color="warning"
@@ -270,7 +270,7 @@ export default function MyProgressPage() {
             <Grid size={{ xs: 12, sm: 2 }}>
               <StatCard
                 title="Experiencia Total"
-                subtitle="Acumuladas en el curso"
+                description="Acumuladas en el curso"
                 value={progress.totalExp}
                 icon={<BoltIcon />}
                 color="primary"
@@ -282,7 +282,7 @@ export default function MyProgressPage() {
                 value={progress.promEstrellas.toFixed(1)}
                 icon={<StarIcon />}
                 color="warning"
-                subtitle="Por misión"
+                description="Por misión"
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 1.8 }}>
@@ -291,7 +291,7 @@ export default function MyProgressPage() {
                 value={progress.promIntentos.toFixed(1)}
                 icon={<ReplayIcon />}
                 color="info"
-                subtitle="Por misión"
+                description="Por misión"
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 2.4 }}>

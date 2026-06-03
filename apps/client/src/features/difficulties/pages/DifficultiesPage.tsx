@@ -339,7 +339,7 @@ export default function DifficultiesPage() {
               <StatCard
                 title="Promedio por Alumno"
                 value={overview ? overview.promDificultades.toFixed(1) : 0}
-                subtitle="Dificultades activas / alumno"
+                description="Dificultades activas / alumno"
                 icon={<GroupIcon />}
                 color="primary"
               />
@@ -381,7 +381,7 @@ export default function DifficultiesPage() {
             ) : (
               <StatCard
                 title="Grado Promedio"
-                subtitle="De las dificultades de los alumnos"
+                description="De las dificultades de los alumnos"
                 value={overview?.promGrado || "N/A"}
                 icon={<SpeedIcon />}
                 color={

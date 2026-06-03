@@ -237,7 +237,7 @@ export default function CoursesSummarySection() {
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <StatCard
                   title="Cursos Activos"
-                  subtitle="En curso actualmente"
+                  description="En curso actualmente"
                   value={summaryData.activos}
                   percentage={
                     summaryData.total > 0
@@ -252,7 +252,7 @@ export default function CoursesSummarySection() {
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <StatCard
                   title="Cursos Inactivos"
-                  subtitle="Dados de baja"
+                  description="Dados de baja"
                   value={summaryData.inactivos}
                   percentage={
                     summaryData.total > 0
@@ -267,7 +267,7 @@ export default function CoursesSummarySection() {
               <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <StatCard
                   title="Cursos Finalizados"
-                  subtitle="Ciclo lectivo cerrado"
+                  description="Ciclo lectivo cerrado"
                   value={summaryData.finalizados}
                   percentage={
                     summaryData.total > 0

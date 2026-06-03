@@ -241,7 +241,7 @@ export default function AdminDashboardPage() {
           <StatCard
             title="Total Usuarios"
             value={stats?.users.total ?? 0}
-            subtitle="Registrados en el sistema"
+            description="Registrados en el sistema"
             icon={<Person />}
             color="primary"
           />
@@ -250,7 +250,7 @@ export default function AdminDashboardPage() {
           <StatCard
             title="Cursos Activos"
             value={stats?.courses.active ?? 0}
-            subtitle={`De ${stats?.courses.total ?? 0} totales`}
+            description={`De ${stats?.courses.total ?? 0} totales`}
             icon={<Class />}
             color="secondary"
           />
@@ -259,7 +259,7 @@ export default function AdminDashboardPage() {
           <StatCard
             title="Clases del Mes"
             value={stats?.classes.month.total ?? 0}
-            subtitle="Programadas y realizadas"
+            description="Programadas y realizadas"
             icon={<Event />}
             color="info"
           />
@@ -268,7 +268,7 @@ export default function AdminDashboardPage() {
           <StatCard
             title="Sesiones del Mes"
             value={stats?.sessions.month.total ?? 0}
-            subtitle="Refuerzos generados"
+            description="Refuerzos generados"
             icon={<TrendingUp />}
             color="success"
           />
@@ -376,7 +376,7 @@ export default function AdminDashboardPage() {
                         )
                       : 0
                   }
-                  subtitle="Alumnos x Curso Activo"
+                  description="Alumnos x Curso Activo"
                   icon={<Person />}
                   color="info"
                   small
@@ -392,7 +392,7 @@ export default function AdminDashboardPage() {
                         )
                       : 0
                   }
-                  subtitle="Docentes x Curso Activo"
+                  description="Docentes x Curso Activo"
                   icon={<SupervisorAccount />}
                   color="secondary"
                   small

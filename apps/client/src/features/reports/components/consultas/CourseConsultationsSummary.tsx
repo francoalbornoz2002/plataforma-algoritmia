@@ -237,7 +237,7 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
                 <StatCard
                   icon={<CheckCircleIcon fontSize="small" />}
                   title="Consultas resueltas"
-                  subtitle="Que poseen respuesta y valoración"
+                  description="Que poseen respuesta y valoración"
                   value={data.kpis.resueltas.count}
                   percentage={data.kpis.resueltas.percentage}
                   color="success"
@@ -249,7 +249,7 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
                 <StatCard
                   icon={<PendingIcon fontSize="small" />}
                   title="Consultas por atender"
-                  subtitle="Pendientes o a revisar"
+                  description="Pendientes o a revisar"
                   value={data.kpis.pendientes.count}
                   percentage={data.kpis.pendientes.percentage}
                   color="warning"
@@ -451,7 +451,7 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
                       <StatCard
                         icon={<ClassIcon fontSize="small" />}
                         title="Atendidas en Clases de Consulta"
-                        subtitle="Consultas revisadas en vivo durante una clase"
+                        description="Consultas revisadas en vivo durante una clase"
                         value={data.kpis.impactoClases.revisadas.count}
                         percentage={
                           data.kpis.impactoClases.revisadas.percentage
@@ -465,7 +465,7 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
                       <StatCard
                         icon={<CheckCircleIcon fontSize="small" />}
                         title="Resueltas vía Clase"
-                        subtitle="Consultas resueltas tras ser revisadas en clase"
+                        description="Consultas resueltas tras ser revisadas en clase"
                         value={data.kpis.impactoClases.resueltas.count}
                         percentage={
                           data.kpis.impactoClases.resueltas.percentage

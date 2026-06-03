@@ -376,7 +376,7 @@ export default function ProgressPage() {
                   value={overview.misionesCompletadas}
                   icon={<TaskAltIcon />}
                   color="success"
-                  subtitle="Total acumulado por el curso"
+                  description="Total acumulado por el curso"
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 2 }}>
@@ -385,7 +385,7 @@ export default function ProgressPage() {
                   value={overview.totalEstrellas}
                   icon={<StarIcon />}
                   color="warning"
-                  subtitle="Total acumulado por el curso"
+                  description="Total acumulado por el curso"
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 2 }}>
@@ -394,7 +394,7 @@ export default function ProgressPage() {
                   value={overview.totalIntentos}
                   icon={<ReplayIcon />}
                   color="info"
-                  subtitle="Total acumulado por el curso"
+                  description="Total acumulado por el curso"
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 2 }}>
@@ -403,7 +403,7 @@ export default function ProgressPage() {
                   value={overview.totalExp}
                   icon={<BoltIcon />}
                   color="primary"
-                  subtitle="Total acumulado por el curso"
+                  description="Total acumulado por el curso"
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 2 }}>
@@ -412,7 +412,7 @@ export default function ProgressPage() {
                   value={overview.promEstrellas.toFixed(1)}
                   icon={<StarIcon />}
                   color="warning"
-                  subtitle="Por alumno"
+                  description="Por alumno"
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 2 }}>
@@ -421,7 +421,7 @@ export default function ProgressPage() {
                   value={overview.promIntentos.toFixed(1)}
                   icon={<ReplayIcon />}
                   color="info"
-                  subtitle="Por alumno"
+                  description="Por alumno"
                 />
               </Grid>
             </Grid>

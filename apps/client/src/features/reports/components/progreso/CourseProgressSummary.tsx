@@ -160,7 +160,7 @@ export default function CourseProgressSummary({ courseId }: Props) {
                 <StatCard
                   icon={<TaskAltIcon fontSize="small" />}
                   title="Misiones completadas"
-                  subtitle="Acumuladas por el curso"
+                  description="Acumuladas por el curso"
                   value={data.resumen.misionesCompletadas}
                   color="info"
                 />
@@ -171,7 +171,7 @@ export default function CourseProgressSummary({ courseId }: Props) {
                 <StatCard
                   icon={<StarIcon fontSize="small" />}
                   title="Estrellas totales"
-                  subtitle="Acumuladas por el curso"
+                  description="Acumuladas por el curso"
                   value={data.resumen.estrellasTotales}
                   color="warning"
                 />
@@ -182,7 +182,7 @@ export default function CourseProgressSummary({ courseId }: Props) {
                 <StatCard
                   icon={<ReplayIcon fontSize="small" />}
                   title="Intentos totales"
-                  subtitle="Acumulados por el curso"
+                  description="Acumulados por el curso"
                   value={data.resumen.intentosTotales}
                   color="secondary"
                 />
@@ -193,7 +193,7 @@ export default function CourseProgressSummary({ courseId }: Props) {
                 <StatCard
                   icon={<BoltIcon fontSize="small" />}
                   title="Experiencia total"
-                  subtitle="Puntos EXP acumulados por el curso"
+                  description="Puntos EXP acumulados por el curso"
                   value={data.resumen.expTotal}
                   color="primary"
                 />
@@ -292,7 +292,7 @@ export default function CourseProgressSummary({ courseId }: Props) {
                       <StatCard
                         icon={<StarIcon fontSize="small" />}
                         title="Estrellas Promedio"
-                        subtitle="Por alumno"
+                        description="Por alumno"
                         value={data.resumen.promEstrellas.toFixed(1)}
                         color="warning"
                       />
@@ -301,7 +301,7 @@ export default function CourseProgressSummary({ courseId }: Props) {
                       <StatCard
                         icon={<ReplayIcon fontSize="small" />}
                         title="Intentos Promedio"
-                        subtitle="Por alumno"
+                        description="Por alumno"
                         value={data.resumen.promIntentos.toFixed(1)}
                         color="info"
                       />

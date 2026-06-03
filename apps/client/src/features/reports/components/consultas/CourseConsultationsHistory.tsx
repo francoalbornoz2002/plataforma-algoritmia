@@ -475,7 +475,7 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
                 <StatCard
                   icon={<FunctionsIcon fontSize="small" />}
                   title="Total de Consultas"
-                  subtitle="Consultas realizadas en el periodo indicado"
+                  description="Consultas realizadas en el periodo indicado"
                   value={data.stats.total}
                   color="primary"
                 />
@@ -484,7 +484,7 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
                 <StatCard
                   icon={<CalendarTodayIcon fontSize="small" />}
                   title="Promedio Diario"
-                  subtitle="Consultas realizadas por día en el periodo indicado"
+                  description="Consultas realizadas por día en el periodo indicado"
                   value={Number(data.stats.promedioDiario.toFixed(1))}
                   color="info"
                 />
@@ -493,7 +493,7 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
                 <StatCard
                   icon={<CheckCircleIcon fontSize="small" />}
                   title="Prom. Atendidas/Día"
-                  subtitle="Consultas revisadas o resueltas por día"
+                  description="Consultas revisadas o resueltas por día"
                   value={Number(data.stats.promedioAtendidasDiario.toFixed(1))}
                   color="success"
                 />

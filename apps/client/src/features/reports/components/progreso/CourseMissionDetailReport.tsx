@@ -259,7 +259,7 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
                 <StatCard
                   icon={<TaskAltIcon fontSize="small" />}
                   title="Veces Completada"
-                  subtitle="Total de ejecuciones"
+                  description="Total de ejecuciones"
                   value={data.stats.vecesCompletada}
                   color="success"
                 />
@@ -268,7 +268,7 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
                 <StatCard
                   icon={<PersonIcon fontSize="small" />}
                   title="Alumnos que completaron"
-                  subtitle="Total de alumnos distintos"
+                  description="Total de alumnos distintos"
                   value={data.stats.alumnosCompletaron}
                   percentage={data.stats.pctAlumnos}
                   color="primary"
@@ -278,7 +278,7 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
                 <StatCard
                   icon={<StarIcon fontSize="small" />}
                   title="Prom. Estrellas"
-                  subtitle="Calificación promedio"
+                  description="Calificación promedio"
                   value={data.stats.promEstrellas.toFixed(1)}
                   color="warning"
                 />
@@ -287,7 +287,7 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
                 <StatCard
                   icon={<ReplayIcon fontSize="small" />}
                   title="Prom. Intentos"
-                  subtitle="Intentos promedio"
+                  description="Intentos promedio"
                   value={data.stats.promIntentos.toFixed(1)}
                   color="info"
                 />

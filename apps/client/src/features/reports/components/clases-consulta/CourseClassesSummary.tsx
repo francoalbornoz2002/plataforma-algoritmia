@@ -225,7 +225,7 @@ export default function CourseClassesSummary({ courseId }: Props) {
                 <StatCard
                   icon={<FunctionsIcon />}
                   title="Promedio Consultas por Clase"
-                  subtitle="Consultas agendadas por clase activa."
+                  description="Consultas agendadas por clase activa."
                   value={data.kpis.promConsultasPorClase.toFixed(1)}
                   color="primary"
                 />

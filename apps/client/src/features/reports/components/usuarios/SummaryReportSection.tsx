@@ -356,7 +356,7 @@ export default function SummaryReportSection() {
               <Grid size={{ xs: 12, md: 4 }}>
                 <StatCard
                   title="Usuarios Activos"
-                  subtitle="En la plataforma"
+                  description="En la plataforma"
                   small
                   value={summaryData.activos}
                   percentage={
@@ -371,7 +371,7 @@ export default function SummaryReportSection() {
               <Grid size={{ xs: 12, md: 4 }}>
                 <StatCard
                   title="Usuarios Inactivos"
-                  subtitle="Dados de baja"
+                  description="Dados de baja"
                   small
                   value={summaryData.inactivos}
                   percentage={
