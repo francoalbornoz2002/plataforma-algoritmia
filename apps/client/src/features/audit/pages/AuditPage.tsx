@@ -339,7 +339,7 @@ export default function AuditPage() {
     >
       <Stack spacing={2} sx={{ height: "100%" }}>
         <HeaderReportPage
-          title="Reporte de Auditoría"
+          title="Auditoría del Sistema"
           description="Monitorea todos los cambios realizados en la base de datos por usuarios o procesos automáticos."
           icon={<HistoryIcon />}
           filters={pdfFilters}

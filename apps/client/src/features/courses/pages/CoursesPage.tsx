@@ -350,7 +350,18 @@ export default function CoursesPage() {
           title="Gestión de Cursos"
           description="Administra los cursos y docentes asignados a cada curso en la plataforma."
           icon={<School />}
-          color="primary"
+          color="secondary"
+          action={
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleAddCourseClick}
+              disabled={isLoading}
+              sx={{ width: { xs: "100%", sm: "auto" } }}
+            >
+              Crear Curso
+            </Button>
+          }
         />
         {/* --- FILTROS Y ORDEN --- */}
         <Stack direction="row" spacing={2} alignItems="center">
@@ -460,19 +471,6 @@ export default function CoursesPage() {
               <FilterAltOffIcon />
             </IconButton>
           </Tooltip>
-          <Box
-            sx={{ flexGrow: { sm: 1 }, display: { xs: "none", sm: "block" } }}
-          />{" "}
-          {/* Spacer */}
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleAddCourseClick}
-            disabled={isLoading}
-            sx={{ width: { xs: "100%", sm: "auto" }, mt: { xs: 1, sm: 0 } }}
-          >
-            Crear Curso
-          </Button>
         </Stack>
 
         {/* --- Loading / Error / Content --- */}
@@ -495,11 +493,11 @@ export default function CoursesPage() {
           <>
             {/* --- Grid for Cards --- */}
             <Box sx={{ flexGrow: 1 }}>
-              <Grid container spacing={3}>
+              <Grid container spacing={2}>
                 {cursos.length > 0 ? (
                   cursos.map((curso) => (
                     // --- Grid Item ---
-                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={curso.id}>
+                    <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={curso.id}>
                       <CourseCard
                         course={curso}
                         onEdit={handleEdit}

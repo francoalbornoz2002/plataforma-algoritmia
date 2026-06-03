@@ -140,7 +140,6 @@ export default function CourseMissionsReport({ courseId }: Props) {
           endpointPathExcel={`/reportes/cursos/${courseId}/progreso/misiones/excel`}
           filenameExcel="misiones_completadas.xlsx"
           disabled={!data}
-          sx={{ mb: 2 }}
         />
 
         {/* Filtros */}

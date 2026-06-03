@@ -385,6 +385,17 @@ export default function UsersPage() {
           description="Administra y gestiona los usuarios de la plataforma."
           icon={<People />}
           color="primary"
+          action={
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleAddUserClick}
+              disabled={isLoading}
+              sx={{ width: { xs: "100%", sm: "auto" } }}
+            >
+              Crear Usuario
+            </Button>
+          }
         />
 
         {/* --- FILTROS Y ORDEN --- */}
@@ -444,21 +455,6 @@ export default function UsersPage() {
               <FilterAltOffIcon />
             </IconButton>
           </Tooltip>
-          <Box
-            sx={{
-              flexGrow: { xs: 0, sm: 1 },
-              display: { xs: "none", sm: "block" },
-            }}
-          />
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleAddUserClick}
-            disabled={isLoading}
-            sx={{ width: { xs: "100%", sm: "auto" }, mt: { xs: 1, sm: 0 } }}
-          >
-            Crear Usuario
-          </Button>
         </Stack>
 
         {/* Muestra un error si falló la carga */}

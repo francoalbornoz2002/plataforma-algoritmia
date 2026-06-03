@@ -1,4 +1,4 @@
-import { Paper, Stack, Typography } from "@mui/material";
+import { Box, Paper, Stack, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 import CardIcon from "./CardIcon";
 
@@ -7,6 +7,7 @@ interface HeaderPageProps {
   description: string;
   icon: ReactNode;
   color?: "primary" | "secondary" | "error" | "info" | "success" | "warning";
+  action?: ReactNode; // Agregamos la prop action
 }
 
 export default function HeaderPage({
@@ -14,6 +15,7 @@ export default function HeaderPage({
   description,
   icon,
   color = "primary",
+  action,
 }: HeaderPageProps) {
   return (
     <Paper
@@ -21,7 +23,10 @@ export default function HeaderPage({
       sx={{
         p: 2,
         display: "flex",
-        flexDirection: "column",
+        flexDirection: { xs: "column", sm: "row" },
+        alignItems: { xs: "flex-start", sm: "center" },
+        justifyContent: "space-between",
+        gap: 2,
       }}
     >
       <Stack direction="row" alignItems="center" spacing={2}>
@@ -35,6 +40,7 @@ export default function HeaderPage({
           </Typography>
         </Stack>
       </Stack>
+      {action && <Box sx={{ width: { xs: "100%", sm: "auto" } }}>{action}</Box>}
     </Paper>
   );
 }
