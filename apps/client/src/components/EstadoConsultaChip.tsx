@@ -14,40 +14,22 @@ interface EstadoConsultaChipProps {
   small?: boolean;
 }
 
+const CONFIG: Record<
+  string,
+  { color: ChipProps["color"]; icon: React.ReactElement }
+> = {
+  [estado_consulta.Pendiente]: { color: "info", icon: <HourglassEmptyIcon /> },
+  [estado_consulta.Revisada]: { color: "primary", icon: <VisibilityIcon /> },
+  [estado_consulta.Resuelta]: { color: "success", icon: <CheckCircleIcon /> },
+  [estado_consulta.No_resuelta]: { color: "error", icon: <BlockIcon /> },
+  [estado_consulta.A_revisar]: { color: "warning", icon: <HelpOutline /> },
+};
+
 export default function EstadoConsultaChip({
   estado,
   small,
 }: EstadoConsultaChipProps) {
-  let icon: React.ReactElement;
-  let color: ChipProps["color"] = "default";
-
-  // 2. Switch para asignar ícono y color
-  switch (estado) {
-    case estado_consulta.Pendiente:
-      icon = <HourglassEmptyIcon />;
-      color = "info";
-      break;
-    case estado_consulta.Revisada:
-      icon = <VisibilityIcon />;
-      color = "primary";
-      break;
-    case estado_consulta.Resuelta:
-      icon = <CheckCircleIcon />;
-      color = "success"; // Verde
-      break;
-    case estado_consulta.No_resuelta:
-      icon = <BlockIcon />;
-      color = "error";
-      break;
-    case estado_consulta.A_revisar:
-      icon = <HelpOutline />;
-      color = "warning";
-      break;
-    default:
-      icon = <HelpOutline />;
-      color = "default";
-      break;
-  }
+  const { color = "default", icon = <HelpOutline /> } = CONFIG[estado] || {};
 
   return (
     <Chip

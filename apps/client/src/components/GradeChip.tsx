@@ -12,34 +12,31 @@ interface GradeChipProps {
   sx?: SxProps;
 }
 
+const CONFIG: Record<
+  string,
+  { color: ChipProps["color"]; icon: React.ReactElement }
+> = {
+  [grado_dificultad.Alto]: {
+    color: "error",
+    icon: <DangerousIcon sx={{ fontSize: "1.25rem" }} />,
+  },
+  [grado_dificultad.Medio]: {
+    color: "warning",
+    icon: <WarningIcon sx={{ fontSize: "1.25rem" }} />,
+  },
+  [grado_dificultad.Bajo]: {
+    color: "success",
+    icon: <CheckCircleIcon sx={{ fontSize: "1.25rem" }} />,
+  },
+  [grado_dificultad.Ninguno]: {
+    color: "default",
+    icon: <RemoveCircleIcon sx={{ fontSize: "1.25rem" }} />,
+  },
+};
+
 export default function GradeChip({ texto, grado, small, sx }: GradeChipProps) {
-  let icon: React.ReactElement | undefined = undefined;
-  let color: ChipProps["color"] = "default";
-
-  // 2. Usamos un switch para asignar ícono y color basado en el 'grado'
-  switch (grado) {
-    case grado_dificultad.Alto:
-      icon = <DangerousIcon sx={{ fontSize: "1.25rem" }} />; // Hacemos el ícono un poco más grande
-      color = "error";
-      break;
-    case grado_dificultad.Medio:
-      icon = <WarningIcon sx={{ fontSize: "1.25rem" }} />;
-      color = "warning";
-      break;
-    case grado_dificultad.Bajo:
-      icon = <CheckCircleIcon sx={{ fontSize: "1.25rem" }} />;
-      color = "success";
-      break;
-    case grado_dificultad.Ninguno:
-      icon = <RemoveCircleIcon sx={{ fontSize: "1.25rem" }} />;
-      color = "default";
-      break;
-  }
-
-  let textoRender = grado.toString();
-  if (texto) {
-    textoRender = `${texto} ${grado}`;
-  }
+  const { color = "default", icon } = CONFIG[grado] || {};
+  const textoRender = texto ? `${texto} ${grado}` : grado.toString();
 
   // 3. Renderizamos el Chip con las props dinámicas
   return (

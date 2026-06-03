@@ -11,29 +11,18 @@ interface MissionDifficultyChip {
   dif: dificultad_mision;
 }
 
-export default function MissionDifficultyChip({ dif }: MissionDifficultyChip) {
-  let icon: React.ReactElement;
-  let color: ChipProps["color"] = "default";
+const CONFIG: Record<
+  string,
+  { color: ChipProps["color"]; icon: React.ReactElement }
+> = {
+  [dificultad_mision.Facil]: { color: "success", icon: <LooksOne /> },
+  [dificultad_mision.Medio]: { color: "warning", icon: <LooksTwo /> },
+  [dificultad_mision.Dificil]: { color: "error", icon: <Looks3 /> },
+};
 
-  // 2. Switch para asignar ícono y color
-  switch (dif) {
-    case dificultad_mision.Facil:
-      icon = <LooksOne />;
-      color = "success";
-      break;
-    case dificultad_mision.Medio:
-      icon = <LooksTwo />;
-      color = "warning";
-      break;
-    case dificultad_mision.Dificil:
-      icon = <Looks3 />;
-      color = "error";
-      break;
-    default:
-      icon = <CheckCircleOutline />;
-      color = "default";
-      break;
-  }
+export default function MissionDifficultyChip({ dif }: MissionDifficultyChip) {
+  const { color = "default", icon = <CheckCircleOutline /> } =
+    CONFIG[dif] || {};
 
   return (
     <Chip

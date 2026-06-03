@@ -9,15 +9,18 @@ interface EstadoCursoChipProps {
   sx?: SxProps<Theme>;
 }
 
+const CONFIG = {
+  Finalizado: { label: "Finalizado", color: "info" as const },
+  Inactivo: { label: "Inactivo", color: "error" as const },
+  Activo: { label: "Activo", color: "success" as const },
+};
+
 export default function EstadoCursoChip({
   estado,
   deletedAt,
   small,
   sx,
 }: EstadoCursoChipProps) {
-  let label = estado;
-  let color: "success" | "error" | "info" | "default" = "default";
-
   // Normalización de lógica
   const isFinalized =
     estado === estado_simple.Finalizado || estado === "Finalizado";
@@ -25,16 +28,17 @@ export default function EstadoCursoChip({
     estado === estado_simple.Inactivo || estado === "Inactivo" || !!deletedAt;
   const isActive = estado === estado_simple.Activo || estado === "Activo";
 
-  if (isFinalized) {
-    label = "Finalizado";
-    color = "info";
-  } else if (isInactive) {
-    label = "Inactivo";
-    color = "error";
-  } else if (isActive) {
-    label = "Activo";
-    color = "success";
-  }
+  const computedState = isFinalized
+    ? "Finalizado"
+    : isInactive
+      ? "Inactivo"
+      : isActive
+        ? "Activo"
+        : null;
+
+  const { label = estado.toString(), color = "default" } = computedState
+    ? CONFIG[computedState]
+    : {};
 
   return (
     <Chip

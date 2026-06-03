@@ -14,31 +14,19 @@ interface TemaChipProps {
   sx?: SxProps;
 }
 
-export default function TemaChip({ tema, small, sx }: TemaChipProps) {
-  let icon: React.ReactElement;
+const CONFIG: Record<string, React.ReactElement> = {
+  [temas.Secuencia]: <FormatListNumberedIcon sx={{ fontSize: "1.25rem" }} />,
+  [temas.Logica]: <AccountTreeIcon sx={{ fontSize: "1.25rem" }} />,
+  [temas.Estructuras]: <LoopIcon sx={{ fontSize: "1.25rem" }} />,
+  [temas.Variables]: <DataObjectIcon sx={{ fontSize: "1.25rem" }} />,
+  [temas.Procedimientos]: (
+    <SubdirectoryArrowRightIcon sx={{ fontSize: "1.25rem" }} />
+  ),
+  [temas.Ninguno]: <BlockIcon sx={{ fontSize: "1.25rem" }} />,
+};
 
-  // Hacemos un switch para asignar el ícono correcto
-  switch (tema) {
-    case temas.Secuencia:
-      icon = <FormatListNumberedIcon sx={{ fontSize: "1.25rem" }} />;
-      break;
-    case temas.Logica:
-      icon = <AccountTreeIcon sx={{ fontSize: "1.25rem" }} />;
-      break;
-    case temas.Estructuras:
-      icon = <LoopIcon sx={{ fontSize: "1.25rem" }} />;
-      break;
-    case temas.Variables:
-      icon = <DataObjectIcon sx={{ fontSize: "1.25rem" }} />;
-      break;
-    case temas.Procedimientos:
-      icon = <SubdirectoryArrowRightIcon sx={{ fontSize: "1.25rem" }} />;
-      break;
-    case temas.Ninguno:
-    default:
-      icon = <BlockIcon sx={{ fontSize: "1.25rem" }} />;
-      break;
-  }
+export default function TemaChip({ tema, small, sx }: TemaChipProps) {
+  const icon = CONFIG[tema] || <BlockIcon sx={{ fontSize: "1.25rem" }} />;
 
   // Renderizamos el Chip
   return (

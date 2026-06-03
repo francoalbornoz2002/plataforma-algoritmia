@@ -1,4 +1,4 @@
-import { Chip, type SxProps } from "@mui/material";
+import { Chip, type SxProps, type ChipProps } from "@mui/material";
 
 import {
   AccessTime as ProgramadaIcon,
@@ -15,46 +15,39 @@ interface EstadoClaseChipProps {
   sx?: SxProps;
 }
 
-export const EstadoClaseChip = ({ estado, sx }: EstadoClaseChipProps) => {
-  let color:
-    | "default"
-    | "primary"
-    | "secondary"
-    | "error"
-    | "info"
-    | "success"
-    | "warning" = "default";
-  let icon = <ProgramadaIcon />;
+const CONFIG: Record<
+  string,
+  { color: ChipProps["color"]; icon: React.ReactElement }
+> = {
+  [estado_clase_consulta.Programada]: {
+    color: "info",
+    icon: <ProgramadaIcon />,
+  },
+  [estado_clase_consulta.Realizada]: {
+    color: "success",
+    icon: <RealizadaIcon />,
+  },
+  [estado_clase_consulta.No_realizada]: {
+    color: "error",
+    icon: <CanceladaIcon />,
+  },
+  [estado_clase_consulta.Cancelada]: {
+    color: "error",
+    icon: <CanceladaIcon />,
+  },
+  [estado_clase_consulta.En_curso]: { color: "success", icon: <EnCursoIcon /> },
+  [estado_clase_consulta.Finalizada]: {
+    color: "secondary",
+    icon: <PorCerrarIcon />,
+  },
+};
 
-  switch (estado) {
-    case estado_clase_consulta.Programada:
-      color = "info";
-      icon = <ProgramadaIcon />;
-      break;
-    case estado_clase_consulta.Realizada:
-      color = "success";
-      icon = <RealizadaIcon />;
-      break;
-    case estado_clase_consulta.No_realizada:
-    case "Cancelada":
-      color = "error";
-      icon = <CanceladaIcon />;
-      break;
-    case estado_clase_consulta.En_curso:
-      color = "success";
-      icon = <EnCursoIcon />;
-      break;
-    case estado_clase_consulta.Finalizada:
-      color = "secondary";
-      icon = <PorCerrarIcon />;
-      break;
-    default:
-      color = "default";
-  }
+export const EstadoClaseChip = ({ estado, sx }: EstadoClaseChipProps) => {
+  const { color = "default", icon = <ProgramadaIcon /> } = CONFIG[estado] || {};
 
   return (
     <Chip
-      label={EstadoClaseLabels[estado]}
+      label={EstadoClaseLabels[estado] || estado}
       color={color}
       icon={icon}
       size="small"
