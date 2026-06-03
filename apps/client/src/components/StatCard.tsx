@@ -1,11 +1,11 @@
-import { Paper, Stack, Typography, Box } from "@mui/material";
+import { Paper, Stack, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 import CardIcon from "./CardIcon";
 
 interface StatCardProps {
   icon: ReactNode;
   title: string;
-  subtitle?: string;
+  description?: string;
   value: number | string;
   percentage?: number;
   color: string;
@@ -15,7 +15,7 @@ interface StatCardProps {
 export default function StatCard({
   icon,
   title,
-  subtitle,
+  description,
   value,
   percentage,
   color,
@@ -45,7 +45,7 @@ export default function StatCard({
 
         <Stack direction="row" spacing={1} alignItems="baseline">
           <Typography
-            variant={small ? "h5" : "h4"}
+            variant={small ? "h6" : "h5"}
             color={`${color}.main`}
             fontWeight="bold"
           >
@@ -65,7 +65,7 @@ export default function StatCard({
             lineHeight: small ? 1.2 : undefined,
           }}
         >
-          {subtitle}
+          {description}
         </Typography>
       </Stack>
     </Paper>

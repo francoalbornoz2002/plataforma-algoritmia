@@ -227,7 +227,7 @@ export default function CourseMissionsReport({ courseId }: Props) {
                 <StatCard
                   icon={<TaskAltIcon />}
                   title="Misiones Completadas"
-                  subtitle="Total en el período"
+                  description="Total en el período"
                   value={data.kpis.totalCompletions}
                   color="info"
                 />
