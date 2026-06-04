@@ -216,6 +216,20 @@ export default function MyConsultsPage() {
                 compañeros de curso."
           icon={<MarkUnreadChatAlt />}
           color="info"
+          action={
+            !isReadOnly && (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => {
+                  setEditingConsulta(null);
+                  setIsFormModalOpen(true);
+                }}
+              >
+                Nueva Consulta
+              </Button>
+            )
+          }
         />
         {/* --- 1. Filtros --- */}
         <Stack direction="row" alignItems="center" spacing={1}>
@@ -355,19 +369,6 @@ export default function MyConsultsPage() {
               <FilterAltOffIcon />
             </IconButton>
           </Tooltip>
-          <Box sx={{ flexGrow: 1 }} />
-          {!isReadOnly && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => {
-                setEditingConsulta(null);
-                setIsFormModalOpen(true);
-              }}
-            >
-              Nueva Consulta
-            </Button>
-          )}
         </Stack>
         <Stack spacing={2} sx={{ minWidth: 0 }}>
           {/* --- 2. Lista de Consultas (Cards) --- */}

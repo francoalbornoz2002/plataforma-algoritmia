@@ -205,6 +205,18 @@ export default function PreguntasPage() {
           description="Gestiona las preguntas que desees agregar como extra a las sesiones de refuerzo"
           icon={<Quiz />}
           color="warning"
+          action={
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => {
+                setPreguntaToEdit(null);
+                setIsFormModalOpen(true);
+              }}
+            >
+              Crear Pregunta
+            </Button>
+          }
         />
         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
           <TextField
@@ -301,17 +313,6 @@ export default function PreguntasPage() {
               <FilterAltOffIcon />
             </IconButton>
           </Tooltip>
-          <Box sx={{ flexGrow: 1 }} />
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => {
-              setPreguntaToEdit(null);
-              setIsFormModalOpen(true);
-            }}
-          >
-            Crear Pregunta
-          </Button>
         </Stack>
 
         {/* --- 2. Lista de Preguntas --- */}

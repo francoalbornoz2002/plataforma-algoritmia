@@ -254,6 +254,17 @@ export default function SesionesRefuerzoPage() {
           description="Gestiona y asigna sesiones de refuerzo a los alumnos."
           icon={<SwitchAccessShortcutAdd />}
           color="success"
+          action={
+            !isReadOnly && (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={handleOpenCreate}
+              >
+                Crear Sesión
+              </Button>
+            )
+          }
         />
 
         {/* --- SECCIÓN DE FILTROS --- */}
@@ -463,18 +474,6 @@ export default function SesionesRefuerzoPage() {
               <FilterAltOffIcon />
             </IconButton>
           </Tooltip>
-          <Box sx={{ flex: 1 }}></Box>
-          <Box>
-            {!isReadOnly && (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleOpenCreate}
-              >
-                Crear Sesión
-              </Button>
-            )}
-          </Box>
         </Stack>
 
         {/* --- 2. Lista de Sesiones (Cards) --- */}
