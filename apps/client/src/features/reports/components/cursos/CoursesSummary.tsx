@@ -20,7 +20,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import StatCard from "../../../../components/StatCard";
 
-export default function CoursesSummarySection() {
+export default function CoursesSummary() {
   const [filters, setFilters] = useState<CoursesSummaryFilters>({
     fechaCorte: "",
     search: "",
@@ -274,27 +274,7 @@ export default function CoursesSummarySection() {
               spacing={3}
               sx={{ width: "100%" }}
             >
-              {/* Izquierda: Gráfico */}
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                {chartConfig && (
-                  <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
-                    <Typography variant="h6" gutterBottom>
-                      Distribución
-                    </Typography>
-                    <BarChart
-                      dataset={chartConfig.dataset}
-                      xAxis={chartConfig.xAxis}
-                      yAxis={[{ tickMinStep: 1 }]}
-                      series={chartConfig.series}
-                      height={350}
-                      onItemClick={handleItemClick}
-                      margin={{ left: 50, right: 50, top: 50, bottom: 50 }}
-                    />
-                  </Paper>
-                )}
-              </Box>
-
-              {/* Derecha: Tabla de Cursos */}
+              {/* Izquierda: Tabla de Cursos */}
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Paper elevation={3} sx={{ height: 455, width: "100%" }}>
                   <DataGrid
@@ -313,6 +293,25 @@ export default function CoursesSummarySection() {
                     sx={{ height: "100%", borderRadius: "0.7em" }}
                   />
                 </Paper>
+              </Box>
+              {/* Derecha: Gráfico */}
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                {chartConfig && (
+                  <Paper elevation={3} sx={{ p: 2, height: "100%" }}>
+                    <Typography variant="h6" gutterBottom>
+                      Distribución
+                    </Typography>
+                    <BarChart
+                      dataset={chartConfig.dataset}
+                      xAxis={chartConfig.xAxis}
+                      yAxis={[{ tickMinStep: 1 }]}
+                      series={chartConfig.series}
+                      height={350}
+                      onItemClick={handleItemClick}
+                      margin={{ left: 50, right: 50, top: 50, bottom: 50 }}
+                    />
+                  </Paper>
+                )}
               </Box>
             </Stack>
           </Stack>

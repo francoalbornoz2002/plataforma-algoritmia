@@ -27,7 +27,7 @@ import HeaderReportPage from "../../../../components/HeaderReportPage";
 import { datePickerConfig } from "../../../../config/theme.config";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
-export default function CoursesHistorySection() {
+export default function CoursesHistory() {
   const [type, setType] = useState<string>("TODOS");
   const [filters, setFilters] = useState<CoursesHistoryFilters>({
     fechaDesde: "",
