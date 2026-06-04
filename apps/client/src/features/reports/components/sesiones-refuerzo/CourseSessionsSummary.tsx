@@ -243,6 +243,7 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                 <StatCard
                   icon={<TopicIcon />}
                   title="Tema más frecuente"
+                  mode="text"
                   value={
                     TemasLabels[data.tops.tema.label as temas] ||
                     data.tops.tema.label
@@ -259,6 +260,7 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                 <StatCard
                   icon={<WarningIcon />}
                   title="Dificultad más frecuente en sesiones"
+                  mode="text"
                   value={data.tops.dificultad.name}
                   description={
                     <>
@@ -271,7 +273,8 @@ export default function CourseSessionsSummary({ courseId }: Props) {
               <Grid size={{ xs: 12, md: 1.9 }}>
                 <StatCard
                   icon={<WarningIcon />}
-                  title="Grado Promedio "
+                  title="Grado Promedio"
+                  mode="text"
                   description="Por sesión"
                   value={data.kpis.promedioGrado}
                   color="warning"
@@ -508,6 +511,7 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                     <StatCard
                       icon={<PersonIcon />}
                       title="Alumno con más sesiones"
+                      mode="text"
                       value={data.tops.alumno.name}
                       description={
                         <>
@@ -520,6 +524,7 @@ export default function CourseSessionsSummary({ courseId }: Props) {
                     <StatCard
                       icon={<SchoolIcon />}
                       title="Docente que más asigna"
+                      mode="text"
                       value={data.tops.docente.name}
                       description={
                         <>

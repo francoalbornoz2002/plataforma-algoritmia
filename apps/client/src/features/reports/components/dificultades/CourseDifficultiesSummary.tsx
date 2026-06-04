@@ -226,24 +226,11 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                   }
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 2.6 }}>
-                <StatCard
-                  icon={<TopicIcon />}
-                  title="Tema Más Frecuente"
-                  value={TemasLabels[data.kpis.temaFrecuente.nombre as temas]}
-                  description={
-                    <>
-                      El <b>{data.kpis.temaFrecuente.pctAlumnos.toFixed(1)}%</b>{" "}
-                      de alumnos poseen dificultades de este tema.
-                    </>
-                  }
-                  color="info"
-                />
-              </Grid>
               <Grid size={{ xs: 12, md: 4.2 }}>
                 <StatCard
                   icon={<WarningIcon />}
                   title="Dificultad Más Frecuente"
+                  mode="text"
                   value={data.kpis.dificultadFrecuente.nombre}
                   description={
                     <>
@@ -257,6 +244,22 @@ export default function CourseDifficultiesSummary({ courseId }: Props) {
                   color="warning"
                 />
               </Grid>
+              <Grid size={{ xs: 12, md: 2.6 }}>
+                <StatCard
+                  icon={<TopicIcon />}
+                  title="Tema Más Frecuente"
+                  mode="text"
+                  value={TemasLabels[data.kpis.temaFrecuente.nombre as temas]}
+                  description={
+                    <>
+                      El <b>{data.kpis.temaFrecuente.pctAlumnos.toFixed(1)}%</b>{" "}
+                      de alumnos poseen dificultades de este tema.
+                    </>
+                  }
+                  color="info"
+                />
+              </Grid>
+
               <Grid size={{ xs: 12, md: 2.5 }}>
                 <StatCard
                   icon={<TrendingUpIcon />}

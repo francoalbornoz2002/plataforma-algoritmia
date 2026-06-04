@@ -243,6 +243,7 @@ export default function CourseClassesSummary({ courseId }: Props) {
                 <StatCard
                   icon={<CategoryIcon />}
                   title="Tema de consulta más frecuente en clases"
+                  mode="text"
                   value={
                     TemasLabels[data.topTopic.name as temas] ||
                     data.topTopic.name
@@ -262,6 +263,7 @@ export default function CourseClassesSummary({ courseId }: Props) {
                 <StatCard
                   icon={<SchoolIcon />}
                   title="Docente con más clases realizadas"
+                  mode="text"
                   value={data.topTeacher.name}
                   description={
                     <>

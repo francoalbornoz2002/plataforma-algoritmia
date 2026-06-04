@@ -295,6 +295,7 @@ export default function MyProgressPage() {
             <Grid size={{ xs: 12, sm: 2.4 }}>
               <StatCard
                 title="Última Actividad"
+                mode="text"
                 description="Completando una misión"
                 value={ultimaActividadFormateada}
                 icon={<AccessTimeIcon />}

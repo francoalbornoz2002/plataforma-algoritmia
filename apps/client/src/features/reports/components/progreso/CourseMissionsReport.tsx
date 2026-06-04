@@ -228,6 +228,7 @@ export default function CourseMissionsReport({ courseId }: Props) {
                 <StatCard
                   icon={<EmojiEventsIcon />}
                   title="Misión Destacada"
+                  mode="text"
                   value={data.kpis.topMission.nombre}
                   description={`Mayor % completado (${data.kpis.topMission.porcentaje.toFixed(1)}%)`}
                   color="warning"

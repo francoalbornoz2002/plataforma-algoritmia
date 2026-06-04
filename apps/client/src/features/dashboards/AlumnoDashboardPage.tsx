@@ -497,6 +497,7 @@ export default function AlumnoDashboardPage() {
             <Grid size={{ xs: 12 }}>
               <StatCard
                 title="Última dificultad en grado alto registrada"
+                mode="text"
                 description={
                   stats?.dificultades.ultimaAlta
                     ? `Grado actual: ${stats.dificultades.ultimaAlta.gradoActual}`
@@ -557,6 +558,7 @@ export default function AlumnoDashboardPage() {
             <Grid size={{ xs: 12 }}>
               <StatCard
                 title={ultimaConsultaTitle}
+                mode="text"
                 description={ultimaConsultaDescription}
                 value={ultimaConsultaValue}
                 icon={<MarkUnreadChatAlt />}
@@ -599,6 +601,7 @@ export default function AlumnoDashboardPage() {
             <Grid size={{ xs: 12 }}>
               <StatCard
                 title={sesionTitle}
+                mode="text"
                 description={sesionDescription}
                 value={sesionValue}
                 icon={<SwitchAccessShortcutAdd />}

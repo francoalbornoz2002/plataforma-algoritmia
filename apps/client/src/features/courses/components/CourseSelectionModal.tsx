@@ -182,7 +182,7 @@ export default function CourseSelectionModal({
           }
         }}
         disableEscapeKeyDown
-        maxWidth="md"
+        maxWidth="lg"
         fullWidth
       >
         <DialogTitle

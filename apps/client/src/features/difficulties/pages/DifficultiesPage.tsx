@@ -336,7 +336,7 @@ export default function DifficultiesPage() {
               <CircularProgress />
             ) : (
               <StatCard
-                title="Promedio por Alumno"
+                title="Prom. por Alumno"
                 value={overview ? overview.promDificultades.toFixed(1) : 0}
                 description="Dificultades activas / alumno"
                 icon={<GroupIcon />}
@@ -344,12 +344,13 @@ export default function DifficultiesPage() {
               />
             )}
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4.6 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 5 }}>
             {overviewLoading ? (
               <CircularProgress />
             ) : (
               <StatCard
                 title="Dificultad más frecuente"
+                mode="text"
                 description="Dificultad que afecta a más alumnos"
                 value={overview?.dificultadModa?.nombre || "N/A"}
                 icon={<Warning />}
@@ -363,6 +364,7 @@ export default function DifficultiesPage() {
             ) : (
               <StatCard
                 title="Tema de dificultad más frecuente"
+                mode="text"
                 description="Tema que afecta a más alumnos"
                 value={
                   overview?.temaModa && overview.temaModa !== temas.Ninguno
@@ -374,13 +376,14 @@ export default function DifficultiesPage() {
               />
             )}
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 2.4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
             {overviewLoading ? (
               <CircularProgress />
             ) : (
               <StatCard
                 title="Grado Promedio"
-                description="De las dificultades de los alumnos"
+                mode="text"
+                description="De dificultades activas"
                 value={overview?.promGrado || "N/A"}
                 icon={<SpeedIcon />}
                 color={

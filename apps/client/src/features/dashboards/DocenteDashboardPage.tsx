@@ -518,6 +518,7 @@ export default function DocenteDashboardPage() {
                         icon={<Warning />}
                         color="warning"
                         small
+                        mode="text"
                         onClick={() =>
                           stats?.week.misionMasDificil &&
                           setSelectedMission(stats.week.misionMasDificil)
@@ -530,6 +531,7 @@ export default function DocenteDashboardPage() {
                   <Grid size={{ xs: 6 }}>
                     <StatCard
                       title="Alumno más activo"
+                      mode="text"
                       description="En la semana actual"
                       value={stats?.week.alumnoMasActivo || "Ninguno"}
                       icon={<School />}
@@ -581,6 +583,7 @@ export default function DocenteDashboardPage() {
                 <StatCard
                   title="Dificultad más frecuente"
                   description="Detectada esta semana"
+                  mode="text"
                   value={stats?.week.dificultadMasDetectada || "Ninguna"}
                   icon={<Warning />}
                   color="error"
@@ -590,6 +593,7 @@ export default function DocenteDashboardPage() {
               <Grid size={{ xs: 6 }}>
                 <StatCard
                   title="Alumno Crítico"
+                  mode="text"
                   description="Que más dificultades tiene"
                   value={stats?.alumnoMasDificultades || "Ninguno"}
                   icon={<School />}
@@ -709,6 +713,7 @@ export default function DocenteDashboardPage() {
               <Grid size={{ xs: 6 }}>
                 <StatCard
                   title="Próxima Clase"
+                  mode="text"
                   value={
                     stats?.nextClass
                       ? formatClassTime(

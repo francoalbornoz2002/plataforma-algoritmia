@@ -267,6 +267,7 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
                 <StatCard
                   icon={<CategoryIcon />}
                   title="Tema más consultado"
+                  mode="text"
                   value={
                     TemasLabels[data.topTopic.name as temas] ||
                     data.topTopic.name
@@ -425,6 +426,7 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
                   <StatCard
                     icon={<SchoolIcon />}
                     title="Docente más qué más consultas responde"
+                    mode="text"
                     value={data.topTeacher.name}
                     description={
                       <>
@@ -440,6 +442,7 @@ export default function CourseConsultationsSummary({ courseId }: Props) {
                   <StatCard
                     icon={<PersonIcon />}
                     title="Alumno con más consultas realizadas"
+                    mode="text"
                     value={data.topStudent.name}
                     description={
                       <>

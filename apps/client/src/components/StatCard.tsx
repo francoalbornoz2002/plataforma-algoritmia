@@ -10,6 +10,7 @@ interface StatCardProps {
   percentage?: number;
   color: string;
   small?: boolean;
+  mode?: "text" | "numeric";
   onClick?: () => void;
 }
 
@@ -21,6 +22,7 @@ export default function StatCard({
   percentage,
   color,
   small = false,
+  mode = "numeric",
   onClick,
 }: StatCardProps) {
   return (
@@ -49,7 +51,15 @@ export default function StatCard({
 
         <Stack direction="row" spacing={1} alignItems="baseline">
           <Typography
-            variant={small ? "h6" : "h5"}
+            variant={
+              mode === "text"
+                ? small
+                  ? "subtitle1"
+                  : "h6"
+                : small
+                  ? "h6"
+                  : "h5"
+            }
             color={`${color}.main`}
             fontWeight="bold"
           >
