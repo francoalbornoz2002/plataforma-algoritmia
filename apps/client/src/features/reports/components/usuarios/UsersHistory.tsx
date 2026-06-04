@@ -32,7 +32,7 @@ import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
-export default function HistoryReportSection() {
+export default function UsersHistory() {
   const [type, setType] = useState<TipoMovimientoUsuario>(
     TipoMovimientoUsuario.TODOS,
   );

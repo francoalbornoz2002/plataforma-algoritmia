@@ -35,7 +35,7 @@ const ROLE_COLORS: Record<string, string> = {
   Alumno: "#0288d1", // Azul
 };
 
-export default function SummaryReportSection() {
+export default function UsersSummary() {
   const [filters, setFilters] = useState<UsersSummaryFilters>({
     fechaCorte: "",
     agruparPor: AgrupacionUsuarios.ROL,
@@ -388,6 +388,26 @@ export default function SummaryReportSection() {
               spacing={3}
               sx={{ width: "100%" }}
             >
+              {/* Tabla de Usuarios */}
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Paper elevation={3} sx={{ height: 455, width: "100%" }}>
+                  <DataGrid
+                    rows={filteredUsers}
+                    columns={columns}
+                    loading={loading}
+                    initialState={{
+                      pagination: { paginationModel: { pageSize: 10 } },
+                      sorting: {
+                        sortModel: [{ field: "createdAt", sort: "desc" }],
+                      },
+                    }}
+                    pageSizeOptions={[10, 25, 50]}
+                    disableRowSelectionOnClick
+                    density="compact"
+                    sx={{ height: "100%", borderRadius: "0.7em" }}
+                  />
+                </Paper>
+              </Box>
               {/* Gráfico */}
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Paper
@@ -439,27 +459,6 @@ export default function SummaryReportSection() {
                       onItemClick={handleItemClick}
                     />
                   )}
-                </Paper>
-              </Box>
-
-              {/* Tabla de Usuarios */}
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Paper elevation={3} sx={{ height: 455, width: "100%" }}>
-                  <DataGrid
-                    rows={filteredUsers}
-                    columns={columns}
-                    loading={loading}
-                    initialState={{
-                      pagination: { paginationModel: { pageSize: 10 } },
-                      sorting: {
-                        sortModel: [{ field: "createdAt", sort: "desc" }],
-                      },
-                    }}
-                    pageSizeOptions={[10, 25, 50]}
-                    disableRowSelectionOnClick
-                    density="compact"
-                    sx={{ height: "100%", borderRadius: "0.7em" }}
-                  />
                 </Paper>
               </Box>
             </Stack>

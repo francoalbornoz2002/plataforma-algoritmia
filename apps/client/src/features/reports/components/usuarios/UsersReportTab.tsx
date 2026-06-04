@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { Box, Button, Typography, Paper } from "@mui/material";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import HistoryIcon from "@mui/icons-material/History";
-import SummaryReportSection from "./SummaryReportSection";
-import HistoryReportSection from "./HistoryReportSection";
 import ReportSelectorDialog, {
   type ReportOption,
 } from "../common/ReportSelectorDialog";
+import UsersSummary from "./UsersSummary";
+import UsersHistory from "./UsersHistory";
 
 interface Props {
   trigger: number;
@@ -41,8 +41,8 @@ export default function UsersReportTab({ trigger }: Props) {
     <Box sx={{ width: "100%" }}>
       {selectedReport ? (
         <>
-          {selectedReport === "summary" && <SummaryReportSection />}
-          {selectedReport === "history" && <HistoryReportSection />}
+          {selectedReport === "summary" && <UsersSummary />}
+          {selectedReport === "history" && <UsersHistory />}
         </>
       ) : (
         <Paper sx={{ p: 4, textAlign: "center", mt: 2 }} elevation={1}>
