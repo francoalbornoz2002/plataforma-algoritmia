@@ -31,7 +31,7 @@ import HeaderReportPage from "../../../../components/HeaderReportPage";
 import { datePickerConfig } from "../../../../config/theme.config";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
-export default function TeacherAssignmentHistorySection() {
+export default function TeacherAssignmentHistory() {
   const [type, setType] = useState<TipoMovimientoAsignacion>(
     TipoMovimientoAsignacion.TODOS,
   );

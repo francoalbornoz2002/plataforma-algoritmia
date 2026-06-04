@@ -4,13 +4,13 @@ import AssessmentIcon from "@mui/icons-material/Assessment";
 import HistoryEduIcon from "@mui/icons-material/HistoryEdu";
 import PersonIcon from "@mui/icons-material/Person";
 import SchoolIcon from "@mui/icons-material/School";
-import StudentEnrollmentHistorySection from "./StudentEnrollmentHistorySection";
-import TeacherAssignmentHistorySection from "./TeacherAssignmentHistorySection";
 import ReportSelectorDialog, {
   type ReportOption,
 } from "../common/ReportSelectorDialog";
 import CoursesSummary from "./CoursesSummary";
 import CoursesHistory from "./CoursesHistory";
+import TeacherAssignmentHistory from "./TeacherAssignmentHistory";
+import StudentEnrollmentHistory from "./StudentEnrollmentHistory";
 
 interface Props {
   trigger: number;
@@ -61,12 +61,8 @@ export default function CoursesReportTab({ trigger }: Props) {
         <>
           {selectedReport === "summary" && <CoursesSummary />}
           {selectedReport === "history" && <CoursesHistory />}
-          {selectedReport === "enrollment" && (
-            <StudentEnrollmentHistorySection />
-          )}
-          {selectedReport === "assignment" && (
-            <TeacherAssignmentHistorySection />
-          )}
+          {selectedReport === "enrollment" && <StudentEnrollmentHistory />}
+          {selectedReport === "assignment" && <TeacherAssignmentHistory />}
         </>
       ) : (
         <Paper sx={{ p: 4, textAlign: "center", mt: 2 }} elevation={1}>

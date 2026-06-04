@@ -31,7 +31,7 @@ import HeaderReportPage from "../../../../components/HeaderReportPage";
 import { datePickerConfig } from "../../../../config/theme.config";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
-export default function StudentEnrollmentHistorySection() {
+export default function StudentEnrollmentHistory() {
   const [type, setType] = useState<TipoMovimientoInscripcion>(
     TipoMovimientoInscripcion.TODOS,
   );
