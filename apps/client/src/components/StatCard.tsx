@@ -32,7 +32,7 @@ export default function StatCard({
         cursor: onClick ? "pointer" : "default",
       }}
     >
-      <Stack spacing={small ? 0.25 : 0.5}>
+      <Stack spacing={small ? 0.5 : 1}>
         <Stack direction="row" alignItems="center" spacing={1}>
           <CardIcon
             icon={icon}

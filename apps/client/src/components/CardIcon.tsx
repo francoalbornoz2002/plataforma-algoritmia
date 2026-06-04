@@ -19,7 +19,7 @@ export default function CardIcon({
         display: "flex",
         bgcolor: `${color}.50`,
         p: size === "xl" ? 1.5 : size === "large" ? 1 : 0.5,
-        borderRadius: "15%",
+        borderRadius: "20%",
         "& svg": {
           fontSize:
             size === "xl"
