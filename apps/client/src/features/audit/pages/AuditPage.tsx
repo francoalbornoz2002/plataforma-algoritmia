@@ -193,7 +193,7 @@ export default function AuditPage() {
       {
         field: "fechaHora",
         headerName: "Fecha y Hora",
-        minWidth: 160,
+        width: 140,
         valueFormatter: (value: string | null) => {
           if (!value) return "";
           return format(new Date(value), "dd/MM/yyyy HH:mm:ss", { locale: es });
@@ -202,7 +202,8 @@ export default function AuditPage() {
       {
         field: "usuarioModifico",
         headerName: "Usuario",
-        minWidth: 300,
+        flex: 1,
+        minWidth: 250,
         renderCell: (params: GridRenderCellParams<LogAuditoria>) => {
           const email = params.row.usuarioModifico?.email;
           const id = params.row.idUsuarioModifico;
@@ -258,14 +259,14 @@ export default function AuditPage() {
       {
         field: "tablaAfectada",
         headerName: "Tabla",
-        minWidth: 200,
+        width: 150,
       },
       {
         field: "operacion",
         headerName: "Operación",
         headerAlign: "center",
         align: "center",
-        minWidth: 100,
+        width: 120,
         renderCell: (params: GridRenderCellParams<LogAuditoria>) => {
           let op = params.row.operacion;
           let color: "default" | "success" | "info" | "error" = "default";
@@ -301,13 +302,13 @@ export default function AuditPage() {
       {
         field: "idFilaAfectada",
         headerName: "ID Fila",
-        flex: 1.5,
-        minWidth: 150,
+        flex: 1,
+        minWidth: 200,
       },
       {
         field: "actions",
         headerName: "Estado",
-        flex: 1,
+        width: 130,
         align: "center",
         headerAlign: "center",
         sortable: false,
@@ -462,7 +463,13 @@ export default function AuditPage() {
             gridTemplateColumns: "minmax(0, 1fr)",
           }}
         >
-          <Box sx={{ height: 600, width: "100%", boxSizing: "border-box" }}>
+          <Box
+            sx={{
+              width: "100%",
+              minHeight: 400,
+              height: { xs: 500, md: "calc(100vh - 210px)" },
+            }}
+          >
             <DataGrid
               rows={rows}
               columns={columns}
@@ -496,7 +503,6 @@ export default function AuditPage() {
                   {
                     outline: "none",
                   },
-                borderRadius: "0.7em",
               }}
               disableColumnResize
             />

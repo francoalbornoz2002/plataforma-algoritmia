@@ -1,5 +1,7 @@
 import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
+import type {} from "@mui/x-data-grid/themeAugmentation";
 import type { JSX } from "react";
+import type {} from "@mui/x-date-pickers/themeAugmentation";
 
 type ThemeProp = {
   children: JSX.Element;
@@ -8,6 +10,10 @@ type ThemeProp = {
 export const theme = createTheme({
   palette: {
     mode: "light",
+    DataGrid: {
+      // Column header background
+      headerBg: "#e6e8f2",
+    },
     primary: {
       main: "#0c1e60",
       "100": "#c0c6df",
@@ -61,8 +67,16 @@ export const theme = createTheme({
           borderRadius: "0.7em",
           backgroundColor: "#ffffff",
           "&.Mui-disabled": {
-            backgroundColor: "#f5f5f5", // Color gris claro para el estado deshabilitado
+            backgroundColor: "#f5f5f5",
           },
+        },
+      },
+    },
+    MuiDataGrid: {
+      styleOverrides: {
+        root: {
+          borderRadius: "14px",
+          fontSize: 12,
         },
       },
     },

@@ -247,7 +247,6 @@ export default function UsersPage() {
     {
       field: "createdAt",
       headerName: "Fecha de alta",
-      minWidth: 130,
       // Formatea la fecha para mostrarla de forma legible
       valueFormatter: (value: string | Date | null) => {
         if (!value) return "";
@@ -259,17 +258,17 @@ export default function UsersPage() {
         }
       },
     },
-    { field: "apellido", headerName: "Apellido", minWidth: 150 },
-    { field: "nombre", headerName: "Nombre", minWidth: 150, editable: false }, // Editable: false si no usas edición inline
+    { field: "apellido", headerName: "Apellido", width: 120 },
+    { field: "nombre", headerName: "Nombre", width: 120, editable: false }, // Editable: false si no usas edición inline
     {
       field: "dni",
       headerName: "DNI",
-      minWidth: 110,
+      width: 100,
     },
     {
       field: "fechaNacimiento",
       headerName: "Fecha de nac.",
-      minWidth: 120,
+      width: 105,
       // Formatea la fecha para mostrarla
       valueFormatter: (value: string | Date | null) => {
         if (!value) return "";
@@ -289,18 +288,18 @@ export default function UsersPage() {
         }
       },
     },
-    { field: "genero", headerName: "Género", minWidth: 100 },
+    { field: "genero", headerName: "Género", width: 100 },
     {
       field: "email",
       headerName: "Email",
       flex: 1,
-      minWidth: 180,
+      minWidth: 200,
     },
-    { field: "rol", headerName: "Rol", minWidth: 120 },
+    { field: "rol", headerName: "Rol", width: 75 },
     {
       field: "estado",
       headerName: "Estado",
-      minWidth: 100,
+      width: 100,
       align: "center",
       headerAlign: "center",
       // Determina el valor basado en deletedAt
@@ -322,7 +321,7 @@ export default function UsersPage() {
     {
       field: "actions",
       headerName: "Acciones",
-      minWidth: 100,
+      width: 100,
       sortable: false,
       filterable: false,
       disableColumnMenu: true,
@@ -375,9 +374,10 @@ export default function UsersPage() {
         width: "100%",
         display: "flex",
         flexDirection: "column",
+        flexGrow: 1,
       }}
     >
-      <Stack spacing={2} sx={{ height: "100%" }}>
+      <Stack spacing={2} sx={{ flexGrow: 1, minHeight: 0 }}>
         {/* --- ENCABEZADO --- */}
         <HeaderPage
           title="Gestión de Usuarios"
@@ -468,49 +468,44 @@ export default function UsersPage() {
         {/* --- Tabla de Datos --- */}
         <Box
           sx={{
-            flexGrow: 1,
             width: "100%",
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1fr)",
+            minHeight: 400,
+            height: { xs: 500, md: "calc(100vh - 210px)" },
           }}
         >
-          <Box sx={{ width: "100%", boxSizing: "border-box" }}>
-            <DataGrid
-              rows={data.rows}
-              columns={columns}
-              loading={isLoading}
-              getRowId={(row) => row.id}
-              // --- 1. CONEXIÓN CON EL SERVIDOR ---
-              rowCount={data.total} // El total de filas en la BD
-              paginationMode="server" // Le dice que la paginación es en el backend
-              sortingMode="server" // Le dice que el orden es en el backend
-              // --- 2. CONEXIÓN CON EL ESTADO DE PAGINACIÓN ---
-              pageSizeOptions={[7, 10, 20]}
-              paginationModel={paginationModel} // <-- Lee el estado
-              onPaginationModelChange={setPaginationModel} // <-- Actualiza el estado
-              // --- 3. CONEXIÓN CON EL ESTADO DE ORDENAMIENTO ---
-              sortModel={sortModel} // <-- Lee el estado
-              onSortModelChange={setSortModel} // <-- Lee el modelo de ordenamiento
-              disableRowSelectionOnClick
-              disableColumnResize={true}
-              sx={{
-                height: 476,
-                borderRadius: "14px",
-                "& .MuiDataGrid-cell:focus": {
-                  outline: "none",
-                },
-                "& .MuiDataGrid-cell:focus-within": {
-                  outline: "none",
-                },
-                "& .MuiDataGrid-columnHeader:focus": {
-                  outline: "none",
-                },
-                "& .MuiDataGrid-columnHeader:focus-within": {
-                  outline: "none",
-                },
-              }}
-            />
-          </Box>
+          <DataGrid
+            rows={data.rows}
+            columns={columns}
+            loading={isLoading}
+            getRowId={(row) => row.id}
+            // --- 1. CONEXIÓN CON EL SERVIDOR ---
+            rowCount={data.total} // El total de filas en la BD
+            paginationMode="server" // Le dice que la paginación es en el backend
+            sortingMode="server" // Le dice que el orden es en el backend
+            // --- 2. CONEXIÓN CON EL ESTADO DE PAGINACIÓN ---
+            pageSizeOptions={[7, 10, 20]}
+            paginationModel={paginationModel} // <-- Lee el estado
+            onPaginationModelChange={setPaginationModel} // <-- Actualiza el estado
+            // --- 3. CONEXIÓN CON EL ESTADO DE ORDENAMIENTO ---
+            sortModel={sortModel} // <-- Lee el estado
+            onSortModelChange={setSortModel} // <-- Lee el modelo de ordenamiento
+            disableRowSelectionOnClick
+            disableColumnResize={true}
+            sx={{
+              "& .MuiDataGrid-cell:focus": {
+                outline: "none",
+              },
+              "& .MuiDataGrid-cell:focus-within": {
+                outline: "none",
+              },
+              "& .MuiDataGrid-columnHeader:focus": {
+                outline: "none",
+              },
+              "& .MuiDataGrid-columnHeader:focus-within": {
+                outline: "none",
+              },
+            }}
+          />
         </Box>
         {/* --- Dialog/Modal para Crear/Editar Usuario --- */}
         <UserFormDialog
