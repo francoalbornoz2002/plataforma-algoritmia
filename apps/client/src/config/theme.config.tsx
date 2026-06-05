@@ -48,6 +48,12 @@ export const theme = createTheme({
       "100": "#b3e5fc",
       "50": "#e1f5fe",
     },
+    grey: {
+      "600": "#757575",
+      "500": "#9e9e9e",
+      "100": "#f5f5f5",
+      "50": "#eeeeee",
+    },
   },
   typography: {
     fontFamily: ["Poppins", "sans-serif"].join(","),

@@ -12,10 +12,12 @@ export default function CardIcon({
   color,
   size = "medium",
 }: CardIconProps) {
+  const iconColor = color === "grey" ? "grey.600" : `${color}.main`;
+
   return (
     <Box
       sx={{
-        color: `${color}.main`,
+        color: iconColor,
         display: "flex",
         bgcolor: `${color}.50`,
         p: size === "xl" ? 1.5 : size === "large" ? 1 : 0.5,

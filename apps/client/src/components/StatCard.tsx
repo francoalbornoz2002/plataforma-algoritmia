@@ -7,7 +7,7 @@ interface StatCardProps {
   title: string;
   description?: ReactNode;
   value: ReactNode;
-  percentage?: number;
+  subValue?: number | string;
   color: string;
   small?: boolean;
   mode?: "text" | "numeric";
@@ -19,12 +19,14 @@ export default function StatCard({
   title,
   description,
   value,
-  percentage,
+  subValue,
   color,
   small = false,
   mode = "numeric",
   onClick,
 }: StatCardProps) {
+  const textColor = color === "grey" ? "grey.600" : `${color}.main`;
+
   return (
     <Paper
       onClick={onClick}
@@ -60,14 +62,16 @@ export default function StatCard({
                   ? "h6"
                   : "h5"
             }
-            color={`${color}.main`}
+            color={textColor}
             fontWeight="bold"
           >
             {value}
           </Typography>
-          {percentage !== undefined && (
-            <Typography variant="caption" color={`${color}.main`}>
-              ({percentage.toFixed(1)}%)
+          {subValue !== undefined && (
+            <Typography variant="caption" color={textColor}>
+              {typeof subValue === "number"
+                ? `(${subValue.toFixed(1)}%)`
+                : subValue}
             </Typography>
           )}
         </Stack>
