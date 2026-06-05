@@ -21,6 +21,7 @@ import type {
 import MissionDifficultyChip from "../../../components/MissionDifficultyChip";
 import { Event } from "@mui/icons-material";
 import { format } from "date-fns/format";
+import { purple } from "@mui/material/colors";
 
 type MissionItem = MisionConEstado | MisionCompletada | MisionEspecial;
 
@@ -41,19 +42,20 @@ function CompletedStats({ data }: { data: MisionCompletada | MisionEspecial }) {
         color="warning"
       />
       <Chip
-        icon={<BoltIcon />}
-        label={`${data.exp} EXP`}
-        size="small"
-        variant="outlined"
-        color="primary"
-      />
-      <Chip
         icon={<ReplayIcon />}
         label={`${data.intentos} Intentos`}
         size="small"
         variant="outlined"
         color="default"
       />
+      <Chip
+        icon={<BoltIcon />}
+        label={`${data.exp} EXP`}
+        size="small"
+        variant="outlined"
+        color="primary"
+      />
+
       <Chip
         icon={<Event />}
         label={
@@ -119,12 +121,12 @@ export default function MissionCard({
       variant="elevation"
       sx={{
         height: "100%",
-        opacity: isCompleted || hideStatus ? 1.0 : 0.6,
+        opacity: isCompleted || hideStatus ? 1.0 : 0.5,
         display: "flex",
         flexDirection: "column",
         // Borde especial si es misión especial
-        borderColor: isSpecial ? "purple" : undefined,
-        borderWidth: isSpecial ? 2 : 1,
+        borderColor: isSpecial ? purple : undefined,
+        borderWidth: isSpecial ? "2px solid" : 1,
       }}
     >
       <CardContent sx={{ flexGrow: 1 }}>
@@ -137,11 +139,11 @@ export default function MissionCard({
           }}
         >
           <Typography
-            variant="h6"
             component="div"
+            fontWeight="bold"
+            fontSize={18}
             sx={{
-              mb: 0,
-              lineHeight: 1.3,
+              lineHeight: 1.2,
               display: "flex",
               alignItems: "center",
               gap: 1,
@@ -160,17 +162,17 @@ export default function MissionCard({
                   bgcolor: "primary.main",
                   color: "white",
                   fontSize: "0.85rem",
-                  fontWeight: "bold",
+                  p: 0.5,
                 }}
               >
                 {numero}
               </Box>
             )}
             {nombre}
-            {isSpecial && (
-              <Chip label="Especial" color="secondary" size="small" />
-            )}
           </Typography>
+          {isSpecial && (
+            <Chip label="Especial" color="secondary" size="small" />
+          )}
 
           {/* Solo mostramos chip de dificultad si existe (Normales) */}
           {dificultad && <MissionDifficultyChip dif={dificultad} />}
@@ -186,11 +188,11 @@ export default function MissionCard({
           <Divider sx={{ mt: "auto" }} />
           <Box
             sx={{
-              p: 2,
+              p: 1.5,
               bgcolor: isCompleted
                 ? isSpecial
                   ? "#f3e5f5"
-                  : "#f5fff5"
+                  : "#fafafa"
                 : "#fafafa",
             }}
           >
