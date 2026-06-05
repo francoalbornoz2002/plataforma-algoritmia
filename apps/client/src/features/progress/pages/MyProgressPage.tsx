@@ -246,53 +246,46 @@ export default function MyProgressPage() {
             color="primary"
           />
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 2 }}>
+            <Grid size={{ xs: 12, sm: 2.5 }}>
               <StatCard
-                title="Misiones Completadas"
-                description="Acumuladas en el curso"
+                title="Misiones"
+                description="Completadas en el curso"
                 value={`${progress.cantMisionesCompletadas} / ${TOTAL_MISIONES}`}
                 icon={<TaskAltIcon />}
                 color="success"
               />
             </Grid>
 
-            <Grid size={{ xs: 12, sm: 2 }}>
+            <Grid size={{ xs: 12, sm: 2.5 }}>
               <StatCard
-                title="Estrellas Totales"
+                title="Estrellas"
                 description="Acumuladas en el curso"
                 value={`${progress.totalEstrellas} / ${TOTAL_ESTRELLAS}`}
+                subValue={`(${progress.promEstrellas.toFixed(1)} promedio por misión)`}
                 icon={<StarIcon />}
                 color="warning"
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 2 }}>
+            <Grid size={{ xs: 12, sm: 2.5 }}>
               <StatCard
-                title="Experiencia Total"
+                title="Intentos"
+                value={progress.totalIntentos}
+                subValue={`(${progress.promIntentos.toFixed(1)} promedio por misión)`}
+                icon={<ReplayIcon />}
+                color="primary"
+                description="Acumulados en el curso"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 2.5 }}>
+              <StatCard
+                title="Experiencia"
                 description="Acumuladas en el curso"
                 value={progress.totalExp}
                 icon={<BoltIcon />}
-                color="primary"
+                color="secondary"
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 1.8 }}>
-              <StatCard
-                title="Prom. Estrellas"
-                value={progress.promEstrellas.toFixed(1)}
-                icon={<StarIcon />}
-                color="warning"
-                description="Por misión"
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 1.8 }}>
-              <StatCard
-                title="Prom. Intentos"
-                value={progress.promIntentos.toFixed(1)}
-                icon={<ReplayIcon />}
-                color="info"
-                description="Por misión"
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 2.4 }}>
+            <Grid size={{ xs: 12, sm: 2 }}>
               <StatCard
                 title="Última Actividad"
                 mode="text"
@@ -305,8 +298,31 @@ export default function MyProgressPage() {
           </Grid>
 
           {/* --- SECCIÓN 1: MISIONES DE CAMPAÑA (Normales) --- */}
-          <Stack spacing={2}>
-            <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+          <Stack>
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              color="primary.main"
+              mb={0.5}
+            >
+              <SportsEsportsIcon fontSize="large" />
+              <Typography
+                variant="overline"
+                fontWeight="bold"
+                fontSize={16}
+                align="center"
+              >
+                Misiones de Campaña
+              </Typography>
+            </Stack>
+            <Stack
+              direction="row"
+              spacing={2}
+              flexWrap="wrap"
+              useFlexGap
+              mb={2}
+            >
               <DatePicker
                 label="Fecha Desde"
                 value={
@@ -420,48 +436,27 @@ export default function MyProgressPage() {
               </Tooltip>
             </Stack>
 
-            <Stack>
-              <Stack
-                direction="row"
-                spacing={1}
-                alignItems="center"
-                color="primary.main"
-              >
-                <SportsEsportsIcon fontSize="large" />
-                <Typography
-                  variant="overline"
-                  fontWeight="bold"
-                  fontSize={16}
-                  align="center"
-                >
-                  Misiones de Campaña
-                </Typography>
-              </Stack>
-
-              <Divider sx={{ mb: 2 }} />
-
-              <Grid container spacing={2}>
-                {filteredMissions.map((m) => (
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={m.mision.id}>
-                    <MissionCard missionData={m} />
-                  </Grid>
-                ))}
-                {filteredMissions.length === 0 && missions.length > 0 && (
-                  <Grid size={{ xs: 12 }}>
-                    <Alert severity="info" sx={{ width: "100%" }}>
-                      No se encontraron misiones con los filtros aplicados.
-                    </Alert>
-                  </Grid>
-                )}
-                {missions.length === 0 && !loading && (
-                  <Grid size={{ xs: 12 }}>
-                    <Alert severity="info" sx={{ width: "100%" }}>
-                      No hay misiones de campaña en este curso.
-                    </Alert>
-                  </Grid>
-                )}
-              </Grid>
-            </Stack>
+            <Grid container spacing={2}>
+              {filteredMissions.map((m) => (
+                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={m.mision.id}>
+                  <MissionCard missionData={m} />
+                </Grid>
+              ))}
+              {filteredMissions.length === 0 && missions.length > 0 && (
+                <Grid size={{ xs: 12 }}>
+                  <Alert severity="info" sx={{ width: "100%" }}>
+                    No se encontraron misiones con los filtros aplicados.
+                  </Alert>
+                </Grid>
+              )}
+              {missions.length === 0 && !loading && (
+                <Grid size={{ xs: 12 }}>
+                  <Alert severity="info" sx={{ width: "100%" }}>
+                    No hay misiones de campaña en este curso.
+                  </Alert>
+                </Grid>
+              )}
+            </Grid>
           </Stack>
 
           {/* --- SECCIÓN 2: MISIONES ESPECIALES --- */}

@@ -370,7 +370,7 @@ export default function ProgressPage() {
           <Stack spacing={2}>
             {/* KPIs */}
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 2 }}>
+              <Grid size={{ xs: 12, sm: 3 }}>
                 <StatCard
                   title="Misiones Completadas"
                   value={overview.misionesCompletadas}
@@ -379,49 +379,33 @@ export default function ProgressPage() {
                   description="Total acumulado por el curso"
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 2 }}>
+              <Grid size={{ xs: 12, sm: 3 }}>
                 <StatCard
                   title="Estrellas"
                   value={overview.totalEstrellas}
+                  subValue={`(${overview.promEstrellas.toFixed(1)} prom. / alumno)`}
                   icon={<StarIcon />}
                   color="warning"
                   description="Total acumulado por el curso"
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 2 }}>
+              <Grid size={{ xs: 12, sm: 3 }}>
                 <StatCard
                   title="Intentos"
                   value={overview.totalIntentos}
+                  subValue={`(${overview.promIntentos.toFixed(1)} prom. / alumno)`}
                   icon={<ReplayIcon />}
-                  color="info"
-                  description="Total acumulado por el curso"
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 2 }}>
-                <StatCard
-                  title="Experiencia"
-                  value={overview.totalExp}
-                  icon={<BoltIcon />}
                   color="primary"
                   description="Total acumulado por el curso"
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 2 }}>
+              <Grid size={{ xs: 12, sm: 3 }}>
                 <StatCard
-                  title="Promedio Estrellas"
-                  value={overview.promEstrellas.toFixed(1)}
-                  icon={<StarIcon />}
-                  color="warning"
-                  description="Por alumno"
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 2 }}>
-                <StatCard
-                  title="Promedio Intentos"
-                  value={overview.promIntentos.toFixed(1)}
-                  icon={<ReplayIcon />}
-                  color="info"
-                  description="Por alumno"
+                  title="Experiencia"
+                  value={overview.totalExp}
+                  icon={<BoltIcon />}
+                  color="secondary"
+                  description="Total acumulado por el curso"
                 />
               </Grid>
             </Grid>
