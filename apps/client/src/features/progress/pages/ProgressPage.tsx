@@ -10,20 +10,12 @@ import {
   MenuItem,
   type SelectChangeEvent,
   Tooltip,
-  Button,
   CircularProgress,
   Grid,
   IconButton,
-  Paper,
+  Pagination,
 } from "@mui/material";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
-import {
-  DataGrid,
-  type GridColDef,
-  type GridSortModel,
-} from "@mui/x-data-grid";
-import { formatDistanceToNow } from "date-fns";
-import { es } from "date-fns/locale";
 import StarIcon from "@mui/icons-material/Star";
 import BoltIcon from "@mui/icons-material/Bolt";
 import ReplayIcon from "@mui/icons-material/Replay";
@@ -48,6 +40,7 @@ import {
 import StudentProgressDetailModal from "../components/StudentProgressDetailModal";
 import HeaderPage from "client/src/components/HeaderPage";
 import StatCard from "../../../components/StatCard";
+import ProgressItem from "../components/ProgressItem";
 
 type StudentRow = ProgresoAlumnoDetallado;
 
@@ -67,16 +60,9 @@ export default function ProgressPage() {
   const [gridLoading, setGridLoading] = useState(true);
   const [gridError, setGridError] = useState<string | null>(null);
 
-  // Estado para paginación
-  const [paginationModel, setPaginationModel] = useState({
-    page: 0,
-    pageSize: 10,
-  });
-
-  // Estado para ordenamiento
-  const [sortModel, setSortModel] = useState<GridSortModel>([
-    { field: "apellido", sort: "asc" },
-  ]);
+  // Paginación de la lista
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Estado para filtros
   const [filters, setFilters] = useState({
@@ -84,6 +70,7 @@ export default function ProgressPage() {
     starsRange: "",
     attemptsRange: "",
     activityRange: "",
+    sortOption: "apellido-asc",
   });
 
   // Estado local para el buscador
@@ -123,7 +110,7 @@ export default function ProgressPage() {
 
   // --- FILTRADO LOCAL ---
   const filteredRows = useMemo(() => {
-    return allRows.filter((row) => {
+    let result = allRows.filter((row) => {
       // Filtro por Búsqueda (Texto)
       if (searchTerm) {
         const term = searchTerm.toLowerCase();
@@ -219,11 +206,46 @@ export default function ProgressPage() {
 
       return true;
     });
+
+    // Ordenamiento
+    result.sort((a, b) => {
+      const sortOpt = filters.sortOption || "apellido-asc";
+      const [field, order] = sortOpt.split("-");
+      const multiplier = order === "asc" ? 1 : -1;
+
+      switch (field) {
+        case "apellido":
+          return multiplier * a.apellido.localeCompare(b.apellido);
+        case "progreso":
+          return (
+            multiplier * (a.pctMisionesCompletadas - b.pctMisionesCompletadas)
+          );
+        case "estrellas":
+          return multiplier * (a.totalEstrellas - b.totalEstrellas);
+        case "intentos":
+          return multiplier * (a.totalIntentos - b.totalIntentos);
+        case "exp":
+          return multiplier * (a.totalExp - b.totalExp);
+        case "actividad": {
+          const dateA = a.ultimaActividad
+            ? new Date(a.ultimaActividad).getTime()
+            : 0;
+          const dateB = b.ultimaActividad
+            ? new Date(b.ultimaActividad).getTime()
+            : 0;
+          return multiplier * (dateA - dateB);
+        }
+        default:
+          return a.apellido.localeCompare(b.apellido);
+      }
+    });
+
+    return result;
   }, [allRows, searchTerm, filters]);
 
   // Efecto para conectar el buscador a los filtros
   useEffect(() => {
-    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+    setPage(1);
   }, [searchTerm]);
 
   // --- 4. HANDLERS (para la DataGrid y Filtros) ---
@@ -235,8 +257,9 @@ export default function ProgressPage() {
       starsRange: "",
       attemptsRange: "",
       activityRange: "",
+      sortOption: "apellido-asc",
     });
-    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+    setPage(1);
   };
 
   const handleFilterChange = (
@@ -246,94 +269,14 @@ export default function ProgressPage() {
       ...prev,
       [e.target.name]: e.target.value,
     }));
-    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+    setPage(1);
   };
 
-  // --- 5. COLUMNAS (DataGrid) ---
-  const columns = useMemo<GridColDef<ProgresoAlumnoDetallado>[]>(
-    () => [
-      {
-        field: "apellido",
-        headerName: "Alumno",
-        flex: 1,
-        valueGetter: (value: any, row: ProgresoAlumnoDetallado) =>
-          `${row.apellido}, ${row.nombre}`,
-      },
-      {
-        field: "pctMisionesCompletadas",
-        headerName: "Progreso (%)",
-        align: "center",
-        headerAlign: "center",
-        width: 100,
-        valueFormatter: (value: number) => {
-          if (typeof value !== "number") return "N/A";
-          return `${value.toFixed(1)}%`;
-        },
-      },
-      {
-        field: "promEstrellas",
-        headerName: "Estrellas (Prom.)",
-        align: "center",
-        headerAlign: "center",
-        width: 125,
-        valueFormatter: (value: number) => {
-          if (typeof value !== "number") return "N/A";
-          return `⭐ ${value.toFixed(1)}`;
-        },
-      },
-      {
-        field: "promIntentos",
-        headerName: "Intentos (Prom.)",
-        align: "center",
-        headerAlign: "center",
-        width: 125,
-        valueFormatter: (value: number) => {
-          if (typeof value !== "number") return "N/A";
-          return value.toFixed(1);
-        },
-      },
-      {
-        field: "totalExp",
-        headerName: "EXP Total",
-        align: "center",
-        headerAlign: "center",
-      },
-      {
-        field: "ultimaActividad",
-        headerName: "Última Actividad",
-        width: 200,
-        valueFormatter: (value: string | null) => {
-          if (!value) return "Nunca";
-          return (
-            "hace " +
-            formatDistanceToNow(new Date(value), {
-              locale: es,
-              addSuffix: false,
-            })
-          );
-        },
-      },
-      {
-        field: "actions",
-        headerName: "Misiones",
-        align: "center",
-        headerAlign: "center",
-        sortable: false,
-        width: 95,
-        renderCell: (params) => (
-          <Tooltip title="Ver detalle de misiones">
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => setViewingStudent(params.row)} // <-- Abre el modal
-            >
-              Detalle
-            </Button>
-          </Tooltip>
-        ),
-      },
-    ],
-    [],
+  // --- 5. PAGINACIÓN ---
+  const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+  const paginatedRows = filteredRows.slice(
+    (page - 1) * itemsPerPage,
+    page * itemsPerPage,
   );
 
   // --- 6. RENDERIZADO ---
@@ -475,6 +418,32 @@ export default function ProgressPage() {
                   </MenuItem>
                 </Select>
               </FormControl>
+              <FormControl size="small" sx={{ minWidth: 200 }}>
+                <InputLabel>Ordenar por</InputLabel>
+                <Select
+                  name="sortOption"
+                  value={filters.sortOption}
+                  label="Ordenar por"
+                  onChange={handleFilterChange}
+                >
+                  <MenuItem value="apellido-asc">Apellido (A-Z)</MenuItem>
+                  <MenuItem value="apellido-desc">Apellido (Z-A)</MenuItem>
+                  <MenuItem value="progreso-desc">Progreso (Desc.)</MenuItem>
+                  <MenuItem value="progreso-asc">Progreso (Asc.)</MenuItem>
+                  <MenuItem value="estrellas-desc">Estrellas (Desc.)</MenuItem>
+                  <MenuItem value="estrellas-asc">Estrellas (Asc.)</MenuItem>
+                  <MenuItem value="intentos-desc">Intentos (Desc.)</MenuItem>
+                  <MenuItem value="intentos-asc">Intentos (Asc.)</MenuItem>
+                  <MenuItem value="exp-desc">Experiencia (Desc.)</MenuItem>
+                  <MenuItem value="exp-asc">Experiencia (Asc.)</MenuItem>
+                  <MenuItem value="actividad-desc">
+                    Última Act. (Recientes)
+                  </MenuItem>
+                  <MenuItem value="actividad-asc">
+                    Última Act. (Antiguas)
+                  </MenuItem>
+                </Select>
+              </FormControl>
               <Tooltip title="Limpiar filtros">
                 <IconButton
                   onClick={handleClearFilters}
@@ -485,49 +454,57 @@ export default function ProgressPage() {
                 </IconButton>
               </Tooltip>
             </Stack>
-            {/* --- C. DataGrid --- */}
+
+            {/* --- C. Lista de Alumnos --- */}
             {gridError && <Alert severity="error">{gridError}</Alert>}
-            <Box
-              sx={{
-                width: "100%",
-                display: "grid",
-                gridTemplateColumns: "minmax(0, 1fr)",
-              }}
-            >
-              <Paper
-                elevation={2}
-                sx={{ height: 600, width: "100%", boxSizing: "border-box" }}
-              >
-                <DataGrid
-                  rows={filteredRows}
-                  columns={columns}
-                  loading={gridLoading}
-                  paginationModel={paginationModel}
-                  onPaginationModelChange={setPaginationModel}
-                  pageSizeOptions={[5, 10, 25]}
-                  sortModel={sortModel}
-                  onSortModelChange={setSortModel}
-                  disableRowSelectionOnClick
-                  disableColumnResize={true}
-                  sx={{
-                    borderRadius: "0.7em",
-                    border: 0,
-                    "& .MuiDataGrid-cell:focus": {
-                      outline: "none",
-                    },
-                    "& .MuiDataGrid-cell:focus-within": {
-                      outline: "none",
-                    },
-                    "& .MuiDataGrid-columnHeader:focus": {
-                      outline: "none",
-                    },
-                    "& .MuiDataGrid-columnHeader:focus-within": {
-                      outline: "none",
-                    },
+
+            <Stack spacing={2}>
+              {paginatedRows.map((row) => (
+                <ProgressItem
+                  key={row.id}
+                  student={{
+                    nombre: row.nombre,
+                    apellido: row.apellido,
+                    fotoPerfilUrl: row.fotoPerfilUrl,
                   }}
+                  stats={{
+                    cantMisionesCompletadas: row.cantMisionesCompletadas,
+                    progresoPct: row.pctMisionesCompletadas,
+                    totalEstrellas: row.totalEstrellas,
+                    promEstrellas: row.promEstrellas,
+                    totalIntentos: row.totalIntentos,
+                    promIntentos: row.promIntentos,
+                    totalExp: row.totalExp,
+                    ultimaActividad: row.ultimaActividad,
+                  }}
+                  onDetailClick={() => setViewingStudent(row)}
                 />
-              </Paper>
-            </Box>
+              ))}
+
+              {filteredRows.length === 0 && !gridLoading && (
+                <Alert severity="info">
+                  No se encontraron alumnos con los filtros aplicados.
+                </Alert>
+              )}
+
+              {totalPages > 1 && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    mt: 2,
+                    mb: 2,
+                  }}
+                >
+                  <Pagination
+                    count={totalPages}
+                    page={page}
+                    onChange={(_, value) => setPage(value)}
+                    color="primary"
+                  />
+                </Box>
+              )}
+            </Stack>
           </Stack>
         ) : null}
 
