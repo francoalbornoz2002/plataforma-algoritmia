@@ -21,6 +21,8 @@ import BoltIcon from "@mui/icons-material/Bolt";
 import ReplayIcon from "@mui/icons-material/Replay";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import AssessmentIcon from "@mui/icons-material/Assessment";
+import WarningIcon from "@mui/icons-material/Warning";
+import SchoolIcon from "@mui/icons-material/School";
 
 // 1. Hooks y Servicios
 import { useCourseContext } from "../../../context/CourseContext";
@@ -313,43 +315,67 @@ export default function ProgressPage() {
           <Stack spacing={2}>
             {/* KPIs */}
             <Grid container spacing={2}>
-              <Grid size={{ xs: 12, sm: 3 }}>
+              <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                 <StatCard
-                  title="Misiones Completadas"
+                  title="Misiones Compl."
                   value={overview.misionesCompletadas}
-                  subValue={`(${overview.pctMisionesCompletadas.toFixed(1)}% progreso total)`}
+                  subValue={`(${overview.pctMisionesCompletadas.toFixed(1)}% prog.)`}
                   icon={<TaskAltIcon />}
                   color="success"
-                  description="Total acumulado por el curso"
+                  description="Total acumulado"
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 3 }}>
+              <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                 <StatCard
                   title="Estrellas Totales"
                   value={overview.totalEstrellas}
-                  subValue={`(${overview.promEstrellas.toFixed(1)} prom. / alumno)`}
+                  subValue={`(${overview.promEstrellas.toFixed(1)} prom.)`}
                   icon={<StarIcon />}
                   color="warning"
-                  description="Acumuladas por el curso"
+                  description="Total acumulado"
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 3 }}>
+              <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                 <StatCard
                   title="Intentos Totales"
                   value={overview.totalIntentos}
-                  subValue={`(${overview.promIntentos.toFixed(1)} prom. / alumno)`}
+                  subValue={`(${overview.promIntentos.toFixed(1)} prom.)`}
                   icon={<ReplayIcon />}
                   color="primary"
-                  description="Acumuladoss por el curso"
+                  description="Total acumulado"
                 />
               </Grid>
-              <Grid size={{ xs: 12, sm: 3 }}>
+              <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                 <StatCard
                   title="Experiencia Total"
                   value={overview.totalExp}
                   icon={<BoltIcon />}
+                  color="info"
+                  description="Puntos acumulados"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                <StatCard
+                  title="Misión más difícil"
+                  mode="text"
+                  value={
+                    overview.misionMasDificil
+                      ? `Misión N° ${overview.misionMasDificil.numero}`
+                      : "Ninguna"
+                  }
+                  description="Mayor prom. de intentos"
+                  icon={<WarningIcon />}
+                  color="error"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                <StatCard
+                  title="Alumno más activo"
+                  mode="text"
+                  value={overview.alumnoMasActivo || "Ninguno"}
+                  description="Más misiones compl."
+                  icon={<SchoolIcon />}
                   color="secondary"
-                  description="Puntos acumulados por el curso"
                 />
               </Grid>
             </Grid>

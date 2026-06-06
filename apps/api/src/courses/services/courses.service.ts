@@ -781,47 +781,7 @@ export class CoursesService {
         },
       });
 
-      // 3. Misión más difícil (Mayor promedio de intentos en el rango)
-      const topMissionGroup = await this.prisma.misionCompletada.groupBy({
-        by: ['idMision'],
-        where: {
-          fechaCompletado: { gte: start, lte: end },
-          progresoAlumno: { alumnoCurso: { idCurso } },
-        },
-        _avg: { intentos: true },
-        orderBy: { _avg: { intentos: 'desc' } },
-        take: 1,
-      });
-      let misionMasDificil: any = null;
-      if (topMissionGroup.length > 0) {
-        misionMasDificil = await this.prisma.mision.findUnique({
-          where: { id: topMissionGroup[0].idMision },
-        });
-      }
-
-      // 4. Alumno más activo (Más misiones completadas en el rango)
-      const topStudentGroup = await this.prisma.misionCompletada.groupBy({
-        by: ['idProgreso'],
-        where: {
-          fechaCompletado: { gte: start, lte: end },
-          progresoAlumno: { alumnoCurso: { idCurso } },
-        },
-        _count: { idMision: true },
-        orderBy: { _count: { idMision: 'desc' } },
-        take: 1,
-      });
-      let alumnoMasActivo: string | null = null;
-      if (topStudentGroup.length > 0) {
-        const p = await this.prisma.progresoAlumno.findUnique({
-          where: { id: topStudentGroup[0].idProgreso },
-          include: { alumnoCurso: { include: { alumno: true } } },
-        });
-        if (p?.alumnoCurso?.alumno) {
-          alumnoMasActivo = `${p.alumnoCurso.alumno.nombre} ${p.alumnoCurso.alumno.apellido}`;
-        }
-      }
-
-      // 5. Dificultad más detectada (Más registros en historial en el rango)
+      // 3. Dificultad más detectada (Más registros en historial en el rango)
       const topDiffGroup = await this.prisma.historialDificultadAlumno.groupBy({
         by: ['idDificultad'],
         where: {
@@ -845,8 +805,6 @@ export class CoursesService {
       return {
         misionesCompletadas,
         consultasRealizadas,
-        misionMasDificil,
-        alumnoMasActivo,
         dificultadMasDetectada,
       };
     };

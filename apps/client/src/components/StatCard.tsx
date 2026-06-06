@@ -56,14 +56,15 @@ export default function StatCard({
             variant={
               mode === "text"
                 ? small
-                  ? "subtitle1"
-                  : "h6"
+                  ? "subtitle2"
+                  : "subtitle1"
                 : small
                   ? "h6"
                   : "h5"
             }
             color={textColor}
             fontWeight="bold"
+            noWrap
           >
             {value}
           </Typography>

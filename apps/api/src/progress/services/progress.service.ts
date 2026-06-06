@@ -36,6 +36,45 @@ export class ProgressService {
       if (!curso || !curso.progresoCurso) {
         throw new NotFoundException('Progreso del curso no encontrado.');
       }
+
+      // 1. Misión más difícil (Mayor promedio de intentos GLOBAL)
+      const topMissionGroup = await this.prisma.misionCompletada.groupBy({
+        by: ['idMision'],
+        where: {
+          progresoAlumno: { alumnoCurso: { idCurso } },
+        },
+        _avg: { intentos: true },
+        orderBy: { _avg: { intentos: 'desc' } },
+        take: 1,
+      });
+      let misionMasDificil;
+      if (topMissionGroup.length > 0) {
+        misionMasDificil = await this.prisma.mision.findUnique({
+          where: { id: topMissionGroup[0].idMision },
+        });
+      }
+
+      // 2. Alumno más activo (Más misiones completadas GLOBAL)
+      const topStudentGroup = await this.prisma.misionCompletada.groupBy({
+        by: ['idProgreso'],
+        where: {
+          progresoAlumno: { alumnoCurso: { idCurso } },
+        },
+        _count: { idMision: true },
+        orderBy: { _count: { idMision: 'desc' } },
+        take: 1,
+      });
+      let alumnoMasActivo;
+      if (topStudentGroup.length > 0) {
+        const p = await this.prisma.progresoAlumno.findUnique({
+          where: { id: topStudentGroup[0].idProgreso },
+          include: { alumnoCurso: { include: { alumno: true } } },
+        });
+        if (p?.alumnoCurso?.alumno) {
+          alumnoMasActivo = `${p.alumnoCurso.alumno.nombre} ${p.alumnoCurso.alumno.apellido}`;
+        }
+      }
+
       // Convertimos los campos Decimal (que llegan como string) a Number (float)
       const progreso = curso.progresoCurso;
       return {
@@ -43,6 +82,8 @@ export class ProgressService {
         pctMisionesCompletadas: this.toNum(progreso.pctMisionesCompletadas),
         promEstrellas: this.toNum(progreso.promEstrellas),
         promIntentos: this.toNum(progreso.promIntentos),
+        misionMasDificil,
+        alumnoMasActivo,
       };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;

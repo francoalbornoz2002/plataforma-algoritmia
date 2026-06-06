@@ -248,6 +248,8 @@ export interface ProgresoCurso {
   promEstrellas: number;
   promIntentos: number;
   estado: estado_simple;
+  misionMasDificil?: Mision | null;
+  alumnoMasActivo?: string | null;
 }
 
 // Para la DataGrid (ProgresoAlumno + nombre)
@@ -714,8 +716,6 @@ export interface ConsultaSimple {
 export interface DashboardStats {
   misionesCompletadas: number;
   consultasRealizadas: number;
-  misionMasDificil: Mision | null;
-  alumnoMasActivo: string | null; // Nombre del alumno
   dificultadMasDetectada: string | null; // Nombre de la dificultad
 }
 

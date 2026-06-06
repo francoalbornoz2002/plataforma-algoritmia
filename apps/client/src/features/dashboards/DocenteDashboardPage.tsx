@@ -15,7 +15,6 @@ import {
   ListItemText,
   TextField,
   InputAdornment,
-  Dialog,
   LinearProgress,
   Divider,
 } from "@mui/material";
@@ -33,7 +32,6 @@ import CourseFormDialog from "../courses/components/CourseFormDialog";
 import { enqueueSnackbar } from "notistack";
 import {
   type CourseDashboardData,
-  type Mision,
   estado_consulta,
   estado_sesion,
 } from "../../types";
@@ -51,7 +49,6 @@ import {
   Warning,
 } from "@mui/icons-material";
 import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
-import MissionCard from "../progress/components/MissionCard";
 import {
   EstadoConsultaLabels,
   EstadoSesionLabels,
@@ -228,7 +225,6 @@ export default function DocenteDashboardPage() {
   const [filteredStudents, setFilteredStudents] = useState<any[]>([]);
   const [stats, setStats] = useState<CourseDashboardData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [selectedMission, setSelectedMission] = useState<Mision | null>(null);
   const [studentInfoOpen, setStudentInfoOpen] = useState<any | null>(null);
 
   // Estados de UI
@@ -503,43 +499,6 @@ export default function DocenteDashboardPage() {
                   color="success"
                   valueText={`${stats?.today.misionesCompletadas ?? 0} / ${stats?.week.misionesCompletadas ?? 0}`}
                 />
-
-                <Divider sx={{ my: 2 }} />
-
-                <Grid container spacing={2}>
-                  <Tooltip title="Ver detalles de la misión">
-                    <Grid size={{ xs: 6 }}>
-                      <StatCard
-                        value={
-                          stats?.week.misionMasDificil
-                            ? `Misión N° ${stats.week.misionMasDificil.numero}`
-                            : "Ninguna"
-                        }
-                        icon={<Warning />}
-                        color="warning"
-                        small
-                        mode="text"
-                        onClick={() =>
-                          stats?.week.misionMasDificil &&
-                          setSelectedMission(stats.week.misionMasDificil)
-                        }
-                        title="Misión más difícil"
-                        description="Qué mas intentos lleva (semana)"
-                      />
-                    </Grid>
-                  </Tooltip>
-                  <Grid size={{ xs: 6 }}>
-                    <StatCard
-                      title="Alumno más activo"
-                      mode="text"
-                      description="En la semana actual"
-                      value={stats?.week.alumnoMasActivo || "Ninguno"}
-                      icon={<School />}
-                      color="secondary"
-                      small
-                    />
-                  </Grid>
-                </Grid>
               </Grid>
             </Grid>
           </Paper>
@@ -753,23 +712,6 @@ export default function DocenteDashboardPage() {
         isLoading={isDeleting}
         confirmText="Dar de baja"
       />
-
-      {/* MODAL DETALLE DE MISIÓN */}
-      <Dialog
-        open={!!selectedMission}
-        onClose={() => setSelectedMission(null)}
-        maxWidth="xs"
-        fullWidth
-      >
-        <Box sx={{ p: 1 }}>
-          {selectedMission && (
-            <MissionCard
-              missionData={{ mision: selectedMission, completada: null }}
-              hideStatus
-            />
-          )}
-        </Box>
-      </Dialog>
 
       {/* MODAL DE INFO DEL ALUMNO */}
       <InfoAlumno
