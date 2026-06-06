@@ -82,7 +82,7 @@ export default function ProgressItem({
         <Stack
           direction="row"
           alignItems="center"
-          spacing={{ xs: 2, md: 3 }}
+          spacing={{ xs: 2, md: 2 }}
           flexWrap="wrap"
           useFlexGap
         >
@@ -92,6 +92,8 @@ export default function ProgressItem({
             label="Misiones compl."
             value={stats.cantMisionesCompletadas}
             subValue={`(${stats.progresoPct.toFixed(1)}% prog.)`}
+            placeholderValue="999"
+            placeholderSubValue="(100.0% prog.)"
           />
 
           <Divider
@@ -106,6 +108,8 @@ export default function ProgressItem({
             label="Estrellas"
             value={stats.totalEstrellas}
             subValue={`(${stats.promEstrellas.toFixed(1)} prom.)`}
+            placeholderValue="999"
+            placeholderSubValue="(99.9 prom.)"
           />
 
           <Divider
@@ -120,6 +124,8 @@ export default function ProgressItem({
             label="Intentos"
             value={stats.totalIntentos}
             subValue={`(${stats.promIntentos.toFixed(1)} prom.)`}
+            placeholderValue="999"
+            placeholderSubValue="(99.9 prom.)"
           />
 
           <Divider
@@ -134,6 +140,8 @@ export default function ProgressItem({
             label="Experiencia"
             value={stats.totalExp}
             subValue="Pts."
+            placeholderValue="99999"
+            placeholderSubValue="Pts."
           />
 
           <Divider
@@ -147,6 +155,7 @@ export default function ProgressItem({
             color="info"
             label="Última Act."
             value={ultimaActividadFormateada}
+            placeholderValue="hace 11 meses"
           />
 
           <Button

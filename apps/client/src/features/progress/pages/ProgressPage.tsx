@@ -317,6 +317,7 @@ export default function ProgressPage() {
                 <StatCard
                   title="Misiones Completadas"
                   value={overview.misionesCompletadas}
+                  subValue={`(${overview.pctMisionesCompletadas.toFixed(1)}% progreso total)`}
                   icon={<TaskAltIcon />}
                   color="success"
                   description="Total acumulado por el curso"
@@ -324,31 +325,31 @@ export default function ProgressPage() {
               </Grid>
               <Grid size={{ xs: 12, sm: 3 }}>
                 <StatCard
-                  title="Estrellas"
+                  title="Estrellas Totales"
                   value={overview.totalEstrellas}
                   subValue={`(${overview.promEstrellas.toFixed(1)} prom. / alumno)`}
                   icon={<StarIcon />}
                   color="warning"
-                  description="Total acumulado por el curso"
+                  description="Acumuladas por el curso"
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 3 }}>
                 <StatCard
-                  title="Intentos"
+                  title="Intentos Totales"
                   value={overview.totalIntentos}
                   subValue={`(${overview.promIntentos.toFixed(1)} prom. / alumno)`}
                   icon={<ReplayIcon />}
                   color="primary"
-                  description="Total acumulado por el curso"
+                  description="Acumuladoss por el curso"
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 3 }}>
                 <StatCard
-                  title="Experiencia"
+                  title="Experiencia Total"
                   value={overview.totalExp}
                   icon={<BoltIcon />}
                   color="secondary"
-                  description="Total acumulado por el curso"
+                  description="Puntos acumulados por el curso"
                 />
               </Grid>
             </Grid>
