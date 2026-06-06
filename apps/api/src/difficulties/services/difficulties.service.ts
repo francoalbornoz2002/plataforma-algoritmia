@@ -101,9 +101,33 @@ export class DifficultiesService {
 
       const overview = curso.dificultadesCurso;
 
+      // Alumno Crítico (Alumno con más dificultades activas)
+      const topStudentGroup = await this.prisma.dificultadAlumno.groupBy({
+        by: ['idAlumno'],
+        where: {
+          idCurso: idCurso,
+          grado: { not: 'Ninguno' },
+        },
+        _count: { idDificultad: true },
+        orderBy: { _count: { idDificultad: 'desc' } },
+        take: 1,
+      });
+
+      let alumnoCritico;
+      if (topStudentGroup.length > 0) {
+        const u = await this.prisma.usuario.findUnique({
+          where: { id: topStudentGroup[0].idAlumno },
+          select: { nombre: true, apellido: true },
+        });
+        if (u) {
+          alumnoCritico = `${u.nombre} ${u.apellido}`;
+        }
+      }
+
       return {
         ...overview,
         promDificultades: parseFloat(overview.promDificultades as any),
+        alumnoCritico,
       };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;

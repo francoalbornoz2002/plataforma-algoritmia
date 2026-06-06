@@ -15,7 +15,6 @@ import {
   ListItemText,
   TextField,
   InputAdornment,
-  LinearProgress,
   Divider,
 } from "@mui/material";
 import CourseInfoCard from "./components/CourseInfoCard";
@@ -37,18 +36,15 @@ import {
 } from "../../types";
 import { useAuth } from "../authentication/context/AuthProvider";
 import {
-  Assessment,
-  AssignmentLate,
   Delete,
   Event,
   Info,
   MarkUnreadChatAlt,
-  School,
   Search,
   SwitchAccessShortcutAdd,
   Warning,
+  TaskAlt,
 } from "@mui/icons-material";
-import { Gauge, gaugeClasses } from "@mui/x-charts/Gauge";
 import {
   EstadoConsultaLabels,
   EstadoSesionLabels,
@@ -127,50 +123,7 @@ const DistributionBar = ({
   );
 };
 
-const ProgressItem = ({
-  title,
-  percent,
-  color,
-  valueText,
-}: {
-  title: string;
-  percent: number;
-  color:
-    | "primary"
-    | "secondary"
-    | "error"
-    | "info"
-    | "success"
-    | "warning"
-    | "inherit";
-  valueText: string;
-}) => (
-  <Box sx={{ mb: 1 }}>
-    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-      <Typography variant="body2" color="text.secondary" fontWeight="medium">
-        {title}
-      </Typography>
-      <Typography variant="body2" color="text.secondary" fontWeight="bold">
-        {valueText}
-      </Typography>
-    </Box>
-    <LinearProgress
-      variant="determinate"
-      value={percent}
-      color={color}
-      sx={{ height: 8, borderRadius: 4 }}
-    />
-  </Box>
-);
-
 // --- Helpers de Color ---
-const getDificultadColor = (label: string) => {
-  if (label === "Bajo") return "#4caf50";
-  if (label === "Medio") return "#ff9800";
-  if (label === "Alto") return "#f44336";
-  return "#9e9e9e";
-};
-
 const getEstadoSesionColor = (estado: string) => {
   const map: Record<string, string> = {
     Pendiente: "#ff9800",
@@ -327,11 +280,73 @@ export default function DocenteDashboardPage() {
   }
 
   return (
-    <Stack spacing={3}>
+    <Stack spacing={2}>
       {/* HEADER */}
       <DashboardHeader nombre={profile?.nombre} curso={selectedCourse.nombre} />
 
       {error && <Alert severity="error">{error}</Alert>}
+
+      {/* --- KPIs PRINCIPALES --- */}
+      <Grid container spacing={2}>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <StatCard
+            title="Progreso"
+            value={`${stats?.progresoPct.toFixed(1)}%`}
+            icon={<TaskAlt />}
+            color="success"
+            description="Promedio del curso"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <StatCard
+            title="Dificultad Frecuente"
+            mode="text"
+            value={stats?.dificultadMasDetectada || "Ninguna"}
+            icon={<Warning />}
+            color="error"
+            description="Moda del curso"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <StatCard
+            title="Consultas Totales"
+            value={stats?.consultas.total ?? 0}
+            subValue={`(${stats?.consultas.pendientes ?? 0} pendientes)`}
+            icon={<MarkUnreadChatAlt />}
+            color="info"
+            description="Realizadas por alumnos"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <StatCard
+            title="Sesiones Totales"
+            value={stats?.sesiones.total ?? 0}
+            subValue={`(${stats?.sesiones.pendientes ?? 0} pendientes)`}
+            icon={<SwitchAccessShortcutAdd />}
+            color="secondary"
+            description="Refuerzos generados"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 12, md: 2 }}>
+          <StatCard
+            title="Próxima Clase"
+            mode="text"
+            value={
+              stats?.nextClass
+                ? formatClassTime(
+                    stats.nextClass.fechaInicio,
+                    stats.nextClass.fechaFin,
+                  )
+                : "Sin programar"
+            }
+            description={
+              stats?.nextClass?.modalidad || "No hay clases agendadas"
+            }
+            icon={<Event />}
+            color="primary"
+          />
+        </Grid>
+      </Grid>
 
       <Grid container spacing={3} sx={{ height: "100%" }}>
         {/* 1. INFO DEL CURSO */}
@@ -444,126 +459,7 @@ export default function DocenteDashboardPage() {
           </Paper>
         </Grid>
       </Grid>
-      <Grid container spacing={3}>
-        {/* GRUPO: PROGRESO */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Paper
-            elevation={2}
-            sx={{
-              p: 2,
-              borderTop: "4px solid",
-              borderColor: "success.main",
-              height: "100%",
-              alignItems: "center",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <Assessment color="success" sx={{ mr: 1 }} />
-              <Typography variant="h6" color="success.main" fontWeight="bold">
-                Progreso del Curso
-              </Typography>
-            </Box>
-            <Grid container spacing={3} alignItems="center">
-              <Grid size={{ xs: 12, sm: 4 }}>
-                <Gauge
-                  value={stats?.progresoPct ?? 0}
-                  height={200}
-                  cornerRadius="50%"
-                  text={({ value }) => `${value?.toFixed(1)}%`}
-                  sx={{
-                    [`& .${gaugeClasses.valueText}`]: {
-                      fontSize: 28,
-                      fontWeight: "bold",
-                    },
-                    [`& .${gaugeClasses.valueArc}`]: { fill: "#4caf50" },
-                  }}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 8 }}>
-                <Typography
-                  variant="subtitle2"
-                  color="text.secondary"
-                  gutterBottom
-                >
-                  Actividad Reciente
-                </Typography>
-                <ProgressItem
-                  title="Misiones: Hoy vs Semana"
-                  percent={
-                    stats?.week.misionesCompletadas
-                      ? (stats.today.misionesCompletadas /
-                          stats.week.misionesCompletadas) *
-                        100
-                      : 0
-                  }
-                  color="success"
-                  valueText={`${stats?.today.misionesCompletadas ?? 0} / ${stats?.week.misionesCompletadas ?? 0}`}
-                />
-              </Grid>
-            </Grid>
-          </Paper>
-        </Grid>
-        {/* GRUPO: DIFICULTADES */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Paper
-            elevation={2}
-            sx={{
-              p: 2,
-              borderTop: "4px solid",
-              borderColor: "error.main",
-              height: "100%",
-              alignItems: "center",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-              <AssignmentLate color="error" sx={{ mr: 1 }} />
-              <Typography variant="h6" color="error.main" fontWeight="bold">
-                Dificultades Detectadas
-              </Typography>
-            </Box>
 
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Distribución por Grado
-            </Typography>
-            <DistributionBar
-              items={
-                stats?.dificultadesPorGrado?.map((d) => ({
-                  label: d.label,
-                  value: d.value,
-                  color: getDificultadColor(d.label),
-                })) ?? []
-              }
-            />
-
-            <Divider sx={{ my: 2 }} />
-
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 6 }}>
-                <StatCard
-                  title="Dificultad más frecuente"
-                  description="Detectada esta semana"
-                  mode="text"
-                  value={stats?.week.dificultadMasDetectada || "Ninguna"}
-                  icon={<Warning />}
-                  color="error"
-                  small
-                />
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <StatCard
-                  title="Alumno Crítico"
-                  mode="text"
-                  description="Que más dificultades tiene"
-                  value={stats?.alumnoMasDificultades || "Ninguno"}
-                  icon={<School />}
-                  color="warning"
-                  small
-                />
-              </Grid>
-            </Grid>
-          </Paper>
-        </Grid>
-      </Grid>
       <Grid container spacing={3}>
         {/* GRUPO: SESIONES DE REFUERZO */}
         <Grid size={{ xs: 12, md: 6 }}>
@@ -651,43 +547,6 @@ export default function DocenteDashboardPage() {
                 })) ?? []
               }
             />
-
-            <Divider sx={{ my: 2 }} />
-
-            <Grid container spacing={2}>
-              <Grid size={{ xs: 6 }}>
-                <ProgressItem
-                  title="Consultas Hoy vs Sem"
-                  percent={
-                    stats?.week.consultasRealizadas
-                      ? (stats.today.consultasRealizadas /
-                          stats.week.consultasRealizadas) *
-                        100
-                      : 0
-                  }
-                  color="info"
-                  valueText={`${stats?.today.consultasRealizadas ?? 0} / ${stats?.week.consultasRealizadas ?? 0}`}
-                />
-              </Grid>
-              <Grid size={{ xs: 6 }}>
-                <StatCard
-                  title="Próxima Clase"
-                  mode="text"
-                  value={
-                    stats?.nextClass
-                      ? formatClassTime(
-                          stats.nextClass.fechaInicio,
-                          stats.nextClass.fechaFin,
-                        )
-                      : "Sin programar"
-                  }
-                  description={stats?.nextClass?.modalidad}
-                  icon={<Event />}
-                  color="primary"
-                  small
-                />
-              </Grid>
-            </Grid>
           </Paper>
         </Grid>
       </Grid>

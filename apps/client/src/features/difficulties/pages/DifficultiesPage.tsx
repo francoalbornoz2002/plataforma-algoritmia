@@ -43,6 +43,7 @@ import { TemasLabels } from "../../../types/traducciones";
 import HeaderPage from "../../../components/HeaderPage";
 import { AssignmentLate, Warning } from "@mui/icons-material";
 import StatCard from "../../../components/StatCard";
+import SchoolIcon from "@mui/icons-material/School";
 import DifficultiesItem from "../components/DifficultiesItem";
 
 // Tipo para la fila de la DataGrid
@@ -286,14 +287,14 @@ export default function DifficultiesPage() {
               />
             )}
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 5 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             {overviewLoading ? (
               <CircularProgress />
             ) : (
               <StatCard
-                title="Dificultad más frecuente"
+                title="Dificultad Frecuente"
                 mode="text"
-                description="Dificultad que afecta a más alumnos"
+                description="Que afecta a más alumnos"
                 value={overview?.dificultadModa?.nombre || "N/A"}
                 icon={<Warning />}
                 color="error"
@@ -305,16 +306,16 @@ export default function DifficultiesPage() {
               <CircularProgress />
             ) : (
               <StatCard
-                title="Tema de dificultad más frecuente"
+                title="Tema Frecuente"
                 mode="text"
-                description="Tema que afecta a más alumnos"
+                description="Tema con más dificultades"
                 value={
                   overview?.temaModa && overview.temaModa !== temas.Ninguno
                     ? TemasLabels[overview.temaModa]
                     : "N/A"
                 }
                 icon={<TopicIcon />}
-                color="secondary"
+                color="info"
               />
             )}
           </Grid>
@@ -337,6 +338,20 @@ export default function DifficultiesPage() {
                         ? "success"
                         : "info"
                 }
+              />
+            )}
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+            {overviewLoading ? (
+              <CircularProgress />
+            ) : (
+              <StatCard
+                title="Alumno Crítico"
+                mode="text"
+                description="Que más dificultades tiene"
+                value={overview?.alumnoCritico || "Ninguno"}
+                icon={<SchoolIcon />}
+                color="secondary"
               />
             )}
           </Grid>

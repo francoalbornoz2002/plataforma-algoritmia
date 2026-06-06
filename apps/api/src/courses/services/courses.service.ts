@@ -760,68 +760,7 @@ export class CoursesService {
   async getDashboardStats(idCurso: string) {
     const now = new Date();
 
-    const { start: todayStart, end: todayEnd } = this.getDayRange(now);
-    const { start: weekStart, end: weekEnd } = this.getWeekRange(now);
-
-    // Función auxiliar para calcular stats en un rango
-    const getStats = async (start: Date, end: Date) => {
-      // 1. Misiones Completadas
-      const misionesCompletadas = await this.prisma.misionCompletada.count({
-        where: {
-          fechaCompletado: { gte: start, lte: end },
-          progresoAlumno: { alumnoCurso: { idCurso } },
-        },
-      });
-
-      // 2. Consultas Realizadas (Creadas en ese rango)
-      const consultasRealizadas = await this.prisma.consulta.count({
-        where: {
-          idCurso,
-          createdAt: { gte: start, lte: end },
-        },
-      });
-
-      // 3. Dificultad más detectada (Más registros en historial en el rango)
-      const topDiffGroup = await this.prisma.historialDificultadAlumno.groupBy({
-        by: ['idDificultad'],
-        where: {
-          idCurso,
-          fechaCambio: { gte: start, lte: end },
-          gradoNuevo: { not: 'Ninguno' }, // Solo consideramos detecciones reales
-        },
-        _count: { idDificultad: true },
-        orderBy: { _count: { idDificultad: 'desc' } },
-        take: 1,
-      });
-      let dificultadMasDetectada: string | null = null;
-      if (topDiffGroup.length > 0) {
-        const d = await this.prisma.dificultad.findUnique({
-          where: { id: topDiffGroup[0].idDificultad },
-          select: { nombre: true },
-        });
-        dificultadMasDetectada = d?.nombre || null;
-      }
-
-      return {
-        misionesCompletadas,
-        consultasRealizadas,
-        dificultadMasDetectada,
-      };
-    };
-
-    // 6. Distribuciones y nuevos KPIs
-    const [
-      todayStats,
-      weekStats,
-      nextClass,
-      course,
-      consultasPorEstado,
-      dificultadesPorGrado,
-      topStudentDiff,
-      sesionesData,
-    ] = await Promise.all([
-      getStats(todayStart, todayEnd),
-      getStats(weekStart, weekEnd),
+    const [nextClass, course, consultasData, sesionesData] = await Promise.all([
       this.prisma.claseConsulta.findFirst({
         where: {
           idCurso,
@@ -836,6 +775,11 @@ export class CoursesService {
           progresoCurso: {
             select: { pctMisionesCompletadas: true },
           },
+          dificultadesCurso: {
+            select: {
+              dificultadModa: { select: { nombre: true } },
+            },
+          },
         },
       }),
       this.prisma.consulta.groupBy({
@@ -843,58 +787,49 @@ export class CoursesService {
         where: { idCurso, deletedAt: null },
         _count: { id: true },
       }),
-      this.prisma.dificultadAlumno.groupBy({
-        by: ['grado'],
-        where: { idCurso, grado: { not: 'Ninguno' } },
-        _count: { idAlumno: true },
-      }),
-      this.prisma.dificultadAlumno.groupBy({
-        by: ['idAlumno'],
-        where: { idCurso, grado: { not: 'Ninguno' } },
-        _count: { idDificultad: true },
-        orderBy: { _count: { idDificultad: 'desc' } },
-        take: 1,
-      }),
       this.prisma.sesionRefuerzo.findMany({
         where: { idCurso, deletedAt: null },
         select: { idDocente: true, estado: true },
       }),
     ]);
 
-    let alumnoMasDificultades: string | null = null;
-    if (topStudentDiff.length > 0) {
-      const u = await this.prisma.usuario.findUnique({
-        where: { id: topStudentDiff[0].idAlumno },
-        select: { nombre: true, apellido: true },
-      });
-      alumnoMasDificultades = u ? `${u.nombre} ${u.apellido}` : null;
-    }
+    // Procesar consultas
+    let totalConsultas = 0;
+    let pendientesConsultas = 0;
+    const consultasPorEstado = consultasData.map((c) => {
+      totalConsultas += c._count.id;
+      if (c.estado === estado_consulta.Pendiente) {
+        pendientesConsultas += c._count.id;
+      }
+      return {
+        label: c.estado,
+        value: c._count.id,
+      };
+    });
 
     // Procesar sesiones en memoria
+    let totalSesiones = sesionesData.length;
+    let pendientesSesiones = sesionesData.filter(
+      (s) => s.estado === estado_sesion.Pendiente,
+    ).length;
     const sesionesPorEstado = sesionesData.reduce((acc, s) => {
       acc[s.estado] = (acc[s.estado] || 0) + 1;
       return acc;
     }, {});
 
     const sistema = sesionesData.filter((s) => !s.idDocente).length;
-    const docente = sesionesData.length - sistema;
+    const docente = totalSesiones - sistema;
 
     return {
-      today: todayStats,
-      week: weekStats,
-      nextClass,
       progresoPct: course?.progresoCurso?.pctMisionesCompletadas
         ? Number(course.progresoCurso.pctMisionesCompletadas)
         : 0,
-      consultasPorEstado: consultasPorEstado.map((c) => ({
-        label: c.estado,
-        value: c._count.id,
-      })),
-      dificultadesPorGrado: dificultadesPorGrado.map((d) => ({
-        label: d.grado,
-        value: d._count.idAlumno,
-      })),
-      alumnoMasDificultades,
+      dificultadMasDetectada:
+        course?.dificultadesCurso?.dificultadModa?.nombre || null,
+      consultas: { total: totalConsultas, pendientes: pendientesConsultas },
+      sesiones: { total: totalSesiones, pendientes: pendientesSesiones },
+      nextClass,
+      consultasPorEstado,
       sesionesPorEstado: Object.entries(sesionesPorEstado).map(
         ([label, value]) => ({
           label,

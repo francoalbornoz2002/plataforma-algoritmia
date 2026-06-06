@@ -295,6 +295,7 @@ export interface DificultadesCurso {
     // El include que añadimos
     nombre: string;
   };
+  alumnoCritico?: string | null;
 }
 
 // 2. Para la DataGrid de Dificultades del Docente
@@ -713,20 +714,13 @@ export interface ConsultaSimple {
 
 // ---------- DASHBOARD DOCENTE ---------- //
 
-export interface DashboardStats {
-  misionesCompletadas: number;
-  consultasRealizadas: number;
-  dificultadMasDetectada: string | null; // Nombre de la dificultad
-}
-
 export interface CourseDashboardData {
-  today: DashboardStats;
-  week: DashboardStats;
-  nextClass: ClaseConsulta | null;
   progresoPct: number;
+  dificultadMasDetectada: string | null;
+  consultas: { total: number; pendientes: number };
+  sesiones: { total: number; pendientes: number };
+  nextClass: ClaseConsulta | null;
   consultasPorEstado: { label: string; value: number }[];
-  dificultadesPorGrado: { label: string; value: number }[];
-  alumnoMasDificultades: string | null;
   sesionesPorEstado: { label: string; value: number }[];
   sesionesPorOrigen: { sistema: number; docente: number };
 }
