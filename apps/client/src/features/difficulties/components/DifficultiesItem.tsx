@@ -6,47 +6,35 @@ import {
   Button,
   Divider,
 } from "@mui/material";
-import ProgressStat from "./ProgressStat";
-import StarIcon from "@mui/icons-material/Star";
-import BoltIcon from "@mui/icons-material/Bolt";
-import ReplayIcon from "@mui/icons-material/Replay";
-import TaskAltIcon from "@mui/icons-material/TaskAlt";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import { formatDistanceToNow } from "date-fns";
-import { es } from "date-fns/locale";
+import ProgressStat from "../../progress/components/ProgressStat";
+import FunctionsIcon from "@mui/icons-material/Functions";
+import DangerousIcon from "@mui/icons-material/Dangerous";
+import WarningIcon from "@mui/icons-material/Warning";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
 
-interface ProgressItemProps {
+interface DifficultiesItemProps {
   student: {
     nombre: string;
     apellido: string;
     fotoPerfilUrl?: string | null;
   };
   stats: {
-    cantMisionesCompletadas: number;
-    progresoPct: number;
-    totalEstrellas: number;
-    promEstrellas: number;
-    totalIntentos: number;
-    promIntentos: number;
-    totalExp: number;
-    ultimaActividad: string | null;
+    total: number;
+    alto: number;
+    medio: number;
+    bajo: number;
+    ninguno: number;
   };
   onDetailClick: () => void;
 }
 
-export default function ProgressItem({
+export default function DifficultiesItem({
   student,
   stats,
   onDetailClick,
-}: ProgressItemProps) {
+}: DifficultiesItemProps) {
   const baseUrl = import.meta.env.VITE_API_URL_WITHOUT_PREFIX || "";
-
-  const ultimaActividadFormateada = stats.ultimaActividad
-    ? formatDistanceToNow(new Date(stats.ultimaActividad), {
-        locale: es,
-        addSuffix: true,
-      })
-    : "Nunca";
 
   return (
     <Paper elevation={2} sx={{ p: 2, borderRadius: "0.7em" }}>
@@ -87,45 +75,11 @@ export default function ProgressItem({
           useFlexGap
         >
           <ProgressStat
-            icon={<TaskAltIcon />}
-            color="success"
-            label="Misiones compl."
-            value={stats.cantMisionesCompletadas}
-            subValue={`(${stats.progresoPct.toFixed(1)}% prog.)`}
-            placeholderValue="999"
-            placeholderSubValue="(100.0% prog.)"
-          />
-
-          <Divider
-            orientation="vertical"
-            flexItem
-            sx={{ display: { xs: "none", sm: "block" } }}
-          />
-
-          <ProgressStat
-            icon={<StarIcon />}
-            color="warning"
-            label="Estrellas"
-            value={stats.totalEstrellas}
-            subValue={`(${stats.promEstrellas.toFixed(1)} prom.)`}
-            placeholderValue="999"
-            placeholderSubValue="(99.9 prom.)"
-          />
-
-          <Divider
-            orientation="vertical"
-            flexItem
-            sx={{ display: { xs: "none", sm: "block" } }}
-          />
-
-          <ProgressStat
-            icon={<ReplayIcon />}
+            icon={<FunctionsIcon />}
             color="primary"
-            label="Intentos"
-            value={stats.totalIntentos}
-            subValue={`(${stats.promIntentos.toFixed(1)} prom.)`}
-            placeholderValue="999"
-            placeholderSubValue="(99.9 prom.)"
+            label="Total Dif."
+            value={stats.total}
+            placeholderValue="99"
           />
 
           <Divider
@@ -135,13 +89,11 @@ export default function ProgressItem({
           />
 
           <ProgressStat
-            icon={<BoltIcon />}
-            color="secondary"
-            label="Experiencia"
-            value={stats.totalExp}
-            subValue="Pts."
-            placeholderValue="99999"
-            placeholderSubValue="Pts."
+            icon={<DangerousIcon />}
+            color="error"
+            label="G. Alto"
+            value={stats.alto}
+            placeholderValue="99"
           />
 
           <Divider
@@ -151,11 +103,39 @@ export default function ProgressItem({
           />
 
           <ProgressStat
-            icon={<AccessTimeIcon />}
+            icon={<WarningIcon />}
+            color="warning"
+            label="G. Medio"
+            value={stats.medio}
+            placeholderValue="99"
+          />
+
+          <Divider
+            orientation="vertical"
+            flexItem
+            sx={{ display: { xs: "none", sm: "block" } }}
+          />
+
+          <ProgressStat
+            icon={<CheckCircleIcon />}
+            color="success"
+            label="G. Bajo"
+            value={stats.bajo}
+            placeholderValue="99"
+          />
+
+          <Divider
+            orientation="vertical"
+            flexItem
+            sx={{ display: { xs: "none", sm: "block" } }}
+          />
+
+          <ProgressStat
+            icon={<RemoveCircleIcon />}
             color="info"
-            label="Última Act."
-            value={ultimaActividadFormateada}
-            placeholderValue="hace 11 meses"
+            label="Superadas"
+            value={stats.ninguno}
+            placeholderValue="99"
           />
 
           <Button

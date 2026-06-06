@@ -4,7 +4,6 @@ import {
   Grid,
   CircularProgress,
   Alert,
-  Paper,
   Stack,
   TextField,
   FormControl,
@@ -14,14 +13,9 @@ import {
   Tooltip,
   Autocomplete,
   type SelectChangeEvent,
-  Button,
   IconButton,
+  Pagination,
 } from "@mui/material";
-import {
-  DataGrid,
-  type GridColDef,
-  type GridSortModel,
-} from "@mui/x-data-grid";
 import TopicIcon from "@mui/icons-material/Topic";
 import SpeedIcon from "@mui/icons-material/Speed";
 import GroupIcon from "@mui/icons-material/Group";
@@ -45,11 +39,11 @@ import { temas, grado_dificultad } from "../../../types";
 
 // 3. Importamos el Modal
 import StudentDifficultyDetailModal from "../components/StudentDifficultyDetailModal";
-import GradeChip from "../../../components/GradeChip";
 import { TemasLabels } from "../../../types/traducciones";
 import HeaderPage from "../../../components/HeaderPage";
 import { AssignmentLate, Warning } from "@mui/icons-material";
 import StatCard from "../../../components/StatCard";
+import DifficultiesItem from "../components/DifficultiesItem";
 
 // Tipo para la fila de la DataGrid
 type StudentRow = AlumnoDificultadResumen;
@@ -80,22 +74,16 @@ export default function DifficultiesPage() {
   // --- ¡NUEVO ESTADO PARA EL MODAL! ---
   const [viewingStudent, setViewingStudent] = useState<StudentRow | null>(null);
 
-  // Estado para paginación
-  const [paginationModel, setPaginationModel] = useState({
-    page: 0,
-    pageSize: 10,
-  });
-
-  // Estado para ordenamiento
-  const [sortModel, setSortModel] = useState<GridSortModel>([
-    { field: "apellido", sort: "asc" },
-  ]);
+  // Paginación de la lista
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Estado para filtros
   const [filters, setFilters] = useState({
     tema: "",
     dificultadId: "", // (Lo dejamos listo para el futuro)
     grado: "",
+    sortOption: "apellido-asc",
   });
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -155,7 +143,7 @@ export default function DifficultiesPage() {
 
   // --- FILTRADO LOCAL ---
   const filteredRows = useMemo(() => {
-    return allRows.filter((row) => {
+    let result = allRows.filter((row) => {
       // Filtro por Búsqueda (Texto)
       if (searchTerm) {
         const term = searchTerm.toLowerCase();
@@ -189,11 +177,37 @@ export default function DifficultiesPage() {
 
       return true;
     });
+
+    // Ordenamiento
+    result.sort((a, b) => {
+      const sortOpt = filters.sortOption || "apellido-asc";
+      const [field, order] = sortOpt.split("-");
+      const multiplier = order === "asc" ? 1 : -1;
+
+      switch (field) {
+        case "apellido":
+          return multiplier * a.apellido.localeCompare(b.apellido);
+        case "total":
+          return multiplier * (a.totalDificultades - b.totalDificultades);
+        case "alto":
+          return multiplier * (a.gradoAlto - b.gradoAlto);
+        case "medio":
+          return multiplier * (a.gradoMedio - b.gradoMedio);
+        case "bajo":
+          return multiplier * (a.gradoBajo - b.gradoBajo);
+        case "ninguno":
+          return multiplier * (a.gradoNinguno - b.gradoNinguno);
+        default:
+          return a.apellido.localeCompare(b.apellido);
+      }
+    });
+
+    return result;
   }, [allRows, searchTerm, filters]);
 
   // Efecto para el buscador
   useEffect(() => {
-    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+    setPage(1);
   }, [searchTerm]);
 
   // --- Handlers (para la DataGrid y Filtros) ---
@@ -213,7 +227,7 @@ export default function DifficultiesPage() {
       }
       return newFilters;
     });
-    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+    setPage(1);
   };
 
   const handleClearFilters = () => {
@@ -222,88 +236,16 @@ export default function DifficultiesPage() {
       tema: "",
       dificultadId: "",
       grado: "",
+      sortOption: "apellido-asc",
     });
-    setPaginationModel((prev) => ({ ...prev, page: 0 }));
+    setPage(1);
   };
 
-  // --- COLUMNAS (DataGrid) ---
-  const columns = useMemo<GridColDef<StudentRow>[]>(
-    () => [
-      {
-        field: "apellido",
-        headerName: "Alumno",
-        flex: 2,
-        valueGetter: (value: any, row: StudentRow) =>
-          `${row.apellido}, ${row.nombre}`,
-      },
-      {
-        field: "totalDificultades",
-        headerName: "Total Dificultades",
-        flex: 1,
-        align: "center",
-        headerAlign: "center",
-      },
-      {
-        field: "gradoAlto",
-        renderHeader: () => (
-          <GradeChip texto="Grado" grado={grado_dificultad.Alto} />
-        ),
-        flex: 1,
-        align: "center",
-        headerAlign: "center",
-        minWidth: 80,
-      },
-      {
-        field: "gradoMedio",
-        renderHeader: () => (
-          <GradeChip texto="Grado" grado={grado_dificultad.Medio} />
-        ),
-        flex: 1,
-        align: "center",
-        headerAlign: "center",
-        minWidth: 80,
-      },
-      {
-        field: "gradoBajo",
-        renderHeader: () => (
-          <GradeChip texto="Grado" grado={grado_dificultad.Bajo} />
-        ),
-        flex: 1,
-        align: "center",
-        headerAlign: "center",
-        minWidth: 80,
-      },
-      {
-        field: "gradoNinguno",
-        renderHeader: () => (
-          <GradeChip texto="Grado" grado={grado_dificultad.Ninguno} />
-        ),
-        flex: 1,
-        align: "center",
-        headerAlign: "center",
-        minWidth: 80,
-      },
-      {
-        field: "actions",
-        headerName: "Detalle",
-        flex: 1,
-        align: "center",
-        headerAlign: "center",
-        sortable: false,
-        renderCell: (params) => (
-          <Tooltip title="Ver detalle de dificultades">
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => setViewingStudent(params.row)} // <-- Abre el modal
-            >
-              Detalle
-            </Button>
-          </Tooltip>
-        ),
-      },
-    ],
-    [],
+  // --- PAGINACIÓN ---
+  const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+  const paginatedRows = filteredRows.slice(
+    (page - 1) * itemsPerPage,
+    page * itemsPerPage,
   );
 
   if (!selectedCourse) {
@@ -486,6 +428,30 @@ export default function DifficultiesPage() {
                 ))}
             </Select>
           </FormControl>
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <InputLabel>Ordenar por</InputLabel>
+            <Select
+              name="sortOption"
+              value={filters.sortOption}
+              label="Ordenar por"
+              onChange={(e) =>
+                handleFilterChange(e as SelectChangeEvent<string>)
+              }
+            >
+              <MenuItem value="apellido-asc">Apellido (A-Z)</MenuItem>
+              <MenuItem value="apellido-desc">Apellido (Z-A)</MenuItem>
+              <MenuItem value="total-desc">Total (Desc.)</MenuItem>
+              <MenuItem value="total-asc">Total (Asc.)</MenuItem>
+              <MenuItem value="alto-desc">Grado Alto (Desc.)</MenuItem>
+              <MenuItem value="alto-asc">Grado Alto (Asc.)</MenuItem>
+              <MenuItem value="medio-desc">Grado Medio (Desc.)</MenuItem>
+              <MenuItem value="medio-asc">Grado Medio (Asc.)</MenuItem>
+              <MenuItem value="bajo-desc">Grado Bajo (Desc.)</MenuItem>
+              <MenuItem value="bajo-asc">Grado Bajo (Asc.)</MenuItem>
+              <MenuItem value="ninguno-desc">Superadas (Desc.)</MenuItem>
+              <MenuItem value="ninguno-asc">Superadas (Asc.)</MenuItem>
+            </Select>
+          </FormControl>
           <Tooltip title="Limpiar filtros">
             <IconButton
               onClick={handleClearFilters}
@@ -496,49 +462,48 @@ export default function DifficultiesPage() {
             </IconButton>
           </Tooltip>
         </Stack>
-        {/* --- C. DataGrid --- */}
+
+        {/* --- C. Lista de Alumnos --- */}
         {gridError && <Alert severity="error">{gridError}</Alert>}
-        <Box
-          sx={{
-            width: "100%",
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1fr)",
-          }}
-        >
-          <Paper
-            elevation={2}
-            sx={{ height: 600, width: "100%", boxSizing: "border-box" }}
-          >
-            <DataGrid
-              rows={filteredRows}
-              columns={columns}
-              loading={gridLoading}
-              paginationModel={paginationModel}
-              onPaginationModelChange={setPaginationModel}
-              pageSizeOptions={[5, 10, 25]}
-              sortModel={sortModel}
-              onSortModelChange={setSortModel}
-              disableRowSelectionOnClick
-              disableColumnResize={true}
-              sx={{
-                "& .MuiDataGrid-cell:focus": {
-                  outline: "none",
-                },
-                "& .MuiDataGrid-cell:focus-within": {
-                  outline: "none",
-                },
-                "& .MuiDataGrid-columnHeader:focus": {
-                  outline: "none",
-                },
-                "& .MuiDataGrid-columnHeader:focus-within": {
-                  outline: "none",
-                },
-                borderRadius: "0.7em",
-                border: 0,
+
+        <Stack spacing={2}>
+          {paginatedRows.map((row) => (
+            <DifficultiesItem
+              key={row.id}
+              student={{
+                nombre: row.nombre,
+                apellido: row.apellido,
               }}
+              stats={{
+                total: row.totalDificultades,
+                alto: row.gradoAlto,
+                medio: row.gradoMedio,
+                bajo: row.gradoBajo,
+                ninguno: row.gradoNinguno,
+              }}
+              onDetailClick={() => setViewingStudent(row)}
             />
-          </Paper>
-        </Box>
+          ))}
+
+          {filteredRows.length === 0 && !gridLoading && (
+            <Alert severity="info">
+              No se encontraron alumnos con los filtros aplicados.
+            </Alert>
+          )}
+
+          {totalPages > 1 && (
+            <Box
+              sx={{ display: "flex", justifyContent: "center", mt: 2, mb: 2 }}
+            >
+              <Pagination
+                count={totalPages}
+                page={page}
+                onChange={(_, value) => setPage(value)}
+                color="primary"
+              />
+            </Box>
+          )}
+        </Stack>
       </Stack>
 
       {/* --- D. El Modal de Detalle --- */}
