@@ -36,12 +36,12 @@ export default function StatCard({
         cursor: onClick ? "pointer" : "default",
       }}
     >
-      <Stack spacing={small ? 0.5 : 1}>
+      <Stack spacing={small ? 0.25 : 0.5}>
         <Stack direction="row" alignItems="center" spacing={1}>
           <CardIcon
             icon={icon}
             color={color}
-            size={small ? "small" : "medium"}
+            size={small ? "small" : "small"}
           />
           <Typography
             variant={small ? "body2" : "subtitle2"}
