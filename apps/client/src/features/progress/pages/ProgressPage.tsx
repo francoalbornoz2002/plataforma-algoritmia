@@ -350,7 +350,7 @@ export default function ProgressPage() {
                   title="Experiencia Total"
                   value={overview.totalExp}
                   icon={<BoltIcon />}
-                  color="info"
+                  color="secondary"
                   description="Puntos acumulados"
                 />
               </Grid>
@@ -375,7 +375,7 @@ export default function ProgressPage() {
                   value={overview.alumnoMasActivo || "Ninguno"}
                   description="Más misiones compl."
                   icon={<SchoolIcon />}
-                  color="secondary"
+                  color="info"
                 />
               </Grid>
             </Grid>

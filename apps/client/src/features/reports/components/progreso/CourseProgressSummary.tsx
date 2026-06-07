@@ -142,13 +142,11 @@ export default function CourseProgressSummary({ courseId }: Props) {
           <Stack spacing={2}>
             {/* Fila 1: Tarjetas de Resumen */}
             <Grid container spacing={2}>
-              {/* Progreso Total */}
-              <Grid size={{ xs: 12, md: 3 }}>
+              {/* Misiones completadas y progreso */}
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <StatCard
-                  icon={<PercentIcon />}
-                  title="Progreso del Curso"
-                  value={`${data.resumen.progresoTotal.toFixed(1)}%`}
-                  color="primary"
+                  icon={<TaskAltIcon fontSize="small" />}
+                  title="Misiones completadas"
                   description={
                     <Box component="span" sx={{ display: "flex", gap: 1.5 }}>
                       <Box
@@ -162,39 +160,33 @@ export default function CourseProgressSummary({ courseId }: Props) {
                       </Box>
                     </Box>
                   }
-                />
-              </Grid>
-
-              {/* Misiones */}
-              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
-                <StatCard
-                  icon={<TaskAltIcon fontSize="small" />}
-                  title="Misiones completadas"
-                  description="Acumuladas por el curso"
                   value={data.resumen.misionesCompletadas}
-                  color="info"
+                  subValue={`(${data.resumen.progresoTotal.toFixed(1)}% prog.)`}
+                  color="success"
                 />
               </Grid>
 
               {/* Estrellas */}
-              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <StatCard
                   icon={<StarIcon fontSize="small" />}
                   title="Estrellas totales"
                   description="Acumuladas por el curso"
                   value={data.resumen.estrellasTotales}
+                  subValue={`(${data.resumen.promEstrellas.toFixed(1)} prom. / alu.)`}
                   color="warning"
                 />
               </Grid>
 
               {/* Intentos */}
-              <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <StatCard
                   icon={<ReplayIcon fontSize="small" />}
                   title="Intentos totales"
                   description="Acumulados por el curso"
                   value={data.resumen.intentosTotales}
-                  color="secondary"
+                  subValue={`(${data.resumen.promIntentos.toFixed(1)} prom. / alu.)`}
+                  color="primary"
                 />
               </Grid>
 
@@ -205,7 +197,7 @@ export default function CourseProgressSummary({ courseId }: Props) {
                   title="Experiencia total"
                   description="Puntos EXP acumulados por el curso"
                   value={data.resumen.expTotal}
-                  color="primary"
+                  color="info"
                 />
               </Grid>
             </Grid>
@@ -215,7 +207,7 @@ export default function CourseProgressSummary({ courseId }: Props) {
               {/* Gráfico */}
               <Grid size={{ xs: 12, md: 6 }}>
                 <Paper
-                  elevation={3}
+                  elevation={2}
                   sx={{
                     p: 2,
                     display: "flex",
@@ -295,254 +287,220 @@ export default function CourseProgressSummary({ courseId }: Props) {
 
               {/* Estadísticas de Alumnos */}
               <Grid size={{ xs: 12, md: 6 }}>
-                <Stack spacing={2} sx={{ height: "100%" }}>
-                  {/* Promedios */}
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 6 }}>
-                      <StatCard
-                        icon={<StarIcon fontSize="small" />}
-                        title="Estrellas Promedio"
-                        description="Por alumno"
-                        value={data.resumen.promEstrellas.toFixed(1)}
-                        color="warning"
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 6 }}>
-                      <StatCard
-                        icon={<ReplayIcon fontSize="small" />}
-                        title="Intentos Promedio"
-                        description="Por alumno"
-                        value={data.resumen.promIntentos.toFixed(1)}
-                        color="info"
-                      />
-                    </Grid>
-                  </Grid>
-                  {/* Tops */}
-                  <Stack
-                    direction={{ xs: "column", sm: "row" }}
-                    spacing={2}
-                    sx={{ flex: 1 }}
+                {/* Tops */}
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={2}
+                  sx={{ flex: 1 }}
+                >
+                  {/* Top Activos */}
+                  <Paper
+                    sx={{
+                      flex: 1,
+                      p: 2,
+                      height: "100%",
+                    }}
                   >
-                    {/* Top Activos */}
-                    <Paper
-                      sx={{
-                        flex: 1,
-                        p: 2,
-                        height: "100%",
-                        borderTop: "4px solid",
-                        borderColor: "success.main",
-                      }}
-                    >
-                      <Stack direction="column" spacing={1}>
-                        <Stack
-                          direction="row"
-                          alignItems="center"
-                          spacing={1}
-                          mb={1}
+                    <Stack direction="column" spacing={1}>
+                      <Stack
+                        direction="row"
+                        alignItems="center"
+                        spacing={1}
+                        mb={1}
+                      >
+                        <TrendingUpIcon color="success" fontSize="small" />
+                        <Typography
+                          variant="subtitle2"
+                          color="success.main"
+                          fontWeight="bold"
                         >
-                          <TrendingUpIcon color="success" fontSize="small" />
-                          <Typography
-                            variant="subtitle2"
-                            color="success.main"
-                            fontWeight="bold"
-                          >
-                            Top 5 Más Activos
-                          </Typography>
-                        </Stack>
-                        <Typography variant="caption" color="text.secondary">
-                          Con porcentaje de diferencia respecto al promedio
+                          Top 5 Más Activos
                         </Typography>
-                        <List dense disablePadding>
-                          {data.tops?.activos.map(
-                            (student: any, index: number) => (
-                              <ListItem key={index} sx={{ py: 0.5, px: 1 }}>
-                                <ListItemAvatar sx={{ minWidth: 44 }}>
-                                  <Avatar
-                                    src={
-                                      student.fotoPerfilUrl
-                                        ? `${API_URL_WITHOUT_PREFIX}${student.fotoPerfilUrl}`
-                                        : undefined
-                                    }
+                      </Stack>
+                      <Typography variant="caption" color="text.secondary">
+                        Con porcentaje de diferencia respecto al promedio
+                      </Typography>
+                      <List dense disablePadding>
+                        {data.tops?.activos.map(
+                          (student: any, index: number) => (
+                            <ListItem key={index} sx={{ py: 0.5, px: 1 }}>
+                              <ListItemAvatar sx={{ minWidth: 44 }}>
+                                <Avatar
+                                  src={
+                                    student.fotoPerfilUrl
+                                      ? `${API_URL_WITHOUT_PREFIX}${student.fotoPerfilUrl}`
+                                      : undefined
+                                  }
+                                  sx={{
+                                    bgcolor: "success.light",
+                                    width: 32,
+                                    height: 32,
+                                    border: "2px solid",
+                                    borderColor: "success.main",
+                                    color: "success.dark",
+                                    fontSize: "0.875rem",
+                                    fontWeight: "bold",
+                                  }}
+                                >
+                                  {!student.fotoPerfilUrl &&
+                                    student.inicialApellido}
+                                </Avatar>
+                              </ListItemAvatar>
+                              <ListItemText
+                                primary={student.nombre}
+                                primaryTypographyProps={{
+                                  variant: "body2",
+                                  fontWeight: 500,
+                                }}
+                                secondary={
+                                  <Typography
+                                    variant="caption"
+                                    component="span"
                                     sx={{
-                                      bgcolor: "success.light",
-                                      width: 32,
-                                      height: 32,
-                                      border: "2px solid",
-                                      borderColor: "success.main",
-                                      color: "success.dark",
-                                      fontSize: "0.875rem",
-                                      fontWeight: "bold",
+                                      fontSize: "0.7rem",
+                                      lineHeight: 1,
                                     }}
                                   >
-                                    {!student.fotoPerfilUrl &&
-                                      student.inicialApellido}
-                                  </Avatar>
-                                </ListItemAvatar>
-                                <ListItemText
-                                  primary={student.nombre}
-                                  primaryTypographyProps={{
-                                    variant: "body2",
-                                    fontWeight: 500,
-                                  }}
-                                  secondary={
+                                    <strong>{student.misiones}</strong> misiones
                                     <Typography
-                                      variant="caption"
                                       component="span"
+                                      variant="caption"
+                                      color="success.main"
                                       sx={{
+                                        ml: 0.5,
+                                        fontWeight: "bold",
                                         fontSize: "0.7rem",
-                                        lineHeight: 1,
                                       }}
                                     >
-                                      <strong>{student.misiones}</strong>{" "}
-                                      misiones completadas
-                                      <Typography
-                                        component="span"
-                                        variant="caption"
-                                        color="success.main"
-                                        sx={{
-                                          ml: 0.5,
-                                          fontWeight: "bold",
-                                          fontSize: "0.7rem",
-                                        }}
-                                      >
-                                        (+
-                                        {student.diferenciaPorcentual.toFixed(
-                                          0,
-                                        )}
-                                        % vs prom)
-                                      </Typography>
+                                      (+
+                                      {student.diferenciaPorcentual.toFixed(0)}%
+                                      vs prom)
                                     </Typography>
-                                  }
-                                  sx={{ m: 0 }}
-                                />
-                              </ListItem>
-                            ),
-                          )}
-                          {data.tops?.activos.length === 0 && (
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              align="center"
-                              display="block"
-                              sx={{ mt: 1 }}
-                            >
-                              Sin datos
-                            </Typography>
-                          )}
-                        </List>
-                      </Stack>
-                    </Paper>
+                                  </Typography>
+                                }
+                                sx={{ m: 0 }}
+                              />
+                            </ListItem>
+                          ),
+                        )}
+                        {data.tops?.activos.length === 0 && (
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            align="center"
+                            display="block"
+                            sx={{ mt: 1 }}
+                          >
+                            Sin datos
+                          </Typography>
+                        )}
+                      </List>
+                    </Stack>
+                  </Paper>
 
-                    {/* Top Inactivos */}
-                    <Paper
-                      sx={{
-                        flex: 1,
-                        p: 2,
-                        height: "100%",
-                        borderTop: "4px solid",
-                        borderColor: "error.main",
-                      }}
-                    >
-                      <Stack direction="column" spacing={1}>
-                        <Stack
-                          direction="row"
-                          alignItems="center"
-                          spacing={1}
-                          mb={1}
+                  {/* Top Inactivos */}
+                  <Paper
+                    sx={{
+                      flex: 1,
+                      p: 2,
+                      height: "100%",
+                    }}
+                  >
+                    <Stack direction="column" spacing={1}>
+                      <Stack
+                        direction="row"
+                        alignItems="center"
+                        spacing={1}
+                        mb={1}
+                      >
+                        <TrendingDownIcon color="error" fontSize="small" />
+                        <Typography
+                          variant="subtitle2"
+                          color="error.main"
+                          fontWeight="bold"
                         >
-                          <TrendingDownIcon color="error" fontSize="small" />
-                          <Typography
-                            variant="subtitle2"
-                            color="error.main"
-                            fontWeight="bold"
-                          >
-                            Top 5 Menos Activos
-                          </Typography>
-                        </Stack>
-                        <Typography variant="caption" color="text.secondary">
-                          Con porcentaje de diferencia respecto al promedio
+                          Top 5 Menos Activos
                         </Typography>
-                        <List dense disablePadding>
-                          {data.tops?.inactivos.map(
-                            (student: any, index: number) => (
-                              <ListItem key={index} sx={{ py: 0.5, px: 1 }}>
-                                <ListItemAvatar sx={{ minWidth: 44 }}>
-                                  <Avatar
-                                    src={
-                                      student.fotoPerfilUrl
-                                        ? `${API_URL_WITHOUT_PREFIX}${student.fotoPerfilUrl}`
-                                        : undefined
-                                    }
+                      </Stack>
+                      <Typography variant="caption" color="text.secondary">
+                        Con porcentaje de diferencia respecto al promedio
+                      </Typography>
+                      <List dense disablePadding>
+                        {data.tops?.inactivos.map(
+                          (student: any, index: number) => (
+                            <ListItem key={index} sx={{ py: 0.5, px: 1 }}>
+                              <ListItemAvatar sx={{ minWidth: 44 }}>
+                                <Avatar
+                                  src={
+                                    student.fotoPerfilUrl
+                                      ? `${API_URL_WITHOUT_PREFIX}${student.fotoPerfilUrl}`
+                                      : undefined
+                                  }
+                                  sx={{
+                                    bgcolor: "error.light",
+                                    width: 32,
+                                    height: 32,
+                                    border: "2px solid",
+                                    borderColor: "error.main",
+                                    color: "error.dark",
+                                    fontSize: "0.875rem",
+                                    fontWeight: "bold",
+                                  }}
+                                >
+                                  {!student.fotoPerfilUrl &&
+                                    student.inicialApellido}
+                                </Avatar>
+                              </ListItemAvatar>
+                              <ListItemText
+                                primary={student.nombre}
+                                primaryTypographyProps={{
+                                  variant: "body2",
+                                  fontWeight: 500,
+                                }}
+                                secondary={
+                                  <Typography
+                                    variant="caption"
+                                    component="span"
                                     sx={{
-                                      bgcolor: "error.light",
-                                      width: 32,
-                                      height: 32,
-                                      border: "2px solid",
-                                      borderColor: "error.main",
-                                      color: "error.dark",
-                                      fontSize: "0.875rem",
-                                      fontWeight: "bold",
+                                      fontSize: "0.7rem",
+                                      lineHeight: 1,
                                     }}
                                   >
-                                    {!student.fotoPerfilUrl &&
-                                      student.inicialApellido}
-                                  </Avatar>
-                                </ListItemAvatar>
-                                <ListItemText
-                                  primary={student.nombre}
-                                  primaryTypographyProps={{
-                                    variant: "body2",
-                                    fontWeight: 500,
-                                  }}
-                                  secondary={
+                                    <strong>{student.misiones}</strong> misiones
                                     <Typography
-                                      variant="caption"
                                       component="span"
+                                      variant="caption"
+                                      color="error.main"
                                       sx={{
+                                        ml: 0.5,
+                                        fontWeight: "bold",
                                         fontSize: "0.7rem",
-                                        lineHeight: 1,
                                       }}
                                     >
-                                      <strong>{student.misiones}</strong>{" "}
-                                      misiones completadas
-                                      <Typography
-                                        component="span"
-                                        variant="caption"
-                                        color="error.main"
-                                        sx={{
-                                          ml: 0.5,
-                                          fontWeight: "bold",
-                                          fontSize: "0.7rem",
-                                        }}
-                                      >
-                                        (
-                                        {student.diferenciaPorcentual.toFixed(
-                                          0,
-                                        )}
-                                        % vs prom)
-                                      </Typography>
+                                      ({student.diferenciaPorcentual.toFixed(0)}
+                                      % vs prom)
                                     </Typography>
-                                  }
-                                  sx={{ m: 0 }}
-                                />
-                              </ListItem>
-                            ),
-                          )}
-                          {data.tops?.inactivos.length === 0 && (
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              align="center"
-                              display="block"
-                              sx={{ mt: 1 }}
-                            >
-                              Sin datos
-                            </Typography>
-                          )}
-                        </List>
-                      </Stack>
-                    </Paper>
-                  </Stack>
+                                  </Typography>
+                                }
+                                sx={{ m: 0 }}
+                              />
+                            </ListItem>
+                          ),
+                        )}
+                        {data.tops?.inactivos.length === 0 && (
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            align="center"
+                            display="block"
+                            sx={{ mt: 1 }}
+                          >
+                            Sin datos
+                          </Typography>
+                        )}
+                      </List>
+                    </Stack>
+                  </Paper>
                 </Stack>
               </Grid>
             </Grid>
