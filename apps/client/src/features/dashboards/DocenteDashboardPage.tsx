@@ -423,14 +423,12 @@ export default function DocenteDashboardPage() {
               display: "flex",
               flexDirection: "column",
               overflow: "hidden",
-              borderTop: 5,
-              borderColor: "primary.main",
               height: "100%",
-              maxHeight: 400,
+              maxHeight: 405,
             }}
           >
             <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
-              <Typography variant="h6" color="primary.main" gutterBottom>
+              <Typography variant="h6" gutterBottom>
                 Alumnos inscriptos
               </Typography>
               <TextField
@@ -558,7 +556,6 @@ export default function DocenteDashboardPage() {
                       data: stats.evolucionProgreso.map((e) => e.progreso),
                       label: "Progreso (%)",
                       color: "#4caf50",
-                      area: true,
                       showMark: true,
                     },
                   ]}

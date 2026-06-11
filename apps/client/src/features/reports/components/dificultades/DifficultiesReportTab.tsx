@@ -7,6 +7,8 @@ import StudentDifficultiesReport from "./StudentDifficultiesReport";
 import ReportSelectorDialog, {
   type ReportOption,
 } from "../common/ReportSelectorDialog";
+import { useAuth } from "../../../authentication/context/AuthProvider";
+import { roles } from "../../../../types";
 
 interface Props {
   courseId: string;
@@ -14,6 +16,7 @@ interface Props {
 }
 
 export default function DifficultiesReportTab({ courseId, trigger }: Props) {
+  const { profile } = useAuth();
   const [selectedReport, setSelectedReport] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -43,7 +46,7 @@ export default function DifficultiesReportTab({ courseId, trigger }: Props) {
       icon: <Person />,
       color: "info.main",
     },
-  ];
+  ].filter((opt) => !(profile?.rol === roles.Docente && opt.id === "summary"));
 
   return (
     <Box sx={{ width: "100%" }}>
