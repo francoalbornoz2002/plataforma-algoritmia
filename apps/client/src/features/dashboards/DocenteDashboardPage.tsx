@@ -44,6 +44,8 @@ import {
   SwitchAccessShortcutAdd,
   Warning,
   TaskAlt,
+  Assessment,
+  AssignmentLate,
 } from "@mui/icons-material";
 import {
   EstadoConsultaLabels,
@@ -60,6 +62,7 @@ import { PieChart } from "@mui/x-charts/PieChart";
 import { FormControl, Select, MenuItem } from "@mui/material";
 import { TemasLabels } from "../../types/traducciones";
 import { temas } from "../../types";
+import CardIcon from "../../components/CardIcon";
 
 // --- Componentes Auxiliares Visuales ---
 
@@ -526,9 +529,17 @@ export default function DocenteDashboardPage() {
               height: "100%",
             }}
           >
-            <Typography variant="h6" gutterBottom>
-              Evolución del Progreso
-            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                mb: 1,
+                gap: 1,
+              }}
+            >
+              <CardIcon icon={<Assessment />} color="success" />
+              <Typography variant="h6">Evolución del Progreso</Typography>
+            </Box>
             <Box sx={{ width: "100%" }}>
               {stats?.evolucionProgreso &&
               stats.evolucionProgreso.length > 0 ? (
@@ -597,7 +608,19 @@ export default function DocenteDashboardPage() {
               alignItems="center"
               mb={2}
             >
-              <Typography variant="h6">Distribución de Dificultades</Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  mb: 1,
+                  gap: 1,
+                }}
+              >
+                <CardIcon icon={<AssignmentLate />} color="error" />
+                <Typography variant="h6">
+                  Distribución de Dificultades
+                </Typography>
+              </Box>
               <FormControl size="small" variant="standard">
                 <Select
                   value={agruparDificultadesPor}
@@ -657,97 +680,6 @@ export default function DocenteDashboardPage() {
                 </Typography>
               )}
             </Box>
-          </Paper>
-        </Grid>
-      </Grid>
-
-      <Grid container spacing={3}>
-        {/* GRUPO: SESIONES DE REFUERZO */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Paper
-            elevation={2}
-            sx={{
-              p: 2,
-              borderTop: "4px solid",
-              borderColor: "#9c27b0",
-              height: "100%",
-              alignItems: "center",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <SwitchAccessShortcutAdd sx={{ color: "#9c27b0", mr: 1 }} />
-              <Typography variant="h6" color="#9c27b0" fontWeight="bold">
-                Sesiones de Refuerzo
-              </Typography>
-            </Box>
-
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Por Estado
-            </Typography>
-            <DistributionBar
-              items={
-                stats?.sesionesPorEstado?.map((s) => ({
-                  label:
-                    EstadoSesionLabels[s.label as estado_sesion] || s.label,
-                  value: s.value,
-                  color: getEstadoSesionColor(s.label),
-                })) ?? []
-              }
-            />
-
-            <Divider sx={{ my: 2 }} />
-
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Por Origen
-            </Typography>
-            <DistributionBar
-              items={[
-                {
-                  label: "Generadas por Sistema",
-                  value: stats?.sesionesPorOrigen.sistema ?? 0,
-                  color: "#9c27b0",
-                },
-                {
-                  label: "Asignadas por Docente",
-                  value: stats?.sesionesPorOrigen.docente ?? 0,
-                  color: "#ff9800",
-                },
-              ]}
-            />
-          </Paper>
-        </Grid>
-        {/* GRUPO: CONSULTAS */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Paper
-            elevation={2}
-            sx={{
-              p: 2,
-              borderTop: "4px solid",
-              borderColor: "info.main",
-              height: "100%",
-              alignItems: "center",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <MarkUnreadChatAlt color="info" sx={{ mr: 1 }} />
-              <Typography variant="h6" color="info.main" fontWeight="bold">
-                Consultas y Clases
-              </Typography>
-            </Box>
-
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              Estado de Consultas
-            </Typography>
-            <DistributionBar
-              items={
-                stats?.consultasPorEstado?.map((c) => ({
-                  label:
-                    EstadoConsultaLabels[c.label as estado_consulta] || c.label,
-                  value: c.value,
-                  color: getEstadoConsultaColor(c.label),
-                })) ?? []
-              }
-            />
           </Paper>
         </Grid>
       </Grid>

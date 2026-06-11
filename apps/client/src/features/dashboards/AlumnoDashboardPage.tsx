@@ -42,6 +42,7 @@ import {
 } from "../../types/traducciones";
 import DashboardHeader from "./components/DashboardHeader";
 import StatCard from "../../components/StatCard";
+import CardIcon from "../../components/CardIcon";
 
 // --- Componentes Auxiliares Visuales ---
 
@@ -299,20 +300,16 @@ export default function AlumnoDashboardPage() {
               height: "100%",
               display: "flex",
               flexDirection: "column",
-              borderTop: "4px solid",
-              borderColor: "warning.main",
             }}
           >
             <Box
               sx={{
                 p: 2,
-                borderBottom: 1,
-                borderColor: "divider",
                 display: "flex",
-                alignItems: "center",
+                gap: 1,
               }}
             >
-              <NotificationsActive color="warning" sx={{ mr: 1 }} />
+              <CardIcon icon={<NotificationsActive />} color="warning" />
               <Typography variant="h6" color="warning.main" fontWeight="bold">
                 Actividad y Pendientes
               </Typography>
@@ -394,16 +391,19 @@ export default function AlumnoDashboardPage() {
             elevation={2}
             sx={{
               p: 2,
-              borderTop: "4px solid",
-              borderColor: "success.main",
               height: "100%",
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-              <Assessment color="success" sx={{ mr: 1 }} />
-              <Typography variant="h6" color="success.main" fontWeight="bold">
-                Mi Progreso
-              </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                mb: 1,
+                gap: 1,
+              }}
+            >
+              <CardIcon icon={<Assessment />} color="success" />
+              <Typography variant="h6">Mi Progreso</Typography>
             </Box>
             <Grid container spacing={2} alignItems="center">
               <Grid
@@ -470,16 +470,19 @@ export default function AlumnoDashboardPage() {
             elevation={2}
             sx={{
               p: 2,
-              borderTop: "4px solid",
-              borderColor: "error.main",
               height: "100%",
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-              <AssignmentLate color="error" sx={{ mr: 1 }} />
-              <Typography variant="h6" color="error.main" fontWeight="bold">
-                Mis Dificultades
-              </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                mb: 1,
+                gap: 1,
+              }}
+            >
+              <CardIcon icon={<AssignmentLate />} color="error" />
+              <Typography variant="h6">Mis Dificultades</Typography>
             </Box>
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
               Distribución de Dificultades Registradas
@@ -530,16 +533,19 @@ export default function AlumnoDashboardPage() {
             elevation={2}
             sx={{
               p: 2,
-              borderTop: "4px solid",
-              borderColor: "info.main",
               height: "100%",
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-              <MarkUnreadChatAlt color="info" sx={{ mr: 1 }} />
-              <Typography variant="h6" color="info.main" fontWeight="bold">
-                Mis Consultas
-              </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                mb: 1,
+                gap: 1,
+              }}
+            >
+              <CardIcon icon={<MarkUnreadChatAlt />} color="info" />
+              <Typography variant="h6">Mis Consultas</Typography>
             </Box>
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
               Estado General ({stats?.consultas.total} totales)
@@ -573,16 +579,19 @@ export default function AlumnoDashboardPage() {
             elevation={2}
             sx={{
               p: 2,
-              borderTop: "4px solid",
-              borderColor: "#9c27b0",
               height: "100%",
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-              <SwitchAccessShortcutAdd sx={{ mr: 1, color: "#9c27b0" }} />
-              <Typography variant="h6" color="#9c27b0" fontWeight="bold">
-                Mis Sesiones
-              </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                mb: 1,
+                gap: 1,
+              }}
+            >
+              <CardIcon icon={<SwitchAccessShortcutAdd />} color="success" />
+              <Typography variant="h6">Mis Sesiones</Typography>
             </Box>
             <Typography variant="subtitle2" color="text.secondary" gutterBottom>
               Estado General ({stats?.sesiones.total ?? 0} totales)
