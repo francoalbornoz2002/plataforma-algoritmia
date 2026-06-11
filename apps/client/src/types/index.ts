@@ -724,6 +724,11 @@ export interface CourseDashboardData {
   sesionesPorEstado: { label: string; value: number }[];
   sesionesPorOrigen: { sistema: number; docente: number };
   evolucionProgreso: { fecha: string | Date; progreso: number }[];
+  dificultadesGraficos: {
+    porTema: { label: string; value: number }[];
+    porDificultad: { label: string; value: number }[];
+    porGrado: { label: string; value: number; color: string }[];
+  };
 }
 
 export interface StudentDashboardStats {

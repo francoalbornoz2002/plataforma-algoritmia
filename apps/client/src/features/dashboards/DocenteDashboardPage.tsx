@@ -56,6 +56,11 @@ import { LineChart } from "@mui/x-charts/LineChart";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
+import { PieChart } from "@mui/x-charts/PieChart";
+import { FormControl, Select, MenuItem } from "@mui/material";
+import { TemasLabels } from "../../types/traducciones";
+import { temas } from "../../types";
+
 // --- Componentes Auxiliares Visuales ---
 
 const DistributionBar = ({
@@ -186,6 +191,9 @@ export default function DocenteDashboardPage() {
   // Estados de UI
   const [searchTerm, setSearchTerm] = useState("");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [agruparDificultadesPor, setAgruparDificultadesPor] = useState<
+    "dificultad" | "tema" | "grado"
+  >("dificultad");
 
   // Estado para eliminar alumno
   const [studentToDelete, setStudentToDelete] = useState<{
@@ -282,6 +290,50 @@ export default function DocenteDashboardPage() {
     );
   }
 
+  // Paleta de 15 colores bien diferenciados para las dificultades
+  const DISTINCT_COLORS = [
+    "#d32f2f",
+    "#1976d2",
+    "#388e3c",
+    "#f57c00",
+    "#7b1fa2",
+    "#0097a7",
+    "#c2185b",
+    "#5d4037",
+    "#afb42b",
+    "#0288d1",
+    "#689f38",
+    "#e64a19",
+    "#512da8",
+    "#455a64",
+    "#fbc02d",
+  ];
+
+  const difficultiesPieData =
+    stats?.dificultadesGraficos?.porDificultad?.map(
+      (item: any, index: number) => ({
+        ...item,
+        color: DISTINCT_COLORS[index % DISTINCT_COLORS.length],
+      }),
+    ) || [];
+
+  const temasPieData =
+    stats?.dificultadesGraficos?.porTema?.map((item: any) => ({
+      ...item,
+      label: TemasLabels[item.label as temas] || item.label,
+    })) || [];
+
+  const gradosPieData = stats?.dificultadesGraficos?.porGrado || [];
+
+  const activePieData =
+    agruparDificultadesPor === "tema"
+      ? temasPieData
+      : agruparDificultadesPor === "grado"
+        ? gradosPieData
+        : difficultiesPieData;
+
+  const totalActivo = activePieData.reduce((acc, curr) => acc + curr.value, 0);
+
   return (
     <Stack spacing={2}>
       {/* HEADER */}
@@ -351,91 +403,15 @@ export default function DocenteDashboardPage() {
         </Grid>
       </Grid>
 
-      <Grid container spacing={3} sx={{ height: "100%" }}>
+      <Grid container spacing={3} sx={{ height: "100%", mb: 3 }}>
         {/* 1. INFO DEL CURSO */}
         <Grid size={{ xs: 12, md: 8.5 }}>
-          <Stack spacing={3} sx={{ height: "100%" }}>
-            <CourseInfoCard
-              course={selectedCourse}
-              studentCount={students.length}
-              isReadOnly={isReadOnly}
-              onEdit={() => setIsEditModalOpen(true)}
-            />
-            <Paper
-              elevation={2}
-              sx={{
-                p: 2,
-                display: "flex",
-                flexDirection: "column",
-                flexGrow: 1,
-              }}
-            >
-              <Typography
-                variant="subtitle2"
-                color="text.secondary"
-                gutterBottom
-              >
-                Evolución del Progreso
-              </Typography>
-              <Box
-                sx={{
-                  width: "100%",
-                }}
-              >
-                {stats?.evolucionProgreso &&
-                stats.evolucionProgreso.length > 0 ? (
-                  <LineChart
-                    height={400}
-                    xAxis={[
-                      {
-                        dataKey: "fecha",
-                        label: "Fecha",
-                        scaleType: "point",
-                        valueFormatter: (value: Date) =>
-                          format(value, "dd/MM", {
-                            locale: es,
-                          }),
-                      },
-                    ]}
-                    yAxis={[
-                      {
-                        label: "Progreso (%)",
-                        min: 0,
-                        max: 100,
-                        tickNumber: 10,
-                      },
-                    ]}
-                    series={[
-                      {
-                        dataKey: "progreso",
-                        label: "Progreso (%)",
-                        color: "#4caf50",
-                        area: true,
-                        showMark: true,
-                      },
-                    ]}
-                    dataset={stats.evolucionProgreso}
-                  />
-                ) : (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      align="center"
-                    >
-                      No hay datos históricos suficientes.
-                    </Typography>
-                  </Box>
-                )}
-              </Box>
-            </Paper>
-          </Stack>
+          <CourseInfoCard
+            course={selectedCourse}
+            studentCount={students.length}
+            isReadOnly={isReadOnly}
+            onEdit={() => setIsEditModalOpen(true)}
+          />
         </Grid>
         {/* --- 2 SIDEBAR ALUMNOS --- */}
         <Grid size={{ xs: 12, md: 3.5 }}>
@@ -450,7 +426,7 @@ export default function DocenteDashboardPage() {
               borderTop: 5,
               borderColor: "primary.main",
               height: "100%",
-              maxHeight: { md: 700 },
+              maxHeight: 400,
             }}
           >
             <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
@@ -536,6 +512,154 @@ export default function DocenteDashboardPage() {
                 </Box>
               )}
             </List>
+          </Paper>
+        </Grid>
+      </Grid>
+
+      {/* --- GRÁFICOS DE PROGRESO Y DIFICULTADES --- */}
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Paper
+            elevation={2}
+            sx={{
+              p: 2,
+              display: "flex",
+              flexDirection: "column",
+              height: "100%",
+            }}
+          >
+            <Typography variant="h6" gutterBottom>
+              Evolución del Progreso
+            </Typography>
+            <Box sx={{ width: "100%" }}>
+              {stats?.evolucionProgreso &&
+              stats.evolucionProgreso.length > 0 ? (
+                <LineChart
+                  height={400}
+                  xAxis={[
+                    {
+                      data: stats.evolucionProgreso.map((e) =>
+                        format(new Date(e.fecha), "dd/MM"),
+                      ),
+                      scaleType: "point",
+                      label: "Fecha",
+                    },
+                  ]}
+                  yAxis={[
+                    {
+                      label: "Progreso (%)",
+                      min: 0,
+                      max: 100,
+                      tickNumber: 10,
+                    },
+                  ]}
+                  series={[
+                    {
+                      data: stats.evolucionProgreso.map((e) => e.progreso),
+                      label: "Progreso (%)",
+                      color: "#4caf50",
+                      area: true,
+                      showMark: true,
+                    },
+                  ]}
+                />
+              ) : (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minHeight: 300,
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    align="center"
+                  >
+                    No hay datos históricos suficientes.
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Paper>
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Paper
+            elevation={2}
+            sx={{
+              p: 2,
+              display: "flex",
+              flexDirection: "column",
+              height: "100%",
+            }}
+          >
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              mb={2}
+            >
+              <Typography variant="h6">Distribución de Dificultades</Typography>
+              <FormControl size="small" variant="standard">
+                <Select
+                  value={agruparDificultadesPor}
+                  onChange={(e) =>
+                    setAgruparDificultadesPor(
+                      e.target.value as "dificultad" | "tema" | "grado",
+                    )
+                  }
+                  disableUnderline
+                  sx={{ fontSize: "0.875rem", fontWeight: "bold" }}
+                >
+                  <MenuItem value="dificultad">Por Dificultad</MenuItem>
+                  <MenuItem value="tema">Por Tema</MenuItem>
+                  <MenuItem value="grado">Por Grado</MenuItem>
+                </Select>
+              </FormControl>
+            </Stack>
+            <Box
+              sx={{
+                width: "100%",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                flexGrow: 1,
+              }}
+            >
+              {activePieData.length > 0 && totalActivo > 0 ? (
+                <PieChart
+                  series={[
+                    {
+                      data: activePieData,
+                      innerRadius: 20,
+                      paddingAngle: 2,
+                      cornerRadius: 4,
+                      highlightScope: { fade: "global", highlight: "item" },
+                      valueFormatter: (v: any) => {
+                        const val = typeof v === "number" ? v : v?.value;
+                        const pct =
+                          totalActivo > 0
+                            ? ((val / totalActivo) * 100).toFixed(1)
+                            : "0.0";
+                        return `${val} casos (${pct}%)`;
+                      },
+                    },
+                  ]}
+                  height={300}
+                  slotProps={{
+                    legend: {
+                      direction: "vertical",
+                      position: { vertical: "middle", horizontal: "end" },
+                    },
+                  }}
+                />
+              ) : (
+                <Typography variant="caption" color="text.secondary">
+                  No hay dificultades registradas.
+                </Typography>
+              )}
+            </Box>
           </Paper>
         </Grid>
       </Grid>

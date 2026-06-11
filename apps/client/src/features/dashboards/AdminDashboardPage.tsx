@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -22,24 +22,14 @@ import {
   TrendingUp,
   Edit,
 } from "@mui/icons-material";
-import { keyframes } from "@mui/system";
+import { useNavigate } from "react-router";
 import { useAuth } from "../authentication/context/AuthProvider";
 import { getAdminDashboardStats } from "../users/services/user.service";
-import type { AdminDashboardStats, Institucion } from "../../types"; // Importamos el tipo AdminDashboardStats y Institucion
-import InstitutionInfo from "../institution/components/InstitutionInfo"; // Importamos el componente de información
-import InstitutionForm from "../institution/components/InstitutionForm"; // Importamos el componente de formulario
-import { Dialog } from "@mui/material"; // Para el modal
+import type { AdminDashboardStats } from "../../types";
 import StatCard from "../../components/StatCard";
 import DashboardHeader from "./components/DashboardHeader";
 
 // --- Componentes Auxiliares Visuales ---
-
-// Define la animación de parpadeo
-const blinkAnimation = keyframes`
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
-`;
 
 const DistributionBar = ({
   items,
@@ -147,14 +137,11 @@ const ProgressItem = ({
 
 export default function AdminDashboardPage() {
   const { profile } = useAuth();
+  const navigate = useNavigate();
 
   const [stats, setStats] = useState<AdminDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isInstitutionFormModalOpen, setIsInstitutionFormModalOpen] =
-    useState(false); // Estado para controlar el modal del formulario
-  const institutionSectionRef = useRef<HTMLDivElement>(null); // Ref para la sección de la institución
-  const [isBlinking, setIsBlinking] = useState(false); // Estado para controlar el parpadeo del botón
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -170,29 +157,6 @@ export default function AdminDashboardPage() {
     };
     fetchStats();
   }, []);
-
-  const handleInstitutionFormSave = (newData: Institucion) => {
-    // Actualiza los datos de la institución en el estado del dashboard
-    setStats((prevStats) => ({
-      ...prevStats!,
-      institution: newData,
-    }));
-    setIsInstitutionFormModalOpen(false); // Cierra el modal
-  };
-
-  const handleScrollToInstitutionForm = () => {
-    if (institutionSectionRef.current) {
-      institutionSectionRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-      setIsBlinking(true);
-      // Detener el parpadeo después de unos segundos
-      setTimeout(() => {
-        setIsBlinking(false);
-      }, 3000); // Parpadea por 3 segundos
-    }
-  };
 
   if (loading) {
     return (
@@ -224,7 +188,7 @@ export default function AdminDashboardPage() {
             <Button
               color="inherit"
               size="medium"
-              onClick={handleScrollToInstitutionForm}
+              onClick={() => navigate("/settings")}
             >
               Registrar Ahora
             </Button>
@@ -495,57 +459,6 @@ export default function AdminDashboardPage() {
           </Paper>
         </Grid>
       </Grid>
-
-      {/* INSTITUCIÓN */}
-      <Paper elevation={2} sx={{ p: 3 }} ref={institutionSectionRef}>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 2,
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center" }}>
-            <Assessment color="primary" sx={{ mr: 1 }} />
-            <Typography variant="h6" color="primary" fontWeight="bold">
-              Datos de la Institución
-            </Typography>
-          </Box>
-          <Button
-            startIcon={<Edit />}
-            size="small"
-            variant="outlined"
-            onClick={() => setIsInstitutionFormModalOpen(true)}
-            sx={{
-              animation: isBlinking
-                ? `${blinkAnimation} 0.5s ease-in-out 6`
-                : "none", // Parpadea 6 veces (3 segundos)
-              borderColor: isBlinking ? "primary.main" : undefined, // Opcional: cambia el color del borde mientras parpadea
-              color: isBlinking ? "primary.main" : undefined,
-            }}
-          >
-            {stats?.institution ? "Editar Info" : "Registrar Institución"}
-          </Button>
-        </Box>
-        <InstitutionInfo
-          institucion={stats?.institution ?? null}
-          isLoading={loading}
-        />
-      </Paper>
-
-      {/* Modal para el formulario de la institución */}
-      <Dialog
-        open={isInstitutionFormModalOpen}
-        onClose={() => setIsInstitutionFormModalOpen(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <InstitutionForm
-          initialData={stats?.institution ?? null}
-          onSave={handleInstitutionFormSave}
-        />
-      </Dialog>
     </Stack>
   );
 }

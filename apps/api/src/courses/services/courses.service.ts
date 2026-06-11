@@ -776,34 +776,43 @@ export class CoursesService {
       },
     });
 
-    // 2. Ejecutamos las demás consultas en paralelo, agregando el historial
-    const [nextClass, consultasData, sesionesData, evolutionHistory] =
-      await Promise.all([
-        this.prisma.claseConsulta.findFirst({
-          where: {
-            idCurso,
-            fechaInicio: { gte: now },
-            estadoClase: { not: 'Cancelada' },
-          },
-          orderBy: { fechaInicio: 'asc' },
-        }),
-        this.prisma.consulta.groupBy({
-          by: ['estado'],
-          where: { idCurso, deletedAt: null },
-          _count: { id: true },
-        }),
-        this.prisma.sesionRefuerzo.findMany({
-          where: { idCurso, deletedAt: null },
-          select: { idDocente: true, estado: true },
-        }),
-        course
-          ? this.prisma.historialProgresoCurso.findMany({
-              where: { idProgresoCurso: course.idProgreso },
-              orderBy: { fechaRegistro: 'asc' },
-              select: { fechaRegistro: true, pctMisionesCompletadas: true },
-            })
-          : Promise.resolve<any[]>([]),
-      ]);
+    // 2. Ejecutamos las demás consultas en paralelo, agregando el historial y dificultades
+    const [
+      nextClass,
+      consultasData,
+      sesionesData,
+      evolutionHistory,
+      rawDifficulties,
+    ] = await Promise.all([
+      this.prisma.claseConsulta.findFirst({
+        where: {
+          idCurso,
+          fechaInicio: { gte: now },
+          estadoClase: { not: 'Cancelada' },
+        },
+        orderBy: { fechaInicio: 'asc' },
+      }),
+      this.prisma.consulta.groupBy({
+        by: ['estado'],
+        where: { idCurso, deletedAt: null },
+        _count: { id: true },
+      }),
+      this.prisma.sesionRefuerzo.findMany({
+        where: { idCurso, deletedAt: null },
+        select: { idDocente: true, estado: true },
+      }),
+      course
+        ? this.prisma.historialProgresoCurso.findMany({
+            where: { idProgresoCurso: course.idProgreso },
+            orderBy: { fechaRegistro: 'asc' },
+            select: { fechaRegistro: true, pctMisionesCompletadas: true },
+          })
+        : Promise.resolve<any[]>([]),
+      this.prisma.dificultadAlumno.findMany({
+        where: { idCurso },
+        include: { dificultad: true },
+      }),
+    ]);
 
     // Procesar consultas
     let totalConsultas = 0;
@@ -847,6 +856,55 @@ export class CoursesService {
 
     const evolutionChartData = Array.from(dailyEvolutionMap.values());
 
+    // Procesar Dificultades
+    const byTopic = new Map<string, Set<string>>();
+    const byDifficulty = new Map<string, Set<string>>();
+    const byGrade = { Ninguno: 0, Bajo: 0, Medio: 0, Alto: 0 };
+    const difficultyDetails = new Map<string, any>();
+
+    rawDifficulties.forEach((d) => {
+      const tema = d.dificultad.tema;
+      if (d.grado !== 'Ninguno') {
+        if (!byTopic.has(tema)) byTopic.set(tema, new Set());
+        byTopic.get(tema)!.add(d.idAlumno);
+      }
+
+      const difId = d.idDificultad;
+      if (d.grado !== 'Ninguno') {
+        if (!byDifficulty.has(difId)) byDifficulty.set(difId, new Set());
+        byDifficulty.get(difId)!.add(d.idAlumno);
+      }
+
+      if (!difficultyDetails.has(difId)) {
+        difficultyDetails.set(difId, { nombre: d.dificultad.nombre });
+      }
+
+      if (d.grado in byGrade) {
+        byGrade[d.grado as keyof typeof byGrade]++;
+      }
+    });
+
+    const graficoTemas = Array.from(byTopic.entries()).map(
+      ([label, students]) => ({
+        label,
+        value: students.size,
+      }),
+    );
+
+    const graficoDificultades = Array.from(byDifficulty.entries()).map(
+      ([id, students]) => ({
+        label: difficultyDetails.get(id)?.nombre || 'Desconocida',
+        value: students.size,
+      }),
+    );
+
+    const graficoGrados = [
+      { label: 'Ninguno', value: byGrade.Ninguno, color: '#9e9e9e' },
+      { label: 'Bajo', value: byGrade.Bajo, color: '#4caf50' },
+      { label: 'Medio', value: byGrade.Medio, color: '#ff9800' },
+      { label: 'Alto', value: byGrade.Alto, color: '#f44336' },
+    ];
+
     return {
       progresoPct: course?.progresoCurso?.pctMisionesCompletadas
         ? Number(course.progresoCurso.pctMisionesCompletadas)
@@ -865,6 +923,11 @@ export class CoursesService {
       ),
       sesionesPorOrigen: { sistema, docente },
       evolucionProgreso: evolutionChartData,
+      dificultadesGraficos: {
+        porTema: graficoTemas,
+        porDificultad: graficoDificultades,
+        porGrado: graficoGrados,
+      },
     };
   }
 

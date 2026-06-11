@@ -48,7 +48,7 @@ export default function HeaderReportPage({
       <Stack direction="row" alignItems="center" spacing={2}>
         <CardIcon icon={icon} color={color} size="large" />
         <Stack justifyContent="center">
-          <Typography variant="h6" color={`${color}.main`} fontWeight="bold">
+          <Typography variant="h6" fontWeight="bold">
             {title}
           </Typography>
           <Typography variant="caption" color="text.secondary">
