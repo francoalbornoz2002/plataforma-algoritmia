@@ -52,6 +52,9 @@ import {
 import InfoAlumno from "./components/InfoAlumno";
 import DashboardHeader from "./components/DashboardHeader";
 import StatCard from "../../components/StatCard";
+import { LineChart } from "@mui/x-charts/LineChart";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 // --- Componentes Auxiliares Visuales ---
 
@@ -351,12 +354,88 @@ export default function DocenteDashboardPage() {
       <Grid container spacing={3} sx={{ height: "100%" }}>
         {/* 1. INFO DEL CURSO */}
         <Grid size={{ xs: 12, md: 8.5 }}>
-          <CourseInfoCard
-            course={selectedCourse}
-            studentCount={students.length}
-            isReadOnly={isReadOnly}
-            onEdit={() => setIsEditModalOpen(true)}
-          />
+          <Stack spacing={3} sx={{ height: "100%" }}>
+            <CourseInfoCard
+              course={selectedCourse}
+              studentCount={students.length}
+              isReadOnly={isReadOnly}
+              onEdit={() => setIsEditModalOpen(true)}
+            />
+            <Paper
+              elevation={2}
+              sx={{
+                p: 2,
+                display: "flex",
+                flexDirection: "column",
+                flexGrow: 1,
+              }}
+            >
+              <Typography
+                variant="subtitle2"
+                color="text.secondary"
+                gutterBottom
+              >
+                Evolución del Progreso
+              </Typography>
+              <Box
+                sx={{
+                  width: "100%",
+                }}
+              >
+                {stats?.evolucionProgreso &&
+                stats.evolucionProgreso.length > 0 ? (
+                  <LineChart
+                    height={400}
+                    xAxis={[
+                      {
+                        dataKey: "fecha",
+                        label: "Fecha",
+                        scaleType: "point",
+                        valueFormatter: (value: Date) =>
+                          format(value, "dd/MM", {
+                            locale: es,
+                          }),
+                      },
+                    ]}
+                    yAxis={[
+                      {
+                        label: "Progreso (%)",
+                        min: 0,
+                        max: 100,
+                        tickNumber: 10,
+                      },
+                    ]}
+                    series={[
+                      {
+                        dataKey: "progreso",
+                        label: "Progreso (%)",
+                        color: "#4caf50",
+                        area: true,
+                        showMark: true,
+                      },
+                    ]}
+                    dataset={stats.evolucionProgreso}
+                  />
+                ) : (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      align="center"
+                    >
+                      No hay datos históricos suficientes.
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            </Paper>
+          </Stack>
         </Grid>
         {/* --- 2 SIDEBAR ALUMNOS --- */}
         <Grid size={{ xs: 12, md: 3.5 }}>
@@ -370,7 +449,8 @@ export default function DocenteDashboardPage() {
               overflow: "hidden",
               borderTop: 5,
               borderColor: "primary.main",
-              height: { md: "calc(100vh - 324px)" }, // Altura máxima para permitir scroll sin forzar espacio
+              height: "100%",
+              maxHeight: { md: 700 },
             }}
           >
             <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>

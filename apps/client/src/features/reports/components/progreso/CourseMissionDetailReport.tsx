@@ -263,7 +263,7 @@ export default function CourseMissionDetailReport({ courseId }: Props) {
                   title="Alumnos que completaron"
                   description="Total de alumnos distintos"
                   value={data.stats.alumnosCompletaron}
-                  percentage={data.stats.pctAlumnos}
+                  subValue={data.stats.pctAlumnos}
                   color="primary"
                 />
               </Grid>

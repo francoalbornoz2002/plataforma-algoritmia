@@ -723,6 +723,7 @@ export interface CourseDashboardData {
   consultasPorEstado: { label: string; value: number }[];
   sesionesPorEstado: { label: string; value: number }[];
   sesionesPorOrigen: { sistema: number; docente: number };
+  evolucionProgreso: { fecha: string | Date; progreso: number }[];
 }
 
 export interface StudentDashboardStats {

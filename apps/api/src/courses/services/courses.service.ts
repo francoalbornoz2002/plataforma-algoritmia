@@ -760,38 +760,50 @@ export class CoursesService {
   async getDashboardStats(idCurso: string) {
     const now = new Date();
 
-    const [nextClass, course, consultasData, sesionesData] = await Promise.all([
-      this.prisma.claseConsulta.findFirst({
-        where: {
-          idCurso,
-          fechaInicio: { gte: now },
-          estadoClase: { not: 'Cancelada' },
+    // 1. Obtenemos primero el curso para conocer su idProgreso
+    const course = await this.prisma.curso.findUnique({
+      where: { id: idCurso },
+      select: {
+        idProgreso: true,
+        progresoCurso: {
+          select: { pctMisionesCompletadas: true },
         },
-        orderBy: { fechaInicio: 'asc' },
-      }),
-      this.prisma.curso.findUnique({
-        where: { id: idCurso },
-        select: {
-          progresoCurso: {
-            select: { pctMisionesCompletadas: true },
-          },
-          dificultadesCurso: {
-            select: {
-              dificultadModa: { select: { nombre: true } },
-            },
+        dificultadesCurso: {
+          select: {
+            dificultadModa: { select: { nombre: true } },
           },
         },
-      }),
-      this.prisma.consulta.groupBy({
-        by: ['estado'],
-        where: { idCurso, deletedAt: null },
-        _count: { id: true },
-      }),
-      this.prisma.sesionRefuerzo.findMany({
-        where: { idCurso, deletedAt: null },
-        select: { idDocente: true, estado: true },
-      }),
-    ]);
+      },
+    });
+
+    // 2. Ejecutamos las demás consultas en paralelo, agregando el historial
+    const [nextClass, consultasData, sesionesData, evolutionHistory] =
+      await Promise.all([
+        this.prisma.claseConsulta.findFirst({
+          where: {
+            idCurso,
+            fechaInicio: { gte: now },
+            estadoClase: { not: 'Cancelada' },
+          },
+          orderBy: { fechaInicio: 'asc' },
+        }),
+        this.prisma.consulta.groupBy({
+          by: ['estado'],
+          where: { idCurso, deletedAt: null },
+          _count: { id: true },
+        }),
+        this.prisma.sesionRefuerzo.findMany({
+          where: { idCurso, deletedAt: null },
+          select: { idDocente: true, estado: true },
+        }),
+        course
+          ? this.prisma.historialProgresoCurso.findMany({
+              where: { idProgresoCurso: course.idProgreso },
+              orderBy: { fechaRegistro: 'asc' },
+              select: { fechaRegistro: true, pctMisionesCompletadas: true },
+            })
+          : Promise.resolve<any[]>([]),
+      ]);
 
     // Procesar consultas
     let totalConsultas = 0;
@@ -820,6 +832,21 @@ export class CoursesService {
     const sistema = sesionesData.filter((s) => !s.idDocente).length;
     const docente = totalSesiones - sistema;
 
+    // Procesar evolución
+    const dailyEvolutionMap = new Map<
+      string,
+      { fecha: Date; progreso: number }
+    >();
+    evolutionHistory.forEach((h) => {
+      const dateKey = h.fechaRegistro.toISOString().split('T')[0];
+      dailyEvolutionMap.set(dateKey, {
+        fecha: h.fechaRegistro,
+        progreso: Number(h.pctMisionesCompletadas),
+      });
+    });
+
+    const evolutionChartData = Array.from(dailyEvolutionMap.values());
+
     return {
       progresoPct: course?.progresoCurso?.pctMisionesCompletadas
         ? Number(course.progresoCurso.pctMisionesCompletadas)
@@ -837,6 +864,7 @@ export class CoursesService {
         }),
       ),
       sesionesPorOrigen: { sistema, docente },
+      evolucionProgreso: evolutionChartData,
     };
   }
 

@@ -17,10 +17,10 @@ import {
 } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import StarIcon from "@mui/icons-material/Star";
 import BoltIcon from "@mui/icons-material/Bolt";
 import ReplayIcon from "@mui/icons-material/Replay";
-import PercentIcon from "@mui/icons-material/Percent";
 import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
@@ -235,8 +235,16 @@ export default function CourseProgressSummary({ courseId }: Props) {
                               dataKey: "fecha",
                               label: "Fecha",
                               scaleType: "point",
-                              valueFormatter: (date) =>
-                                format(new Date(date), "dd/MM"),
+                              valueFormatter: (date) => {
+                                const f = format(new Date(date), "EEE dd/MM", {
+                                  locale: es,
+                                });
+                                // Capitalizamos la 1ra letra y quitamos el punto por si date-fns lo incluye
+                                return (
+                                  f.charAt(0).toUpperCase() +
+                                  f.slice(1).replace(".", "")
+                                );
+                              },
                             },
                           ]}
                           yAxis={[
