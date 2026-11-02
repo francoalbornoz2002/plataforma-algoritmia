@@ -252,7 +252,7 @@ export interface ProgresoAlumnoDetallado {
   pctMisionesCompletadas: number;
   promEstrellas: number;
   promIntentos: number;
-  ultimaActividad: string | null; // Llega como string ISO
+  fechaRegistro: string | null; // Llega como string ISO
   estado: estado_simple;
   // Campos añadidos por el servicio:
   nombre: string;

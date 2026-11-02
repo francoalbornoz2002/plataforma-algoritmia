@@ -188,8 +188,8 @@ export default function ProgressPage() {
       // Filtro de Última Actividad
       if (filters.activityRange) {
         const now = new Date();
-        const activityDate = row.ultimaActividad
-          ? new Date(row.ultimaActividad)
+        const activityDate = row.fechaRegistro
+          ? new Date(row.fechaRegistro)
           : new Date(0);
         const diffDays =
           (now.getTime() - activityDate.getTime()) / (1000 * 3600 * 24);
@@ -229,11 +229,11 @@ export default function ProgressPage() {
         case "exp":
           return multiplier * (a.totalExp - b.totalExp);
         case "actividad": {
-          const dateA = a.ultimaActividad
-            ? new Date(a.ultimaActividad).getTime()
+          const dateA = a.fechaRegistro
+            ? new Date(a.fechaRegistro).getTime()
             : 0;
-          const dateB = b.ultimaActividad
-            ? new Date(b.ultimaActividad).getTime()
+          const dateB = b.fechaRegistro
+            ? new Date(b.fechaRegistro).getTime()
             : 0;
           return multiplier * (dateA - dateB);
         }
@@ -502,7 +502,7 @@ export default function ProgressPage() {
                     totalIntentos: row.totalIntentos,
                     promIntentos: row.promIntentos,
                     totalExp: row.totalExp,
-                    ultimaActividad: row.ultimaActividad,
+                    ultimaActividad: row.fechaRegistro,
                   }}
                   onDetailClick={() => setViewingStudent(row)}
                 />
