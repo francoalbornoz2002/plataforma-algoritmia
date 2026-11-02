@@ -193,42 +193,41 @@ export class DifficultiesService {
 
     try {
       // 1. Consultar inscripciones del curso con el alumno y sus dificultades
-      const inscripciones = await this.prisma.inscripcionesAlumnoCurso.findMany({
-        where: {
-          idCurso: idCurso,
-          estado: includeInactive
-            ? { in: [estado_simple.Activo, estado_simple.Finalizado] }
-            : estado_simple.Activo,
-        },
-        include: {
-          alumno: {
-            select: {
-              id: true,
-              nombre: true,
-              apellido: true,
+      const inscripciones = await this.prisma.inscripcionesAlumnoCurso.findMany(
+        {
+          where: {
+            idCurso: idCurso,
+            estado: includeInactive
+              ? { in: [estado_simple.Activo, estado_simple.Finalizado] }
+              : estado_simple.Activo,
+          },
+          include: {
+            alumno: {
+              select: {
+                id: true,
+                nombre: true,
+                apellido: true,
+              },
+            },
+            dificultadesAlumnos: {
+              select: {
+                gradoActual: true,
+                idDificultad: true,
+                dificultad: { select: { tema: true } },
+                fechaRegistro: true,
+              },
+              orderBy: { fechaRegistro: 'desc' },
             },
           },
-          dificultadesAlumnos: {
-            select: {
-              gradoActual: true,
-              idDificultad: true,
-              dificultad: { select: { tema: true } },
-              fechaRegistro: true,
-            },
-            orderBy: { fechaRegistro: 'desc' },
-          },
         },
-      });
+      );
 
       // 2. Mapear la respuesta y calcular los conteos (utilizando solo el último estado por dificultad)
       const data = inscripciones.map((inscripcion) => {
         const { alumno, dificultadesAlumnos } = inscripcion;
 
         // Deduplicar: mantener el más reciente de cada idDificultad
-        const latestDifMap = new Map<
-          string,
-          (typeof dificultadesAlumnos)[0]
-        >();
+        const latestDifMap = new Map<string, (typeof dificultadesAlumnos)[0]>();
         for (const d of dificultadesAlumnos) {
           if (!latestDifMap.has(d.idDificultad)) {
             latestDifMap.set(d.idDificultad, d);

@@ -16,17 +16,6 @@ export class ProgressController {
   constructor(private readonly progressService: ProgressService) {}
 
   /**
-   * Endpoint para que el videojuego registre una misión completada.
-   */
-  // // TODO: Proteger esto con un Guardia de API Key
-  // @Public()
-  // @Post('submit-mission')
-  // @HttpCode(HttpStatus.OK)
-  // submitMission(@Body() submitMissionDto: SubmitMissionDto) {
-  //   return this.progressService.submitMission(submitMissionDto);
-  // }
-
-  /**
    * Endpoint para que el videojuego registre y sincronice una o más misiones completadas.
    */
   // TODO: Proteger esto con un Guardia de API Key

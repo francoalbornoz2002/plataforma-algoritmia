@@ -112,8 +112,8 @@ export class ProgressService {
         where.estado = { in: [estado_simple.Activo, estado_simple.Finalizado] };
       }
 
-      const inscripciones =
-        await this.prisma.inscripcionesAlumnoCurso.findMany({
+      const inscripciones = await this.prisma.inscripcionesAlumnoCurso.findMany(
+        {
           where,
           include: {
             alumno: {
@@ -136,7 +136,8 @@ export class ProgressService {
               orderBy: { fechaCompletado: 'desc' },
             },
           },
-        });
+        },
+      );
 
       // Mapear la respuesta para el DataGrid
       const data = inscripciones.map((ac) => {
@@ -174,27 +175,26 @@ export class ProgressService {
   async getStudentProgress(idAlumno: string, idCurso: string) {
     try {
       // 1. Buscamos la inscripción específica
-      const inscripcion =
-        await this.prisma.inscripcionesAlumnoCurso.findFirst({
-          where: {
-            idAlumno: idAlumno,
-            idCurso: idCurso,
+      const inscripcion = await this.prisma.inscripcionesAlumnoCurso.findFirst({
+        where: {
+          idAlumno: idAlumno,
+          idCurso: idCurso,
+        },
+        include: {
+          alumno: { select: { fotoPerfilUrl: true } },
+          progresoAlumnos: {
+            orderBy: { fechaRegistro: 'desc' },
+            take: 1,
           },
-          include: {
-            alumno: { select: { fotoPerfilUrl: true } },
-            progresoAlumnos: {
-              orderBy: { fechaRegistro: 'desc' },
-              take: 1,
-            },
-            misionesEspeciales: {
-              orderBy: { fechaCompletado: 'desc' },
-            },
-            misionesCompletadas: {
-              include: { mision: true },
-              orderBy: { fechaCompletado: 'desc' },
-            },
+          misionesEspeciales: {
+            orderBy: { fechaCompletado: 'desc' },
           },
-        });
+          misionesCompletadas: {
+            include: { mision: true },
+            orderBy: { fechaCompletado: 'desc' },
+          },
+        },
+      });
 
       const progreso = inscripcion?.progresoAlumnos?.[0];
 
@@ -244,16 +244,9 @@ export class ProgressService {
 
     try {
       // 3. Validar al alumno y obtener su inscripción activa
-      const inscripcion =
-        await this.prisma.inscripcionesAlumnoCurso.findFirst({
-          where: { idAlumno: idAlumno, estado: estado_simple.Activo },
-          include: {
-            progresoAlumnos: {
-              orderBy: { fechaRegistro: 'desc' },
-              take: 1,
-            },
-          },
-        });
+      const inscripcion = await this.prisma.inscripcionesAlumnoCurso.findFirst({
+        where: { idAlumno: idAlumno, estado: estado_simple.Activo },
+      });
 
       if (!inscripcion) {
         throw new NotFoundException(
@@ -334,53 +327,22 @@ export class ProgressService {
           for (const mision of misionesEspeciales) {
             const fechaMision = new Date(mision.fechaCompletado);
 
-            const existing = await tx.misionEspecialCompletada.findUnique({
-              where: { id: mision.idMision },
+            await tx.misionEspecialCompletada.create({
+              data: {
+                id: mision.idMision,
+                idInscripcion: idInscripcion,
+                nombre: mision.nombre ?? 'Misión Especial Sin Nombre',
+                descripcion: mision.descripcion ?? 'Sin descripción disponible',
+                estrellas: mision.estrellas,
+                exp: mision.exp,
+                intentos: mision.intentos,
+                fechaCompletado: fechaMision,
+              },
             });
 
-            if (existing) {
-              // LOGICA HIGH SCORE
-              const esMejorPuntaje =
-                mision.estrellas > existing.estrellas ||
-                (mision.estrellas === existing.estrellas &&
-                  mision.exp > existing.exp);
-
-              if (esMejorPuntaje) {
-                await tx.misionEspecialCompletada.update({
-                  where: { id: mision.idMision },
-                  data: {
-                    nombre: mision.nombre ?? existing.nombre,
-                    descripcion: mision.descripcion ?? existing.descripcion,
-                    estrellas: mision.estrellas,
-                    exp: mision.exp,
-                    intentos: mision.intentos,
-                    fechaCompletado: fechaMision,
-                  },
-                });
-
-                totalEstrellasDelta += mision.estrellas - existing.estrellas;
-                totalExpDelta += mision.exp - existing.exp;
-                totalIntentosDelta += mision.intentos - existing.intentos;
-              }
-            } else {
-              await tx.misionEspecialCompletada.create({
-                data: {
-                  id: mision.idMision,
-                  idInscripcion: idInscripcion,
-                  nombre: mision.nombre ?? 'Misión Especial Sin Nombre',
-                  descripcion:
-                    mision.descripcion ?? 'Sin descripción disponible',
-                  estrellas: mision.estrellas,
-                  exp: mision.exp,
-                  intentos: mision.intentos,
-                  fechaCompletado: fechaMision,
-                },
-              });
-
-              totalEstrellasDelta += mision.estrellas;
-              totalExpDelta += mision.exp;
-              totalIntentosDelta += mision.intentos;
-            }
+            totalEstrellasDelta += mision.estrellas;
+            totalExpDelta += mision.exp;
+            totalIntentosDelta += mision.intentos;
           }
 
           // --- Paso C: Registrar nuevo estado en ProgresoAlumno (Historial acumulado, nunca update) ---
@@ -465,13 +427,12 @@ export class ProgressService {
   async getStudentMissionStatus(idAlumno: string, idCurso: string) {
     try {
       // 1. Buscar la inscripción del alumno en ESE curso
-      const inscripcion =
-        await this.prisma.inscripcionesAlumnoCurso.findFirst({
-          where: {
-            idAlumno: idAlumno,
-            idCurso: idCurso,
-          },
-        });
+      const inscripcion = await this.prisma.inscripcionesAlumnoCurso.findFirst({
+        where: {
+          idAlumno: idAlumno,
+          idCurso: idCurso,
+        },
+      });
 
       if (!inscripcion) {
         throw new NotFoundException(
