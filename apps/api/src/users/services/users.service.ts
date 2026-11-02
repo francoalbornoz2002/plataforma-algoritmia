@@ -16,6 +16,7 @@ import {
   estado_clase_consulta,
   estado_consulta,
   estado_sesion,
+  estado_simple,
 } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { FindAllUsersDto } from '../dto/find-all-users.dto';
@@ -286,7 +287,7 @@ export class UsersService {
     const inscripcion = await this.prisma.inscripcionesAlumnoCurso.findFirst({
       where: {
         idAlumno: alumno.id,
-        estado: 'Activo',
+        estado: estado_simple.Activo,
       },
       include: {
         progresoAlumnos: {
@@ -314,6 +315,7 @@ export class UsersService {
           },
         },
         dificultadesAlumnos: {
+          orderBy: { fechaRegistro: 'desc' },
           select: {
             idDificultad: true,
             gradoActual: true,
@@ -329,16 +331,27 @@ export class UsersService {
       );
     }
 
-    const dificultadesAlumno = inscripcion.dificultadesAlumnos.map((d) => ({
-      idDificultad: d.idDificultad,
-      grado: d.gradoActual,
-    }));
+    // Filtramos para conservar únicamente el registro más reciente por cada dificultad
+    const latestDifMap = new Map<string, string>();
+    for (const d of inscripcion.dificultadesAlumnos) {
+      if (!latestDifMap.has(d.idDificultad)) {
+        latestDifMap.set(d.idDificultad, d.gradoActual);
+      }
+    }
+
+    const dificultadesAlumno = Array.from(latestDifMap.entries()).map(
+      ([idDificultad, grado]) => ({
+        idDificultad,
+        grado,
+      }),
+    );
 
     // Armamos y devolvemos la respuesta final
     const alumnoData = {
       id: alumno.id,
       nombre: alumno.nombre,
       apellido: alumno.apellido,
+      ultimaActividad: inscripcion.progresoAlumnos[0]?.fechaRegistro ?? null,
     };
 
     return {

@@ -227,7 +227,35 @@ export default function UserFormDialog({
                 }}
                 disabled={isSubmitting}
               />
+              {/* Selector de Rol */}
+              <Controller
+                name="rol"
+                control={control}
+                render={({ field, fieldState: { error } }) => (
+                  <FormControl fullWidth required error={!!error}>
+                    <InputLabel id="rol-select-label">Rol</InputLabel>
+                    <Select
+                      labelId="rol-select-label"
+                      label="Rol"
+                      disabled={isSubmitting}
+                      {...field}
+                    >
+                      {/* Mapea los valores del TIPO Rol */}
+                      {rolesValues.map((rol) => (
+                        <MenuItem key={rol} value={rol}>
+                          {/* Puedes poner nombres más amigables aquí si quieres */}
+                          {rol}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    <FormHelperText sx={{ minHeight: "1.25em" }}>
+                      {error?.message || " "}
+                    </FormHelperText>
+                  </FormControl>
+                )}
+              />
             </Stack>
+
             <TextField
               label="Email"
               fullWidth
@@ -417,33 +445,6 @@ export default function UserFormDialog({
                 />
               </Stack>
             )}
-            {/* Selector de Rol */}
-            <Controller
-              name="rol"
-              control={control}
-              render={({ field, fieldState: { error } }) => (
-                <FormControl fullWidth required error={!!error}>
-                  <InputLabel id="rol-select-label">Rol</InputLabel>
-                  <Select
-                    labelId="rol-select-label"
-                    label="Rol"
-                    disabled={isSubmitting}
-                    {...field}
-                  >
-                    {/* Mapea los valores del TIPO Rol */}
-                    {rolesValues.map((rol) => (
-                      <MenuItem key={rol} value={rol}>
-                        {/* Puedes poner nombres más amigables aquí si quieres */}
-                        {rol}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  <FormHelperText sx={{ minHeight: "1.25em" }}>
-                    {error?.message || " "}
-                  </FormHelperText>
-                </FormControl>
-              )}
-            />
           </Stack>
         </DialogContent>
         <DialogActions sx={{ p: "16px 24px" }}>
