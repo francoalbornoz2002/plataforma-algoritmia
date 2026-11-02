@@ -1,6 +1,6 @@
 import { ForbiddenException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Prisma, roles } from '@prisma/client';
+import { estado_simple, Prisma, roles } from '@prisma/client';
 
 /**
  * Valida si un docente tiene acceso a un curso.
@@ -22,12 +22,13 @@ export async function checkDocenteAccess(
     return;
   }
 
-  const asignacion = await (tx as PrismaService).docenteCurso.findUnique({
+  const asignacion = await (
+    tx as PrismaService
+  ).asignacionesDocenteCurso.findFirst({
     where: {
-      idDocente_idCurso: {
-        idDocente,
-        idCurso,
-      },
+      idDocente: idDocente,
+      idCurso: idCurso,
+      estado: estado_simple.Activo,
     },
     include: { curso: { select: { deletedAt: true } } },
   });
@@ -65,12 +66,13 @@ export async function checkAlumnoAccess(
     return;
   }
 
-  const inscripcion = await (tx as PrismaService).alumnoCurso.findUnique({
+  const inscripcion = await (
+    tx as PrismaService
+  ).inscripcionesAlumnoCurso.findFirst({
     where: {
-      idAlumno_idCurso: {
-        idAlumno,
-        idCurso,
-      },
+      idAlumno: idAlumno,
+      idCurso: idCurso,
+      estado: estado_simple.Activo,
     },
     include: { curso: { select: { deletedAt: true } } },
   });

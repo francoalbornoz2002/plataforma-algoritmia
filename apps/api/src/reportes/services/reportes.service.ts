@@ -144,7 +144,6 @@ export class ReportesService {
         dni: true,
         email: true,
         rol: true,
-        genero: true,
         createdAt: true,
         deletedAt: true,
         ultimoAcceso: true,
@@ -535,18 +534,20 @@ export class ReportesService {
       tipoMovimiento === TipoMovimientoInscripcion.TODOS ||
       tipoMovimiento === TipoMovimientoInscripcion.INSCRIPCION
     ) {
-      const where: Prisma.AlumnoCursoWhereInput = {
+      const where: Prisma.InscripcionesAlumnoCursoWhereInput = {
         fechaInscripcion: { gte: start, lte: end },
       };
       if (cursoId) where.idCurso = cursoId;
 
-      const inscripciones = await this.prisma.alumnoCurso.findMany({
-        where,
-        include: {
-          alumno: { select: { nombre: true, apellido: true } },
-          curso: { select: { nombre: true } },
+      const inscripciones = await this.prisma.inscripcionesAlumnoCurso.findMany(
+        {
+          where,
+          include: {
+            alumno: { select: { nombre: true, apellido: true } },
+            curso: { select: { nombre: true } },
+          },
         },
-      });
+      );
       inscripciones.forEach((i) => {
         events.push({
           tipo: 'Inscripción',
@@ -562,12 +563,12 @@ export class ReportesService {
       tipoMovimiento === TipoMovimientoInscripcion.TODOS ||
       tipoMovimiento === TipoMovimientoInscripcion.BAJA
     ) {
-      const where: Prisma.AlumnoCursoWhereInput = {
+      const where: Prisma.InscripcionesAlumnoCursoWhereInput = {
         fechaBaja: { gte: start, lte: end },
       };
       if (cursoId) where.idCurso = cursoId;
 
-      const bajas = await this.prisma.alumnoCurso.findMany({
+      const bajas = await this.prisma.inscripcionesAlumnoCurso.findMany({
         where,
         include: {
           alumno: { select: { nombre: true, apellido: true } },
@@ -601,12 +602,12 @@ export class ReportesService {
       tipoMovimiento === TipoMovimientoAsignacion.TODOS ||
       tipoMovimiento === TipoMovimientoAsignacion.ASIGNACION
     ) {
-      const where: Prisma.DocenteCursoWhereInput = {
+      const where: Prisma.AsignacionesDocenteCursoWhereInput = {
         fechaAsignacion: { gte: start, lte: end },
       };
       if (cursoId) where.idCurso = cursoId;
 
-      const asignaciones = await this.prisma.docenteCurso.findMany({
+      const asignaciones = await this.prisma.asignacionesDocenteCurso.findMany({
         where,
         include: {
           docente: { select: { nombre: true, apellido: true } },
@@ -628,12 +629,12 @@ export class ReportesService {
       tipoMovimiento === TipoMovimientoAsignacion.TODOS ||
       tipoMovimiento === TipoMovimientoAsignacion.BAJA
     ) {
-      const where: Prisma.DocenteCursoWhereInput = {
+      const where: Prisma.AsignacionesDocenteCursoWhereInput = {
         fechaBaja: { gte: start, lte: end },
       };
       if (cursoId) where.idCurso = cursoId;
 
-      const bajas = await this.prisma.docenteCurso.findMany({
+      const bajas = await this.prisma.asignacionesDocenteCurso.findMany({
         where,
         include: {
           docente: { select: { nombre: true, apellido: true } },
@@ -663,7 +664,7 @@ export class ReportesService {
 
     const curso = await this.prisma.curso.findUnique({
       where: { id: idCurso },
-      select: { id: true, idProgreso: true },
+      select: { id: true },
     });
 
     if (!curso) {
@@ -686,9 +687,8 @@ export class ReportesService {
       end.setUTCHours(23, 59, 59, 999);
 
       // 1. Buscar el registro histórico más cercano a la fecha de corte
-      const historial = await this.prisma.historialProgresoCurso.findFirst({
+      const historial = await this.prisma.progresoCurso.findFirst({
         where: {
-          idProgresoCurso: curso.idProgreso,
           fechaRegistro: { lte: end },
         },
         orderBy: { fechaRegistro: 'desc' },
@@ -706,7 +706,7 @@ export class ReportesService {
       };
 
       // 2. Calcular alumnos activos a esa fecha
-      const students = await this.prisma.alumnoCurso.findMany({
+      const students = await this.prisma.inscripcionesAlumnoCurso.findMany({
         where: {
           idCurso: idCurso,
           fechaInscripcion: { lte: end },
@@ -718,8 +718,7 @@ export class ReportesService {
             { estado: estado_simple.Finalizado },
           ],
         },
-        select: {
-          idProgreso: true,
+        include: {
           alumno: {
             select: { nombre: true, apellido: true, fotoPerfilUrl: true },
           },
@@ -728,7 +727,7 @@ export class ReportesService {
       totalAlumnos = students.length;
 
       // 2.b Calcular alumnos inactivos a esa fecha
-      totalAlumnosInactivos = await this.prisma.alumnoCurso.count({
+      totalAlumnosInactivos = await this.prisma.inscripcionesAlumnoCurso.count({
         where: {
           idCurso: idCurso,
           fechaInscripcion: { lte: end },
@@ -743,8 +742,8 @@ export class ReportesService {
       // 3. Obtener stats individuales históricos
       studentStats = await Promise.all(
         students.map(async (s) => {
-          const hist = await this.prisma.historialProgresoAlumno.findFirst({
-            where: { idProgreso: s.idProgreso, fechaRegistro: { lte: end } },
+          const hist = await this.prisma.progresoAlumno.findFirst({
+            where: { idInscripcion: s.id, fechaRegistro: { lte: end } },
             orderBy: { fechaRegistro: 'desc' },
             select: { cantMisionesCompletadas: true },
           });
@@ -758,13 +757,14 @@ export class ReportesService {
       );
     } else {
       // --- MODO ACTUAL ---
-      progreso = await this.prisma.progresoCurso.findUnique({
-        where: { id: curso.idProgreso },
+      progreso = await this.prisma.progresoCurso.findFirst({
+        where: { idCurso: curso.id },
+        orderBy: { fechaRegistro: 'desc' },
       });
 
       if (!progreso) throw new NotFoundException('Progreso no inicializado.');
 
-      const students = await this.prisma.alumnoCurso.findMany({
+      const students = await this.prisma.inscripcionesAlumnoCurso.findMany({
         where: {
           idCurso: idCurso,
           estado: { in: [estado_simple.Activo, estado_simple.Finalizado] }, // <-- Incluimos Finalizados
@@ -773,13 +773,17 @@ export class ReportesService {
           alumno: {
             select: { nombre: true, apellido: true, fotoPerfilUrl: true },
           },
-          progresoAlumno: { select: { cantMisionesCompletadas: true } },
+          progresoAlumnos: {
+            orderBy: { fechaRegistro: 'desc' },
+            take: 1,
+            select: { cantMisionesCompletadas: true },
+          },
         },
       });
       totalAlumnos = students.length;
 
       // Inactivos actuales
-      totalAlumnosInactivos = await this.prisma.alumnoCurso.count({
+      totalAlumnosInactivos = await this.prisma.inscripcionesAlumnoCurso.count({
         where: { idCurso: idCurso, estado: estado_simple.Inactivo },
       });
 
@@ -787,7 +791,7 @@ export class ReportesService {
         nombre: s.alumno.nombre,
         apellido: s.alumno.apellido,
         fotoPerfilUrl: s.alumno.fotoPerfilUrl,
-        misiones: s.progresoAlumno?.cantMisionesCompletadas || 0,
+        misiones: s.progresoAlumnos?.[0]?.cantMisionesCompletadas || 0,
       }));
     }
 
@@ -836,8 +840,8 @@ export class ReportesService {
       }));
 
     // --- EVOLUCIÓN DEL PROGRESO ---
-    const whereHistory: Prisma.HistorialProgresoCursoWhereInput = {
-      idProgresoCurso: curso.idProgreso,
+    const whereHistory: Prisma.ProgresoCursoWhereInput = {
+      idCurso: curso.id,
     };
 
     if (fechaCorte) {
@@ -846,7 +850,7 @@ export class ReportesService {
       whereHistory.fechaRegistro = { lte: end };
     }
 
-    const evolutionHistory = await this.prisma.historialProgresoCurso.findMany({
+    const evolutionHistory = await this.prisma.progresoCurso.findMany({
       where: whereHistory,
       orderBy: { fechaRegistro: 'asc' },
       select: { fechaRegistro: true, pctMisionesCompletadas: true },
@@ -901,9 +905,7 @@ export class ReportesService {
     end.setUTCHours(23, 59, 59, 999);
 
     const where: Prisma.MisionCompletadaWhereInput = {
-      progresoAlumno: {
-        alumnoCurso: { idCurso: idCurso },
-      },
+      inscripcionAlumno: { idCurso: idCurso },
       fechaCompletado: { gte: start, lte: end },
     };
 
@@ -915,13 +917,12 @@ export class ReportesService {
       where,
       include: {
         mision: true,
-        progresoAlumno: true, // Solo necesitamos el ID para contar únicos
       },
       orderBy: { fechaCompletado: 'asc' },
     });
 
     // 1. Agrupación por Misión
-    const totalAlumnos = await this.prisma.alumnoCurso.count({
+    const totalAlumnos = await this.prisma.inscripcionesAlumnoCurso.count({
       where: {
         idCurso: idCurso,
         estado: { in: [estado_simple.Activo, estado_simple.Finalizado] }, // <-- Incluimos Finalizados
@@ -946,7 +947,7 @@ export class ReportesService {
       }
       const stat = missionStats[c.idMision];
       stat.count++;
-      stat.uniqueStudents.add(c.idProgreso);
+      stat.uniqueStudents.add(c.idInscripcion);
       stat.totalEstrellas += c.estrellas;
       stat.totalExp += c.exp;
       stat.totalIntentos += c.intentos;
@@ -1059,19 +1060,13 @@ export class ReportesService {
     const completions = await this.prisma.misionCompletada.findMany({
       where: {
         idMision: misionId,
-        progresoAlumno: {
-          alumnoCurso: { idCurso: idCurso },
-        },
+        inscripcionAlumno: { idCurso: idCurso },
         fechaCompletado: { gte: start, lte: end },
       },
       include: {
-        progresoAlumno: {
+        inscripcionAlumno: {
           include: {
-            alumnoCurso: {
-              include: {
-                alumno: { select: { nombre: true, apellido: true } },
-              },
-            },
+            alumno: { select: { nombre: true, apellido: true } },
           },
         },
       },
@@ -1116,8 +1111,9 @@ export class ReportesService {
 
     // Stats
     const totalCompletions = completions.length;
-    const uniqueStudents = new Set(completions.map((c) => c.idProgreso)).size;
-    const totalAlumnos = await this.prisma.alumnoCurso.count({
+    const uniqueStudents = new Set(completions.map((c) => c.idInscripcion))
+      .size;
+    const totalAlumnos = await this.prisma.inscripcionesAlumnoCurso.count({
       where: {
         idCurso: idCurso,
         estado: { in: [estado_simple.Activo, estado_simple.Finalizado] }, // <-- Incluimos Finalizados
@@ -1130,9 +1126,9 @@ export class ReportesService {
 
     // Tabla Alumnos
     const tableData = completions.map((c) => ({
-      id: c.progresoAlumno.id,
-      alumno: c.progresoAlumno.alumnoCurso
-        ? `${c.progresoAlumno.alumnoCurso.alumno.nombre} ${c.progresoAlumno.alumnoCurso.alumno.apellido}`
+      id: c.id,
+      alumno: c.inscripcionAlumno?.alumno
+        ? `${c.inscripcionAlumno.alumno.nombre} ${c.inscripcionAlumno.alumno.apellido}`
         : 'Alumno Desconocido',
       estrellas: c.estrellas,
       exp: c.exp,
@@ -1174,7 +1170,7 @@ export class ReportesService {
       end.setUTCHours(23, 59, 59, 999);
 
       // A. Alumnos activos a la fecha de corte
-      totalAlumnos = await this.prisma.alumnoCurso.count({
+      totalAlumnos = await this.prisma.inscripcionesAlumnoCurso.count({
         where: {
           idCurso: idCurso,
           fechaInscripcion: { lte: end },
@@ -1187,7 +1183,7 @@ export class ReportesService {
       });
 
       // B. Alumnos inactivos a la fecha de corte
-      totalAlumnosInactivos = await this.prisma.alumnoCurso.count({
+      totalAlumnosInactivos = await this.prisma.inscripcionesAlumnoCurso.count({
         where: {
           idCurso: idCurso,
           fechaInscripcion: { lte: end },
@@ -1199,24 +1195,27 @@ export class ReportesService {
       });
 
       // C. Reconstruir estado de dificultades desde el historial
-      const history = await this.prisma.historialDificultadAlumno.findMany({
+      const history = await this.prisma.dificultadesAlumno.findMany({
         where: {
-          idCurso: idCurso,
-          fechaCambio: { lte: end },
+          inscripcion: { idCurso: idCurso },
+          fechaRegistro: { lte: end },
         },
-        orderBy: { fechaCambio: 'asc' }, // Procesamos en orden cronológico
-        include: { dificultad: true },
+        orderBy: { fechaRegistro: 'asc' }, // Procesamos en orden cronológico
+        include: {
+          dificultad: true,
+          inscripcion: { select: { idAlumno: true } },
+        },
       });
 
       // Mapa para guardar el último estado: "idAlumno-idDificultad" -> Registro
       const stateMap = new Map<string, any>();
 
       history.forEach((h) => {
-        const key = `${h.idAlumno}-${h.idDificultad}`;
+        const key = `${h.inscripcion.idAlumno}-${h.idDificultad}`;
         stateMap.set(key, {
-          idAlumno: h.idAlumno,
+          idAlumno: h.inscripcion.idAlumno,
           idDificultad: h.idDificultad,
-          grado: h.gradoNuevo, // Leemos 'gradoNuevo' del historial, pero lo guardamos como 'grado' para la lógica siguiente
+          grado: h.gradoActual,
           dificultad: h.dificultad,
         });
       });
@@ -1224,21 +1223,40 @@ export class ReportesService {
       rawDifficulties = Array.from(stateMap.values());
     } else {
       // MODO ACTUAL
-      totalAlumnos = await this.prisma.alumnoCurso.count({
+      totalAlumnos = await this.prisma.inscripcionesAlumnoCurso.count({
         where: {
           idCurso: idCurso,
           estado: { in: [estado_simple.Activo, estado_simple.Finalizado] }, // <-- Incluimos Finalizados
         },
       });
 
-      totalAlumnosInactivos = await this.prisma.alumnoCurso.count({
+      totalAlumnosInactivos = await this.prisma.inscripcionesAlumnoCurso.count({
         where: { idCurso: idCurso, estado: estado_simple.Inactivo },
       });
 
-      rawDifficulties = await this.prisma.dificultadAlumno.findMany({
-        where: { idCurso: idCurso },
-        include: { dificultad: true },
+      const history = await this.prisma.dificultadesAlumno.findMany({
+        where: {
+          inscripcion: { idCurso: idCurso },
+        },
+        orderBy: { fechaRegistro: 'asc' },
+        include: {
+          dificultad: true,
+          inscripcion: { select: { idAlumno: true } },
+        },
       });
+
+      const stateMap = new Map<string, any>();
+      history.forEach((h) => {
+        const key = `${h.inscripcion.idAlumno}-${h.idDificultad}`;
+        stateMap.set(key, {
+          idAlumno: h.inscripcion.idAlumno,
+          idDificultad: h.idDificultad,
+          grado: h.gradoActual,
+          dificultad: h.dificultad,
+        });
+      });
+
+      rawDifficulties = Array.from(stateMap.values());
     }
 
     // No filtramos 'Ninguno' para mostrar también las superadas en los reportes
@@ -1416,14 +1434,10 @@ export class ReportesService {
     end.setUTCHours(23, 59, 59, 999);
 
     // 2. Construir filtro WHERE
-    const where: Prisma.HistorialDificultadAlumnoWhereInput = {
-      idCurso,
-      fechaCambio: { gte: start, lte: end },
+    const where: Prisma.DificultadesAlumnoWhereInput = {
+      inscripcion: { idCurso },
+      fechaRegistro: { gte: start, lte: end },
     };
-
-    if (fuente) {
-      where.fuente = fuente;
-    }
 
     if (dificultades) {
       const ids = dificultades.split(',').filter(Boolean);
@@ -1438,14 +1452,26 @@ export class ReportesService {
     }
 
     // 3. Consultar Historial
-    const history = await this.prisma.historialDificultadAlumno.findMany({
+    const rawHistory = await this.prisma.dificultadesAlumno.findMany({
       where,
       include: {
-        alumno: { select: { nombre: true, apellido: true } },
+        inscripcion: {
+          select: {
+            alumno: { select: { nombre: true, apellido: true } },
+          },
+        },
         dificultad: { select: { nombre: true, tema: true } },
       },
-      orderBy: { fechaCambio: 'desc' },
+      orderBy: { fechaRegistro: 'desc' },
     });
+
+    const history = rawHistory.map((h) => ({
+      ...h,
+      alumno: h.inscripcion.alumno,
+      fechaCambio: h.fechaRegistro,
+      gradoNuevo: h.gradoActual,
+      fuente: fuente_cambio_dificultad.VIDEOJUEGO,
+    }));
 
     // 4. Procesar Datos
 
@@ -1529,20 +1555,38 @@ export class ReportesService {
 
     // --- PARTE 1: MINI RESUMEN (Estado Actual) ---
     // Obtenemos las dificultades actuales del alumno en este curso
-    const currentDifficulties = await this.prisma.dificultadAlumno.findMany({
+    const inscripcion = await this.prisma.inscripcionesAlumnoCurso.findFirst({
       where: {
         idCurso,
         idAlumno: studentId,
       },
-      include: { dificultad: true },
     });
+
+    const rawCurrentDifficulties = inscripcion
+      ? await this.prisma.dificultadesAlumno.findMany({
+          where: {
+            idInscripcion: inscripcion.id,
+          },
+          include: { dificultad: true },
+          orderBy: { fechaRegistro: 'desc' },
+        })
+      : [];
+
+    // Deduplicar para quedarse con el más reciente por dificultad
+    const latestDifMap = new Map<string, (typeof rawCurrentDifficulties)[0]>();
+    for (const d of rawCurrentDifficulties) {
+      if (!latestDifMap.has(d.idDificultad)) {
+        latestDifMap.set(d.idDificultad, d);
+      }
+    }
+    const currentDifficulties = Array.from(latestDifMap.values());
 
     // Agrupaciones para gráficos del resumen
     const byGrade = { Ninguno: 0, Bajo: 0, Medio: 0, Alto: 0 };
     const byTopic: Record<string, number> = {};
 
     currentDifficulties.forEach((d) => {
-      if (d.grado in byGrade) byGrade[d.grado]++;
+      if (d.gradoActual in byGrade) byGrade[d.gradoActual]++;
       byTopic[d.dificultad.tema] = (byTopic[d.dificultad.tema] || 0) + 1;
     });
 
@@ -1551,7 +1595,7 @@ export class ReportesService {
         id: d.dificultad.id,
         nombre: d.dificultad.nombre,
         tema: d.dificultad.tema,
-        grado: d.grado,
+        grado: d.gradoActual,
       })),
       graficos: {
         porGrado: [
@@ -1575,13 +1619,11 @@ export class ReportesService {
     const end = fechaHasta ? new Date(fechaHasta) : new Date();
     end.setUTCHours(23, 59, 59, 999);
 
-    const whereHistory: Prisma.HistorialDificultadAlumnoWhereInput = {
-      idCurso,
-      idAlumno: studentId,
-      fechaCambio: { gte: start, lte: end },
+    const whereHistory: Prisma.DificultadesAlumnoWhereInput = {
+      inscripcion: { idCurso, idAlumno: studentId },
+      fechaRegistro: { gte: start, lte: end },
     };
 
-    if (fuente) whereHistory.fuente = fuente;
     if (dificultades) {
       const ids = dificultades.split(',').filter(Boolean);
       if (ids.length > 0) whereHistory.idDificultad = { in: ids };
@@ -1592,14 +1634,26 @@ export class ReportesService {
         whereHistory.dificultad = { tema: { in: temasList } };
     }
 
-    const history = await this.prisma.historialDificultadAlumno.findMany({
+    const rawHistory = await this.prisma.dificultadesAlumno.findMany({
       where: whereHistory,
       include: {
         dificultad: { select: { nombre: true, tema: true } },
-        alumno: { select: { nombre: true, apellido: true } },
+        inscripcion: {
+          select: {
+            alumno: { select: { nombre: true, apellido: true } },
+          },
+        },
       },
-      orderBy: { fechaCambio: 'asc' }, // Orden ascendente para construir la evolución
+      orderBy: { fechaRegistro: 'asc' }, // Orden ascendente para construir la evolución
     });
+
+    const history = rawHistory.map((h) => ({
+      ...h,
+      alumno: h.inscripcion.alumno,
+      fechaCambio: h.fechaRegistro,
+      gradoNuevo: h.gradoActual,
+      fuente: fuente_cambio_dificultad.VIDEOJUEGO,
+    }));
 
     // A) Stats de Mejora
     let totalMejoras = 0;
@@ -2390,7 +2444,7 @@ export class ReportesService {
     });
 
     // Obtener lista de docentes del curso para el filtro del frontend
-    const docentesCurso = await this.prisma.docenteCurso.findMany({
+    const docentesCurso = await this.prisma.asignacionesDocenteCurso.findMany({
       where: { idCurso },
       select: {
         docente: { select: { id: true, nombre: true, apellido: true } },
@@ -2993,13 +3047,13 @@ export class ReportesService {
 
     // 3. Obtener Listas para Filtros (Metadata)
     const [alumnos, docentes, dificultades] = await Promise.all([
-      this.prisma.alumnoCurso.findMany({
+      this.prisma.inscripcionesAlumnoCurso.findMany({
         where: { idCurso },
         select: {
           alumno: { select: { id: true, nombre: true, apellido: true } },
         },
       }),
-      this.prisma.docenteCurso.findMany({
+      this.prisma.asignacionesDocenteCurso.findMany({
         where: { idCurso },
         select: {
           docente: { select: { id: true, nombre: true, apellido: true } },

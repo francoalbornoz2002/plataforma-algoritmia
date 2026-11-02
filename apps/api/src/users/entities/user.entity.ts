@@ -14,12 +14,6 @@ export class UserEntity {
   dni: string;
 
   @ApiProperty()
-  fechaNacimiento: Date;
-
-  @ApiProperty()
-  genero: string;
-
-  @ApiProperty()
   email: string;
 
   @ApiProperty()

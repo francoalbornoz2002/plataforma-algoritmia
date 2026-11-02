@@ -17,7 +17,6 @@ import {
   grado_dificultad,
   Prisma,
   roles,
-  fuente_cambio_dificultad,
 } from '@prisma/client';
 import { getDiaSemanaEnum } from 'src/helpers';
 import { UserPayload } from 'src/interfaces/authenticated-user.interface';
@@ -827,55 +826,44 @@ export class SesionesRefuerzoService {
       else if (pctAciertos < 85) nuevoGrado = grado_dificultad.Bajo;
       else nuevoGrado = grado_dificultad.Ninguno;
 
-      // 3.1. Verificar estado actual para Historial
-      const existingDifficulty = await tx.dificultadAlumno.findUnique({
-        where: {
-          idAlumno_idCurso_idDificultad: {
-            idAlumno,
-            idCurso,
-            idDificultad: sesion.idDificultad,
-          },
-        },
+      // 3.1. Buscar la inscripción del alumno para obtener el idInscripcion
+      const inscripcion = await tx.inscripcionesAlumnoCurso.findFirst({
+        where: { idAlumno, idCurso },
       });
 
-      const shouldUpdate =
-        !existingDifficulty || existingDifficulty.grado !== nuevoGrado;
+      if (!inscripcion) {
+        throw new NotFoundException(
+          'No se encontró la inscripción del alumno en el curso.',
+        );
+      }
 
-      if (shouldUpdate) {
-        // Actualizamos o creamos la dificultad con el nuevo grado
-        await tx.dificultadAlumno.upsert({
-          where: {
-            idAlumno_idCurso_idDificultad: {
-              idAlumno,
-              idCurso,
-              idDificultad: sesion.idDificultad,
-            },
-          },
-          update: { grado: nuevoGrado },
-          create: {
-            idAlumno,
-            idCurso,
-            idDificultad: sesion.idDificultad,
-            grado: nuevoGrado,
-          },
-        });
+      // 3.2. Verificar el registro de dificultad más reciente para esta dificultad
+      const existingDifficulty = await tx.dificultadesAlumno.findFirst({
+        where: {
+          idInscripcion: inscripcion.id,
+          idDificultad: sesion.idDificultad,
+        },
+        orderBy: { fechaRegistro: 'desc' },
+      });
 
-        // Insertamos en el Historial
-        await tx.historialDificultadAlumno.create({
+      const shouldCreate =
+        !existingDifficulty || existingDifficulty.gradoActual !== nuevoGrado;
+
+      if (shouldCreate) {
+        // Siempre se crea un nuevo registro con el cambio (comportamiento de historial)
+        await tx.dificultadesAlumno.create({
           data: {
-            idAlumno,
-            idCurso,
+            idInscripcion: inscripcion.id,
             idDificultad: sesion.idDificultad,
             gradoAnterior: existingDifficulty
-              ? existingDifficulty.grado
+              ? existingDifficulty.gradoActual
               : grado_dificultad.Ninguno,
-            gradoNuevo: nuevoGrado,
-            fechaCambio: new Date(),
-            fuente: fuente_cambio_dificultad.SESION_REFUERZO,
+            gradoActual: nuevoGrado,
+            fechaRegistro: new Date(),
           },
         });
 
-        // 3.2. Recalcular KPIs del curso (Solo si hubo cambios)
+        // 3.3. Recalcular KPIs del curso (Solo si hubo cambios)
         await this.difficultiesService.recalculateCourseDifficulties(
           tx,
           idCurso,

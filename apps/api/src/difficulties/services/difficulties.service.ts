@@ -33,37 +33,45 @@ export class DifficultiesService {
    */
   async getStudentDifficulties(idAlumno: string, idCurso: string) {
     try {
-      // 1. Buscamos todas las dificultades asignadas a ese alumno en ese curso
-      const dificultadesAlumno = await this.prisma.dificultadAlumno.findMany({
+      // 1. Obtener la inscripción activa del alumno en el curso
+      const inscripcion = await this.prisma.inscripcionesAlumnoCurso.findFirst({
+        where: { idAlumno, idCurso, estado: estado_simple.Activo },
+      });
+
+      // 2. Buscamos todas las dificultades asignadas a la inscripción del alumno en ese curso
+      const dificultadesAlumno = await this.prisma.dificultadesAlumno.findMany({
         where: {
-          idAlumno: idAlumno,
-          idCurso: idCurso,
+          idInscripcion: inscripcion?.id,
         },
-        // 2. Incluimos los detalles de la dificultad (nombre, tema, etc.)
         include: {
           dificultad: true,
         },
-        // Opcional: ordenar por tema o nombre
         orderBy: {
-          dificultad: {
-            tema: 'asc',
-          },
+          fechaRegistro: 'desc',
         },
       });
 
       // 3. Validamos si se encontró algo
       if (!dificultadesAlumno || dificultadesAlumno.length === 0) {
-        // No es un error, simplemente puede no tener dificultades aún
         return [];
       }
 
+      // Quedarse únicamente con el registro más reciente de cada dificultad
+      const latestMap = new Map<string, (typeof dificultadesAlumno)[0]>();
+      for (const da of dificultadesAlumno) {
+        if (!latestMap.has(da.idDificultad)) {
+          latestMap.set(da.idDificultad, da);
+        }
+      }
+      const latestList = Array.from(latestMap.values());
+
       // 4. Mapeamos la respuesta para que sea más limpia para el frontend
-      return dificultadesAlumno.map((da) => ({
+      return latestList.map((da) => ({
         id: da.dificultad.id,
         nombre: da.dificultad.nombre,
         descripcion: da.dificultad.descripcion,
         tema: da.dificultad.tema,
-        grado: da.grado, // El grado (Ninguno, Bajo, Medio, Alto) del alumno
+        grado: da.gradoActual,
       }));
     } catch (error) {
       console.error('Error en getStudentDifficulties:', error);
@@ -82,7 +90,9 @@ export class DifficultiesService {
       const curso = await this.prisma.curso.findUnique({
         where: { id: idCurso },
         select: {
-          dificultadesCurso: {
+          dificultadesCursos: {
+            orderBy: { fechaRegistro: 'desc' },
+            take: 1,
             // Opcional: incluir el nombre de la dificultad más frecuente
             include: {
               dificultadModa: {
@@ -93,34 +103,66 @@ export class DifficultiesService {
         },
       });
 
-      if (!curso || !curso.dificultadesCurso) {
+      const overview = curso?.dificultadesCursos?.[0];
+      if (!overview) {
         throw new NotFoundException(
           'Resumen de dificultades del curso no encontrado.',
         );
       }
 
-      const overview = curso.dificultadesCurso;
-
-      // Alumno Crítico (Alumno con más dificultades activas)
-      const topStudentGroup = await this.prisma.dificultadAlumno.groupBy({
-        by: ['idAlumno'],
+      // Alumno Crítico (Alumno con más dificultades activas según su último estado)
+      const allActiveDif = await this.prisma.dificultadesAlumno.findMany({
         where: {
-          idCurso: idCurso,
-          grado: { not: 'Ninguno' },
+          inscripcion: {
+            idCurso: idCurso,
+            estado: estado_simple.Activo,
+          },
         },
-        _count: { idDificultad: true },
-        orderBy: { _count: { idDificultad: 'desc' } },
-        take: 1,
+        select: {
+          idInscripcion: true,
+          idDificultad: true,
+          gradoActual: true,
+          fechaRegistro: true,
+          inscripcion: {
+            select: {
+              alumno: { select: { nombre: true, apellido: true } },
+            },
+          },
+        },
+        orderBy: { fechaRegistro: 'desc' },
       });
 
-      let alumnoCritico;
-      if (topStudentGroup.length > 0) {
-        const u = await this.prisma.usuario.findUnique({
-          where: { id: topStudentGroup[0].idAlumno },
-          select: { nombre: true, apellido: true },
-        });
-        if (u) {
-          alumnoCritico = `${u.nombre} ${u.apellido}`;
+      // Deduplicar por idInscripcion + idDificultad
+      const latestPerStudentDif = new Map<string, (typeof allActiveDif)[0]>();
+      for (const d of allActiveDif) {
+        const key = `${d.idInscripcion}_${d.idDificultad}`;
+        if (!latestPerStudentDif.has(key)) {
+          latestPerStudentDif.set(key, d);
+        }
+      }
+
+      // Contar dificultades activas (gradoActual !== 'Ninguno') por inscripción
+      const countsByInscripcion = new Map<
+        string,
+        { count: number; alumnoNombre: string }
+      >();
+      for (const d of latestPerStudentDif.values()) {
+        if (d.gradoActual !== 'Ninguno') {
+          const prev = countsByInscripcion.get(d.idInscripcion) || {
+            count: 0,
+            alumnoNombre: `${d.inscripcion.alumno.nombre} ${d.inscripcion.alumno.apellido}`,
+          };
+          prev.count++;
+          countsByInscripcion.set(d.idInscripcion, prev);
+        }
+      }
+
+      let alumnoCritico: string | undefined;
+      let maxCount = 0;
+      for (const { count, alumnoNombre } of countsByInscripcion.values()) {
+        if (count > maxCount) {
+          maxCount = count;
+          alumnoCritico = alumnoNombre;
         }
       }
 
@@ -150,67 +192,75 @@ export class DifficultiesService {
     const includeInactive = !!curso?.deletedAt;
 
     try {
-      // 1. Construir el WHERE (Ahora para el modelo 'Usuario')
-      const where: Prisma.UsuarioWhereInput = {
-        rol: roles.Alumno, // Solo Alumnos
-        cursosDelAlumno: {
-          // Que estén en este curso Y activos
-          some: {
-            idCurso: idCurso,
-            // Si el curso está finalizado, mostramos Finalizados y Activos, pero NO Inactivos (Abandonos)
-            estado: includeInactive
-              ? { in: [estado_simple.Activo, estado_simple.Finalizado] }
-              : estado_simple.Activo,
-          },
+      // 1. Consultar inscripciones del curso con el alumno y sus dificultades
+      const inscripciones = await this.prisma.inscripcionesAlumnoCurso.findMany({
+        where: {
+          idCurso: idCurso,
+          estado: includeInactive
+            ? { in: [estado_simple.Activo, estado_simple.Finalizado] }
+            : estado_simple.Activo,
         },
-      };
-
-      // 2. Ejecutar consulta (sin paginación ni ordenamiento del lado del servidor)
-      const alumnos = await this.prisma.usuario.findMany({
-        where,
-        select: {
-          id: true,
-          nombre: true,
-          apellido: true,
-          dificultades: {
-            where: { idCurso: idCurso },
+        include: {
+          alumno: {
             select: {
-              grado: true,
+              id: true,
+              nombre: true,
+              apellido: true,
+            },
+          },
+          dificultadesAlumnos: {
+            select: {
+              gradoActual: true,
               idDificultad: true,
               dificultad: { select: { tema: true } },
+              fechaRegistro: true,
             },
+            orderBy: { fechaRegistro: 'desc' },
           },
         },
       });
 
-      // 3. Mapear la respuesta y calcular los conteos
-      const data = alumnos.map((alumno) => {
-        // Contamos los grados manualmente
-        const alto = alumno.dificultades.filter(
-          (d) => d.grado === 'Alto',
+      // 2. Mapear la respuesta y calcular los conteos (utilizando solo el último estado por dificultad)
+      const data = inscripciones.map((inscripcion) => {
+        const { alumno, dificultadesAlumnos } = inscripcion;
+
+        // Deduplicar: mantener el más reciente de cada idDificultad
+        const latestDifMap = new Map<
+          string,
+          (typeof dificultadesAlumnos)[0]
+        >();
+        for (const d of dificultadesAlumnos) {
+          if (!latestDifMap.has(d.idDificultad)) {
+            latestDifMap.set(d.idDificultad, d);
+          }
+        }
+        const activeDifficulties = Array.from(latestDifMap.values());
+
+        const alto = activeDifficulties.filter(
+          (d) => d.gradoActual === 'Alto',
         ).length;
-        const medio = alumno.dificultades.filter(
-          (d) => d.grado === 'Medio',
+        const medio = activeDifficulties.filter(
+          (d) => d.gradoActual === 'Medio',
         ).length;
-        const bajo = alumno.dificultades.filter(
-          (d) => d.grado === 'Bajo',
+        const bajo = activeDifficulties.filter(
+          (d) => d.gradoActual === 'Bajo',
         ).length;
-        const ninguno = alumno.dificultades.filter(
-          (d) => d.grado === 'Ninguno',
+        const ninguno = activeDifficulties.filter(
+          (d) => d.gradoActual === 'Ninguno',
         ).length;
 
         return {
           id: alumno.id,
           nombre: alumno.nombre,
           apellido: alumno.apellido,
-          totalDificultades: alumno.dificultades.length,
+          totalDificultades: activeDifficulties.length,
           gradoAlto: alto,
           gradoMedio: medio,
           gradoBajo: bajo,
           gradoNinguno: ninguno,
-          dificultadesDetalle: alumno.dificultades.map((d) => ({
+          dificultadesDetalle: activeDifficulties.map((d) => ({
             idDificultad: d.idDificultad,
-            grado: d.grado,
+            grado: d.gradoActual,
             tema: d.dificultad.tema,
           })),
         };
@@ -227,38 +277,48 @@ export class DifficultiesService {
 
   /**
    * MÉTODO 3: Obtener el detalle de dificultades de UN alumno
-   * (El que usamos para el Alumno, ahora reutilizado para el Modal del Docente)
+   * (Reutiliza la lógica de consulta por inscripción para el Modal del Docente)
    */
   async getStudentDifficultiesDetail(idAlumno: string, idCurso: string) {
     try {
-      const dificultadesAlumno = await this.prisma.dificultadAlumno.findMany({
+      const inscripcion = await this.prisma.inscripcionesAlumnoCurso.findFirst({
+        where: { idAlumno, idCurso },
+      });
+
+      if (!inscripcion) {
+        throw new NotFoundException(
+          'No se encontró una inscripción para este alumno en este curso.',
+        );
+      }
+
+      const dificultadesAlumno = await this.prisma.dificultadesAlumno.findMany({
         where: {
-          idAlumno: idAlumno,
-          idCurso: idCurso,
+          idInscripcion: inscripcion.id,
         },
         include: {
           dificultad: true,
         },
         orderBy: {
-          dificultad: {
-            tema: 'asc',
-          },
+          fechaRegistro: 'desc',
         },
       });
 
-      if (!dificultadesAlumno) {
-        throw new NotFoundException(
-          'No se encontraron dificultades para este alumno.',
-        );
+      // Deduplicar para conservar únicamente el registro más reciente de cada dificultad
+      const latestMap = new Map<string, (typeof dificultadesAlumno)[0]>();
+      for (const da of dificultadesAlumno) {
+        if (!latestMap.has(da.idDificultad)) {
+          latestMap.set(da.idDificultad, da);
+        }
       }
+      const latestList = Array.from(latestMap.values());
 
       // Mapeamos para el frontend
-      return dificultadesAlumno.map((da) => ({
+      return latestList.map((da) => ({
         id: da.dificultad.id,
         nombre: da.dificultad.nombre,
         descripcion: da.dificultad.descripcion,
         tema: da.dificultad.tema,
-        grado: da.grado,
+        grado: da.gradoActual,
       }));
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
@@ -291,9 +351,9 @@ export class DifficultiesService {
 
     try {
       // 3. Validar que el alumno esté activo (UNA SOLA VEZ)
-      const inscripcion = await this.prisma.alumnoCurso.findFirst({
-        where: { idAlumno: idAlumno, estado: 'Activo' },
-        select: { idCurso: true },
+      const inscripcion = await this.prisma.inscripcionesAlumnoCurso.findFirst({
+        where: { idAlumno: idAlumno, estado: estado_simple.Activo },
+        select: { id: true, idCurso: true },
       });
 
       if (!inscripcion) {
@@ -310,7 +370,7 @@ export class DifficultiesService {
         // para no romper la cronología de los gráficos.
         const fechaRegistroHistorial = new Date();
 
-        // --- Paso A: Iterar y hacer UPSERT para cada dificultad ---
+        // --- Paso A: Iterar y registrar cada dificultad ---
         for (const dto of dtos) {
           // --- Lógica de Cancelación de Sesiones por cambio de Grado ---
           const sesionPendiente = await tx.sesionRefuerzo.findFirst({
@@ -352,52 +412,29 @@ export class DifficultiesService {
             }
           }
 
-          // 1. Buscamos el estado actual para saber si cambió
-          const existing = await tx.dificultadAlumno.findUnique({
+          // 1. Buscamos el registro más reciente para saber el grado anterior
+          const existing = await tx.dificultadesAlumno.findFirst({
             where: {
-              idAlumno_idCurso_idDificultad: {
-                idAlumno: idAlumno,
-                idCurso: idCurso,
-                idDificultad: dto.idDificultad,
-              },
+              idInscripcion: inscripcion.id,
+              idDificultad: dto.idDificultad,
             },
+            orderBy: { fechaRegistro: 'desc' },
           });
 
           // 2. Solo actuamos si es nuevo o si el grado es diferente
-          const shouldUpdate = !existing || existing.grado !== dto.grado;
+          const shouldCreate = !existing || existing.gradoActual !== dto.grado;
 
-          if (shouldUpdate) {
-            await tx.dificultadAlumno.upsert({
-              where: {
-                idAlumno_idCurso_idDificultad: {
-                  idAlumno: idAlumno,
-                  idCurso: idCurso,
-                  idDificultad: dto.idDificultad,
-                },
-              },
-              create: {
-                idAlumno: idAlumno,
-                idCurso: idCurso,
-                idDificultad: dto.idDificultad,
-                grado: dto.grado,
-              },
-              update: {
-                grado: dto.grado,
-              },
-            });
-
-            // 3. Insertamos en el Historial
-            await tx.historialDificultadAlumno.create({
+          if (shouldCreate) {
+            // Siempre se crea un nuevo registro (comportamiento de historial)
+            await tx.dificultadesAlumno.create({
               data: {
-                idAlumno: idAlumno,
-                idCurso: idCurso,
+                idInscripcion: inscripcion.id,
                 idDificultad: dto.idDificultad,
                 gradoAnterior: existing
-                  ? existing.grado
+                  ? existing.gradoActual
                   : grado_dificultad.Ninguno,
-                gradoNuevo: dto.grado,
-                fechaCambio: fechaRegistroHistorial,
-                fuente: fuente_cambio_dificultad.VIDEOJUEGO,
+                gradoActual: dto.grado,
+                fechaRegistro: fechaRegistroHistorial,
               },
             });
           }
@@ -467,47 +504,44 @@ export class DifficultiesService {
 
   /**
    * HELPER: Recalcula los KPIs de DificultadesCurso
-   * (Esta es la lógica que discutimos)
    */
   public async recalculateCourseDifficulties(
     tx: Prisma.TransactionClient,
     idCurso: string,
     fechaRegistro: Date = new Date(),
   ) {
-    // 1. Encontrar el registro de DificultadesCurso a actualizar
-    const curso = await tx.curso.findUnique({
-      where: { id: idCurso },
-      select: { idDificultadesCurso: true },
-    });
-    if (!curso) throw new Error('Curso no encontrado en recalculate'); // Error interno
-
-    // 2. Obtener TODOS los registros de dificultad de ESTE curso
-    // CORRECCIÓN: Solo de alumnos que siguen en el curso (Activos o Finalizados)
-    // Excluimos a los 'Inactivo' para no manchar los promedios.
-    const allDifAlumnos = await tx.dificultadAlumno.findMany({
+    // 1. Obtener los registros de dificultad de ESTE curso (más recientes primero)
+    // Solo de alumnos con inscripciones Activas o Finalizadas
+    const rawDifAlumnos = await tx.dificultadesAlumno.findMany({
       where: {
-        idCurso: idCurso,
-        alumno: {
-          cursosDelAlumno: {
-            some: {
-              idCurso: idCurso,
-              // Filtramos por estado en la tabla intermedia
-              estado: { in: [estado_simple.Activo, estado_simple.Finalizado] },
-            },
-          },
+        inscripcion: {
+          idCurso: idCurso,
+          estado: { in: [estado_simple.Activo, estado_simple.Finalizado] },
         },
       },
       select: {
-        idAlumno: true,
+        idInscripcion: true,
         idDificultad: true,
-        grado: true,
-        dificultad: { select: { tema: true } }, // Hacemos JOIN con 'dificultad'
+        gradoActual: true,
+        fechaRegistro: true,
+        inscripcion: { select: { idAlumno: true } },
+        dificultad: { select: { tema: true } },
       },
-      orderBy: { idDificultad: 'asc' }, // Orden determinista para empates
+      orderBy: { fechaRegistro: 'desc' },
     });
 
-    // 2.1. Contar el total de alumnos activos/finalizados para el cálculo del promedio
-    const totalAlumnos = await tx.alumnoCurso.count({
+    // Deduplicar: quedarnos únicamente con el registro más reciente para cada (idInscripcion, idDificultad)
+    const latestMap = new Map<string, (typeof rawDifAlumnos)[0]>();
+    for (const d of rawDifAlumnos) {
+      const key = `${d.idInscripcion}_${d.idDificultad}`;
+      if (!latestMap.has(key)) {
+        latestMap.set(key, d);
+      }
+    }
+    const allDifAlumnos = Array.from(latestMap.values());
+
+    // 2. Contar el total de alumnos activos/finalizados para el cálculo del promedio
+    const totalAlumnos = await tx.inscripcionesAlumnoCurso.count({
       where: {
         idCurso: idCurso,
         estado: { in: [estado_simple.Activo, estado_simple.Finalizado] },
@@ -516,36 +550,22 @@ export class DifficultiesService {
 
     // Si no hay dificultades (o no hay alumnos), reseteamos y salimos
     if (allDifAlumnos.length === 0 || totalAlumnos === 0) {
-      const reset = await tx.dificultadesCurso.update({
-        where: { id: curso.idDificultadesCurso },
+      await tx.dificultadesCurso.create({
         data: {
-          temaModa: 'Ninguno',
+          idCurso: idCurso,
+          temaModa: temas.Ninguno,
           idDificultadModa: null,
           promDificultades: 0,
-          promGrado: 'Ninguno',
-        },
-      });
-
-      // Guardar historial de reset
-      await tx.historialDificultadesCurso.create({
-        data: {
-          idDificultadesCurso: curso.idDificultadesCurso,
-          temaModa: reset.temaModa,
-          idDificultadModa: reset.idDificultadModa,
-          promDificultades: reset.promDificultades,
-          promGrado: reset.promGrado,
+          promGrado: grado_dificultad.Ninguno,
           fechaRegistro: fechaRegistro,
         },
       });
-
       return;
     }
 
     // --- 3. Calcular KPIs (Lógica en TypeScript) ---
 
     // KPI: Promedio de dificultades por alumno
-    // Dividimos por el total de alumnos del curso, no solo los que tienen dificultades
-    // (Incluye superadas para coincidir con el reporte general)
     const promDificultades = allDifAlumnos.length / totalAlumnos;
 
     let promGrado: grado_dificultad = 'Ninguno';
@@ -554,7 +574,7 @@ export class DifficultiesService {
 
     // Filtramos solo las activas para las Modas y el Grado Promedio
     const activeDifAlumnos = allDifAlumnos.filter(
-      (d) => d.grado !== grado_dificultad.Ninguno,
+      (d) => d.gradoActual !== grado_dificultad.Ninguno,
     );
 
     if (activeDifAlumnos.length > 0) {
@@ -567,12 +587,12 @@ export class DifficultiesService {
         b[1] > a[1] ? b : a,
       )[0];
 
-      // KPI: Tema más frecuente (Contamos alumnos únicos por tema, igual que en el reporte)
+      // KPI: Tema más frecuente (Contamos alumnos únicos por tema)
       const temaCounts = new Map<temas, Set<string>>();
       activeDifAlumnos.forEach((d) => {
         if (!temaCounts.has(d.dificultad.tema))
           temaCounts.set(d.dificultad.tema, new Set());
-        temaCounts.get(d.dificultad.tema)!.add(d.idAlumno);
+        temaCounts.get(d.dificultad.tema)!.add(d.inscripcion.idAlumno);
       });
       temaModa = [...temaCounts.entries()].reduce((a, b) =>
         b[1].size > a[1].size ? b : a,
@@ -581,7 +601,7 @@ export class DifficultiesService {
       // KPI: Grado promedio (con pesos, solo de las activas)
       const pesos = { Ninguno: 0, Bajo: 1, Medio: 2, Alto: 3 };
       let sumaPesos = 0;
-      activeDifAlumnos.forEach((d) => (sumaPesos += pesos[d.grado]));
+      activeDifAlumnos.forEach((d) => (sumaPesos += pesos[d.gradoActual]));
       const promNumerico = sumaPesos / activeDifAlumnos.length;
 
       if (promNumerico > 2.5) promGrado = grado_dificultad.Alto;
@@ -589,25 +609,14 @@ export class DifficultiesService {
       else if (promNumerico > 0) promGrado = grado_dificultad.Bajo;
     }
 
-    // 4. Actualizar la tabla DificultadesCurso
-    const actualizado = await tx.dificultadesCurso.update({
-      where: { id: curso.idDificultadesCurso },
+    // 4. Crear snapshot en DificultadesCurso
+    await tx.dificultadesCurso.create({
       data: {
+        idCurso: idCurso,
         temaModa: temaModa,
         idDificultadModa: dificultadModaId,
         promDificultades: promDificultades,
         promGrado: promGrado,
-      },
-    });
-
-    // --- NUEVO: Insertar en HistorialDificultadesCurso ---
-    await tx.historialDificultadesCurso.create({
-      data: {
-        idDificultadesCurso: curso.idDificultadesCurso,
-        temaModa: actualizado.temaModa,
-        idDificultadModa: actualizado.idDificultadModa,
-        promDificultades: actualizado.promDificultades,
-        promGrado: actualizado.promGrado,
         fechaRegistro: fechaRegistro,
       },
     });

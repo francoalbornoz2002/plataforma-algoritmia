@@ -12,6 +12,7 @@ import {
   Prisma,
   estado_clase_consulta,
   estado_consulta,
+  estado_simple,
   temas,
 } from '@prisma/client';
 
@@ -90,8 +91,8 @@ export class ConsultasService {
         select: { nombre: true },
       });
       // Buscamos docentes activos
-      const docentes = await this.prisma.docenteCurso.findMany({
-        where: { idCurso, estado: 'Activo' },
+      const docentes = await this.prisma.asignacionesDocenteCurso.findMany({
+        where: { idCurso, estado: estado_simple.Activo },
         include: { docente: true },
       });
 
@@ -774,10 +775,11 @@ export class ConsultasService {
       // Fuera de la transacción para no bloquearla si el SMTP tarda
 
       // A. Buscamos a TODOS los docentes activos del curso
-      const docentesDelCurso = await this.prisma.docenteCurso.findMany({
-        where: { idCurso: idCurso, estado: 'Activo' },
-        include: { docente: true }, // Traemos usuario para email y nombre
-      });
+      const docentesDelCurso =
+        await this.prisma.asignacionesDocenteCurso.findMany({
+          where: { idCurso: idCurso, estado: estado_simple.Activo },
+          include: { docente: true }, // Traemos usuario para email y nombre
+        });
 
       if (docentesDelCurso.length > 0) {
         const destinatarios = docentesDelCurso.map((d) => ({

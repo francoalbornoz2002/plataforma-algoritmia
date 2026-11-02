@@ -175,7 +175,6 @@ export class UsersService {
       'dni',
       'email',
       'rol',
-      'fechaNacimiento',
       'deletedAt',
       'createdAt',
     ];
@@ -199,8 +198,6 @@ export class UsersService {
             nombre: true,
             apellido: true,
             dni: true,
-            fechaNacimiento: true,
-            genero: true,
             rol: true,
             createdAt: true,
             updatedAt: true,
@@ -285,94 +282,69 @@ export class UsersService {
       throw new UnauthorizedException('Credenciales inválidas.');
     }
 
-    // Obtenemos la inscripción activa del alumno
-    const inscripcion = await this.prisma.alumnoCurso.findFirst({
+    // Obtenemos la inscripción activa del alumno con sus relaciones necesarias para el juego
+    const inscripcion = await this.prisma.inscripcionesAlumnoCurso.findFirst({
       where: {
         idAlumno: alumno.id,
         estado: 'Activo',
       },
-      select: {
-        idCurso: true,
-        idProgreso: true,
+      include: {
+        progresoAlumnos: {
+          orderBy: { fechaRegistro: 'desc' },
+          take: 1,
+        },
+        misionesCompletadas: {
+          select: {
+            idMision: true,
+            estrellas: true,
+            exp: true,
+            intentos: true,
+            fechaCompletado: true,
+          },
+        },
+        misionesEspeciales: {
+          select: {
+            id: true,
+            nombre: true,
+            descripcion: true,
+            estrellas: true,
+            exp: true,
+            intentos: true,
+            fechaCompletado: true,
+          },
+        },
+        dificultadesAlumnos: {
+          select: {
+            idDificultad: true,
+            gradoActual: true,
+          },
+        },
       },
     });
 
-    // Si no existe una inscripción activa, lazamos error.
+    // Si no existe una inscripción activa, lanzamos error.
     if (!inscripcion) {
       throw new NotFoundException(
         'Este alumno no tiene una inscripción activa.',
       );
     }
 
-    const { idCurso, idProgreso } = inscripcion;
-
-    // Obtenemos el progreso_alumno para obtener la última actividad
-    const progreso = await this.prisma.progresoAlumno.findUnique({
-      where: { id: idProgreso },
-      select: { ultimaActividad: true },
-    });
-
-    // Si no existe el progreso, lanzamos error
-    if (!progreso) {
-      throw new NotFoundException(
-        'No se encontró el registro de progreso del alumno.',
-      );
-    }
-
-    // Obtenemos las misiones completadas por el alumno en ese progreso
-    const misionesCompletadas = await this.prisma.misionCompletada.findMany({
-      where: { idProgreso: idProgreso },
-      select: {
-        // Devolvemos solo lo que Godot necesita guardar
-        idMision: true,
-        estrellas: true,
-        exp: true,
-        intentos: true,
-        fechaCompletado: true,
-      },
-    });
-
-    // Obtenemos las misiones especiales completadas por el alumno
-    const misionesEspecialesCompletadas =
-      await this.prisma.misionEspecialCompletada.findMany({
-        where: { idProgreso: idProgreso },
-        select: {
-          id: true,
-          nombre: true,
-          descripcion: true,
-          estrellas: true,
-          exp: true,
-          intentos: true,
-          fechaCompletado: true,
-        },
-      });
-
-    // Obtenemos las dificultades registradas por el alumno en ese curso
-    const dificultadesAlumno = await this.prisma.dificultadAlumno.findMany({
-      where: {
-        idAlumno: alumno.id,
-        idCurso: idCurso,
-      },
-      select: {
-        // Devolvemos solo lo que Godot necesita
-        idDificultad: true,
-        grado: true,
-      },
-    });
+    const dificultadesAlumno = inscripcion.dificultadesAlumnos.map((d) => ({
+      idDificultad: d.idDificultad,
+      grado: d.gradoActual,
+    }));
 
     // Armamos y devolvemos la respuesta final
     const alumnoData = {
       id: alumno.id,
       nombre: alumno.nombre,
       apellido: alumno.apellido,
-      genero: alumno.genero,
-      ultimaActividad: progreso.ultimaActividad,
     };
 
     return {
       alumno: alumnoData,
-      misionesCompletadas: misionesCompletadas,
-      misionesEspecialesCompletadas: misionesEspecialesCompletadas,
+      misionesCompletadas: inscripcion.misionesCompletadas,
+      misionesEspecialesCompletadas: inscripcion.misionesEspeciales,
       dificultadesAlumno: dificultadesAlumno,
     };
   }
@@ -485,7 +457,7 @@ export class UsersService {
     // --- LÓGICA PARA ALUMNOS ---
     if (role === roles.Alumno) {
       // 1. Buscar SOLO la inscripción activa (Regla de Negocio 1)
-      const inscripcionActiva = await tx.alumnoCurso.findFirst({
+      const inscripcionActiva = await tx.inscripcionesAlumnoCurso.findFirst({
         where: {
           idAlumno: userId,
           estado: 'Activo',
@@ -494,23 +466,14 @@ export class UsersService {
 
       if (inscripcionActiva) {
         // 2. Dar de baja la inscripción
-        await tx.alumnoCurso.update({
+        await tx.inscripcionesAlumnoCurso.update({
           where: {
-            idAlumno_idCurso: {
-              idAlumno: userId,
-              idCurso: inscripcionActiva.idCurso,
-            },
+            id: inscripcionActiva.id,
           },
           data: { estado: 'Inactivo', fechaBaja: new Date() },
         });
 
-        // 3. Dar de baja el progreso
-        await tx.progresoAlumno.update({
-          where: { id: inscripcionActiva.idProgreso },
-          data: { estado: 'Inactivo' },
-        });
-
-        // 4. Recalcular estadísticas SOLO de ese curso
+        // 3. Recalcular estadísticas SOLO de ese curso
         await this.progressService.recalculateCourseProgress(
           tx,
           inscripcionActiva.idCurso,
@@ -521,7 +484,7 @@ export class UsersService {
         );
       }
 
-      // 5. Cerrar Consultas pendientes del alumno en CUALQUIER curso
+      // 4. Cerrar Consultas pendientes del alumno en CUALQUIER curso
       await tx.consulta.updateMany({
         where: {
           idAlumno: userId,
@@ -536,7 +499,7 @@ export class UsersService {
         data: { estado: estado_consulta.No_resuelta },
       });
 
-      // 6. Cancelar todas las sesiones de refuerzo pendientes del alumno
+      // 5. Cancelar todas las sesiones de refuerzo pendientes del alumno
       await tx.sesionRefuerzo.updateMany({
         where: {
           idAlumno: userId,
@@ -553,7 +516,7 @@ export class UsersService {
     // --- LÓGICA PARA DOCENTES ---
     if (role === roles.Docente) {
       // 1. Dar de baja asignaciones a cursos
-      await tx.docenteCurso.updateMany({
+      await tx.asignacionesDocenteCurso.updateMany({
         where: { idDocente: userId, estado: 'Activo' },
         data: { estado: 'Inactivo', fechaBaja: new Date() },
       });

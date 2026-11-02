@@ -70,92 +70,78 @@ export class CoursesService {
       imagen && imagen.filename ? `/uploads/${imagen.filename}` : null;
 
     try {
-      return await this.prisma.$transaction(async (tx) => {
-        // 1. Crear dependencias
-        const progreso = await tx.progresoCurso.create({ data: {} });
-        const dificultades = await tx.dificultadesCurso.create({ data: {} });
-
-        // 2. Crear el curso y sus relaciones anidadas
-        const curso = await tx.curso.create({
-          data: {
-            nombre,
-            descripcion,
-            contrasenaAcceso, // Deberías hashear esta contraseña
-            imagenUrl,
-            modalidadPreferencial: modalidadPreferencial,
-            estado: estado_simple.Activo, // <-- Default explícito
-            idProgreso: progreso.id,
-            idDificultadesCurso: dificultades.id,
-            docentes: {
-              create: docenteIds.map((idDocente) => ({
-                idDocente: idDocente,
-                estado: 'Activo',
-              })),
+      return await this.prisma.$transaction(
+        async (tx: Prisma.TransactionClient) => {
+          // 1. Crear el curso y sus relaciones anidadas
+          const curso = await tx.curso.create({
+            data: {
+              nombre,
+              descripcion,
+              contrasenaAcceso, // Deberías hashear esta contraseña
+              imagenUrl,
+              modalidadPreferencial: modalidadPreferencial,
+              estado: estado_simple.Activo, // <-- Default explícito
+              docentes: {
+                create: docenteIds.map((idDocente) => ({
+                  idDocente: idDocente,
+                  estado: 'Activo',
+                })),
+              },
+              diasClase: {
+                create: diasClase.map((dia) => ({
+                  dia: dia.dia,
+                  modalidad: dia.modalidad,
+                  horaInicio: timeToDate(dia.horaInicio),
+                  horaFin: timeToDate(dia.horaFin),
+                })),
+              },
             },
-            diasClase: {
-              create: diasClase.map((dia) => ({
-                dia: dia.dia,
-                modalidad: dia.modalidad,
-                horaInicio: timeToDate(dia.horaInicio),
-                horaFin: timeToDate(dia.horaFin),
-              })),
-            },
-          },
-        });
+          });
 
-        // 3. Inicializar Historiales (Para que los gráficos arranquen en 0)
-        const fechaInicio = new Date();
-        await tx.historialProgresoCurso.create({
-          data: {
-            idProgresoCurso: progreso.id,
-            misionesCompletadas: 0,
-            totalEstrellas: 0,
-            totalExp: 0,
-            totalIntentos: 0,
-            pctMisionesCompletadas: 0,
-            promEstrellas: 0,
-            promIntentos: 0,
-            fechaRegistro: fechaInicio,
-          },
-        });
-
-        await tx.historialDificultadesCurso.create({
-          data: {
-            idDificultadesCurso: dificultades.id,
-            temaModa: 'Ninguno',
-            promDificultades: 0,
-            promGrado: 'Ninguno',
-            fechaRegistro: fechaInicio,
-          },
-        });
-
-        // 4. Enviar correo de bienvenida a los docentes asignados
-        // (Lo hacemos dentro del try pero fuera de la transacción crítica si queremos,
-        // o aquí mismo. Para simplificar, lo hacemos después de crear el curso)
-        const docentesAsignados = await tx.usuario.findMany({
-          where: { id: { in: docenteIds } },
-        });
-
-        const diasTexto = diasClase
-          .map((d) => `${d.dia} (${d.horaInicio}-${d.horaFin})`)
-          .join(', ');
-
-        for (const docente of docentesAsignados) {
-          this.mailService.enviarBienvenidaCursoDocente(
-            docente.email,
-            docente.nombre,
-            {
-              nombre: curso.nombre,
-              descripcion: curso.descripcion,
-              diasClase: diasTexto,
-              contrasena: contrasenaAcceso,
+          // 2. Inicializar ProgresoCurso y DificultadesCurso vinculados al curso
+          const fechaInicio = new Date();
+          await tx.progresoCurso.create({
+            data: {
               idCurso: curso.id,
+              fechaRegistro: fechaInicio,
             },
-          );
-        }
+          });
 
-        return curso;
-      });
+          await tx.dificultadesCurso.create({
+            data: {
+              idCurso: curso.id,
+              fechaRegistro: fechaInicio,
+            },
+          });
+
+          // 3. Enviar correo de bienvenida a los docentes asignados
+          // (Lo hacemos dentro del try pero fuera de la transacción crítica si queremos,
+          // o aquí mismo. Para simplificar, lo hacemos después de crear el curso)
+          const docentesAsignados = await tx.usuario.findMany({
+            where: { id: { in: docenteIds } },
+          });
+
+          const diasTexto = diasClase
+            .map((d) => `${d.dia} (${d.horaInicio}-${d.horaFin})`)
+            .join(', ');
+
+          for (const docente of docentesAsignados) {
+            this.mailService.enviarBienvenidaCursoDocente(
+              docente.email,
+              docente.nombre,
+              {
+                nombre: curso.nombre,
+                descripcion: curso.descripcion,
+                diasClase: diasTexto,
+                contrasena: contrasenaAcceso,
+                idCurso: curso.id,
+              },
+            );
+          }
+
+          return curso;
+        },
+      );
     } catch (error) {
       console.error('Error al crear el curso:', error);
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -345,9 +331,10 @@ export class CoursesService {
         dataToUpdate.imagenUrl = `/uploads/${imagen.filename}`; // <-- Se guarda con prefijo
       }
     } else if (user.rol === roles.Docente) {
-      const isDocenteOfCourse = await this.prisma.docenteCurso.findFirst({
-        where: { idCurso: id, idDocente: user.userId, estado: 'Activo' },
-      });
+      const isDocenteOfCourse =
+        await this.prisma.asignacionesDocenteCurso.findFirst({
+          where: { idCurso: id, idDocente: user.userId, estado: 'Activo' },
+        });
       if (!isDocenteOfCourse) {
         throw new ForbiddenException(
           'No tienes permiso para editar este curso.',
@@ -400,112 +387,118 @@ export class CoursesService {
 
     try {
       // 4. Ejecutar la transacción
-      const cursoActualizado = await this.prisma.$transaction(async (tx) => {
-        let nuevosDocentesIds: string[] = [];
-        const cursoActualizadoTx = await tx.curso.update({
-          where: { id },
-          data: dataToUpdate,
-        });
-
-        // Sincronizar Docentes
-        if (user.rol === roles.Administrador && dto.docenteIds !== undefined) {
-          const { docenteIds } = dto; // La nueva lista de IDs
-
-          // 1. DESACTIVAR:
-          // (Pone 'Inactivo' a los docentes que están en la BD pero NO en la nueva lista)
-          await tx.docenteCurso.updateMany({
-            where: {
-              idCurso: id,
-              idDocente: { notIn: docenteIds },
-              estado: 'Activo', // Solo afecta a los que estaban activos
-            },
-            data: { estado: 'Inactivo' },
+      const cursoActualizado = await this.prisma.$transaction(
+        async (tx: Prisma.TransactionClient) => {
+          let nuevosDocentesIds: string[] = [];
+          const cursoActualizadoTx = await tx.curso.update({
+            where: { id },
+            data: dataToUpdate,
           });
 
-          // 2. REACTIVAR:
-          // (Pone 'Activo' a los docentes que SÍ están en la nueva lista
-          // pero que figuraban como 'Inactivo' en la BD)
-          await tx.docenteCurso.updateMany({
-            where: {
-              idCurso: id,
-              idDocente: { in: docenteIds },
-              estado: 'Inactivo', // Solo afecta a los que estaban inactivos
-            },
-            data: { estado: 'Activo' },
-          });
+          // Sincronizar Docentes
+          if (
+            user.rol === roles.Administrador &&
+            dto.docenteIds !== undefined
+          ) {
+            const { docenteIds } = dto; // La nueva lista de IDs
 
-          // 3. CREAR NUEVOS:
-          // (Esta es la parte más importante)
-
-          // 3.1. Primero, buscamos los docentes que YA existen en la tabla
-          const asignacionesExistentes = await tx.docenteCurso.findMany({
-            where: {
-              idCurso: id,
-              idDocente: { in: docenteIds },
-            },
-            select: { idDocente: true },
-          });
-          const idsExistentes = new Set(
-            asignacionesExistentes.map((a) => a.idDocente),
-          );
-
-          // 3.2. Filtramos la lista para encontrar los que son 100% nuevos
-          const idsParaCrear = docenteIds.filter(
-            (id) => !idsExistentes.has(id),
-          );
-
-          // 3.3. Creamos solo los nuevos
-          if (idsParaCrear.length > 0) {
-            await tx.docenteCurso.createMany({
-              data: idsParaCrear.map((idDocente) => ({
+            // 1. DESACTIVAR:
+            // (Pone 'Inactivo' a los docentes que están en la BD pero NO en la nueva lista)
+            await tx.asignacionesDocenteCurso.updateMany({
+              where: {
                 idCurso: id,
-                idDocente: idDocente,
-                estado: 'Activo',
-              })),
-            });
-            nuevosDocentesIds = idsParaCrear;
-          }
-        }
-
-        // Sincronizar Días de Clase
-        if (diasClaseToSync) {
-          await this.sincronizarDiasClase(tx, id, diasClaseToSync);
-        }
-
-        // Enviar correo a los NUEVOS docentes asignados
-        if (nuevosDocentesIds.length > 0) {
-          const nuevosDocentes = await tx.usuario.findMany({
-            where: { id: { in: nuevosDocentesIds } },
-          });
-
-          // Obtenemos los días actualizados para el correo
-          const diasActuales = await tx.diaClase.findMany({
-            where: { idCurso: id },
-          });
-          const diasTexto = diasActuales
-            .map(
-              (d) =>
-                `${d.dia} (${dateToTime(d.horaInicio)}-${dateToTime(d.horaFin)})`,
-            )
-            .join(', ');
-
-          for (const docente of nuevosDocentes) {
-            this.mailService.enviarBienvenidaCursoDocente(
-              docente.email,
-              docente.nombre,
-              {
-                nombre: cursoActualizadoTx.nombre,
-                descripcion: cursoActualizadoTx.descripcion,
-                diasClase: diasTexto,
-                contrasena: cursoActualizadoTx.contrasenaAcceso,
-                idCurso: id,
+                idDocente: { notIn: docenteIds },
+                estado: 'Activo', // Solo afecta a los que estaban activos
               },
-            );
-          }
-        }
+              data: { estado: 'Inactivo' },
+            });
 
-        return cursoActualizadoTx;
-      });
+            // 2. REACTIVAR:
+            // (Pone 'Activo' a los docentes que SÍ están en la nueva lista
+            // pero que figuraban como 'Inactivo' en la BD)
+            await tx.asignacionesDocenteCurso.updateMany({
+              where: {
+                idCurso: id,
+                idDocente: { in: docenteIds },
+                estado: 'Inactivo', // Solo afecta a los que estaban inactivos
+              },
+              data: { estado: 'Activo' },
+            });
+
+            // 3. CREAR NUEVOS:
+            // (Esta es la parte más importante)
+
+            // 3.1. Primero, buscamos los docentes que YA existen en la tabla
+            const asignacionesExistentes =
+              await tx.asignacionesDocenteCurso.findMany({
+                where: {
+                  idCurso: id,
+                  idDocente: { in: docenteIds },
+                },
+                select: { idDocente: true },
+              });
+            const idsExistentes = new Set(
+              asignacionesExistentes.map((a) => a.idDocente),
+            );
+
+            // 3.2. Filtramos la lista para encontrar los que son 100% nuevos
+            const idsParaCrear = docenteIds.filter(
+              (id) => !idsExistentes.has(id),
+            );
+
+            // 3.3. Creamos solo los nuevos
+            if (idsParaCrear.length > 0) {
+              await tx.asignacionesDocenteCurso.createMany({
+                data: idsParaCrear.map((idDocente) => ({
+                  idCurso: id,
+                  idDocente: idDocente,
+                  estado: 'Activo',
+                })),
+              });
+              nuevosDocentesIds = idsParaCrear;
+            }
+          }
+
+          // Sincronizar Días de Clase
+          if (diasClaseToSync) {
+            await this.sincronizarDiasClase(tx, id, diasClaseToSync);
+          }
+
+          // Enviar correo a los NUEVOS docentes asignados
+          if (nuevosDocentesIds.length > 0) {
+            const nuevosDocentes = await tx.usuario.findMany({
+              where: { id: { in: nuevosDocentesIds } },
+            });
+
+            // Obtenemos los días actualizados para el correo
+            const diasActuales = await tx.diaClase.findMany({
+              where: { idCurso: id },
+            });
+            const diasTexto = diasActuales
+              .map(
+                (d) =>
+                  `${d.dia} (${dateToTime(d.horaInicio)}-${dateToTime(d.horaFin)})`,
+              )
+              .join(', ');
+
+            for (const docente of nuevosDocentes) {
+              this.mailService.enviarBienvenidaCursoDocente(
+                docente.email,
+                docente.nombre,
+                {
+                  nombre: cursoActualizadoTx.nombre,
+                  descripcion: cursoActualizadoTx.descripcion,
+                  diasClase: diasTexto,
+                  contrasena: cursoActualizadoTx.contrasenaAcceso,
+                  idCurso: id,
+                },
+              );
+            }
+          }
+
+          return cursoActualizadoTx;
+        },
+      );
 
       // 5. Borrar archivo de imagen antiguo
       if (newImageUploaded && oldImagenUrl) {
@@ -553,15 +546,9 @@ export class CoursesService {
   async remove(id: string) {
     try {
       // 1. Verificar si existe y no está ya eliminado
-      // Necesitamos fetchear el curso para obtener los IDs de progreso y dificultades
       const curso = await this.prisma.curso.findUnique({
         where: { id, deletedAt: null },
-        select: {
-          id: true,
-          idProgreso: true,
-          idDificultadesCurso: true,
-          alumnos: { select: { idProgreso: true } },
-        },
+        select: { id: true },
       });
 
       if (!curso) {
@@ -570,64 +557,39 @@ export class CoursesService {
         );
       }
 
-      const idsProgresosAlumnos = curso.alumnos.map((a) => a.idProgreso);
-
       // 2. Ejecutar todas las bajas en una transacción
-      // Usamos $transaction con un array de operaciones
       const [cursoDadoDeBaja] = await this.prisma.$transaction([
         // a. Dar de baja el curso principal
         this.prisma.curso.update({
           where: { id: curso.id },
-          data: { deletedAt: new Date(), estado: estado_simple.Inactivo }, // <-- Marcamos como Inactivo
+          data: { deletedAt: new Date(), estado: estado_simple.Inactivo },
         }),
 
-        // b. Dar de baja el ProgresoCurso
-        this.prisma.progresoCurso.update({
-          where: { id: curso.idProgreso },
-          data: { estado: estado_simple.Inactivo },
-        }),
-
-        // c. Dar de baja DificultadesCurso
-        this.prisma.dificultadesCurso.update({
-          where: { id: curso.idDificultadesCurso },
-          data: { estado: estado_simple.Inactivo },
-        }),
-
-        // d. Dar de baja asignaciones de Docentes (updateMany)
-        this.prisma.docenteCurso.updateMany({
+        // b. Dar de baja asignaciones de Docentes (updateMany)
+        this.prisma.asignacionesDocenteCurso.updateMany({
           where: { idCurso: curso.id, estado: estado_simple.Activo },
           data: { estado: estado_simple.Inactivo, fechaBaja: new Date() },
         }),
 
-        // e. Dar de baja inscripciones de Alumnos
-        this.prisma.alumnoCurso.updateMany({
+        // c. Dar de baja inscripciones de Alumnos
+        this.prisma.inscripcionesAlumnoCurso.updateMany({
           where: { idCurso: curso.id, estado: estado_simple.Activo },
           data: { estado: estado_simple.Inactivo, fechaBaja: new Date() },
         }),
 
-        // f. Dar de baja Progresos de Alumnos (si existen)
-        ...(idsProgresosAlumnos.length > 0
-          ? [
-              this.prisma.progresoAlumno.updateMany({
-                where: { id: { in: idsProgresosAlumnos } },
-                data: { estado: estado_simple.Inactivo },
-              }),
-            ]
-          : []),
-
-        // g. Dar de baja Sesiones de Refuerzo
+        // d. Dar de baja Sesiones de Refuerzo
         this.prisma.sesionRefuerzo.updateMany({
           where: { idCurso: curso.id, deletedAt: null },
           data: { deletedAt: new Date(), estado: estado_sesion.Cancelada },
         }),
 
-        // h. Dar de baja Consultas
+        // e. Dar de baja Consultas
         this.prisma.consulta.updateMany({
           where: { idCurso: curso.id, deletedAt: null },
           data: { deletedAt: new Date() },
         }),
 
-        // i. Dar de baja Clases de Consulta
+        // f. Dar de baja Clases de Consulta
         this.prisma.claseConsulta.updateMany({
           where: { idCurso: curso.id, deletedAt: null },
           data: {
@@ -636,7 +598,7 @@ export class CoursesService {
           },
         }),
 
-        // j. Eliminar Días de Clase (deleteMany)
+        // g. Eliminar Días de Clase (deleteMany)
         this.prisma.diaClase.deleteMany({
           where: { idCurso: curso.id },
         }),
@@ -667,7 +629,7 @@ export class CoursesService {
     // 1. Verificar si existe y no está ya finalizado/eliminado
     const curso = await this.prisma.curso.findUnique({
       where: { id, deletedAt: null },
-      include: { alumnos: { select: { idProgreso: true } } },
+      select: { id: true },
     });
 
     if (!curso) {
@@ -675,8 +637,6 @@ export class CoursesService {
         `Curso con ID '${id}' no encontrado o ya ha sido finalizado.`,
       );
     }
-
-    const idsProgresosAlumnos = curso.alumnos.map((a) => a.idProgreso);
 
     // 2. Ejecutar cierre en transacción
     return this.prisma.$transaction([
@@ -686,32 +646,15 @@ export class CoursesService {
         data: { deletedAt: new Date(), estado: estado_simple.Finalizado }, // <-- Marcamos como Finalizado
       }),
 
-      // b. Inactivar relaciones (Alumnos/Docentes/Progreso/Dificultades)
-      this.prisma.alumnoCurso.updateMany({
+      // b. Inactivar relaciones (Alumnos/Docentes/Dificultades)
+      this.prisma.inscripcionesAlumnoCurso.updateMany({
         where: { idCurso: id, estado: estado_simple.Activo },
         data: { estado: estado_simple.Finalizado, fechaBaja: new Date() },
       }),
-      this.prisma.docenteCurso.updateMany({
+      this.prisma.asignacionesDocenteCurso.updateMany({
         where: { idCurso: id, estado: estado_simple.Activo },
         data: { estado: estado_simple.Finalizado, fechaBaja: new Date() },
       }),
-      this.prisma.progresoCurso.update({
-        where: { id: curso.idProgreso },
-        data: { estado: estado_simple.Finalizado },
-      }),
-      this.prisma.dificultadesCurso.update({
-        where: { id: curso.idDificultadesCurso },
-        data: { estado: estado_simple.Finalizado },
-      }),
-      // Inactivar progresos individuales
-      ...(idsProgresosAlumnos.length > 0
-        ? [
-            this.prisma.progresoAlumno.updateMany({
-              where: { id: { in: idsProgresosAlumnos } },
-              data: { estado: estado_simple.Finalizado },
-            }),
-          ]
-        : []),
 
       // c. Cerrar Consultas (Pendientes -> No resuelta)
       this.prisma.consulta.updateMany({
@@ -760,30 +703,28 @@ export class CoursesService {
   async getDashboardStats(idCurso: string) {
     const now = new Date();
 
-    // 1. Obtenemos primero el curso para conocer su idProgreso
-    const course = await this.prisma.curso.findUnique({
-      where: { id: idCurso },
-      select: {
-        idProgreso: true,
-        progresoCurso: {
-          select: { pctMisionesCompletadas: true },
-        },
-        dificultadesCurso: {
-          select: {
-            dificultadModa: { select: { nombre: true } },
-          },
-        },
-      },
-    });
-
-    // 2. Ejecutamos las demás consultas en paralelo, agregando el historial y dificultades
+    // 1. Ejecutamos las consultas en paralelo
     const [
+      latestProgreso,
+      latestDificultades,
       nextClass,
       consultasData,
       sesionesData,
       evolutionHistory,
       rawDifficulties,
     ] = await Promise.all([
+      this.prisma.progresoCurso.findFirst({
+        where: { idCurso },
+        orderBy: { fechaRegistro: 'desc' },
+        select: { pctMisionesCompletadas: true },
+      }),
+      this.prisma.dificultadesCurso.findFirst({
+        where: { idCurso },
+        orderBy: { fechaRegistro: 'desc' },
+        select: {
+          dificultadModa: { select: { nombre: true } },
+        },
+      }),
       this.prisma.claseConsulta.findFirst({
         where: {
           idCurso,
@@ -801,16 +742,23 @@ export class CoursesService {
         where: { idCurso, deletedAt: null },
         select: { idDocente: true, estado: true },
       }),
-      course
-        ? this.prisma.historialProgresoCurso.findMany({
-            where: { idProgresoCurso: course.idProgreso },
-            orderBy: { fechaRegistro: 'asc' },
-            select: { fechaRegistro: true, pctMisionesCompletadas: true },
-          })
-        : Promise.resolve<any[]>([]),
-      this.prisma.dificultadAlumno.findMany({
+      this.prisma.progresoCurso.findMany({
         where: { idCurso },
-        include: { dificultad: true },
+        orderBy: { fechaRegistro: 'asc' },
+        select: { fechaRegistro: true, pctMisionesCompletadas: true },
+      }),
+      this.prisma.dificultadesAlumno.findMany({
+        where: {
+          inscripcion: {
+            idCurso,
+            estado: estado_simple.Activo,
+          },
+        },
+        include: {
+          dificultad: true,
+          inscripcion: { select: { idAlumno: true } },
+        },
+        orderBy: { fechaRegistro: 'desc' },
       }),
     ]);
 
@@ -856,31 +804,41 @@ export class CoursesService {
 
     const evolutionChartData = Array.from(dailyEvolutionMap.values());
 
-    // Procesar Dificultades
+    // Procesar Dificultades (usar únicamente el estado más reciente de cada dificultad)
+    const latestDifMap = new Map<string, (typeof rawDifficulties)[0]>();
+    for (const d of rawDifficulties) {
+      const key = `${d.idInscripcion}_${d.idDificultad}`;
+      if (!latestDifMap.has(key)) {
+        latestDifMap.set(key, d);
+      }
+    }
+    const currentDifficulties = Array.from(latestDifMap.values());
+
     const byTopic = new Map<string, Set<string>>();
     const byDifficulty = new Map<string, Set<string>>();
     const byGrade = { Ninguno: 0, Bajo: 0, Medio: 0, Alto: 0 };
     const difficultyDetails = new Map<string, any>();
 
-    rawDifficulties.forEach((d) => {
+    currentDifficulties.forEach((d) => {
       const tema = d.dificultad.tema;
-      if (d.grado !== 'Ninguno') {
+      const alumnoId = d.inscripcion.idAlumno;
+      if (d.gradoActual !== 'Ninguno') {
         if (!byTopic.has(tema)) byTopic.set(tema, new Set());
-        byTopic.get(tema)!.add(d.idAlumno);
+        byTopic.get(tema)!.add(alumnoId);
       }
 
       const difId = d.idDificultad;
-      if (d.grado !== 'Ninguno') {
+      if (d.gradoActual !== 'Ninguno') {
         if (!byDifficulty.has(difId)) byDifficulty.set(difId, new Set());
-        byDifficulty.get(difId)!.add(d.idAlumno);
+        byDifficulty.get(difId)!.add(alumnoId);
       }
 
       if (!difficultyDetails.has(difId)) {
         difficultyDetails.set(difId, { nombre: d.dificultad.nombre });
       }
 
-      if (d.grado in byGrade) {
-        byGrade[d.grado as keyof typeof byGrade]++;
+      if (d.gradoActual in byGrade) {
+        byGrade[d.gradoActual as keyof typeof byGrade]++;
       }
     });
 
@@ -906,11 +864,11 @@ export class CoursesService {
     ];
 
     return {
-      progresoPct: course?.progresoCurso?.pctMisionesCompletadas
-        ? Number(course.progresoCurso.pctMisionesCompletadas)
+      progresoPct: latestProgreso?.pctMisionesCompletadas
+        ? Number(latestProgreso.pctMisionesCompletadas)
         : 0,
       dificultadMasDetectada:
-        course?.dificultadesCurso?.dificultadModa?.nombre || null,
+        latestDificultades?.dificultadModa?.nombre || null,
       consultas: { total: totalConsultas, pendientes: pendientesConsultas },
       sesiones: { total: totalSesiones, pendientes: pendientesSesiones },
       nextClass,
@@ -940,26 +898,32 @@ export class CoursesService {
     const { start: startOfDay, end: endOfDay } = this.getDayRange(now);
     const { start: startOfWeek, end: endOfWeek } = this.getWeekRange(now);
 
-    // 1. Misiones Completadas (Hoy y Semana) + Progreso %
-    const [misionesHoy, misionesSemana, progreso] = await Promise.all([
+    // 1. Obtener la inscripción activa del alumno en el curso
+    const inscripcion = await this.prisma.inscripcionesAlumnoCurso.findFirst({
+      where: { idAlumno, idCurso, estado: estado_simple.Activo },
+      include: {
+        progresoAlumnos: {
+          orderBy: { fechaRegistro: 'desc' },
+          take: 1,
+          select: { pctMisionesCompletadas: true, promIntentos: true },
+        },
+      },
+    });
+
+    const progreso = inscripcion?.progresoAlumnos?.[0];
+
+    // Misiones Completadas (Hoy y Semana)
+    const [misionesHoy, misionesSemana] = await Promise.all([
       this.prisma.misionCompletada.count({
         where: {
-          progresoAlumno: { alumnoCurso: { idAlumno, idCurso } },
+          inscripcionAlumno: { idAlumno, idCurso },
           fechaCompletado: { gte: startOfDay, lte: endOfDay },
         },
       }),
       this.prisma.misionCompletada.count({
         where: {
-          progresoAlumno: { alumnoCurso: { idAlumno, idCurso } },
+          inscripcionAlumno: { idAlumno, idCurso },
           fechaCompletado: { gte: startOfWeek, lte: endOfWeek },
-        },
-      }),
-      this.prisma.alumnoCurso.findUnique({
-        where: { idAlumno_idCurso: { idAlumno, idCurso } },
-        select: {
-          progresoAlumno: {
-            select: { pctMisionesCompletadas: true, promIntentos: true },
-          },
         },
       }),
     ]);
@@ -969,7 +933,7 @@ export class CoursesService {
       {
         where: {
           fechaCompletado: { gte: startOfWeek, lte: endOfWeek },
-          progresoAlumno: { alumnoCurso: { idAlumno, idCurso } },
+          inscripcionAlumno: { idAlumno, idCurso },
         },
         include: { mision: true },
         orderBy: { intentos: 'desc' },
@@ -980,8 +944,8 @@ export class CoursesService {
       misionMasDificil = {
         mision: misionMasDificilRecord.mision,
         intentos: misionMasDificilRecord.intentos,
-        promedioHistorial: progreso?.progresoAlumno?.promIntentos
-          ? Number(progreso.progresoAlumno.promIntentos)
+        promedioHistorial: progreso?.promIntentos
+          ? Number(progreso.promIntentos)
           : 0,
       };
     }
@@ -1025,43 +989,61 @@ export class CoursesService {
       },
     });
 
-    // 4. Dificultades
-    const dificultadesDistribucion = await this.prisma.dificultadAlumno.groupBy(
-      {
-        by: ['grado'],
-        where: { idAlumno, idCurso },
-        _count: { idDificultad: true },
-      },
-    );
-    const cantDificultadesActivas = dificultadesDistribucion
-      .filter((d) => d.grado !== 'Ninguno')
-      .reduce((acc, curr) => acc + curr._count.idDificultad, 0);
+    // 4. Dificultades (usar únicamente el estado más reciente por dificultad)
+    const rawStudentDifs = inscripcion
+      ? await this.prisma.dificultadesAlumno.findMany({
+          where: { idInscripcion: inscripcion.id },
+          orderBy: { fechaRegistro: 'desc' },
+        })
+      : [];
 
-    const ultimaDificultadAlta =
-      await this.prisma.historialDificultadAlumno.findFirst({
-        where: { idAlumno, idCurso, gradoNuevo: 'Alto' },
-        orderBy: { fechaCambio: 'desc' },
-        select: {
-          dificultad: { select: { id: true, nombre: true } },
-          fechaCambio: true,
-        },
-      });
+    const studentDifMap = new Map<string, (typeof rawStudentDifs)[0]>();
+    for (const d of rawStudentDifs) {
+      if (!studentDifMap.has(d.idDificultad)) {
+        studentDifMap.set(d.idDificultad, d);
+      }
+    }
+    const latestStudentDifs = Array.from(studentDifMap.values());
+
+    const cantDificultadesActivas = latestStudentDifs.filter(
+      (d) => d.gradoActual !== 'Ninguno',
+    ).length;
+
+    const distCounts: Record<string, number> = {
+      Ninguno: 0,
+      Bajo: 0,
+      Medio: 0,
+      Alto: 0,
+    };
+    latestStudentDifs.forEach((d) => {
+      distCounts[d.gradoActual] = (distCounts[d.gradoActual] || 0) + 1;
+    });
+    const dificultadesDistribucion = Object.entries(distCounts).map(
+      ([gradoActual, count]) => ({
+        gradoActual,
+        _count: { idDificultad: count },
+      }),
+    );
+
+    const ultimaDificultadAlta = inscripcion
+      ? await this.prisma.dificultadesAlumno.findFirst({
+          where: {
+            idInscripcion: inscripcion.id,
+            gradoActual: 'Alto',
+          },
+          orderBy: { fechaRegistro: 'desc' },
+          select: {
+            dificultad: { select: { id: true, nombre: true } },
+            gradoActual: true,
+          },
+        })
+      : null;
 
     let ultimaAltaInfo;
     if (ultimaDificultadAlta) {
-      const estadoActual = await this.prisma.dificultadAlumno.findUnique({
-        where: {
-          idAlumno_idCurso_idDificultad: {
-            idAlumno,
-            idCurso,
-            idDificultad: ultimaDificultadAlta.dificultad.id,
-          },
-        },
-        select: { grado: true },
-      });
       ultimaAltaInfo = {
         nombre: ultimaDificultadAlta.dificultad.nombre,
-        gradoActual: estadoActual?.grado || 'Ninguno',
+        gradoActual: ultimaDificultadAlta.gradoActual,
       };
     }
 
@@ -1145,14 +1127,15 @@ export class CoursesService {
       select: { id: true, titulo: true, estado: true, updatedAt: true },
     });
 
-    const cantidadAlumnosInscriptos = await this.prisma.alumnoCurso.count({
-      where: { idCurso, estado: estado_simple.Activo },
-    });
+    const cantidadAlumnosInscriptos =
+      await this.prisma.inscripcionesAlumnoCurso.count({
+        where: { idCurso, estado: estado_simple.Activo },
+      });
 
     return {
       misiones: { hoy: misionesHoy, semana: misionesSemana },
-      progresoPct: progreso?.progresoAlumno?.pctMisionesCompletadas
-        ? Number(progreso.progresoAlumno.pctMisionesCompletadas)
+      progresoPct: progreso?.pctMisionesCompletadas
+        ? Number(progreso.pctMisionesCompletadas)
         : 0,
       misionMasDificil,
       sesionPendiente,
@@ -1160,7 +1143,7 @@ export class CoursesService {
       dificultades: {
         activas: cantDificultadesActivas,
         distribucion: dificultadesDistribucion.map((d) => ({
-          label: d.grado,
+          label: d.gradoActual,
           value: d._count.idDificultad,
         })),
         ultimaAlta: ultimaAltaInfo,

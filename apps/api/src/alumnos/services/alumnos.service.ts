@@ -30,8 +30,8 @@ export class AlumnosService {
 
   async findMyCourses(idAlumno: string) {
     try {
-      // Buscamos en la tabla 'AlumnoCurso' las inscripciones del alumno
-      const inscripciones = await this.prisma.alumnoCurso.findMany({
+      // Buscamos en la tabla 'inscripcionesAlumnoCurso' las inscripciones del alumno
+      const inscripciones = await this.prisma.inscripcionesAlumnoCurso.findMany({
         where: {
           idAlumno: idAlumno,
         },
@@ -44,7 +44,7 @@ export class AlumnosService {
           curso: {
             // Incluimos los detalles del curso (para la Card)
             include: {
-              // (Usamos el filtro de 'Activo' que ya implementamos)
+              // Docentes asignados activos
               docentes: {
                 where: { estado: 'Activo' },
                 select: {
@@ -130,13 +130,14 @@ export class AlumnosService {
         }
 
         // 4. Validar que el alumno no tenga OTRA inscripción activa
-        const otraInscripcionActiva = await tx.alumnoCurso.findFirst({
-          where: {
-            idAlumno: idAlumno,
-            estado: 'Activo',
-            NOT: { idCurso: idCurso },
-          },
-        });
+        const otraInscripcionActiva =
+          await tx.inscripcionesAlumnoCurso.findFirst({
+            where: {
+              idAlumno: idAlumno,
+              estado: estado_simple.Activo,
+              NOT: { idCurso: idCurso },
+            },
+          });
 
         if (otraInscripcionActiva) {
           throw new BadRequestException(
@@ -144,15 +145,14 @@ export class AlumnosService {
           );
         }
 
-        // 5. Buscar inscripción existente (para reactivar)
-        const inscripcionExistente = await tx.alumnoCurso.findUnique({
-          where: {
-            idAlumno_idCurso: {
+        // 5. Buscar inscripción existente (para validar re-inscripción)
+        const inscripcionExistente =
+          await tx.inscripcionesAlumnoCurso.findFirst({
+            where: {
               idAlumno: idAlumno,
               idCurso: idCurso,
             },
-          },
-        });
+          });
 
         if (inscripcionExistente) {
           // El alumno ya estuvo en este curso
@@ -165,42 +165,25 @@ export class AlumnosService {
           );
         } else {
           // --- Inscripción Nueva ---
-
-          // Inicializamos el progreso del alumno (tabla ProgresoAlumno)
-          const nuevoProgreso = await tx.progresoAlumno.create({
-            data: {
-              // Los campos utilizan @default de prisma.
-            },
-          });
-
-          // Inicializamos el historial del alumno
-          await tx.historialProgresoAlumno.create({
-            data: {
-              idProgreso: nuevoProgreso.id,
-              cantMisionesCompletadas: 0,
-              totalEstrellas: 0,
-              totalExp: 0,
-              totalIntentos: 0,
-              pctMisionesCompletadas: 0,
-              promEstrellas: 0,
-              promIntentos: 0,
-              fechaRegistro: new Date(),
-            },
-          });
-
-          // Creamos la Inscripción (tabla AlumnoCurso)
-          const inscripcion = await tx.alumnoCurso.create({
+          // 1. Creamos la Inscripción
+          const inscripcion = await tx.inscripcionesAlumnoCurso.create({
             data: {
               idAlumno: idAlumno,
               idCurso: idCurso,
-              idProgreso: nuevoProgreso.id,
-              estado: 'Activo',
+              estado: estado_simple.Activo,
             },
           });
 
-          // Actualizamos el progreso general del curso (para incluir al nuevo alumno en los promedios)
+          // 2. Inicializamos el progreso del alumno vinculado a la nueva inscripción
+          await tx.progresoAlumno.create({
+            data: {
+              idInscripcion: inscripcion.id,
+            },
+          });
+
+          // 3. Actualizamos el progreso general del curso (para incluir al nuevo alumno en los promedios)
           await this.progressService.recalculateCourseProgress(tx, idCurso);
-          // Actualizamos también las estadísticas de dificultades (el promedio bajará al entrar un alumno sin dificultades)
+          // 4. Actualizamos también las estadísticas de dificultades
           await this.difficultiesService.recalculateCourseDifficulties(
             tx,
             idCurso,
@@ -286,10 +269,10 @@ export class AlumnosService {
     await checkDocenteAccess(this.prisma, idDocente, idCurso);
 
     // 2. Buscamos los alumnos activos
-    const inscripciones = await this.prisma.alumnoCurso.findMany({
+    const inscripciones = await this.prisma.inscripcionesAlumnoCurso.findMany({
       where: {
         idCurso: idCurso,
-        estado: 'Activo',
+        estado: estado_simple.Activo,
       },
       include: {
         alumno: {
@@ -311,52 +294,60 @@ export class AlumnosService {
     // 1. Validamos que el docente que pide tenga acceso
     await checkDocenteAccess(this.prisma, idDocente, idCurso);
 
-    // 2. Buscamos los alumnos que están activos en el curso y tienen al menos una dificultad registrada para ese curso.
-    const alumnosElegibles = await this.prisma.usuario.findMany({
-      where: {
-        rol: roles.Alumno,
-        // Filtro para asegurar que el alumno esté activo en el curso
-        cursosDelAlumno: {
-          some: {
-            idCurso: idCurso,
-            estado: 'Activo',
+    // 2. Buscamos las inscripciones activas del curso que tengan dificultades registradas no superadas
+    const inscripcionesConDificultades =
+      await this.prisma.inscripcionesAlumnoCurso.findMany({
+        where: {
+          idCurso: idCurso,
+          estado: estado_simple.Activo,
+          dificultadesAlumnos: {
+            some: {
+              gradoActual: { not: 'Ninguno' },
+            },
           },
         },
-        // Filtro para asegurar que el alumno tenga al menos una dificultad en ese curso
-        dificultades: {
-          some: {
-            idCurso: idCurso,
-            grado: { not: 'Ninguno' }, // Omitimos las superadas
+        include: {
+          alumno: {
+            select: {
+              id: true,
+              nombre: true,
+              apellido: true,
+              fotoPerfilUrl: true,
+            },
+          },
+          dificultadesAlumnos: {
+            where: {
+              gradoActual: { not: 'Ninguno' },
+            },
+            select: {
+              gradoActual: true,
+            },
           },
         },
-      },
-      select: {
-        id: true,
-        nombre: true,
-        apellido: true,
-        fotoPerfilUrl: true,
-        dificultades: {
-          where: {
-            idCurso: idCurso,
-            grado: { not: 'Ninguno' },
-          },
-          select: { grado: true },
-        },
-      },
-      orderBy: [{ apellido: 'asc' }, { nombre: 'asc' }],
-    });
+        orderBy: [
+          { alumno: { apellido: 'asc' } },
+          { alumno: { nombre: 'asc' } },
+        ],
+      });
 
-    return alumnosElegibles.map((a) => {
-      const alto = a.dificultades.filter((d) => d.grado === 'Alto').length;
-      const medio = a.dificultades.filter((d) => d.grado === 'Medio').length;
-      const bajo = a.dificultades.filter((d) => d.grado === 'Bajo').length;
+    return inscripcionesConDificultades.map((inscripcion) => {
+      const { alumno, dificultadesAlumnos } = inscripcion;
+      const alto = dificultadesAlumnos.filter(
+        (d) => d.gradoActual === 'Alto',
+      ).length;
+      const medio = dificultadesAlumnos.filter(
+        (d) => d.gradoActual === 'Medio',
+      ).length;
+      const bajo = dificultadesAlumnos.filter(
+        (d) => d.gradoActual === 'Bajo',
+      ).length;
 
       return {
-        id: a.id,
-        nombre: a.nombre,
-        apellido: a.apellido,
-        fotoPerfilUrl: a.fotoPerfilUrl,
-        totalDificultades: a.dificultades.length,
+        id: alumno.id,
+        nombre: alumno.nombre,
+        apellido: alumno.apellido,
+        fotoPerfilUrl: alumno.fotoPerfilUrl,
+        totalDificultades: dificultadesAlumnos.length,
         gradoAlto: alto,
         gradoMedio: medio,
         gradoBajo: bajo,
@@ -366,7 +357,7 @@ export class AlumnosService {
 
   async findActiveCourseDifficulties(idAlumno: string) {
     // 1. Buscamos si el alumno tiene una inscripción activa
-    const inscripcion = await this.prisma.alumnoCurso.findFirst({
+    const inscripcion = await this.prisma.inscripcionesAlumnoCurso.findFirst({
       where: {
         idAlumno: idAlumno,
         estado: estado_simple.Activo,

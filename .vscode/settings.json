@@ -1,4 +1,5 @@
 {
   "material-icon-theme.activeIconPack": "nest",
-  "prisma.pinToPrisma6": true
+  "prisma.pinToPrisma6": true,
+  "js/ts.tsdk.path": "node_modules\\typescript\\lib"
 }

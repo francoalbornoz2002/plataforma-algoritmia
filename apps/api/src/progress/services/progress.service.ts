@@ -5,9 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Prisma } from '@prisma/client';
-import { SubmitMissionDto } from '../dto/submit-mission.dto'; // (Importación existente)
-import { estado_simple } from '@prisma/client'; // Aseguramos importar el enum
+import { estado_simple, Prisma } from '@prisma/client';
+import { SubmitMissionDto } from '../dto/submit-mission.dto';
 
 @Injectable()
 export class ProgressService {
@@ -26,14 +25,12 @@ export class ProgressService {
    */
   async getCourseOverview(idCurso: string) {
     try {
-      const curso = await this.prisma.curso.findUnique({
-        where: { id: idCurso },
-        select: {
-          progresoCurso: true, // Seleccionamos la relación de progreso
-        },
+      const progreso = await this.prisma.progresoCurso.findFirst({
+        where: { idCurso },
+        orderBy: { fechaRegistro: 'desc' },
       });
 
-      if (!curso || !curso.progresoCurso) {
+      if (!progreso) {
         throw new NotFoundException('Progreso del curso no encontrado.');
       }
 
@@ -41,7 +38,7 @@ export class ProgressService {
       const topMissionGroup = await this.prisma.misionCompletada.groupBy({
         by: ['idMision'],
         where: {
-          progresoAlumno: { alumnoCurso: { idCurso } },
+          inscripcionAlumno: { idCurso },
         },
         _avg: { intentos: true },
         orderBy: { _avg: { intentos: 'desc' } },
@@ -56,27 +53,27 @@ export class ProgressService {
 
       // 2. Alumno más activo (Más misiones completadas GLOBAL)
       const topStudentGroup = await this.prisma.misionCompletada.groupBy({
-        by: ['idProgreso'],
+        by: ['idInscripcion'],
         where: {
-          progresoAlumno: { alumnoCurso: { idCurso } },
+          inscripcionAlumno: { idCurso },
         },
         _count: { idMision: true },
         orderBy: { _count: { idMision: 'desc' } },
         take: 1,
       });
-      let alumnoMasActivo;
+      let alumnoMasActivo: string | undefined;
       if (topStudentGroup.length > 0) {
-        const p = await this.prisma.progresoAlumno.findUnique({
-          where: { id: topStudentGroup[0].idProgreso },
-          include: { alumnoCurso: { include: { alumno: true } } },
-        });
-        if (p?.alumnoCurso?.alumno) {
-          alumnoMasActivo = `${p.alumnoCurso.alumno.nombre} ${p.alumnoCurso.alumno.apellido}`;
+        const inscripcion =
+          await this.prisma.inscripcionesAlumnoCurso.findUnique({
+            where: { id: topStudentGroup[0].idInscripcion },
+            include: { alumno: true },
+          });
+        if (inscripcion?.alumno) {
+          alumnoMasActivo = `${inscripcion.alumno.nombre} ${inscripcion.alumno.apellido}`;
         }
       }
 
       // Convertimos los campos Decimal (que llegan como string) a Number (float)
-      const progreso = curso.progresoCurso;
       return {
         ...progreso,
         pctMisionesCompletadas: this.toNum(progreso.pctMisionesCompletadas),
@@ -97,7 +94,6 @@ export class ProgressService {
   /**
    * MÉTODO 2: Obtener la lista de alumnos para la DataGrid
    */
-  // 0. Verificar estado del curso para saber si incluimos inactivos
   async getStudentProgressList(idCurso: string) {
     const curso = await this.prisma.curso.findUnique({
       where: { id: idCurso },
@@ -106,7 +102,7 @@ export class ProgressService {
     const includeInactive = !!curso?.deletedAt;
 
     try {
-      const where: Prisma.AlumnoCursoWhereInput = {
+      const where: Prisma.InscripcionesAlumnoCursoWhereInput = {
         idCurso: idCurso,
       };
 
@@ -116,57 +112,52 @@ export class ProgressService {
         where.estado = { in: [estado_simple.Activo, estado_simple.Finalizado] };
       }
 
-      const alumnos = await this.prisma.alumnoCurso.findMany({
-        where,
-        include: {
-          alumno: {
-            select: {
-              nombre: true,
-              apellido: true,
-              fotoPerfilUrl: true,
-              dni: true,
-              fechaNacimiento: true,
-            },
-          },
-          // --- CAMBIO AQUÍ ---
-          progresoAlumno: {
-            include: {
-              // Traemos las especiales
-              misionesEspeciales: {
-                orderBy: { fechaCompletado: 'desc' },
-              },
-              // Y las normales con sus detalles
-              misionesCompletadas: {
-                include: { mision: true },
-                orderBy: { fechaCompletado: 'desc' },
+      const inscripciones =
+        await this.prisma.inscripcionesAlumnoCurso.findMany({
+          where,
+          include: {
+            alumno: {
+              select: {
+                nombre: true,
+                apellido: true,
+                fotoPerfilUrl: true,
+                dni: true,
               },
             },
+            progresoAlumnos: {
+              orderBy: { fechaRegistro: 'desc' },
+              take: 1,
+            },
+            misionesEspeciales: {
+              orderBy: { fechaCompletado: 'desc' },
+            },
+            misionesCompletadas: {
+              include: { mision: true },
+              orderBy: { fechaCompletado: 'desc' },
+            },
           },
-          // -------------------
-        },
-      });
+        });
 
-      // 4. Mapear la respuesta para el DataGrid
-      // Mapear la respuesta y convertir los Decimal a Number
-      const data = alumnos.map((ac) => ({
-        ...ac.progresoAlumno,
-        // ¡LA CORRECCIÓN!
-        // El 'id' que viene de 'progresoAlumno' es el idProgreso.
-        // Necesitamos añadir explícitamente el idAlumno.
-        id: ac.progresoAlumno.id, // (Este es idProgreso)
-        idAlumno: ac.idAlumno, // <-- AÑADIMOS EL ID DEL ALUMNO
-        nombre: ac.alumno.nombre,
-        apellido: ac.alumno.apellido,
-        fotoPerfilUrl: ac.alumno.fotoPerfilUrl,
-        dni: ac.alumno.dni,
-        fechaNacimiento: ac.alumno.fechaNacimiento,
-        fechaInscripcion: ac.fechaInscripcion,
-        pctMisionesCompletadas: this.toNum(
-          ac.progresoAlumno.pctMisionesCompletadas,
-        ),
-        promEstrellas: this.toNum(ac.progresoAlumno.promEstrellas),
-        promIntentos: this.toNum(ac.progresoAlumno.promIntentos),
-      }));
+      // Mapear la respuesta para el DataGrid
+      const data = inscripciones.map((ac) => {
+        const progreso = ac.progresoAlumnos[0];
+        return {
+          ...progreso,
+          id: progreso?.id,
+          idInscripcion: ac.id,
+          idAlumno: ac.idAlumno,
+          nombre: ac.alumno.nombre,
+          apellido: ac.alumno.apellido,
+          fotoPerfilUrl: ac.alumno.fotoPerfilUrl,
+          dni: ac.alumno.dni,
+          fechaInscripcion: ac.fechaInscripcion,
+          pctMisionesCompletadas: this.toNum(progreso?.pctMisionesCompletadas),
+          promEstrellas: this.toNum(progreso?.promEstrellas),
+          promIntentos: this.toNum(progreso?.promIntentos),
+          misionesEspeciales: ac.misionesEspeciales,
+          misionesCompletadas: ac.misionesCompletadas,
+        };
+      });
 
       return data;
     } catch (error) {
@@ -177,44 +168,48 @@ export class ProgressService {
     }
   }
 
+  /**
+   * MÉTODO 3: Obtener el progreso de un alumno específico
+   */
   async getStudentProgress(idAlumno: string, idCurso: string) {
     try {
       // 1. Buscamos la inscripción específica
-      const inscripcion = await this.prisma.alumnoCurso.findUnique({
-        where: {
-          idAlumno_idCurso: {
+      const inscripcion =
+        await this.prisma.inscripcionesAlumnoCurso.findFirst({
+          where: {
             idAlumno: idAlumno,
             idCurso: idCurso,
           },
-        },
-        // 2. Incluimos el progreso de esa inscripción y misiones
-        include: {
-          alumno: { select: { fotoPerfilUrl: true } },
-          progresoAlumno: {
-            include: {
-              misionesEspeciales: {
-                orderBy: { fechaCompletado: 'desc' },
-              },
-              misionesCompletadas: {
-                include: { mision: true },
-                orderBy: { fechaCompletado: 'desc' },
-              },
+          include: {
+            alumno: { select: { fotoPerfilUrl: true } },
+            progresoAlumnos: {
+              orderBy: { fechaRegistro: 'desc' },
+              take: 1,
+            },
+            misionesEspeciales: {
+              orderBy: { fechaCompletado: 'desc' },
+            },
+            misionesCompletadas: {
+              include: { mision: true },
+              orderBy: { fechaCompletado: 'desc' },
             },
           },
-        },
-      });
+        });
 
-      // 3. Validamos que exista
-      if (!inscripcion || !inscripcion.progresoAlumno) {
+      const progreso = inscripcion?.progresoAlumnos?.[0];
+
+      // 2. Validamos que exista
+      if (!inscripcion || !progreso) {
         throw new NotFoundException(
           'No se encontró tu progreso para este curso.',
         );
       }
 
-      // 4. Devolvemos solo el objeto de progreso
-      const progreso = inscripcion.progresoAlumno;
+      // 3. Devolvemos el objeto de progreso con sus misiones
       return {
         ...progreso,
+        misionesEspeciales: inscripcion.misionesEspeciales,
+        misionesCompletadas: inscripcion.misionesCompletadas,
         fotoPerfilUrl: inscripcion.alumno.fotoPerfilUrl,
         pctMisionesCompletadas: this.toNum(progreso.pctMisionesCompletadas),
         promEstrellas: this.toNum(progreso.promEstrellas),
@@ -248,11 +243,17 @@ export class ProgressService {
     }
 
     try {
-      // 3. Validar al alumno y obtener su progreso
-      const inscripcion = await this.prisma.alumnoCurso.findFirst({
-        where: { idAlumno: idAlumno, estado: 'Activo' },
-        select: { idCurso: true, idProgreso: true },
-      });
+      // 3. Validar al alumno y obtener su inscripción activa
+      const inscripcion =
+        await this.prisma.inscripcionesAlumnoCurso.findFirst({
+          where: { idAlumno: idAlumno, estado: estado_simple.Activo },
+          include: {
+            progresoAlumnos: {
+              orderBy: { fechaRegistro: 'desc' },
+              take: 1,
+            },
+          },
+        });
 
       if (!inscripcion) {
         throw new NotFoundException(
@@ -260,7 +261,8 @@ export class ProgressService {
         );
       }
 
-      const { idProgreso, idCurso } = inscripcion;
+      const idInscripcion = inscripcion.id;
+      const idCurso = inscripcion.idCurso;
 
       // --- SEPARACIÓN DE LOTES ---
       const misionesNormales = dtos.filter((m) => !m.esMisionEspecial);
@@ -273,21 +275,15 @@ export class ProgressService {
           let totalExpDelta = 0;
           let totalIntentosDelta = 0;
           let cantMisionesCompletadasDelta = 0;
-          let ultimaActividadLote = new Date(0);
 
           // --- Paso A: Procesar Misiones NORMALES (Upsert manual) ---
           for (const mision of misionesNormales) {
             const fechaMision = new Date(mision.fechaCompletado);
-            if (fechaMision > ultimaActividadLote) {
-              ultimaActividadLote = fechaMision;
-            }
 
-            const existing = await tx.misionCompletada.findUnique({
+            const existing = await tx.misionCompletada.findFirst({
               where: {
-                idMision_idProgreso: {
-                  idMision: mision.idMision,
-                  idProgreso: idProgreso,
-                },
+                idMision: mision.idMision,
+                idInscripcion: idInscripcion,
               },
             });
 
@@ -301,12 +297,7 @@ export class ProgressService {
               if (esMejorPuntaje) {
                 // Sobreescribir solo si es mejor
                 await tx.misionCompletada.update({
-                  where: {
-                    idMision_idProgreso: {
-                      idMision: mision.idMision,
-                      idProgreso: idProgreso,
-                    },
-                  },
+                  where: { id: existing.id },
                   data: {
                     estrellas: mision.estrellas,
                     exp: mision.exp,
@@ -324,7 +315,7 @@ export class ProgressService {
               await tx.misionCompletada.create({
                 data: {
                   idMision: mision.idMision,
-                  idProgreso: idProgreso,
+                  idInscripcion: idInscripcion,
                   estrellas: mision.estrellas,
                   exp: mision.exp,
                   intentos: mision.intentos,
@@ -342,9 +333,6 @@ export class ProgressService {
           // --- Paso B: Procesar Misiones ESPECIALES ---
           for (const mision of misionesEspeciales) {
             const fechaMision = new Date(mision.fechaCompletado);
-            if (fechaMision > ultimaActividadLote) {
-              ultimaActividadLote = fechaMision;
-            }
 
             const existing = await tx.misionEspecialCompletada.findUnique({
               where: { id: mision.idMision },
@@ -378,7 +366,7 @@ export class ProgressService {
               await tx.misionEspecialCompletada.create({
                 data: {
                   id: mision.idMision,
-                  idProgreso: idProgreso,
+                  idInscripcion: idInscripcion,
                   nombre: mision.nombre ?? 'Misión Especial Sin Nombre',
                   descripcion:
                     mision.descripcion ?? 'Sin descripción disponible',
@@ -395,80 +383,59 @@ export class ProgressService {
             }
           }
 
-          // --- Paso C: Actualizar ProgresoAlumno ---
-          const progAlumnoActualizado = await tx.progresoAlumno.update({
-            where: { id: idProgreso },
-            data: {
-              totalEstrellas: { increment: totalEstrellasDelta },
-              totalExp: { increment: totalExpDelta },
-              totalIntentos: { increment: totalIntentosDelta },
-              cantMisionesCompletadas: {
-                increment: cantMisionesCompletadasDelta,
-              },
-              ultimaActividad:
-                ultimaActividadLote.getTime() > 0
-                  ? ultimaActividadLote
-                  : undefined,
-            },
+          // --- Paso C: Registrar nuevo estado en ProgresoAlumno (Historial acumulado, nunca update) ---
+          const progAlumnoActual = await tx.progresoAlumno.findFirst({
+            where: { idInscripcion },
+            orderBy: { fechaRegistro: 'desc' },
           });
+
+          const totalEstrellas =
+            (progAlumnoActual?.totalEstrellas || 0) + totalEstrellasDelta;
+          const totalExp = (progAlumnoActual?.totalExp || 0) + totalExpDelta;
+          const totalIntentos =
+            (progAlumnoActual?.totalIntentos || 0) + totalIntentosDelta;
+          const cantMisionesCompletadas =
+            (progAlumnoActual?.cantMisionesCompletadas || 0) +
+            cantMisionesCompletadasDelta;
 
           // --- Paso D: Recalcular Porcentajes y Promedios ---
           let nuevoPromEstrellas = 0;
           let nuevoPromIntentos = 0;
 
-          if (progAlumnoActualizado.cantMisionesCompletadas > 0) {
-            nuevoPromEstrellas =
-              progAlumnoActualizado.totalEstrellas /
-              progAlumnoActualizado.cantMisionesCompletadas;
-
-            nuevoPromIntentos =
-              progAlumnoActualizado.totalIntentos /
-              progAlumnoActualizado.cantMisionesCompletadas;
+          if (cantMisionesCompletadas > 0) {
+            nuevoPromEstrellas = totalEstrellas / cantMisionesCompletadas;
+            nuevoPromIntentos = totalIntentos / cantMisionesCompletadas;
           }
 
           const totalMisiones = await tx.mision.count();
 
           const nuevoPctCompletadas =
             totalMisiones > 0
-              ? (progAlumnoActualizado.cantMisionesCompletadas /
-                  totalMisiones) *
-                100
+              ? (cantMisionesCompletadas / totalMisiones) * 100
               : 0;
 
-          const progresoFinal = await tx.progresoAlumno.update({
-            where: { id: idProgreso },
+          const fechaRegistroSnapshot = new Date();
+
+          // Se crea un nuevo registro con el estado actualizado (comportamiento de historial)
+          await tx.progresoAlumno.create({
             data: {
+              idInscripcion,
+              cantMisionesCompletadas,
+              totalEstrellas,
+              totalExp,
+              totalIntentos,
+              pctMisionesCompletadas: nuevoPctCompletadas,
               promEstrellas: nuevoPromEstrellas,
               promIntentos: nuevoPromIntentos,
-              pctMisionesCompletadas: nuevoPctCompletadas,
+              fechaRegistro: fechaRegistroSnapshot,
             },
           });
 
-          // Definimos la fecha de registro para el historial:
-          // SIEMPRE será el momento actual (cuando el servidor recibe la sincronización),
-          // para no romper la cronología de los gráficos si el alumno jugó offline en el pasado.
-          const fechaRegistroHistorial = new Date();
-
-          // --- NUEVO: Insertar en HistorialProgresoAlumno ---
-          await tx.historialProgresoAlumno.create({
-            data: {
-              idProgreso: idProgreso,
-              cantMisionesCompletadas: progresoFinal.cantMisionesCompletadas,
-              totalEstrellas: progresoFinal.totalEstrellas,
-              totalExp: progresoFinal.totalExp,
-              totalIntentos: progresoFinal.totalIntentos,
-              pctMisionesCompletadas: progresoFinal.pctMisionesCompletadas,
-              promEstrellas: progresoFinal.promEstrellas,
-              promIntentos: progresoFinal.promIntentos,
-              fechaRegistro: fechaRegistroHistorial,
-            },
-          });
-
-          // --- Paso E: Recalcular ProgresoCurso ---
+          // --- Paso E: Recalcular ProgresoCurso (crea snapshot en progresoCurso) ---
           await this.recalculateCourseProgress(
             tx,
             idCurso,
-            fechaRegistroHistorial,
+            fechaRegistroSnapshot,
           );
 
           return { message: 'Lote de progreso registrado con éxito' };
@@ -497,55 +464,43 @@ export class ProgressService {
    */
   async getStudentMissionStatus(idAlumno: string, idCurso: string) {
     try {
-      // 1. Buscar el idProgreso del alumno en ESE curso
-      const inscripcion = await this.prisma.alumnoCurso.findUnique({
-        where: {
-          idAlumno_idCurso: {
+      // 1. Buscar la inscripción del alumno en ESE curso
+      const inscripcion =
+        await this.prisma.inscripcionesAlumnoCurso.findFirst({
+          where: {
             idAlumno: idAlumno,
             idCurso: idCurso,
           },
-        },
-        select: { idProgreso: true },
-      });
+        });
 
       if (!inscripcion) {
         throw new NotFoundException(
           'Inscripción del alumno en este curso no encontrada.',
         );
       }
-      const { idProgreso } = inscripcion;
+      const idInscripcion = inscripcion.id;
 
       // 2. Buscar TODAS las misiones maestras (ej: las 10 misiones)
       const allMissions = await this.prisma.mision.findMany({
         orderBy: {
-          numero: 'asc', // Ordenamos por número de misión para la secuencia narrativa
+          numero: 'asc',
         },
         include: {
-          // 3. Incluir el registro de "misionCompletada" SÓLO
-          // si coincide con el idProgreso de nuestro alumno.
           misionesCompletadas: {
             where: {
-              idProgreso: idProgreso,
+              idInscripcion: idInscripcion,
             },
           },
         },
       });
 
-      // 4. Formatear la respuesta (la "fusión")
-      // Formatear la respuesta de forma segura
+      // 3. Formatear la respuesta (la "fusión")
       return allMissions.map((mision) => {
-        // Desestructuramos el objeto 'mision'.
-        // 'misionesCompletadas' se va a una variable...
         const { misionesCompletadas, ...restOfMision } = mision;
-
-        // ...y 'restOfMision' contiene el resto (id, nombre, desc).
-
-        // Obtenemos el registro (o null) de la variable que separamos
         const completada = misionesCompletadas[0] || null;
 
-        // Devolvemos el objeto limpio y 100% type-safe
         return {
-          mision: restOfMision, // Este es el objeto 'mision' SIN 'misionesCompletadas'
+          mision: restOfMision,
           completada: completada,
         };
       });
@@ -559,99 +514,81 @@ export class ProgressService {
   }
 
   /**
-   * Recalcula los KPIs de ProgresoCurso
+   * Recalcula los KPIs de ProgresoCurso y guarda un snapshot
    */
   public async recalculateCourseProgress(
     tx: Prisma.TransactionClient,
     idCurso: string,
     fechaRegistro: Date = new Date(),
   ) {
-    // 1. Obtenemos el ID del ProgresoCurso
-    const curso = await tx.curso.findUnique({
-      where: { id: idCurso },
-      select: { idProgreso: true },
-    });
-    if (!curso) return; // El curso no existe
-
-    // 2. AGREGACIÓN 1: Para TODOS los alumnos activos
-    // (Para las SUMAS totales)
-    const whereTodos = {
-      alumnoCurso: {
-        idCurso: idCurso,
-        estado: { in: [estado_simple.Activo, estado_simple.Finalizado] },
-      },
+    // 1. Condición de inscripción para el curso (Activo o Finalizado)
+    const whereInscripcion = {
+      idCurso: idCurso,
+      estado: { in: [estado_simple.Activo, estado_simple.Finalizado] },
     };
 
-    const [agregadosTodos, totalAlumnos, totalMisiones] = await Promise.all([
-      tx.progresoAlumno.aggregate({
-        _sum: {
-          cantMisionesCompletadas: true,
-          totalEstrellas: true,
-          totalExp: true,
-          totalIntentos: true,
+    // 2. Traer las inscripciones con el último snapshot de cada alumno
+    const [inscripciones, totalMisiones] = await Promise.all([
+      tx.inscripcionesAlumnoCurso.findMany({
+        where: whereInscripcion,
+        select: {
+          id: true,
+          progresoAlumnos: {
+            orderBy: { fechaRegistro: 'desc' },
+            take: 1,
+          },
         },
-        where: whereTodos,
-      }),
-      tx.alumnoCurso.count({
-        where: whereTodos.alumnoCurso,
       }),
       tx.mision.count(),
     ]);
 
+    let sumMisionesCompletadas = 0;
+    let sumTotalEstrellas = 0;
+    let sumTotalExp = 0;
+    let sumTotalIntentos = 0;
+    let sumPromEstrellas = 0;
+    let sumPromIntentos = 0;
+    let cantJugadores = 0;
+
+    for (const insc of inscripciones) {
+      const p = insc.progresoAlumnos[0];
+      if (p) {
+        sumMisionesCompletadas += p.cantMisionesCompletadas;
+        sumTotalEstrellas += p.totalEstrellas;
+        sumTotalExp += p.totalExp;
+        sumTotalIntentos += p.totalIntentos;
+
+        if (p.totalIntentos > 0 || p.cantMisionesCompletadas > 0) {
+          sumPromEstrellas += this.toNum(p.promEstrellas);
+          sumPromIntentos += this.toNum(p.promIntentos);
+          cantJugadores++;
+        }
+      }
+    }
+
+    const totalAlumnos = inscripciones.length;
+
     const pctMisionesCompletadas =
       totalAlumnos > 0 && totalMisiones > 0
-        ? ((agregadosTodos._sum.cantMisionesCompletadas || 0) /
-            (totalAlumnos * totalMisiones)) *
-          100
+        ? (sumMisionesCompletadas / (totalAlumnos * totalMisiones)) * 100
         : 0;
 
-    // 3. AGREGACIÓN 2: Para alumnos que SÍ JUGARON
-    // (Para los PROMEDIOS de Estrellas e Intentos)
-    const agregadosJugadores = await tx.progresoAlumno.aggregate({
-      _avg: {
-        promEstrellas: true, // <-- KPI #2
-        promIntentos: true, // <-- KPI #3
-      },
-      where: {
-        alumnoCurso: {
-          idCurso: idCurso,
-          estado: { in: [estado_simple.Activo, estado_simple.Finalizado] }, // <-- CORRECCIÓN: Incluir Finalizados
-        },
-        // ¡La clave está aquí!
-        ultimaActividad: {
-          not: null,
-        },
-      },
-    });
+    const promEstrellas =
+      cantJugadores > 0 ? sumPromEstrellas / cantJugadores : 0;
+    const promIntentos =
+      cantJugadores > 0 ? sumPromIntentos / cantJugadores : 0;
 
-    // 4. Actualizamos la tabla ProgresoCurso combinando ambas agregaciones
-    const cursoActualizado = await tx.progresoCurso.update({
-      where: { id: curso.idProgreso },
+    // 3. Crear nuevo registro histórico / snapshot en ProgresoCurso
+    await tx.progresoCurso.create({
       data: {
-        // --- Datos de la Agregación 1 (Todos) ---
-        misionesCompletadas: agregadosTodos._sum.cantMisionesCompletadas || 0,
-        totalEstrellas: agregadosTodos._sum.totalEstrellas || 0,
-        totalExp: agregadosTodos._sum.totalExp || 0,
-        totalIntentos: agregadosTodos._sum.totalIntentos || 0,
+        idCurso: idCurso,
+        misionesCompletadas: sumMisionesCompletadas,
+        totalEstrellas: sumTotalEstrellas,
+        totalExp: sumTotalExp,
+        totalIntentos: sumTotalIntentos,
         pctMisionesCompletadas: pctMisionesCompletadas,
-
-        // --- Datos de la Agregación 2 (Solo Jugadores) ---
-        promEstrellas: agregadosJugadores._avg.promEstrellas || 0,
-        promIntentos: agregadosJugadores._avg.promIntentos || 0,
-      },
-    });
-
-    // --- NUEVO: Insertar en HistorialProgresoCurso ---
-    await tx.historialProgresoCurso.create({
-      data: {
-        idProgresoCurso: curso.idProgreso,
-        misionesCompletadas: cursoActualizado.misionesCompletadas,
-        totalEstrellas: cursoActualizado.totalEstrellas,
-        totalExp: cursoActualizado.totalExp,
-        totalIntentos: cursoActualizado.totalIntentos,
-        pctMisionesCompletadas: cursoActualizado.pctMisionesCompletadas,
-        promEstrellas: cursoActualizado.promEstrellas,
-        promIntentos: cursoActualizado.promIntentos,
+        promEstrellas: promEstrellas,
+        promIntentos: promIntentos,
         fechaRegistro: fechaRegistro,
       },
     });

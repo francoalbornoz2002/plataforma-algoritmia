@@ -18,6 +18,8 @@ import {
   estado_consulta,
   estado_sesion,
   estado_simple,
+  Prisma,
+  PrismaClient,
   roles,
 } from '@prisma/client';
 
@@ -37,7 +39,7 @@ export class DocentesService {
   async findMyCourses(idDocente: string) {
     try {
       // Buscamos en 'DocenteCurso'
-      const asignaciones = await this.prisma.docenteCurso.findMany({
+      const asignaciones = await this.prisma.asignacionesDocenteCurso.findMany({
         where: {
           idDocente: idDocente,
           // Sin filtrar por estado, para traer activos e inactivos
@@ -203,10 +205,10 @@ export class DocentesService {
     }
 
     // 2. Buscamos los docentes activos
-    const asignaciones = await this.prisma.docenteCurso.findMany({
+    const asignaciones = await this.prisma.asignacionesDocenteCurso.findMany({
       where: {
         idCurso: idCurso,
-        estado: 'Activo',
+        estado: estado_simple.Activo,
       },
       include: {
         docente: {
@@ -236,15 +238,10 @@ export class DocentesService {
     await checkDocenteAccess(this.prisma, idDocenteSolicitante, idCurso);
 
     // 2. Validar que el alumno esté activo en el curso
-    const inscripcion = await this.prisma.alumnoCurso.findUnique({
+    const inscripcion = await this.prisma.inscripcionesAlumnoCurso.findFirst({
       where: {
-        idAlumno_idCurso: {
-          idAlumno,
-          idCurso,
-        },
-      },
-      include: {
-        progresoAlumno: true,
+        idAlumno: idAlumno,
+        idCurso: idCurso,
       },
     });
 
@@ -255,17 +252,11 @@ export class DocentesService {
     }
 
     // 3. Ejecutar baja en transacción
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // a. Baja de inscripción
-      await tx.alumnoCurso.update({
-        where: { idAlumno_idCurso: { idAlumno, idCurso } },
+      await tx.inscripcionesAlumnoCurso.update({
+        where: { id: inscripcion.id },
         data: { estado: estado_simple.Inactivo, fechaBaja: new Date() },
-      });
-
-      // b. Baja de progreso
-      await tx.progresoAlumno.update({
-        where: { id: inscripcion.idProgreso },
-        data: { estado: estado_simple.Inactivo },
       });
 
       // c. Cerrar Consultas pendientes (Pendiente, A_revisar, Revisada -> No_resuelta)

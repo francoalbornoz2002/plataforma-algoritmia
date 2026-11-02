@@ -91,8 +91,8 @@ export class PrismaService implements OnModuleInit {
   // 'this.prisma.modelo' apunte a 'this.prisma.extendedClient.modelo'.
   // Esto hace que la extensión sea transparente para el resto de la aplicación.
 
-  get alumnoCurso() {
-    return this.extendedClient.alumnoCurso;
+  get inscripcionesAlumnoCurso() {
+    return this.extendedClient.inscripcionesAlumnoCurso;
   }
   get claseConsulta() {
     return this.extendedClient.claseConsulta;
@@ -109,8 +109,8 @@ export class PrismaService implements OnModuleInit {
   get diaClase() {
     return this.extendedClient.diaClase;
   }
-  get dificultadAlumno() {
-    return this.extendedClient.dificultadAlumno;
+  get dificultadesAlumno() {
+    return this.extendedClient.dificultadesAlumno;
   }
   get dificultad() {
     return this.extendedClient.dificultad;
@@ -118,20 +118,8 @@ export class PrismaService implements OnModuleInit {
   get dificultadesCurso() {
     return this.extendedClient.dificultadesCurso;
   }
-  get docenteCurso() {
-    return this.extendedClient.docenteCurso;
-  }
-  get historialDificultadAlumno() {
-    return this.extendedClient.historialDificultadAlumno;
-  }
-  get historialDificultadesCurso() {
-    return this.extendedClient.historialDificultadesCurso;
-  }
-  get historialProgresoAlumno() {
-    return this.extendedClient.historialProgresoAlumno;
-  }
-  get historialProgresoCurso() {
-    return this.extendedClient.historialProgresoCurso;
+  get asignacionesDocenteCurso() {
+    return this.extendedClient.asignacionesDocenteCurso;
   }
   get institucion() {
     return this.extendedClient.institucion;

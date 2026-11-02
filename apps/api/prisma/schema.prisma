@@ -173,7 +173,6 @@ model DificultadesCurso {
   idDificultadModa String?          @map("dificultad_moda") @db.Uuid
   promDificultades Decimal          @default(0.0) @map("prom_dificultades") @db.Decimal(5, 2)
   promGrado        grado_dificultad @default(Ninguno) @map("prom_grado")
-  estado           estado_simple    @default(Activo)
   fechaRegistro    DateTime         @default(now()) @map("fecha_registro") @db.Timestamptz(6)
   curso            Curso            @relation(fields: [idCurso], references: [id])
   dificultadModa   Dificultad?      @relation(fields: [idDificultadModa], references: [id], onDelete: NoAction, onUpdate: NoAction)
