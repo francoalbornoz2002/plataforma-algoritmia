@@ -10,20 +10,18 @@ import {
   Avatar,
   Box,
   IconButton,
-  MenuItem,
   CircularProgress,
   Typography,
   InputAdornment,
 } from "@mui/material";
 import { PhotoCamera, Visibility, VisibilityOff } from "@mui/icons-material";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSnackbar } from "notistack";
 import { useAuth } from "../../authentication/context/AuthProvider";
 import { updateUserProfile } from "../services/user.service";
 import {
   profileUpdateSchema,
-  generos,
   type ProfileFormValues,
 } from "../validations/user.schema";
 
@@ -64,7 +62,6 @@ export default function ProfileModal({ open, onClose }: ProfileModalProps) {
   useEffect(() => {
     if (open && profile) {
       reset({
-        genero: profile.genero,
         password: "",
         confirmPassword: "",
       });
@@ -113,7 +110,6 @@ export default function ProfileModal({ open, onClose }: ProfileModalProps) {
 
     try {
       const formData = new FormData();
-      formData.append("genero", data.genero);
 
       if (data.password) {
         formData.append("password", data.password);
@@ -210,28 +206,6 @@ export default function ProfileModal({ open, onClose }: ProfileModalProps) {
             >
               Tamaño máximo: 2 MB. Formatos: JPG, PNG.
             </Typography>
-
-            {/* Campos del formulario */}
-            <Controller
-              name="genero"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  select
-                  label="Género"
-                  fullWidth
-                  error={!!errors.genero}
-                  helperText={errors.genero?.message}
-                >
-                  {generos.map((genero) => (
-                    <MenuItem key={genero} value={genero}>
-                      {genero}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              )}
-            />
 
             <TextField
               label="Nueva Contraseña (Opcional)"

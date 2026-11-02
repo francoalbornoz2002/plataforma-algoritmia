@@ -30,7 +30,6 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 // Esquemas de validación, tipos y el tipo User base
 import {
   createUserSchema,
-  generos,
   rolesValues,
   updateUserSchema,
   type CreateUserFormValues,
@@ -86,8 +85,6 @@ export default function UserFormDialog({
       nombre: "",
       apellido: "",
       dni: "",
-      fechaNacimiento: undefined,
-      genero: "Masculino",
       email: "",
       rol: undefined,
       password: "",
@@ -104,19 +101,6 @@ export default function UserFormDialog({
           nombre: userToEdit.nombre || "",
           apellido: userToEdit.apellido || "",
           dni: userToEdit.dni || "",
-          // Al cargar la fecha de la BD (UTC), extraemos los componentes
-          // para que el DatePicker la muestre correctamente en hora local.
-          fechaNacimiento: userToEdit.fechaNacimiento
-            ? (() => {
-                const d = new Date(userToEdit.fechaNacimiento);
-                return new Date(
-                  d.getUTCFullYear(),
-                  d.getUTCMonth(),
-                  d.getUTCDate(),
-                );
-              })()
-            : undefined,
-          genero: userToEdit.genero || "Otro",
           email: userToEdit.email || "", // Email no se edita, pero lo mostramos
           rol: userToEdit.rol,
           password: "", // Limpia password en modo edición
@@ -128,8 +112,6 @@ export default function UserFormDialog({
           nombre: "",
           apellido: "",
           dni: "",
-          fechaNacimiento: new Date(),
-          genero: "Masculino",
           email: "",
           rol: roles.Alumno,
           password: "",
@@ -145,15 +127,12 @@ export default function UserFormDialog({
   > = async (data) => {
     setSubmitError(null);
     try {
-      const { confirmPassword, fechaNacimiento, ...rest } = data;
+      const { confirmPassword, ...rest } = data;
 
       // Al enviar, formateamos a YYYY-MM-DD para evitar que la zona horaria
       // del navegador reste horas y cambie el día en el servidor.
       const dataToSend = {
         ...rest,
-        fechaNacimiento: fechaNacimiento
-          ? format(fechaNacimiento, "yyyy-MM-dd")
-          : undefined,
         // Asegura no enviar password vacío en update si no se quiere cambiar
         password: isEditMode && !data.password ? undefined : data.password,
       } as any;
@@ -247,61 +226,6 @@ export default function UserFormDialog({
                   },
                 }}
                 disabled={isSubmitting}
-              />
-              {/* DatePicker para Fecha de Nacimiento */}
-              <Controller
-                name="fechaNacimiento"
-                control={control}
-                render={({ field, fieldState: { error } }) => (
-                  <LocalizationProvider
-                    dateAdapter={AdapterDateFns}
-                    adapterLocale={es}
-                  >
-                    <DatePicker
-                      label="Fecha de Nacimiento" // Asterisco si es requerido
-                      format="dd/MM/yyyy"
-                      value={field.value || null}
-                      onChange={(date) => field.onChange(date)}
-                      disabled={isSubmitting}
-                      disableFuture
-                      slotProps={{
-                        textField: {
-                          required: true, // Indica visualmente que es requerido
-                          fullWidth: true,
-                          error: !!error,
-                          helperText: error?.message || " ",
-                        },
-                      }}
-                    />
-                  </LocalizationProvider>
-                )}
-              />
-              {/* Selector de Género */}
-              <Controller
-                name="genero"
-                control={control}
-                render={({ field, fieldState: { error } }) => (
-                  <FormControl fullWidth required error={!!error}>
-                    <InputLabel id="genero-select-label">Género</InputLabel>
-                    <Select
-                      labelId="genero-select-label"
-                      label="Género"
-                      disabled={isSubmitting}
-                      {...field}
-                    >
-                      {/* Mapea los valores del TIPO Género */}
-                      {generos.map((genero) => (
-                        <MenuItem key={genero} value={genero}>
-                          {/* Puedes poner nombres más amigables aquí si quieres */}
-                          {genero}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    <FormHelperText sx={{ minHeight: "1.25em" }}>
-                      {error?.message || " "}
-                    </FormHelperText>
-                  </FormControl>
-                )}
               />
             </Stack>
             <TextField

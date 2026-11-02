@@ -1,28 +1,18 @@
 import { z } from "zod";
 import type { Rol } from "../../../types/roles";
-import { roles, type Genero } from "../../../types";
+import { roles } from "../../../types";
 
 export const rolesValues: [Rol, ...Rol[]] = [
   "Administrador",
   "Docente",
   "Alumno",
 ];
-export const generos: [Genero, ...Genero[]] = ["Masculino", "Femenino", "Otro"];
-const fechaLimite = new Date();
 
 // Esquema base sin password
 const userBaseSchema = z.object({
   nombre: z.string().min(2, "El nombre es obligatorio"),
   apellido: z.string().min(2, "El apellido es obligatorio"),
   dni: z.string().regex(/^\d{7,9}$/, "El DNI debe entre 7 y 9 dígitos"),
-  fechaNacimiento: z
-    .date("Formato de fecha inválido")
-    .min(new Date(1930, 1, 1), { error: "Muy viejo!" })
-    .max(
-      fechaLimite.setFullYear(fechaLimite.getFullYear() - 18),
-      "El usuario debe tener al menos 18 años.",
-    ),
-  genero: z.enum(generos, "Debe seleccionar un género"),
   email: z
     .string()
     .min(1, "El email es obligatorio")
@@ -71,10 +61,9 @@ export const updateUserSchema = userBaseSchema
     },
   );
 
-// Esquema para el ProfileModal (solo género y contraseña)
+// Esquema para el ProfileModal (solo contraseña)
 export const profileUpdateSchema = z
   .object({
-    genero: z.enum(generos, "Debe seleccionar un género"),
     password: z
       .string()
       .min(6, "La contraseña debe tener al menos 6 caracteres")

@@ -19,7 +19,6 @@ import PersonIcon from "@mui/icons-material/Person";
 import EmailIcon from "@mui/icons-material/Email";
 import BadgeIcon from "@mui/icons-material/Badge";
 import CakeIcon from "@mui/icons-material/Cake";
-import WcIcon from "@mui/icons-material/Wc";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import ToggleOnIcon from "@mui/icons-material/ToggleOn";
@@ -91,44 +90,6 @@ export default function UserDetailModal({
               <ListItemText
                 primary="DNI"
                 secondary={user.dni}
-                primaryTypographyProps={{ variant: "caption" }}
-                secondaryTypographyProps={{
-                  variant: "body2",
-                  color: "text.primary",
-                }}
-              />
-            </ListItem>
-            <Divider variant="inset" component="li" sx={{ ml: 7 }} />
-
-            <ListItem sx={{ py: 0.5 }}>
-              <ListItemIcon sx={{ minWidth: 40 }}>
-                <CakeIcon color="action" fontSize="small" />
-              </ListItemIcon>
-              <ListItemText
-                primary="Fecha de Nacimiento"
-                secondary={
-                  user.fechaNacimiento
-                    ? format(new Date(user.fechaNacimiento), "dd/MM/yyyy", {
-                        locale: es,
-                      })
-                    : "-"
-                }
-                primaryTypographyProps={{ variant: "caption" }}
-                secondaryTypographyProps={{
-                  variant: "body2",
-                  color: "text.primary",
-                }}
-              />
-            </ListItem>
-            <Divider variant="inset" component="li" sx={{ ml: 7 }} />
-
-            <ListItem sx={{ py: 0.5 }}>
-              <ListItemIcon sx={{ minWidth: 40 }}>
-                <WcIcon color="action" fontSize="small" />
-              </ListItemIcon>
-              <ListItemText
-                primary="Género"
-                secondary={user.genero}
                 primaryTypographyProps={{ variant: "caption" }}
                 secondaryTypographyProps={{
                   variant: "body2",

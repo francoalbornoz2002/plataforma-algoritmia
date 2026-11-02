@@ -266,30 +266,6 @@ export default function UsersPage() {
       width: 100,
     },
     {
-      field: "fechaNacimiento",
-      headerName: "Fecha de nac.",
-      width: 105,
-      // Formatea la fecha para mostrarla
-      valueFormatter: (value: string | Date | null) => {
-        if (!value) return "";
-        try {
-          const dateObj = typeof value === "string" ? parseISO(value) : value;
-          // Al ser un campo db.Date, Prisma lo devuelve como medianoche UTC.
-          // Para evitar que la zona horaria local lo desplace al día anterior,
-          // extraemos los componentes UTC y creamos una fecha local equivalente para mostrar.
-          const day = dateObj.getUTCDate();
-          const month = dateObj.getUTCMonth();
-          const year = dateObj.getUTCFullYear();
-          return format(new Date(year, month, day), "dd/MM/yyyy", {
-            locale: es,
-          });
-        } catch {
-          return "Inválida";
-        }
-      },
-    },
-    { field: "genero", headerName: "Género", width: 100 },
-    {
       field: "email",
       headerName: "Email",
       flex: 1,

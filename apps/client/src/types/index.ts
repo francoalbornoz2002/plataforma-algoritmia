@@ -1,12 +1,3 @@
-import type {
-  ActivityRange,
-  AttemptsRange,
-  ProgressRange,
-  StarsRange,
-} from "./progress-filters";
-
-export type Genero = "Masculino" | "Femenino" | "Otro";
-
 export enum roles {
   Administrador = "Administrador",
   Docente = "Docente",
@@ -104,8 +95,6 @@ export interface UserData {
   nombre: string;
   apellido: string;
   dni: string;
-  fechaNacimiento: Date;
-  genero: Genero;
   email: string;
   rol: roles;
   fotoPerfilUrl?: string | null;
@@ -270,7 +259,6 @@ export interface ProgresoAlumnoDetallado {
   apellido: string;
   fotoPerfilUrl?: string | null;
   dni?: string;
-  fechaNacimiento?: string | Date;
   fechaInscripcion?: string | Date;
   misionesCompletadas?: MisionCompletada[];
   misionesEspeciales?: MisionEspecial[];

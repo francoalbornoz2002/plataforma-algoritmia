@@ -30,23 +30,6 @@ export default function InfoAlumno({
 
   if (!student) return null;
 
-  // Función para formatear fechas ignorando la zona horaria para nacimientos
-  const formatBirthDate = (dateString?: string | Date | null) => {
-    if (!dateString) return "No registrada";
-    try {
-      const dateObj =
-        typeof dateString === "string" ? parseISO(dateString) : dateString;
-      const day = dateObj.getUTCDate();
-      const month = dateObj.getUTCMonth();
-      const year = dateObj.getUTCFullYear();
-      return format(new Date(year, month, day), "dd 'de' MMMM, yyyy", {
-        locale: es,
-      });
-    } catch {
-      return "Fecha inválida";
-    }
-  };
-
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
       <DialogTitle sx={{ textAlign: "center", pb: 1, fontWeight: "bold" }}>
@@ -99,22 +82,6 @@ export default function InfoAlumno({
               </Typography>
               <Typography variant="body1" fontWeight="medium">
                 {student.dni || "No registrado"}
-              </Typography>
-            </Box>
-          </Box>
-
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <CalendarMonth color="action" />
-            <Box>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                display="block"
-              >
-                Fecha de Nacimiento
-              </Typography>
-              <Typography variant="body1" fontWeight="medium">
-                {formatBirthDate(student.fechaNacimiento)}
               </Typography>
             </Box>
           </Box>
