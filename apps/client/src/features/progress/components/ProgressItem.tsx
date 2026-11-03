@@ -119,22 +119,6 @@ export default function ProgressItem({
           />
 
           <ProgressStat
-            icon={<ReplayIcon />}
-            color="primary"
-            label="Intentos"
-            value={stats.totalIntentos}
-            subValue={`(${stats.promIntentos.toFixed(1)} prom.)`}
-            placeholderValue="999"
-            placeholderSubValue="(99.9 prom.)"
-          />
-
-          <Divider
-            orientation="vertical"
-            flexItem
-            sx={{ display: { xs: "none", sm: "block" } }}
-          />
-
-          <ProgressStat
             icon={<BoltIcon />}
             color="secondary"
             label="Experiencia"
@@ -142,6 +126,21 @@ export default function ProgressItem({
             subValue="Pts."
             placeholderValue="99999"
             placeholderSubValue="Pts."
+          />
+          <Divider
+            orientation="vertical"
+            flexItem
+            sx={{ display: { xs: "none", sm: "block" } }}
+          />
+
+          <ProgressStat
+            icon={<ReplayIcon />}
+            color="primary"
+            label="Intentos"
+            value={stats.totalIntentos}
+            subValue={`(${stats.promIntentos.toFixed(1)} prom.)`}
+            placeholderValue="999"
+            placeholderSubValue="(99.9 prom.)"
           />
 
           <Divider

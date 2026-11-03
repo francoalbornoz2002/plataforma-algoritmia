@@ -174,7 +174,7 @@ export default function StudentProgressDetailModal({
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="lg"
+      maxWidth="xl"
       fullWidth
       scroll="paper"
     >
@@ -319,7 +319,7 @@ export default function StudentProgressDetailModal({
               ) : (
                 <Grid container spacing={2} sx={{ mb: 4 }}>
                   {filteredMissions.map((m) => (
-                    <Grid size={{ sm: 12, md: 6 }} key={m.mision.id}>
+                    <Grid size={{ sm: 6, md: 4 }} key={m.mision.id}>
                       <MissionCard missionData={m} />
                     </Grid>
                   ))}

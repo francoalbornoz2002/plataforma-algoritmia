@@ -216,8 +216,8 @@ export default function MyProgressPage() {
   const TOTAL_ESTRELLAS = TOTAL_MISIONES * 3;
 
   // Formateamos el valor de "Última Actividad"
-  const ultimaActividadFormateada = progress?.ultimaActividad
-    ? `${formatDistanceToNow(new Date(progress.ultimaActividad), {
+  const ultimaActividadFormateada = progress?.fechaRegistro
+    ? `${formatDistanceToNow(new Date(progress.fechaRegistro), {
         locale: es,
       })}`
     : "Nunca";
@@ -268,21 +268,21 @@ export default function MyProgressPage() {
             </Grid>
             <Grid size={{ xs: 12, sm: 2.5 }}>
               <StatCard
+                title="Experiencia"
+                description="Acumuladas en el curso"
+                value={progress.totalExp}
+                icon={<BoltIcon />}
+                color="secondary"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 2.5 }}>
+              <StatCard
                 title="Intentos"
                 value={progress.totalIntentos}
                 subValue={`(${progress.promIntentos.toFixed(1)} promedio por misión)`}
                 icon={<ReplayIcon />}
                 color="primary"
                 description="Acumulados en el curso"
-              />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 2.5 }}>
-              <StatCard
-                title="Experiencia"
-                description="Acumuladas en el curso"
-                value={progress.totalExp}
-                icon={<BoltIcon />}
-                color="secondary"
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 2 }}>

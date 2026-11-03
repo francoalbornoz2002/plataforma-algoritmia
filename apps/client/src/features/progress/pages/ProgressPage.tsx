@@ -337,21 +337,21 @@ export default function ProgressPage() {
               </Grid>
               <Grid size={{ xs: 12, sm: 4, md: 2 }}>
                 <StatCard
+                  title="Experiencia Total"
+                  value={overview.totalExp}
+                  icon={<BoltIcon />}
+                  color="secondary"
+                  description="Puntos acumulados"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+                <StatCard
                   title="Intentos Totales"
                   value={overview.totalIntentos}
                   subValue={`(${overview.promIntentos.toFixed(1)} prom.)`}
                   icon={<ReplayIcon />}
                   color="primary"
                   description="Total acumulado"
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 4, md: 2 }}>
-                <StatCard
-                  title="Experiencia Total"
-                  value={overview.totalExp}
-                  icon={<BoltIcon />}
-                  color="secondary"
-                  description="Puntos acumulados"
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 4, md: 2 }}>
