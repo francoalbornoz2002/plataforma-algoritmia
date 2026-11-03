@@ -45,6 +45,8 @@ import { AssignmentLate, Warning } from "@mui/icons-material";
 import StatCard from "../../../components/StatCard";
 import SchoolIcon from "@mui/icons-material/School";
 import DifficultiesItem from "../components/DifficultiesItem";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 
 // Tipo para la fila de la DataGrid
 type StudentRow = AlumnoDificultadResumen;
@@ -86,8 +88,35 @@ export default function DifficultiesPage() {
     grado: "",
     sortOption: "apellido-asc",
   });
+  const [hasSelectedSortOption, setHasSelectedSortOption] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState("");
+
+  const sortDirectionIcon = (field: string) => {
+    if (filters.sortOption === `${field}-asc`)
+      return <ArrowUpwardIcon fontSize="small" />;
+    if (filters.sortOption === `${field}-desc`)
+      return <ArrowDownwardIcon fontSize="small" />;
+    return null;
+  };
+  const sortOptionLabel = (label: string, field: string) => (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        width: "100%",
+      }}
+    >
+      <span>{label}</span>
+      {sortDirectionIcon(field)}
+    </Box>
+  );
+  const nextSortOption = (field: string) => {
+    const [currentField, currentOrder] = filters.sortOption.split("-");
+    if (!hasSelectedSortOption || currentField !== field) return `${field}-asc`;
+    return `${field}-${currentOrder === "asc" ? "desc" : "asc"}`;
+  };
 
   const [allDifficulties, setAllDifficulties] = useState<DificultadConTema[]>(
     [],
@@ -239,6 +268,16 @@ export default function DifficultiesPage() {
       grado: "",
       sortOption: "apellido-asc",
     });
+    setHasSelectedSortOption(true);
+    setPage(1);
+  };
+
+  const handleSortChange = (e: SelectChangeEvent<string>) => {
+    setFilters((prev) => ({
+      ...prev,
+      sortOption: e.target.value,
+    }));
+    setHasSelectedSortOption(true);
     setPage(1);
   };
 
@@ -447,24 +486,41 @@ export default function DifficultiesPage() {
             <InputLabel>Ordenar por</InputLabel>
             <Select
               name="sortOption"
-              value={filters.sortOption}
+              value={hasSelectedSortOption ? filters.sortOption : ""}
               label="Ordenar por"
-              onChange={(e) =>
-                handleFilterChange(e as SelectChangeEvent<string>)
-              }
+              onChange={handleSortChange}
+              displayEmpty
+              renderValue={() => {
+                const [field] = filters.sortOption.split("-");
+                const labels: Record<string, string> = {
+                  apellido: "Apellido",
+                  total: "Total dificultades",
+                  alto: "Grado alto",
+                  medio: "Grado medio",
+                  bajo: "Grado bajo",
+                  ninguno: "Superadas",
+                };
+                return sortOptionLabel(labels[field], field);
+              }}
             >
-              <MenuItem value="apellido-asc">Apellido (A-Z)</MenuItem>
-              <MenuItem value="apellido-desc">Apellido (Z-A)</MenuItem>
-              <MenuItem value="total-desc">Total (Desc.)</MenuItem>
-              <MenuItem value="total-asc">Total (Asc.)</MenuItem>
-              <MenuItem value="alto-desc">Grado Alto (Desc.)</MenuItem>
-              <MenuItem value="alto-asc">Grado Alto (Asc.)</MenuItem>
-              <MenuItem value="medio-desc">Grado Medio (Desc.)</MenuItem>
-              <MenuItem value="medio-asc">Grado Medio (Asc.)</MenuItem>
-              <MenuItem value="bajo-desc">Grado Bajo (Desc.)</MenuItem>
-              <MenuItem value="bajo-asc">Grado Bajo (Asc.)</MenuItem>
-              <MenuItem value="ninguno-desc">Superadas (Desc.)</MenuItem>
-              <MenuItem value="ninguno-asc">Superadas (Asc.)</MenuItem>
+              <MenuItem value={nextSortOption("apellido")}>
+                {sortOptionLabel("Apellido", "apellido")}
+              </MenuItem>
+              <MenuItem value={nextSortOption("total")}>
+                {sortOptionLabel("Total dificultades", "total")}
+              </MenuItem>
+              <MenuItem value={nextSortOption("alto")}>
+                {sortOptionLabel("Grado alto", "alto")}
+              </MenuItem>
+              <MenuItem value={nextSortOption("medio")}>
+                {sortOptionLabel("Grado medio", "medio")}
+              </MenuItem>
+              <MenuItem value={nextSortOption("bajo")}>
+                {sortOptionLabel("Grado bajo", "bajo")}
+              </MenuItem>
+              <MenuItem value={nextSortOption("ninguno")}>
+                {sortOptionLabel("Superadas", "ninguno")}
+              </MenuItem>
             </Select>
           </FormControl>
           <Tooltip title="Limpiar filtros">

@@ -32,6 +32,8 @@ import { EstadoConsultaLabels, TemasLabels } from "../../../types/traducciones";
 import HeaderPage from "../../../components/HeaderPage";
 import { FilterAltOff, MarkUnreadChatAlt } from "@mui/icons-material";
 import { datePickerConfig } from "../../../config/theme.config";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 
 // Constante para la paginación
 const PAGE_SIZE = 10;
@@ -57,7 +59,34 @@ export default function ConsultasPage() {
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   // Estado para ordenamiento
-  const [sortOption, setSortOption] = useState("recent"); // recent, old, az, za
+  const [sortOption, setSortOption] = useState("titulo-asc");
+  const [hasSelectedSortOption, setHasSelectedSortOption] = useState(true);
+
+  const sortDirectionIcon = (field: string) => {
+    if (sortOption === `${field}-asc`)
+      return <ArrowUpwardIcon fontSize="small" />;
+    if (sortOption === `${field}-desc`)
+      return <ArrowDownwardIcon fontSize="small" />;
+    return null;
+  };
+  const sortOptionLabel = (label: string, field: string) => (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        width: "100%",
+      }}
+    >
+      <span>{label}</span>
+      {sortDirectionIcon(field)}
+    </Box>
+  );
+  const nextSortOption = (field: string) => {
+    const [currentField, currentOrder] = sortOption.split("-");
+    if (!hasSelectedSortOption || currentField !== field) return `${field}-asc`;
+    return `${field}-${currentOrder === "asc" ? "desc" : "asc"}`;
+  };
 
   // --- Data Fetching ---
   const fetchConsultas = (currentPage: number) => {
@@ -66,22 +95,9 @@ export default function ConsultasPage() {
     setLoading(true);
     setError(null);
 
-    let sort = "createdAt";
-    let order: "asc" | "desc" = "desc";
-
-    if (sortOption === "recent") {
-      sort = "createdAt";
-      order = "desc";
-    } else if (sortOption === "old") {
-      sort = "createdAt";
-      order = "asc";
-    } else if (sortOption === "az") {
-      sort = "titulo";
-      order = "asc";
-    } else if (sortOption === "za") {
-      sort = "titulo";
-      order = "desc";
-    }
+    const [sortField, sortOrder] = sortOption.split("-");
+    const sort = sortField === "titulo" ? "titulo" : "createdAt";
+    const order: "asc" | "desc" = sortOrder === "asc" ? "asc" : "desc";
 
     const params: FindConsultasParams = {
       page: currentPage,
@@ -122,6 +138,12 @@ export default function ConsultasPage() {
     setPage(1); // Resetea a la pág 1
   };
 
+  const handleSortChange = (e: SelectChangeEvent<string>) => {
+    setSortOption(e.target.value);
+    setHasSelectedSortOption(true);
+    setPage(1);
+  };
+
   const handleClearFilters = () => {
     setSearchTerm("");
     setFilters({
@@ -130,7 +152,8 @@ export default function ConsultasPage() {
       fechaDesde: null,
       fechaHasta: null,
     });
-    setSortOption("recent");
+    setSortOption("titulo-asc");
+    setHasSelectedSortOption(true);
     setPage(1);
   };
 
@@ -285,14 +308,25 @@ export default function ConsultasPage() {
           <FormControl size="small" sx={{ minWidth: 180 }}>
             <InputLabel>Ordenar por</InputLabel>
             <Select
-              value={sortOption}
+              value={hasSelectedSortOption ? sortOption : ""}
               label="Ordenar por"
-              onChange={(e) => setSortOption(e.target.value)}
+              onChange={handleSortChange}
+              displayEmpty
+              renderValue={() => {
+                const [field] = sortOption.split("-");
+                const labels: Record<string, string> = {
+                  fecha: "Fecha",
+                  titulo: "Título",
+                };
+                return sortOptionLabel(labels[field], field);
+              }}
             >
-              <MenuItem value="recent">Más recientes</MenuItem>
-              <MenuItem value="old">Más antiguas</MenuItem>
-              <MenuItem value="az">Título (A-Z)</MenuItem>
-              <MenuItem value="za">Título (Z-A)</MenuItem>
+              <MenuItem value={nextSortOption("fecha")}>
+                {sortOptionLabel("Fecha", "fecha")}
+              </MenuItem>
+              <MenuItem value={nextSortOption("titulo")}>
+                {sortOptionLabel("Título", "titulo")}
+              </MenuItem>
             </Select>
           </FormControl>
         </Stack>

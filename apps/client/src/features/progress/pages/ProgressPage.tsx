@@ -23,6 +23,8 @@ import TaskAltIcon from "@mui/icons-material/TaskAlt";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import WarningIcon from "@mui/icons-material/Warning";
 import SchoolIcon from "@mui/icons-material/School";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 
 // 1. Hooks y Servicios
 import { useCourseContext } from "../../../context/CourseContext";
@@ -74,12 +76,39 @@ export default function ProgressPage() {
     activityRange: "",
     sortOption: "apellido-asc",
   });
+  const [hasSelectedSortOption, setHasSelectedSortOption] = useState(true);
 
   // Estado local para el buscador
   const [searchTerm, setSearchTerm] = useState("");
 
   // Estado para el modal del detalle de las misiones del alumno
   const [viewingStudent, setViewingStudent] = useState<StudentRow | null>(null);
+
+  const sortDirectionIcon = (field: string) => {
+    if (filters.sortOption === `${field}-asc`)
+      return <ArrowUpwardIcon fontSize="small" />;
+    if (filters.sortOption === `${field}-desc`)
+      return <ArrowDownwardIcon fontSize="small" />;
+    return null;
+  };
+  const sortOptionLabel = (label: string, field: string) => (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        width: "100%",
+      }}
+    >
+      <span>{label}</span>
+      {sortDirectionIcon(field)}
+    </Box>
+  );
+  const nextSortOption = (field: string) => {
+    const [currentField, currentOrder] = filters.sortOption.split("-");
+    if (!hasSelectedSortOption || currentField !== field) return `${field}-asc`;
+    return `${field}-${currentOrder === "asc" ? "desc" : "asc"}`;
+  };
 
   // --- 3. DATA FETCHING (EFFECTS) ---
 
@@ -261,6 +290,7 @@ export default function ProgressPage() {
       activityRange: "",
       sortOption: "apellido-asc",
     });
+    setHasSelectedSortOption(true);
     setPage(1);
   };
 
@@ -271,6 +301,15 @@ export default function ProgressPage() {
       ...prev,
       [e.target.name]: e.target.value,
     }));
+    setPage(1);
+  };
+
+  const handleSortChange = (e: SelectChangeEvent<string>) => {
+    setFilters((prev) => ({
+      ...prev,
+      sortOption: e.target.value,
+    }));
+    setHasSelectedSortOption(true);
     setPage(1);
   };
 
@@ -449,25 +488,40 @@ export default function ProgressPage() {
                 <InputLabel>Ordenar por</InputLabel>
                 <Select
                   name="sortOption"
-                  value={filters.sortOption}
+                  value={hasSelectedSortOption ? filters.sortOption : ""}
                   label="Ordenar por"
-                  onChange={handleFilterChange}
+                  onChange={handleSortChange}
+                  displayEmpty
+                  renderValue={() => {
+                    const [field] = filters.sortOption.split("-");
+                    const labels: Record<string, string> = {
+                      apellido: "Apellido",
+                      progreso: "Progreso",
+                      estrellas: "Estrellas",
+                      intentos: "Intentos",
+                      exp: "Experiencia",
+                      actividad: "Última actividad",
+                    };
+                    return sortOptionLabel(labels[field], field);
+                  }}
                 >
-                  <MenuItem value="apellido-asc">Apellido (A-Z)</MenuItem>
-                  <MenuItem value="apellido-desc">Apellido (Z-A)</MenuItem>
-                  <MenuItem value="progreso-desc">Progreso (Desc.)</MenuItem>
-                  <MenuItem value="progreso-asc">Progreso (Asc.)</MenuItem>
-                  <MenuItem value="estrellas-desc">Estrellas (Desc.)</MenuItem>
-                  <MenuItem value="estrellas-asc">Estrellas (Asc.)</MenuItem>
-                  <MenuItem value="intentos-desc">Intentos (Desc.)</MenuItem>
-                  <MenuItem value="intentos-asc">Intentos (Asc.)</MenuItem>
-                  <MenuItem value="exp-desc">Experiencia (Desc.)</MenuItem>
-                  <MenuItem value="exp-asc">Experiencia (Asc.)</MenuItem>
-                  <MenuItem value="actividad-desc">
-                    Última Act. (Recientes)
+                  <MenuItem value={nextSortOption("apellido")}>
+                    {sortOptionLabel("Apellido", "apellido")}
                   </MenuItem>
-                  <MenuItem value="actividad-asc">
-                    Última Act. (Antiguas)
+                  <MenuItem value={nextSortOption("progreso")}>
+                    {sortOptionLabel("Progreso", "progreso")}
+                  </MenuItem>
+                  <MenuItem value={nextSortOption("estrellas")}>
+                    {sortOptionLabel("Estrellas", "estrellas")}
+                  </MenuItem>
+                  <MenuItem value={nextSortOption("intentos")}>
+                    {sortOptionLabel("Intentos", "intentos")}
+                  </MenuItem>
+                  <MenuItem value={nextSortOption("exp")}>
+                    {sortOptionLabel("Experiencia", "exp")}
+                  </MenuItem>
+                  <MenuItem value={nextSortOption("actividad")}>
+                    {sortOptionLabel("Última actividad", "actividad")}
                   </MenuItem>
                 </Select>
               </FormControl>

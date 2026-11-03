@@ -8,6 +8,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  type SelectChangeEvent,
   Button,
   Grid,
   Pagination,
@@ -47,6 +48,8 @@ import SesionDetailModal from "../../reports/components/sesiones-refuerzo/Sesion
 import HeaderPage from "../../../components/HeaderPage";
 import { datePickerConfig } from "../../../config/theme.config";
 import { SwitchAccessShortcutAdd } from "@mui/icons-material";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 
 export default function SesionesRefuerzoPage() {
   const { selectedCourse, isReadOnly } = useCourseContext();
@@ -73,7 +76,34 @@ export default function SesionesRefuerzoPage() {
   }>({ fechaDesde: null, fechaHasta: null });
 
   const [pagination, setPagination] = useState({ page: 1, limit: 9 });
-  const [sortOption, setSortOption] = useState("recent");
+  const [sortOption, setSortOption] = useState("nroSesion-asc");
+  const [hasSelectedSortOption, setHasSelectedSortOption] = useState(true);
+
+  const sortDirectionIcon = (field: string) => {
+    if (sortOption === `${field}-asc`)
+      return <ArrowUpwardIcon fontSize="small" />;
+    if (sortOption === `${field}-desc`)
+      return <ArrowDownwardIcon fontSize="small" />;
+    return null;
+  };
+  const sortOptionLabel = (label: string, field: string) => (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        width: "100%",
+      }}
+    >
+      <span>{label}</span>
+      {sortDirectionIcon(field)}
+    </Box>
+  );
+  const nextSortOption = (field: string) => {
+    const [currentField, currentOrder] = sortOption.split("-");
+    if (!hasSelectedSortOption || currentField !== field) return `${field}-asc`;
+    return `${field}-${currentOrder === "asc" ? "desc" : "asc"}`;
+  };
 
   // --- Estados de Carga/Error ---
   const [loading, setLoading] = useState(true);
@@ -172,21 +202,16 @@ export default function SesionesRefuerzoPage() {
       return true;
     });
 
+    const [sortField, sortOrder] = sortOption.split("-");
+    const multiplier = sortOrder === "asc" ? 1 : -1;
     return result.sort((a, b) => {
-      if (sortOption === "recent") {
-        return (
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-      } else if (sortOption === "old") {
-        return (
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        );
-      } else if (sortOption === "nro_desc") {
-        return b.nroSesion - a.nroSesion;
-      } else if (sortOption === "nro_asc") {
-        return a.nroSesion - b.nroSesion;
+      if (sortField === "nroSesion") {
+        return multiplier * (a.nroSesion - b.nroSesion);
       }
-      return 0;
+      return (
+        multiplier *
+        (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      );
     });
   }, [allSesiones, filters, dateFilters, sortOption]);
 
@@ -217,10 +242,17 @@ export default function SesionesRefuerzoPage() {
     setPagination((prev) => ({ ...prev, page: value }));
   };
 
+  const handleSortChange = (e: SelectChangeEvent<string>) => {
+    setSortOption(e.target.value);
+    setHasSelectedSortOption(true);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
   const handleClearFilters = () => {
     setFilters({});
     setDateFilters({ fechaDesde: null, fechaHasta: null });
-    setSortOption("recent");
+    setSortOption("nroSesion-asc");
+    setHasSelectedSortOption(true);
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
@@ -455,14 +487,25 @@ export default function SesionesRefuerzoPage() {
           <FormControl size="small" sx={{ Width: 180 }}>
             <InputLabel>Ordenar por</InputLabel>
             <Select
-              value={sortOption}
+              value={hasSelectedSortOption ? sortOption : ""}
               label="Ordenar por"
-              onChange={(e) => setSortOption(e.target.value)}
+              onChange={handleSortChange}
+              displayEmpty
+              renderValue={() => {
+                const [field] = sortOption.split("-");
+                const labels: Record<string, string> = {
+                  fecha: "Fecha",
+                  nroSesion: "Número de sesión",
+                };
+                return sortOptionLabel(labels[field], field);
+              }}
             >
-              <MenuItem value="recent">Más recientes</MenuItem>
-              <MenuItem value="old">Más antiguas</MenuItem>
-              <MenuItem value="nro_asc">N° Sesión (Asc.)</MenuItem>
-              <MenuItem value="nro_desc">N° Sesión (Dec.)</MenuItem>
+              <MenuItem value={nextSortOption("fecha")}>
+                {sortOptionLabel("Fecha", "fecha")}
+              </MenuItem>
+              <MenuItem value={nextSortOption("nroSesion")}>
+                {sortOptionLabel("Número de sesión", "nroSesion")}
+              </MenuItem>
             </Select>
           </FormControl>
           <Tooltip title="Limpiar filtros">

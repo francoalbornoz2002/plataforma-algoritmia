@@ -8,6 +8,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  type SelectChangeEvent,
   Button,
   Grid,
   IconButton,
@@ -49,6 +50,8 @@ import { FinalizarClaseModal } from "../components/FinalizarClaseModal";
 import HeaderPage from "../../../components/HeaderPage";
 import { datePickerConfig } from "../../../config/theme.config";
 import { useAuth } from "../../authentication/context/AuthProvider";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 
 // Tipos para los filtros
 type OrdenFiltro =
@@ -56,6 +59,8 @@ type OrdenFiltro =
   | "fecha-asc"
   | "consultas-desc"
   | "consultas-asc";
+
+type OrdenCampo = "fecha" | "consultas";
 
 export default function ClasesConsultaPage() {
   const { selectedCourse, isReadOnly } = useCourseContext();
@@ -75,7 +80,34 @@ export default function ClasesConsultaPage() {
   const [fechaHasta, setFechaHasta] = useState<Date | null>(null);
   const [docenteFiltro, setDocenteFiltro] = useState("Todos");
   const [estadoFiltro, setEstadoFiltro] = useState("Todos");
-  const [orden, setOrden] = useState<OrdenFiltro>("fecha-desc");
+  const [orden, setOrden] = useState<OrdenFiltro>("consultas-asc");
+  const [hasSelectedSortOption, setHasSelectedSortOption] = useState(true);
+
+  const sortDirectionIcon = (field: OrdenCampo) => {
+    if (orden === `${field}-asc`)
+      return <ArrowUpwardIcon fontSize="small" />;
+    if (orden === `${field}-desc`)
+      return <ArrowDownwardIcon fontSize="small" />;
+    return null;
+  };
+  const sortOptionLabel = (label: string, field: OrdenCampo) => (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        width: "100%",
+      }}
+    >
+      <span>{label}</span>
+      {sortDirectionIcon(field)}
+    </Box>
+  );
+  const nextSortOption = (field: OrdenCampo): OrdenFiltro => {
+    const [currentField, currentOrder] = orden.split("-");
+    if (!hasSelectedSortOption || currentField !== field) return `${field}-asc`;
+    return `${field}-${currentOrder === "asc" ? "desc" : "asc"}` as OrdenFiltro;
+  };
 
   // --- Estados de Modales ---
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -317,7 +349,13 @@ export default function ClasesConsultaPage() {
     setFechaHasta(null);
     setDocenteFiltro("Todos");
     setEstadoFiltro("Todos");
-    setOrden("fecha-desc");
+    setOrden("consultas-asc");
+    setHasSelectedSortOption(true);
+  };
+
+  const handleSortChange = (e: SelectChangeEvent<OrdenFiltro>) => {
+    setOrden(e.target.value);
+    setHasSelectedSortOption(true);
   };
 
   const handleSaveSuccess = () => {
@@ -485,16 +523,27 @@ export default function ClasesConsultaPage() {
           <FormControl size="small" sx={{ minWidth: 200 }}>
             <InputLabel>Ordenar por</InputLabel>
             <Select
-              value={orden}
+              value={hasSelectedSortOption ? orden : ""}
               label="Ordenar por"
-              onChange={(e) => setOrden(e.target.value as OrdenFiltro)}
+              onChange={handleSortChange}
+              displayEmpty
+              renderValue={() => {
+                const field: OrdenCampo = orden.startsWith("fecha-")
+                  ? "fecha"
+                  : "consultas";
+                const labels: Record<OrdenCampo, string> = {
+                  fecha: "Fecha",
+                  consultas: "Cantidad de consultas",
+                };
+                return sortOptionLabel(labels[field], field);
+              }}
             >
-              <MenuItem value="fecha-desc">Más Recientes</MenuItem>
-              <MenuItem value="fecha-asc">Más Antiguas</MenuItem>
-              <MenuItem value="consultas-desc">
-                Cant. Consultas (Desc.)
+              <MenuItem value={nextSortOption("fecha")}>
+                {sortOptionLabel("Fecha", "fecha")}
               </MenuItem>
-              <MenuItem value="consultas-asc">Cant. Consultas (Asc.)</MenuItem>
+              <MenuItem value={nextSortOption("consultas")}>
+                {sortOptionLabel("Cantidad de consultas", "consultas")}
+              </MenuItem>
             </Select>
           </FormControl>
 
