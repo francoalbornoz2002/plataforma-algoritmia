@@ -12,10 +12,9 @@ import {
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useState, useEffect } from "react";
-// Importamos el servicio de alumno
-import { joinCourse } from "../../users/services/alumnos.service";
 import type { CursoConDetalles } from "../../../types";
 import { enqueueSnackbar } from "notistack";
+import { joinCourse } from "../services/courses.service";
 // El tipo de curso que viene de la pestaña "Todos los Cursos"
 
 interface JoinCourseModalProps {

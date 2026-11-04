@@ -176,6 +176,27 @@ export const finalizeCourse = async (id: string): Promise<void> => {
   }
 };
 
+/**
+ * Inscribe al alumno actual en un curso usando la contraseña
+ */
+export const joinCourse = async (
+  idCurso: string,
+  contrasenaAcceso: string,
+): Promise<any> => {
+  try {
+    const response = await apiClient.post(`/cursos/${idCurso}/inscribirse`, {
+      contrasenaAcceso,
+    });
+    return response.data;
+  } catch (err: any) {
+    console.error(
+      "Error al inscribirse al curso:",
+      err.response?.data || err.message,
+    );
+    throw err.response?.data || new Error("Error al inscribirse al curso.");
+  }
+};
+
 // --- Función para obtener estadísticas del dashboard de ALUMNO ---
 export const getStudentDashboardStats = async (idCurso: string) => {
   try {

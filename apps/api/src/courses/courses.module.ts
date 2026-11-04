@@ -7,6 +7,8 @@ import { MulterModule } from '@nestjs/platform-express';
 import { extname, join } from 'path';
 import { diskStorage } from 'multer';
 import { existsSync, mkdirSync } from 'fs';
+import { ProgressModule } from 'src/progress/progress.module';
+import { DifficultiesModule } from 'src/difficulties/difficulties.module';
 
 const UPLOADS_PATH = join(process.cwd(), 'uploads');
 
@@ -30,6 +32,8 @@ const UPLOADS_PATH = join(process.cwd(), 'uploads');
         },
       }),
     }),
+    ProgressModule,
+    DifficultiesModule,
   ],
   controllers: [CoursesController],
   providers: [CoursesService, PrismaService],

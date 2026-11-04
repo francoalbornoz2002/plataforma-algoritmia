@@ -23,12 +23,13 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
 import { FindAllCoursesDto } from '../dto/find-all-courses.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { JoinCourseDto } from 'src/courses/dto/join-course-dto';
 
+@UseGuards(RolesGuard)
 @Controller('cursos')
 export class CoursesController {
   constructor(private readonly coursesService: CoursesService) {}
 
-  @UseGuards(RolesGuard)
   @Roles(roles.Administrador)
   @Post()
   @UseInterceptors(FileInterceptor('imagen'))
@@ -49,7 +50,6 @@ export class CoursesController {
     return this.coursesService.findOne(id);
   }
 
-  @UseGuards(RolesGuard)
   @Roles(roles.Administrador, roles.Docente)
   @Patch(':id')
   @UseInterceptors(FileInterceptor('imagen'))
@@ -62,28 +62,38 @@ export class CoursesController {
     return this.coursesService.update(id, updateCourseDto, imagen, req.user);
   }
 
-  @UseGuards(RolesGuard)
   @Roles(roles.Administrador)
   @Delete(':id')
   delete(@Param('id') id: string) {
     return this.coursesService.remove(id);
   }
 
-  @UseGuards(RolesGuard)
   @Roles(roles.Administrador)
   @Patch(':id/finalizar')
   finalize(@Param('id') id: string) {
     return this.coursesService.finalize(id);
   }
 
-  @UseGuards(RolesGuard)
+  @Roles(roles.Alumno)
+  @Post(':id/inscribirse')
+  joinCourse(
+    @Req() req: AuthenticatedUserRequest,
+    @Body() contrasenaAcceso: string,
+    @Param('id', ParseUUIDPipe) idCurso: string,
+  ) {
+    return this.coursesService.joinCourse(
+      req.user.userId,
+      idCurso,
+      contrasenaAcceso,
+    );
+  }
+
   @Roles(roles.Docente, roles.Administrador)
   @Get(':id/dashboard-stats')
   getDashboardStats(@Param('id', ParseUUIDPipe) id: string) {
     return this.coursesService.getDashboardStats(id);
   }
 
-  @UseGuards(RolesGuard)
   @Roles(roles.Alumno)
   @Get(':id/student-dashboard')
   getStudentDashboardStats(

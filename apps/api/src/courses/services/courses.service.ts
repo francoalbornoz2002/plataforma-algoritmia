@@ -25,11 +25,16 @@ import { UserPayload } from 'src/interfaces/authenticated-user.interface';
 import { unlink } from 'fs';
 import { basename, join } from 'path';
 import { MailService } from 'src/mail/services/mail.service';
+import { JoinCourseDto } from '../dto/join-course-dto';
+import { ProgressService } from 'src/progress/services/progress.service';
+import { DifficultiesService } from 'src/difficulties/services/difficulties.service';
 
 @Injectable()
 export class CoursesService {
   constructor(
     private prisma: PrismaService,
+    private progressService: ProgressService,
+    private difficultiesService: DifficultiesService,
     private readonly mailService: MailService,
   ) {}
 
@@ -695,6 +700,111 @@ export class CoursesService {
         data: { estado: estado_sesion.No_realizada },
       }),
     ]);
+  }
+
+  async joinCourse(
+    idAlumno: string,
+    idCurso: string,
+    contrasenaAcceso: string,
+  ) {
+    try {
+      return await this.prisma.$transaction(
+        async (tx: Prisma.TransactionClient) => {
+          // 3. Validar Curso y Contraseña
+          const curso = await tx.curso.findUnique({
+            where: { id: idCurso, deletedAt: null },
+          });
+
+          if (!curso) {
+            throw new NotFoundException(
+              'Curso no encontrado o no está disponible.',
+            );
+          }
+
+          if (curso.contrasenaAcceso !== contrasenaAcceso) {
+            throw new BadRequestException(
+              'La contraseña del curso es incorrecta.',
+            );
+          }
+
+          // 4. Validar que el alumno no tenga OTRA inscripción activa
+          const otraInscripcionActiva =
+            await tx.inscripcionesAlumnoCurso.findFirst({
+              where: {
+                idAlumno: idAlumno,
+                estado: estado_simple.Activo,
+                NOT: { idCurso: idCurso },
+              },
+            });
+
+          if (otraInscripcionActiva) {
+            throw new BadRequestException(
+              'Ya tienes una inscripción activa en otro curso.',
+            );
+          }
+
+          // 5. Buscar inscripción existente (para validar re-inscripción)
+          const inscripcionExistente =
+            await tx.inscripcionesAlumnoCurso.findFirst({
+              where: {
+                idAlumno: idAlumno,
+                idCurso: idCurso,
+              },
+            });
+
+          if (inscripcionExistente) {
+            // El alumno ya estuvo en este curso
+            if (inscripcionExistente.estado === estado_simple.Activo) {
+              throw new BadRequestException(
+                'Ya estás inscripto en este curso.',
+              );
+            }
+            // Regla de Negocio: No se puede volver a cursar el mismo curso
+            throw new BadRequestException(
+              'No puedes volver a inscribirte en un curso del que ya formaste parte (Baja o Finalizado).',
+            );
+          } else {
+            // --- Inscripción Nueva ---
+            // 1. Creamos la Inscripción
+            const inscripcion = await tx.inscripcionesAlumnoCurso.create({
+              data: {
+                idAlumno: idAlumno,
+                idCurso: idCurso,
+                estado: estado_simple.Activo,
+              },
+            });
+
+            // 2. Inicializamos el progreso del alumno vinculado a la nueva inscripción
+            await tx.progresoAlumno.create({
+              data: {
+                idInscripcion: inscripcion.id,
+              },
+            });
+
+            // 3. Actualizamos el progreso general del curso (para incluir al nuevo alumno en los promedios)
+            await this.progressService.recalculateCourseProgress(tx, idCurso);
+            // 4. Actualizamos también las estadísticas de dificultades
+            await this.difficultiesService.recalculateCourseDifficulties(
+              tx,
+              idCurso,
+            );
+
+            return inscripcion;
+          }
+        },
+      );
+    } catch (error) {
+      if (
+        error instanceof ForbiddenException ||
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
+      ) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        'No se pudo completar la inscripción.',
+      );
+    }
   }
 
   /**

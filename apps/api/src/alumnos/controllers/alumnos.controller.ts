@@ -17,7 +17,7 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { roles } from '@prisma/client';
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
-import { JoinCourseDto } from '../dto/join-course-dto';
+import { JoinCourseDto } from '../../courses/dto/join-course-dto';
 import { CreateConsultaDto } from 'src/consultas/dto/create-consulta.dto';
 import { FindConsultasDto } from 'src/consultas/dto/find-consultas.dto';
 import { ValorarConsultaDto } from 'src/consultas/dto/valorar-consulta.dto';
@@ -32,16 +32,6 @@ export class AlumnosController {
   @Get('my/courses')
   findMyCourses(@Req() req: AuthenticatedUserRequest) {
     return this.alumnosService.findMyCourses(req.user.userId);
-  }
-
-  @Roles(roles.Alumno)
-  @Post('my/join-course')
-  joinCourse(
-    @Req() req: AuthenticatedUserRequest, // Obtenemos el alumno del token
-    @Body() joinCourseDto: JoinCourseDto, // Obtenemos { idCurso, contrasenaAcceso } del body
-  ) {
-    // Pasamos el usuario y el DTO completo al servicio
-    return this.alumnosService.joinCourse(req.user, joinCourseDto);
   }
 
   @Roles(roles.Alumno)

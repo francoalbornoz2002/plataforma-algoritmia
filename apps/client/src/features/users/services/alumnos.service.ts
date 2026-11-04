@@ -42,27 +42,6 @@ export const findMyCourses = async (): Promise<InscripcionConCurso[]> => {
   }
 };
 
-/**
- * Inscribe al alumno actual en un curso usando la contraseña
- */
-export const joinCourse = async (
-  idCurso: string,
-  contrasenaAcceso: string,
-): Promise<any> => {
-  try {
-    // Asumo que tu endpoint de 'join' está en el AlumnosController
-    // y que el 'idCurso' va en el body (si va en la URL, hay que cambiarlo)
-    const response = await apiClient.post(`/alumnos/my/join-course`, {
-      idCurso,
-      contrasenaAcceso,
-    });
-    return response.data;
-  } catch (err: any) {
-    console.error("Error joining course:", err.response?.data || err.message);
-    throw err.response?.data || new Error("Error al unirse al curso.");
-  }
-};
-
 export const getMyProgress = async (
   idCurso: string,
 ): Promise<ProgresoAlumno> => {
