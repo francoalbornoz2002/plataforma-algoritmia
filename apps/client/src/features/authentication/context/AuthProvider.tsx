@@ -93,7 +93,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshProfile = useCallback(async () => {
     if (!user?.userId) return;
     try {
-      const { data } = await apiClient.get<UserData>(`/users/${user.userId}`);
+      const { data } = await apiClient.get<UserData>(
+        `/usuarios/${user.userId}`,
+      );
       setProfile(data);
 
       // Verificamos si es el primer login (ultimoAcceso null) aquí mismo
