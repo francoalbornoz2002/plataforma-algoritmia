@@ -32,7 +32,6 @@ import type {
   MisionEspecial,
 } from "../../../types";
 import MissionDifficultyChip from "../../../components/MissionDifficultyChip";
-import ProgressStat from "./ProgressStat";
 import CompletedStat from "./CompletedStat";
 
 type MissionItem = MisionConEstado | MisionCompletada | MisionEspecial;

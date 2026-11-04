@@ -290,7 +290,7 @@ export default function ClaseConsultaFormModal({
       });
     }
 
-    return Array.from(optionsMap.values()); // <-- Devolvemos ConsultaSimple[]
+    return Array.from(optionsMap.values());
   }, [consultasList, claseToEdit, isEditMode]);
 
   // 6. Fecha máxima (Tu feature)
