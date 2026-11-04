@@ -32,14 +32,14 @@ export class UsersController {
 
   @UseGuards(RolesGuard)
   @Roles(roles.Administrador)
-  @Post('create')
+  @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
 
   @UseGuards(RolesGuard)
   @Roles(roles.Administrador)
-  @Get('all')
+  @Get()
   @ApiCreatedResponse({ type: UserEntity, isArray: true })
   findAll(
     @Query() findAllUsersDto: FindAllUsersDto,
@@ -56,25 +56,18 @@ export class UsersController {
     return this.usersService.getAdminDashboardStats();
   }
 
-  @UseGuards(RolesGuard)
-  @Get('teachers')
-  @ApiCreatedResponse({ type: UserEntity, isArray: true })
-  findTeachers() {
-    return this.usersService.findTeachers();
-  }
-
   @Get(':id')
   @ApiCreatedResponse({ type: UserEntity })
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.usersService.findOne(id);
   }
 
-  @Patch('edit/:id')
+  @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
   }
 
-  @Patch('profile/:id')
+  @Patch(':id/profile')
   @UseInterceptors(FileInterceptor('fotoPerfil'))
   updateProfile(
     @Param('id') id: string,
@@ -86,8 +79,15 @@ export class UsersController {
 
   @UseGuards(RolesGuard)
   @Roles(roles.Administrador)
-  @Delete('delete/:id')
+  @Delete(':id')
   delete(@Param('id') id: string) {
     return this.usersService.delete(id);
+  }
+
+  @UseGuards(RolesGuard)
+  @Get('teachers')
+  @ApiCreatedResponse({ type: UserEntity, isArray: true })
+  findTeachers() {
+    return this.usersService.findTeachers();
   }
 }

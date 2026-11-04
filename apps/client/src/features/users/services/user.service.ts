@@ -45,8 +45,8 @@ export const createUser = async (
   userData: CreateUserData,
 ): Promise<UserData> => {
   try {
-    // Llama al endpoint POST /users/create
-    const response = await apiClient.post<UserData>("/users/create", userData);
+    // Llama al endpoint POST /users
+    const response = await apiClient.post<UserData>("/users", userData);
     return response.data;
   } catch (error: any) {
     console.error("Error al crear usuario:", error);
@@ -60,9 +60,9 @@ export const updateUser = async (
   userData: UpdateUserData,
 ): Promise<UserData> => {
   try {
-    // Llama al endpoint PATCH /users/edit:id
+    // Llama al endpoint PATCH /users:id
     const response = await apiClient.patch<UserData>(
-      `/users/edit/${userId}`,
+      `/users/${userId}`,
       userData,
     );
     return response.data;
@@ -78,9 +78,9 @@ export const updateUserProfile = async (
   formData: FormData,
 ): Promise<UserData> => {
   try {
-    // Llama al endpoint PATCH /users/profile/:id con multipart/form-data
+    // Llama al endpoint PATCH /users/:id/profile con multipart/form-data
     const response = await apiClient.patch<UserData>(
-      `/users/profile/${userId}`,
+      `/users/${userId}/profile`,
       formData,
       {
         headers: { "Content-Type": "multipart/form-data" },
@@ -97,8 +97,8 @@ export const updateUserProfile = async (
 export const deleteUser = async (userId: string): Promise<void> => {
   // No suele devolver datos
   try {
-    // Llama al endpoint DELETE /users/delete:id
-    await apiClient.delete(`/users/delete/${userId}`);
+    // Llama al endpoint DELETE /users/:id
+    await apiClient.delete(`/users/${userId}`);
     // No devuelve nada si tiene éxito
   } catch (error) {
     console.error(`Error al dar de baja usuario ${userId}:`, error);
