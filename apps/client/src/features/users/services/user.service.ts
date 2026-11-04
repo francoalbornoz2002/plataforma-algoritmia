@@ -24,9 +24,9 @@ export const findUsers = async (
   params: FindUsersParams,
 ): Promise<PaginatedUsersResponse> => {
   try {
-    const response = await apiClient.get("/users/all", {
+    const response = await apiClient.get("/usuarios", {
       // Axios convierte esto en query parameters:
-      // /users/all?page=1&limit=6&search=juan&roles[]=Docente&roles[]=Administrador...
+      // /usuarios/all?page=1&limit=6&search=juan&roles[]=Docente&roles[]=Administrador...
       params: params,
       // Importante para que axios maneje arrays correctamente
       paramsSerializer: {
@@ -45,8 +45,8 @@ export const createUser = async (
   userData: CreateUserData,
 ): Promise<UserData> => {
   try {
-    // Llama al endpoint POST /users
-    const response = await apiClient.post<UserData>("/users", userData);
+    // Llama al endpoint POST /usuarios
+    const response = await apiClient.post<UserData>("/usuarios", userData);
     return response.data;
   } catch (error: any) {
     console.error("Error al crear usuario:", error);
@@ -60,9 +60,9 @@ export const updateUser = async (
   userData: UpdateUserData,
 ): Promise<UserData> => {
   try {
-    // Llama al endpoint PATCH /users:id
+    // Llama al endpoint PATCH /usuarios/:id
     const response = await apiClient.patch<UserData>(
-      `/users/${userId}`,
+      `/usuarios/${userId}`,
       userData,
     );
     return response.data;
@@ -78,9 +78,9 @@ export const updateUserProfile = async (
   formData: FormData,
 ): Promise<UserData> => {
   try {
-    // Llama al endpoint PATCH /users/:id/profile con multipart/form-data
+    // Llama al endpoint PATCH /usuarios/:id/perfil con multipart/form-data
     const response = await apiClient.patch<UserData>(
-      `/users/${userId}/profile`,
+      `/usuarios/${userId}/perfil`,
       formData,
       {
         headers: { "Content-Type": "multipart/form-data" },
@@ -97,8 +97,8 @@ export const updateUserProfile = async (
 export const deleteUser = async (userId: string): Promise<void> => {
   // No suele devolver datos
   try {
-    // Llama al endpoint DELETE /users/:id
-    await apiClient.delete(`/users/${userId}`);
+    // Llama al endpoint DELETE /usuarios/:id
+    await apiClient.delete(`/usuarios/${userId}`);
     // No devuelve nada si tiene éxito
   } catch (error) {
     console.error(`Error al dar de baja usuario ${userId}:`, error);
@@ -109,7 +109,7 @@ export const deleteUser = async (userId: string): Promise<void> => {
 // --- Función para obtener un usuario por id ---
 export const getUserById = async (userId: string): Promise<UserData> => {
   try {
-    const response = await apiClient.get<UserData>(`/users/${userId}`);
+    const response = await apiClient.get<UserData>(`/usuarios/${userId}`);
     return response.data;
   } catch (error) {
     console.error(`Error al obtener usuario ${userId}:`, error);
@@ -121,7 +121,7 @@ export const getUserById = async (userId: string): Promise<UserData> => {
 export const getAdminDashboardStats =
   async (): Promise<AdminDashboardStats> => {
     try {
-      const response = await apiClient.get("/users/admin-dashboard-stats");
+      const response = await apiClient.get("/usuarios/admin-dashboard-stats");
       return response.data;
     } catch (err: any) {
       console.error("Error fetching admin dashboard stats:", err);

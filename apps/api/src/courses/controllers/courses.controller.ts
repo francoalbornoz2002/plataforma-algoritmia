@@ -24,13 +24,13 @@ import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user
 import { FindAllCoursesDto } from '../dto/find-all-courses.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 
-@Controller('courses')
+@Controller('cursos')
 export class CoursesController {
   constructor(private readonly coursesService: CoursesService) {}
 
   @UseGuards(RolesGuard)
   @Roles(roles.Administrador)
-  @Post('create')
+  @Post()
   @UseInterceptors(FileInterceptor('imagen'))
   create(
     @Body() createCourseDto: CreateCourseDto,
@@ -39,15 +39,41 @@ export class CoursesController {
     return this.coursesService.create(createCourseDto, imagen);
   }
 
-  @Get('all')
+  @Get()
   findAll(@Query() query: FindAllCoursesDto) {
-    // The global ValidationPipe (in main.ts) automatically validates 'query'
     return this.coursesService.findAll(query);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.coursesService.findOne(id);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(roles.Administrador, roles.Docente)
+  @Patch(':id')
+  @UseInterceptors(FileInterceptor('imagen'))
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateCourseDto: UpdateCourseDto,
+    @UploadedFile() imagen: Express.Multer.File,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    return this.coursesService.update(id, updateCourseDto, imagen, req.user);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(roles.Administrador)
+  @Delete(':id')
+  delete(@Param('id') id: string) {
+    return this.coursesService.remove(id);
+  }
+
+  @UseGuards(RolesGuard)
+  @Roles(roles.Administrador)
+  @Patch(':id/finalizar')
+  finalize(@Param('id') id: string) {
+    return this.coursesService.finalize(id);
   }
 
   @UseGuards(RolesGuard)
@@ -65,32 +91,5 @@ export class CoursesController {
     @Req() req: AuthenticatedUserRequest,
   ) {
     return this.coursesService.getStudentDashboardStats(id, req.user.userId);
-  }
-
-  @UseGuards(RolesGuard)
-  @Roles(roles.Administrador, roles.Docente)
-  @Patch('edit/:id')
-  @UseInterceptors(FileInterceptor('imagen'))
-  update(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateCourseDto: UpdateCourseDto,
-    @UploadedFile() imagen: Express.Multer.File,
-    @Req() req: AuthenticatedUserRequest,
-  ) {
-    return this.coursesService.update(id, updateCourseDto, imagen, req.user);
-  }
-
-  @UseGuards(RolesGuard)
-  @Roles(roles.Administrador)
-  @Patch('finalize/:id')
-  finalize(@Param('id') id: string) {
-    return this.coursesService.finalize(id);
-  }
-
-  @UseGuards(RolesGuard)
-  @Roles(roles.Administrador)
-  @Delete('delete/:id')
-  delete(@Param('id') id: string) {
-    return this.coursesService.remove(id);
   }
 }

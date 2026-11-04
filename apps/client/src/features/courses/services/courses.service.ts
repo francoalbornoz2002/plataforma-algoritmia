@@ -27,7 +27,7 @@ export const findCourses = async (
   params: FindCoursesParams,
 ): Promise<PaginatedCoursesResponse> => {
   try {
-    const response = await apiClient.get("/courses/all", {
+    const response = await apiClient.get("/cursos", {
       params: params,
       paramsSerializer: {
         indexes: null, // Para que axios maneje bien los arrays
@@ -35,7 +35,10 @@ export const findCourses = async (
     });
     return response.data;
   } catch (err: any) {
-    console.error("Error fetching courses:", err.response?.data || err.message);
+    console.error(
+      "Error al obtener los cursos:",
+      err.response?.data || err.message,
+    );
     throw err.response?.data || new Error("Error al buscar los cursos.");
   }
 };
@@ -45,7 +48,7 @@ export const findDocentesParaFiltro = async (): Promise<
   DocenteParaFiltro[]
 > => {
   try {
-    const response = await apiClient.get("/users/teachers");
+    const response = await apiClient.get("/usuarios/docentes");
     return response.data;
   } catch (err: any) {
     console.error(
@@ -62,7 +65,7 @@ export const findDocentesParaFiltro = async (): Promise<
 (El endpoint devuelve el curso con 'docentes' y 'diasClase') */
 export const findCourseById = async (id: string): Promise<CursoParaEditar> => {
   try {
-    const response = await apiClient.get(`/courses/${id}`);
+    const response = await apiClient.get(`/cursos/${id}`);
     return response.data;
   } catch (err: any) {
     console.error(
@@ -94,7 +97,7 @@ export const createCourse = async (
   }
 
   try {
-    const response = await apiClient.post("/courses/create", formData, {
+    const response = await apiClient.post("/cursos", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -132,7 +135,7 @@ export const updateCourse = async (
   }
 
   try {
-    const response = await apiClient.patch(`/courses/edit/${id}`, formData, {
+    const response = await apiClient.patch(`/cursos/${id}`, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -150,7 +153,7 @@ export const updateCourse = async (
 /* Da de baja un curso por su ID. */
 export const deleteCourse = async (id: string): Promise<void> => {
   try {
-    await apiClient.delete(`/courses/delete/${id}`);
+    await apiClient.delete(`/cursos/${id}`);
   } catch (err: any) {
     console.error(
       `Error deleting course ${id}:`,
@@ -163,7 +166,7 @@ export const deleteCourse = async (id: string): Promise<void> => {
 /* Finaliza un curso (Cierre de ciclo) */
 export const finalizeCourse = async (id: string): Promise<void> => {
   try {
-    await apiClient.patch(`/courses/finalize/${id}`);
+    await apiClient.patch(`/cursos/${id}/finalizar`);
   } catch (err: any) {
     console.error(
       `Error finalizing course ${id}:`,
@@ -177,7 +180,7 @@ export const finalizeCourse = async (id: string): Promise<void> => {
 export const getStudentDashboardStats = async (idCurso: string) => {
   try {
     const response = await apiClient.get(
-      `/courses/${idCurso}/student-dashboard`,
+      `/cursos/${idCurso}/student-dashboard`,
     );
     return response.data;
   } catch (err: any) {

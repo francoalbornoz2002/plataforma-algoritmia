@@ -25,8 +25,8 @@ import { FindAllUsersDto } from '../dto/find-all-users.dto';
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
 import { FileInterceptor } from '@nestjs/platform-express';
 
-@Controller('users')
-@ApiTags('users')
+@Controller('usuarios')
+@ApiTags('usuarios')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -67,7 +67,7 @@ export class UsersController {
     return this.usersService.update(id, updateUserDto);
   }
 
-  @Patch(':id/profile')
+  @Patch(':id/perfil')
   @UseInterceptors(FileInterceptor('fotoPerfil'))
   updateProfile(
     @Param('id') id: string,
@@ -85,7 +85,7 @@ export class UsersController {
   }
 
   @UseGuards(RolesGuard)
-  @Get('teachers')
+  @Get('docentes')
   @ApiCreatedResponse({ type: UserEntity, isArray: true })
   findTeachers() {
     return this.usersService.findTeachers();
