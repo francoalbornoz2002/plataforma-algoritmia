@@ -144,14 +144,14 @@ export default function ConsultaAccordion({
       </AccordionSummary>
 
       {/* --- 2. El Detalle (lo que se expande) --- */}
-      <AccordionDetails sx={{ bgcolor: "grey.50" }}>
+      <AccordionDetails>
         <Stack spacing={3}>
           {/* Descripción del Alumno */}
           <Box>
             <Typography variant="overline" color="text.secondary">
               Descripcion de la consulta
             </Typography>
-            <Typography variant="body2">{consulta.descripcion}</Typography>
+            <Typography variant="body1">{consulta.descripcion}</Typography>
           </Box>
 
           <Divider />

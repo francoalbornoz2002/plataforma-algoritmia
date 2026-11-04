@@ -112,14 +112,14 @@ export default function ConsultaAccordionAlumno({
       </AccordionSummary>
 
       {/* --- 6. EL DETALLE --- */}
-      <AccordionDetails sx={{ bgcolor: "grey.50" }}>
+      <AccordionDetails>
         <Stack spacing={2}>
           {/* Descripción (pregunta) */}
           <Box>
             <Typography variant="overline" color="text.secondary">
               Tu Consulta
             </Typography>
-            <Typography variant="body2">{descripcion}</Typography>
+            <Typography variant="body1">{descripcion}</Typography>
           </Box>
 
           {/* Respuesta o Resolución (si existe o fue revisada en clase) */}
@@ -146,7 +146,6 @@ export default function ConsultaAccordionAlumno({
           {/* Acciones (si no está borrada) */}
           {!isDeleted && (
             <>
-              <Divider />
               <CardActions sx={{ justifyContent: "flex-end", p: 0, pt: 1 }}>
                 {estado === estado_consulta.Pendiente && (
                   <Box>
