@@ -702,11 +702,9 @@ export class CoursesService {
     ]);
   }
 
-  async joinCourse(
-    idAlumno: string,
-    idCurso: string,
-    contrasenaAcceso: string,
-  ) {
+  async joinCourse(idAlumno: string, idCurso: string, dto: JoinCourseDto) {
+    const { contrasenaAcceso } = dto;
+
     try {
       return await this.prisma.$transaction(
         async (tx: Prisma.TransactionClient) => {
@@ -714,6 +712,9 @@ export class CoursesService {
           const curso = await tx.curso.findUnique({
             where: { id: idCurso, deletedAt: null },
           });
+
+          console.log('Contraseña del curso:', curso?.contrasenaAcceso);
+          console.log('Contraseña enviada:', contrasenaAcceso);
 
           if (!curso) {
             throw new NotFoundException(

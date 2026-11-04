@@ -78,14 +78,10 @@ export class CoursesController {
   @Post(':id/inscribirse')
   joinCourse(
     @Req() req: AuthenticatedUserRequest,
-    @Body() contrasenaAcceso: string,
+    @Body() dto: JoinCourseDto,
     @Param('id', ParseUUIDPipe) idCurso: string,
   ) {
-    return this.coursesService.joinCourse(
-      req.user.userId,
-      idCurso,
-      contrasenaAcceso,
-    );
+    return this.coursesService.joinCourse(req.user.userId, idCurso, dto);
   }
 
   @Roles(roles.Docente, roles.Administrador)
