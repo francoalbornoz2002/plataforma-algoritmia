@@ -20,7 +20,7 @@ export const getMyProgress = async (
   idCurso: string,
 ): Promise<ProgresoAlumno> => {
   try {
-    const response = await apiClient.get("/alumnos/my/progress", {
+    const response = await apiClient.get(`/progreso/${idCurso}/mi-progreso`, {
       params: { idCurso }, // Envía ?idCurso=...
     });
     return response.data;

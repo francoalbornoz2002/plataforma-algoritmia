@@ -28,16 +28,6 @@ export class AlumnosController {
   constructor(private readonly alumnosService: AlumnosService) {}
 
   @Roles(roles.Alumno)
-  @Get('my/progress')
-  findMyProgress(
-    @Req() req: AuthenticatedUserRequest,
-    @Query('idCurso', ParseUUIDPipe) idCurso: string, // Recibimos el ID del curso
-  ) {
-    const idAlumno = req.user.userId; // Obtenemos el ID del alumno
-    return this.alumnosService.findMyProgress(idAlumno, idCurso); // Llamamos al servicio
-  }
-
-  @Roles(roles.Alumno)
   @Get('my/difficulties')
   findMyDifficulties(
     @Req() req: AuthenticatedUserRequest,

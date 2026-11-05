@@ -27,13 +27,6 @@ export class AlumnosService {
     private consultasService: ConsultasService,
   ) {}
 
-  async findMyProgress(idAlumno: string, idCurso: string) {
-    // 3. Llamamos al servicio experto
-    // La validación de si el alumno existe en el curso
-    // ya la hace 'getStudentProgress'
-    return this.progressService.getStudentProgress(idAlumno, idCurso);
-  }
-
   async findMyDifficulties(idAlumno: string, idCurso: string) {
     // 3. Llamamos al servicio experto
     return this.difficultiesService.getStudentDifficulties(idAlumno, idCurso);
