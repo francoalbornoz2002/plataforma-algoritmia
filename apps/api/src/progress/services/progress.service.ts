@@ -7,6 +7,7 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { estado_simple, Prisma } from '@prisma/client';
 import { SubmitMissionDto } from '../dto/submit-mission.dto';
+import { checkDocenteAccess } from 'src/helpers/access.helper';
 
 @Injectable()
 export class ProgressService {
@@ -23,7 +24,8 @@ export class ProgressService {
   /**
    * MÉTODO 1: Obtener el Resumen (KPIs) del Curso
    */
-  async getCourseOverview(idCurso: string) {
+  async getCourseProgressOverview(idDocente: string, idCurso: string) {
+    await checkDocenteAccess(this.prisma, idDocente, idCurso);
     try {
       const progreso = await this.prisma.progresoCurso.findFirst({
         where: { idCurso },
@@ -84,7 +86,7 @@ export class ProgressService {
       };
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
-      console.error('Error en getCourseOverview:', error);
+      console.error('Error en getCourseProgressOverview:', error);
       throw new InternalServerErrorException(
         'Error al obtener el resumen del curso.',
       );
@@ -94,7 +96,9 @@ export class ProgressService {
   /**
    * MÉTODO 2: Obtener la lista de alumnos para la DataGrid
    */
-  async getStudentProgressList(idCurso: string) {
+  async getStudentProgressList(idCurso: string, idDocente: string) {
+    await checkDocenteAccess(this.prisma, idDocente, idCurso);
+
     const curso = await this.prisma.curso.findUnique({
       where: { id: idCurso },
       select: { deletedAt: true },

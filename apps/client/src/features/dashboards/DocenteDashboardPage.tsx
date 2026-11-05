@@ -15,25 +15,19 @@ import {
   ListItemText,
   TextField,
   InputAdornment,
-  Divider,
 } from "@mui/material";
 import CourseInfoCard from "./components/CourseInfoCard";
 
 import { useCourseContext } from "../../context/CourseContext";
 
 import {
-  getStudentProgressList,
   removeStudentFromCourse,
   getCourseDashboardStats,
 } from "../users/services/docentes.service";
 import ConfirmationDialog from "../../components/ConfirmationDialog";
 import CourseFormDialog from "../courses/components/CourseFormDialog";
 import { enqueueSnackbar } from "notistack";
-import {
-  type CourseDashboardData,
-  estado_consulta,
-  estado_sesion,
-} from "../../types";
+import { type CourseDashboardData } from "../../types";
 import { useAuth } from "../authentication/context/AuthProvider";
 import {
   Delete,
@@ -47,116 +41,18 @@ import {
   Assessment,
   AssignmentLate,
 } from "@mui/icons-material";
-import {
-  EstadoConsultaLabels,
-  EstadoSesionLabels,
-} from "../../types/traducciones";
 import InfoAlumno from "./components/InfoAlumno";
 import DashboardHeader from "./components/DashboardHeader";
 import StatCard from "../../components/StatCard";
 import { LineChart } from "@mui/x-charts/LineChart";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
 
 import { PieChart } from "@mui/x-charts/PieChart";
 import { FormControl, Select, MenuItem } from "@mui/material";
 import { TemasLabels } from "../../types/traducciones";
 import { temas } from "../../types";
 import CardIcon from "../../components/CardIcon";
-
-// --- Componentes Auxiliares Visuales ---
-
-const DistributionBar = ({
-  items,
-}: {
-  items: { label: string; value: number; color: string }[];
-}) => {
-  const total = items.reduce((acc, curr) => acc + curr.value, 0);
-  if (total === 0)
-    return (
-      <Typography variant="body2" color="text.secondary">
-        Sin datos
-      </Typography>
-    );
-
-  return (
-    <Box sx={{ width: "100%", mb: 1 }}>
-      <Box
-        sx={{
-          display: "flex",
-          width: "100%",
-          height: 16,
-          borderRadius: 2,
-          overflow: "hidden",
-          mb: 1.5,
-        }}
-      >
-        {items.map((item, index) => (
-          <Box
-            key={index}
-            sx={{
-              width: `${(item.value / total) * 100}%`,
-              bgcolor: item.color,
-            }}
-            title={`${item.label}: ${item.value}`}
-          />
-        ))}
-      </Box>
-      <Stack
-        direction="row"
-        spacing={2}
-        flexWrap="wrap"
-        useFlexGap
-        sx={{ rowGap: 1 }}
-      >
-        {items.map((item, index) => (
-          <Box key={index} sx={{ display: "flex", alignItems: "center" }}>
-            <Box
-              sx={{
-                width: 12,
-                height: 12,
-                borderRadius: "50%",
-                bgcolor: item.color,
-                mr: 1,
-              }}
-            />
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              fontWeight="medium"
-            >
-              {item.label}: {item.value}
-            </Typography>
-          </Box>
-        ))}
-      </Stack>
-    </Box>
-  );
-};
-
-// --- Helpers de Color ---
-const getEstadoSesionColor = (estado: string) => {
-  const map: Record<string, string> = {
-    Pendiente: "#ff9800",
-    Completada: "#4caf50",
-    Cancelada: "#f44336",
-    En_curso: "#03a9f4",
-    Incompleta: "#9c27b0",
-    No_realizada: "#9e9e9e",
-  };
-  return map[estado] || "#9e9e9e";
-};
-
-const getEstadoConsultaColor = (estado: string) => {
-  const map: Record<string, string> = {
-    Pendiente: "#ff9800",
-    Resuelta: "#4caf50",
-    No_resuelta: "#f44336",
-    A_revisar: "#03a9f4",
-    Revisada: "#9c27b0",
-  };
-  return map[estado] || "#9e9e9e";
-};
+import { getStudentProgressList } from "../progress/services/progress.service";
 
 const formatClassTime = (inicio: string, fin: string) => {
   const start = new Date(inicio);

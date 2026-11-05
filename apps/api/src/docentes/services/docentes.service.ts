@@ -31,22 +31,6 @@ export class DocentesService {
     private consultasService: ConsultasService,
   ) {}
 
-  /**
-   * Pide el Resumen (KPIs) del curso al ProgressService
-   */
-  async getCourseOverview(idCurso: string, idDocente: string) {
-    await checkDocenteAccess(this.prisma, idDocente, idCurso);
-    return this.progressService.getCourseOverview(idCurso);
-  }
-
-  /**
-   * Pide la lista de alumnos al ProgressService
-   */
-  async getStudentProgressList(idCurso: string, idDocente: string) {
-    await checkDocenteAccess(this.prisma, idDocente, idCurso);
-    return this.progressService.getStudentProgressList(idCurso);
-  }
-
   async getCourseDifficultiesOverview(idCurso: string, idDocente: string) {
     await checkDocenteAccess(this.prisma, idDocente, idCurso);
     return this.difficultiesService.getCourseDifficultiesOverview(idCurso);

@@ -42,7 +42,7 @@ import {
   getCourseConsultationsHistory,
   type CourseConsultationsHistoryFilters,
 } from "../../service/reports.service";
-import { getStudentProgressList } from "../../../users/services/docentes.service";
+import { getStudentProgressList } from "../../../progress/services/progress.service";
 import { temas, estado_consulta } from "../../../../types";
 import { TemasLabels } from "../../../../types/traducciones";
 import QuickDateFilter from "../../../../components/QuickDateFilter";

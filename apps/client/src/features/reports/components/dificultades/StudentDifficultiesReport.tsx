@@ -40,7 +40,7 @@ import {
   getCourseDifficultiesReport,
   type StudentDifficultiesReportFilters,
 } from "../../service/reports.service";
-import { getStudentProgressList } from "../../../users/services/docentes.service";
+import { getStudentProgressList } from "../../../progress/services/progress.service";
 import {
   temas,
   fuente_cambio_dificultad,

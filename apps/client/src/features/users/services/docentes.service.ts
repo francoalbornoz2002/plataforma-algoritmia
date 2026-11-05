@@ -11,33 +11,10 @@ import type {
   MisionConEstado,
   ConsultaDocente,
   PaginatedConsultasDocenteResponse,
-  ProgresoCurso,
   CourseDashboardData,
   ProgresoAlumnoDetallado,
 } from "../../../types";
 import type { CreateRespuestaFormValues } from "../../consultas/validations/createRespuesta.schema";
-
-/**
- * Obtiene el Resumen (KPIs) de un curso específico
- */
-export const getCourseOverview = async (
-  idCurso: string,
-): Promise<ProgresoCurso> => {
-  try {
-    const response = await apiClient.get(
-      `/docentes/my/courses/${idCurso}/progress-overview`,
-    );
-    return response.data;
-  } catch (err: any) {
-    console.error(
-      "Error fetching course overview:",
-      err.response?.data || err.message,
-    );
-    throw (
-      err.response?.data || new Error("Error al obtener el resumen del curso.")
-    );
-  }
-};
 
 /**
  * Obtiene las estadísticas del dashboard para un curso (Docente)
@@ -51,29 +28,6 @@ export const getCourseDashboardStats = async (
   } catch (err: any) {
     console.error("Error fetching dashboard stats:", err);
     throw err.response?.data || new Error("Error al obtener estadísticas.");
-  }
-};
-
-/**
- * Obtiene la lista paginada y filtrada de alumnos y su progreso
- */
-export const getStudentProgressList = async (
-  idCurso: string,
-): Promise<ProgresoAlumnoDetallado[]> => {
-  try {
-    const response = await apiClient.get(
-      `/docentes/my/courses/${idCurso}/progress-students`,
-    );
-    return response.data;
-  } catch (err: any) {
-    console.error(
-      "Error fetching student progress list:",
-      err.response?.data || err.message,
-    );
-    throw (
-      err.response?.data ||
-      new Error("Error al obtener el progreso de los alumnos.")
-    );
   }
 };
 

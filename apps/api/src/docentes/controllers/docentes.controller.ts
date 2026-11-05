@@ -29,24 +29,6 @@ export class DocentesController {
     private readonly consultasService: ConsultasService,
   ) {}
 
-  @Get('my/courses/:idCurso/progress-overview')
-  getCourseOverview(
-    @Param('idCurso', ParseUUIDPipe) idCurso: string,
-    @Req() req: AuthenticatedUserRequest,
-  ) {
-    const idDocente = req.user.userId;
-    return this.docentesService.getCourseOverview(idCurso, idDocente);
-  }
-
-  @Get('my/courses/:idCurso/progress-students')
-  getStudentProgressList(
-    @Param('idCurso', ParseUUIDPipe) idCurso: string,
-    @Req() req: AuthenticatedUserRequest,
-  ) {
-    const idDocente = req.user.userId;
-    return this.docentesService.getStudentProgressList(idCurso, idDocente);
-  }
-
   @Get('my/courses/:idCurso/difficulties-overview')
   getCourseDifficultiesOverview(
     @Param('idCurso', ParseUUIDPipe) idCurso: string,

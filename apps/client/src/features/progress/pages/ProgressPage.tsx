@@ -28,10 +28,7 @@ import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 
 // 1. Hooks y Servicios
 import { useCourseContext } from "../../../context/CourseContext";
-import {
-  getCourseOverview,
-  getStudentProgressList,
-} from "../../users/services/docentes.service";
+import { getStudentProgressList } from "../../progress/services/progress.service";
 
 // 2. Tipos
 import type { ProgresoCurso, ProgresoAlumnoDetallado } from "../../../types";
@@ -45,6 +42,7 @@ import StudentProgressDetailModal from "../components/StudentProgressDetailModal
 import HeaderPage from "client/src/components/HeaderPage";
 import StatCard from "../../../components/StatCard";
 import ProgressItem from "../components/ProgressItem";
+import { getCourseProgressOverview } from "../services/progress.service";
 
 type StudentRow = ProgresoAlumnoDetallado;
 
@@ -118,7 +116,7 @@ export default function ProgressPage() {
 
     setOverviewLoading(true);
     setOverviewError(null);
-    getCourseOverview(selectedCourse.id)
+    getCourseProgressOverview(selectedCourse.id)
       .then((data) => setOverview(data))
       .catch((err) => setOverviewError(err.message))
       .finally(() => setOverviewLoading(false));
