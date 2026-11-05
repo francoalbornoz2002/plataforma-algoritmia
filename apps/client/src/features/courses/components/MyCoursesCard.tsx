@@ -7,19 +7,14 @@ import {
   Box,
 } from "@mui/material";
 import SchoolIcon from "@mui/icons-material/School";
-// Importamos los tipos de los servicios
-import type { InscripcionConCurso } from "../../users/services/alumnos.service";
-import type { AsignacionConCurso } from "../../users/services/docentes.service";
+import type { UserCourse } from "../../users/services/user.service";
 import { Group } from "@mui/icons-material";
 import EstadoCursoChip from "../../../components/EstadoCursoChip";
 
-// El componente acepta la "inscripción" o "asignación" completa
-type MyCourseEntry = InscripcionConCurso | AsignacionConCurso;
-
 // Propiedades para el componente
 interface MyCoursesCardProps {
-  inscripcion: MyCourseEntry;
-  onClick: (inscripcion: MyCourseEntry) => void;
+  inscripcion: UserCourse;
+  onClick: (inscripcion: UserCourse) => void;
 }
 
 // Obtenemos la URL de la API (asegúrate de que VITE_API_URL esté en tu .env)

@@ -17,7 +17,6 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { roles } from '@prisma/client';
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
-import { JoinCourseDto } from '../../courses/dto/join-course-dto';
 import { CreateConsultaDto } from 'src/consultas/dto/create-consulta.dto';
 import { FindConsultasDto } from 'src/consultas/dto/find-consultas.dto';
 import { ValorarConsultaDto } from 'src/consultas/dto/valorar-consulta.dto';
@@ -27,12 +26,6 @@ import { UpdateConsultaDto } from 'src/consultas/dto/update-consulta.dto';
 @Controller('alumnos')
 export class AlumnosController {
   constructor(private readonly alumnosService: AlumnosService) {}
-
-  @Roles(roles.Alumno)
-  @Get('my/courses')
-  findMyCourses(@Req() req: AuthenticatedUserRequest) {
-    return this.alumnosService.findMyCourses(req.user.userId);
-  }
 
   @Roles(roles.Alumno)
   @Get('my/progress')

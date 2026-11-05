@@ -25,19 +25,18 @@ import { FindAllUsersDto } from '../dto/find-all-users.dto';
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
 import { FileInterceptor } from '@nestjs/platform-express';
 
+@UseGuards(RolesGuard)
 @Controller('usuarios')
 @ApiTags('usuarios')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @UseGuards(RolesGuard)
   @Roles(roles.Administrador)
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }
 
-  @UseGuards(RolesGuard)
   @Roles(roles.Administrador)
   @Get()
   @ApiCreatedResponse({ type: UserEntity, isArray: true })
@@ -49,7 +48,18 @@ export class UsersController {
     return this.usersService.findAll(findAllUsersDto, adminId);
   }
 
-  @UseGuards(RolesGuard)
+  @Get('docentes')
+  @ApiCreatedResponse({ type: UserEntity, isArray: true })
+  findTeachers() {
+    return this.usersService.findTeachers();
+  }
+
+  @Roles(roles.Alumno, roles.Docente)
+  @Get('cursos')
+  findUserCourses(@Req() req: AuthenticatedUserRequest) {
+    return this.usersService.findUserCourses(req.user.userId, req.user.rol);
+  }
+
   @Roles(roles.Administrador)
   @Get('admin-dashboard-stats')
   getAdminDashboardStats() {
@@ -62,6 +72,7 @@ export class UsersController {
     return this.usersService.findOne(id);
   }
 
+  @Roles(roles.Administrador)
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(id, updateUserDto);
@@ -77,17 +88,9 @@ export class UsersController {
     return this.usersService.update(id, updateUserDto, fotoPerfil);
   }
 
-  @UseGuards(RolesGuard)
   @Roles(roles.Administrador)
   @Delete(':id')
   delete(@Param('id') id: string) {
     return this.usersService.delete(id);
-  }
-
-  @UseGuards(RolesGuard)
-  @Get('docentes')
-  @ApiCreatedResponse({ type: UserEntity, isArray: true })
-  findTeachers() {
-    return this.usersService.findTeachers();
   }
 }

@@ -2,10 +2,8 @@ import apiClient from "../../../lib/axios";
 // Usamos el tipo que ya existe
 import type {
   Consulta,
-  CursoParaEditar,
   DificultadAlumnoDetallada,
   DocenteBasico,
-  estado_simple,
   FindConsultasParams,
   MisionConEstado,
   PaginatedConsultasResponse,
@@ -17,30 +15,6 @@ import type {
   UpdateConsultaFormValues,
 } from "../../consultas/validations/consulta.schema";
 import type { ValorarConsultaFormValues } from "../../consultas/validations/valorarConsulta.schema";
-
-// 1. Definimos el tipo de dato que devuelve 'findMyCourses'
-export interface InscripcionConCurso {
-  idAlumno: string;
-  idCurso: string;
-  estado: estado_simple;
-  curso: CursoParaEditar; // <-- Usamos el tipo acordado
-}
-
-/**
- * Busca todos los cursos (activos e inactivos) de un alumno
- */
-export const findMyCourses = async (): Promise<InscripcionConCurso[]> => {
-  try {
-    const response = await apiClient.get("/alumnos/my/courses");
-    return response.data;
-  } catch (err: any) {
-    console.error(
-      "Error fetching student's courses:",
-      err.response?.data || err.message,
-    );
-    throw err.response?.data || new Error("Error al obtener tus cursos.");
-  }
-};
 
 export const getMyProgress = async (
   idCurso: string,

@@ -25,13 +25,9 @@ import {
 
 // 2. Servicios
 import {
-  findMyCourses as findMyStudentCourses,
-  type InscripcionConCurso,
-} from "../../users/services/alumnos.service";
-import {
-  findMyCourses as findMyTeacherCourses,
-  type AsignacionConCurso,
-} from "../../users/services/docentes.service";
+  findUserCourses,
+  type UserCourse,
+} from "../../users/services/user.service";
 
 // 3. Componentes Hijos
 import MyCoursesCard from "./MyCoursesCard"; // <-- Tarjeta para "Mis Cursos"
@@ -50,9 +46,6 @@ interface CourseSelectionModalProps {
   role: roles;
 }
 
-// Tipo unificado para las listas de cursos
-type MyCourseEntry = InscripcionConCurso | AsignacionConCurso;
-
 export default function CourseSelectionModal({
   open,
   onClose,
@@ -63,7 +56,7 @@ export default function CourseSelectionModal({
   const [tabValue, setTabValue] = useState(0);
 
   // --- Estados para la Pestaña "Mis Cursos" ---
-  const [myCourses, setMyCourses] = useState<MyCourseEntry[]>([]);
+  const [myCourses, setMyCourses] = useState<UserCourse[]>([]);
   const [myCoursesLoading, setMyCoursesLoading] = useState(true);
   const [myCoursesError, setMyCoursesError] = useState<string | null>(null);
 
@@ -78,11 +71,6 @@ export default function CourseSelectionModal({
   );
 
   const isStudent = role === roles.Alumno;
-
-  // Función memoizada para cargar "Mis Cursos"
-  const fetchMyData = useMemo(() => {
-    return isStudent ? findMyStudentCourses : findMyTeacherCourses;
-  }, [isStudent]);
 
   // Creamos un Set con los IDs de TODOS los cursos en los que el alumno tiene historial
   // (Activo, Inactivo, Finalizado) para bloquear la re-inscripción al MISMO curso.
@@ -107,12 +95,11 @@ export default function CourseSelectionModal({
       // Reseteamos al tab 0 por defecto mientras carga
       setTabValue(0);
 
-      fetchMyData()
+      findUserCourses()
         .then((data) => {
-          const courses = data as MyCourseEntry[];
-          setMyCourses(courses);
+          setMyCourses(data);
           // Si es alumno y no tiene cursos, lo mandamos a inscribirse
-          if (isStudent && courses.length === 0) {
+          if (isStudent && data.length === 0) {
             setTabValue(1);
           }
         })
@@ -140,7 +127,7 @@ export default function CourseSelectionModal({
       // Al cerrar, reseteamos el tab para la próxima vez que se abra
       setTabValue(0);
     }
-  }, [open, isStudent, fetchMyData]);
+  }, [open, isStudent]);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     // Si se intenta cambiar a la pestaña "Inscribirse" (índice 1) y el alumno ya está inscripto,
@@ -152,7 +139,7 @@ export default function CourseSelectionModal({
   };
 
   // --- Handlers ---
-  const handleSelectCourse = (inscripcion: MyCourseEntry) => {
+  const handleSelectCourse = (inscripcion: UserCourse) => {
     // Regla estricta: Si fue dado de baja (Inactivo), no puede entrar nunca.
     if (inscripcion.estado === "Inactivo") return;
 
@@ -166,8 +153,8 @@ export default function CourseSelectionModal({
 
     // Forzamos un refetch de "Mis Cursos"
     setMyCoursesLoading(true);
-    fetchMyData()
-      .then((data) => setMyCourses(data as MyCourseEntry[]))
+    findUserCourses()
+      .then((data) => setMyCourses(data))
       .catch((err) => setMyCoursesError(err.message))
       .finally(() => setMyCoursesLoading(false));
   };

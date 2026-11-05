@@ -29,11 +29,6 @@ export class DocentesController {
     private readonly consultasService: ConsultasService,
   ) {}
 
-  @Get('my/courses')
-  findMyCourses(@Req() req: AuthenticatedUserRequest) {
-    return this.docentesService.findMyCourses(req.user.userId);
-  }
-
   @Get('my/courses/:idCurso/progress-overview')
   getCourseOverview(
     @Param('idCurso', ParseUUIDPipe) idCurso: string,

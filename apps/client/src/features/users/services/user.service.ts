@@ -8,6 +8,7 @@ import type {
   PaginatedResponse,
   UpdateUserData,
   UserData,
+  CursoParaEditar,
 } from "../../../types";
 
 // Interfaz para los parámetros de búsqueda
@@ -19,6 +20,37 @@ export interface FindUsersParams extends BaseFilterParams {
 
 // Interfaz para la respuesta paginada completa de la API
 export interface PaginatedUsersResponse extends PaginatedResponse<UserData> {}
+
+export interface UserCourse {
+  idUsuario: string;
+  idCurso: string;
+  estado: estado_simple;
+  curso: CursoParaEditar;
+}
+
+type UserCourseResponse = Omit<UserCourse, "idUsuario"> &
+  (
+    | { idAlumno: string; idDocente?: never }
+    | { idDocente: string; idAlumno?: never }
+  );
+
+export const findUserCourses = async (): Promise<UserCourse[]> => {
+  try {
+    const response = await apiClient.get<UserCourseResponse[]>(
+      "/usuarios/cursos",
+    );
+    return response.data.map(({ idAlumno, idDocente, ...course }) => ({
+      ...course,
+      idUsuario: idAlumno ?? idDocente,
+    }));
+  } catch (err: any) {
+    console.error(
+      "Error fetching user's courses:",
+      err.response?.data || err.message,
+    );
+    throw err.response?.data || new Error("Error al obtener tus cursos.");
+  }
+};
 
 export const findUsers = async (
   params: FindUsersParams,

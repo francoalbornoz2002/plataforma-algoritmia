@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -27,6 +28,7 @@ import { basename, join } from 'path';
 import { ProgressService } from 'src/progress/services/progress.service';
 import { DifficultiesService } from 'src/difficulties/services/difficulties.service';
 import { Institucion } from '@prisma/client';
+import { dateToTime } from 'src/helpers';
 
 // Defino el tipo de usuario sin password a devolver
 type SafeUser = Omit<Usuario, 'password'>;
@@ -456,6 +458,71 @@ export class UsersService {
         },
       });
     });
+  }
+
+  async findUserCourses(userId: string, rol: roles) {
+    // const usuario = await this.findOne(userId);
+    // if (usuario.rol !== roles.Alumno && usuario.rol !== roles.Docente) {
+    //   throw new ForbiddenException(
+    //     'Solo alumnos y docentes pueden consultar sus cursos.',
+    //   );
+    // }
+
+    const cursoInclude = {
+      docentes: {
+        where: { estado: estado_simple.Activo },
+        select: {
+          docente: {
+            select: { id: true, nombre: true, apellido: true },
+          },
+        },
+      },
+      _count: {
+        select: {
+          alumnos: {
+            where: {
+              estado: {
+                in: [estado_simple.Activo, estado_simple.Finalizado],
+              },
+            },
+          },
+        },
+      },
+      diasClase: true,
+    };
+
+    try {
+      const cursos =
+        rol === roles.Alumno
+          ? await this.prisma.inscripcionesAlumnoCurso.findMany({
+              where: { idAlumno: userId },
+              orderBy: { estado: 'asc' },
+              include: { curso: { include: cursoInclude } },
+            })
+          : await this.prisma.asignacionesDocenteCurso.findMany({
+              where: { idDocente: userId },
+              orderBy: { estado: 'asc' },
+              include: { curso: { include: cursoInclude } },
+            });
+
+      return cursos.map((registro) => ({
+        ...registro,
+        curso: {
+          ...registro.curso,
+          docentes: registro.curso.docentes.map((dc) => dc.docente),
+          diasClase: registro.curso.diasClase.map((dia) => ({
+            id: dia.id,
+            dia: dia.dia,
+            modalidad: dia.modalidad,
+            horaInicio: dateToTime(dia.horaInicio),
+            horaFin: dateToTime(dia.horaFin),
+          })),
+        },
+      }));
+    } catch (error) {
+      console.error('Error al buscar los cursos del usuario:', error);
+      throw new InternalServerErrorException('Error al obtener tus cursos');
+    }
   }
 
   /**
