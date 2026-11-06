@@ -26,23 +26,23 @@ export class DifficultiesController {
   constructor(private readonly difficultiesService: DifficultiesService) {}
 
   /**
-   * Endpoint para que el videojuego registre/actualice una o varias dificultades.
-   * TODO: Proteger esto con un Guardia de API Key.
-   */
-  @Public()
-  @Post('submit-difficulties')
-  @HttpCode(HttpStatus.OK)
-  @ApiBody({ type: [SubmitDifficultyDto] })
-  async submitBatchDifficulties(@Body() dtos: SubmitDifficultyDto[]) {
-    return this.difficultiesService.submitDifficulties(dtos);
-  }
-
-  /**
    * Endpoint para obtener la lista de dificultades para filtros.
    */
   @Get()
   findAllForFilter() {
     return this.difficultiesService.findAllForFilter();
+  }
+
+  /**
+   * Endpoint para que el videojuego registre/actualice una o varias dificultades.
+   * TODO: Proteger esto con un Guardia de API Key.
+   */
+  @Public()
+  @Post('sincronizar')
+  @HttpCode(HttpStatus.OK)
+  @ApiBody({ type: [SubmitDifficultyDto] })
+  async submitBatchDifficulties(@Body() dtos: SubmitDifficultyDto[]) {
+    return this.difficultiesService.submitDifficulties(dtos);
   }
 
   @Roles(roles.Docente)

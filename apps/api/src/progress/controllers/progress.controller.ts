@@ -25,6 +25,18 @@ import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user
 export class ProgressController {
   constructor(private readonly progressService: ProgressService) {}
 
+  /**
+   * Endpoint para que el videojuego registre y sincronice una o más misiones completadas.
+   */
+  // TODO: Proteger esto con un Guardia de API Key
+  @Post('sincronizar')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiBody({ type: [SubmitMissionDto] })
+  submitBatchMissions(@Body() dtos: SubmitMissionDto[]) {
+    return this.progressService.submitMissions(dtos);
+  }
+
   @Get(':idCurso/resumen')
   getCourseProgressOverview(
     @Req() req: AuthenticatedUserRequest,
@@ -51,17 +63,5 @@ export class ProgressController {
     @Param('idCurso', ParseUUIDPipe) idCurso: string,
   ) {
     return this.progressService.getStudentProgress(req.user.userId, idCurso);
-  }
-
-  /**
-   * Endpoint para que el videojuego registre y sincronice una o más misiones completadas.
-   */
-  // TODO: Proteger esto con un Guardia de API Key
-  @Post('submit-missions')
-  @Public()
-  @HttpCode(HttpStatus.OK)
-  @ApiBody({ type: [SubmitMissionDto] })
-  submitBatchMissions(@Body() dtos: SubmitMissionDto[]) {
-    return this.progressService.submitMissions(dtos);
   }
 }
