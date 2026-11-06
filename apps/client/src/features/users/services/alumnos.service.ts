@@ -1,41 +1,7 @@
 import apiClient from "../../../lib/axios";
-import type {
-  Consulta,
-  DocenteBasico,
-  FindConsultasParams,
-  PaginatedConsultasResponse,
-  PaginatedConsultasDocenteResponse,
-} from "../../../types";
-import type {
-  CreateConsultaFormValues,
-  UpdateConsultaFormValues,
-} from "../../consultas/validations/consulta.schema";
+import type { Consulta, DocenteBasico } from "../../../types";
+import type { UpdateConsultaFormValues } from "../../consultas/validations/consulta.schema";
 import type { ValorarConsultaFormValues } from "../../consultas/validations/valorarConsulta.schema";
-
-/**
- * Crea una nueva consulta (Alumno)
- */
-export const createConsulta = async (
-  idCurso: string,
-  data: CreateConsultaFormValues,
-): Promise<Consulta> => {
-  try {
-    // El backend DTO espera 'fechaConsulta', la añadimos
-    const payload = {
-      ...data,
-      fechaConsulta: new Date().toISOString(), // Añadimos la fecha actual
-    };
-
-    const response = await apiClient.post(
-      `/alumnos/my/courses/${idCurso}/consults/create`,
-      payload,
-    );
-    return response.data;
-  } catch (err: any) {
-    console.error("Error creating consult:", err.response?.data || err.message);
-    throw err.response?.data || new Error("Error al crear la consulta.");
-  }
-};
 
 /**
  * Edita una consulta existente (Alumno)

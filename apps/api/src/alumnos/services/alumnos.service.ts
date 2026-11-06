@@ -25,15 +25,6 @@ export class AlumnosService {
     private consultasService: ConsultasService,
   ) {}
 
-  async createConsulta(
-    idAlumno: string,
-    idCurso: string,
-    dto: CreateConsultaDto,
-  ) {
-    // El servicio "cerebro" hace todo el trabajo
-    return this.consultasService.createConsulta(idAlumno, idCurso, dto);
-  }
-
   async updateConsulta(
     idConsulta: string,
     idAlumno: string,

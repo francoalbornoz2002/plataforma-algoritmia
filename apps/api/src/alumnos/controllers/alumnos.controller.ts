@@ -28,17 +28,6 @@ export class AlumnosController {
   constructor(private readonly alumnosService: AlumnosService) {}
 
   @Roles(roles.Alumno)
-  @Post('my/courses/:idCurso/consults/create')
-  createConsulta(
-    @Req() req: AuthenticatedUserRequest,
-    @Param('idCurso', ParseUUIDPipe) idCurso: string,
-    @Body() dto: CreateConsultaDto,
-  ) {
-    const idAlumno = req.user.userId;
-    return this.alumnosService.createConsulta(idAlumno, idCurso, dto);
-  }
-
-  @Roles(roles.Alumno)
   @Patch('my/consults/edit/:idConsulta')
   updateConsulta(
     @Req() req: AuthenticatedUserRequest,

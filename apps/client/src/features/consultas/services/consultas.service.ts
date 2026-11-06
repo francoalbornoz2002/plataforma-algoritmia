@@ -1,9 +1,32 @@
 import apiClient from "../../../lib/axios";
 import type {
+  Consulta,
   FindConsultasParams,
   PaginatedConsultasDocenteResponse,
   PaginatedConsultasResponse,
 } from "../../../types";
+import type { CreateConsultaFormValues } from "../validations/consulta.schema";
+
+/**
+ * Crea una nueva consulta (Alumno)
+ */
+export const createConsulta = async (
+  idCurso: string,
+  data: CreateConsultaFormValues,
+): Promise<Consulta> => {
+  try {
+    const payload = {
+      ...data,
+      idCurso: idCurso,
+    };
+
+    const response = await apiClient.post(`/consultas`, payload);
+    return response.data;
+  } catch (err: any) {
+    console.error("Error creating consult:", err.response?.data || err.message);
+    throw err.response?.data || new Error("Error al crear la consulta.");
+  }
+};
 
 export const findConsultas = async (
   idCurso: string,

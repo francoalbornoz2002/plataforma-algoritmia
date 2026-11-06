@@ -35,12 +35,8 @@ export class ConsultasService {
   ) {}
 
   // --- 1. SERVICIO DE CREACIÓN (ALUMNO) ---
-  async createConsulta(
-    idAlumno: string,
-    idCurso: string,
-    dto: CreateConsultaDto,
-  ) {
-    const { titulo, descripcion, tema } = dto;
+  async createConsulta(idAlumno: string, dto: CreateConsultaDto) {
+    const { idCurso, titulo, descripcion, tema } = dto;
 
     // Validar que el título y la descripción no sean iguales
     if (titulo.toLowerCase() === descripcion.toLowerCase()) {

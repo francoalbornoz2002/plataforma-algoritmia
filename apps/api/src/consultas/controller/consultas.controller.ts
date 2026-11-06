@@ -1,8 +1,10 @@
 import {
+  Body,
   Controller,
   Get,
   Param,
   ParseUUIDPipe,
+  Post,
   Query,
   Req,
   UseGuards,
@@ -13,11 +15,18 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 import { roles } from '@prisma/client';
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
 import { FindConsultasDto } from '../dto/find-consultas.dto';
+import { CreateConsultaDto } from '../dto/create-consulta.dto';
 
 @UseGuards(RolesGuard)
 @Controller('consultas')
 export class ConsultasController {
   constructor(private readonly consultasService: ConsultasService) {}
+
+  @Roles(roles.Alumno)
+  @Post()
+  create(@Req() req: AuthenticatedUserRequest, @Body() dto: CreateConsultaDto) {
+    return this.consultasService.createConsulta(req.user.userId, dto);
+  }
 
   @Roles(roles.Docente)
   @Get(':idCurso')
