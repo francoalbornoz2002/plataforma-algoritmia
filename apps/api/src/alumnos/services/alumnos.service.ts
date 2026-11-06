@@ -25,15 +25,6 @@ export class AlumnosService {
     private consultasService: ConsultasService,
   ) {}
 
-  async valorarConsulta(
-    idConsulta: string,
-    idAlumno: string,
-    dto: ValorarConsultaDto,
-  ) {
-    // El servicio "cerebro" hace todo el trabajo
-    return this.consultasService.valorarConsulta(idConsulta, idAlumno, dto);
-  }
-
   async findActiveAlumnosByCurso(idCurso: string, idDocente: string) {
     // 1. Validamos que el docente que pide tenga acceso
     await checkDocenteAccess(this.prisma, idDocente, idCurso);

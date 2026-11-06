@@ -1,25 +1,5 @@
 import apiClient from "../../../lib/axios";
-import type { Consulta, DocenteBasico } from "../../../types";
-import type { ValorarConsultaFormValues } from "../../consultas/validations/valorarConsulta.schema";
-
-/**
- * Valora una respuesta (Alumno)
- */
-export const valorarConsulta = async (
-  idConsulta: string,
-  data: ValorarConsultaFormValues,
-): Promise<Consulta> => {
-  try {
-    const response = await apiClient.patch(
-      `/alumnos/my/consults/${idConsulta}/valorar`,
-      data,
-    );
-    return response.data;
-  } catch (err: any) {
-    console.error("Error rating consult:", err.response?.data || err.message);
-    throw err.response?.data || new Error("Error al valorar la consulta.");
-  }
-};
+import type { DocenteBasico } from "../../../types";
 
 /**
  * Obtiene la lista de alumnos activos de un curso (para filtros).

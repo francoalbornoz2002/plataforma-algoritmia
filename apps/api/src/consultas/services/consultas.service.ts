@@ -274,11 +274,7 @@ export class ConsultasService {
   }
 
   // --- 3. SERVICIO DE VALORACIÓN (ALUMNO) ---
-  async valorarConsulta(
-    idConsulta: string,
-    idAlumno: string,
-    dto: ValorarConsultaDto,
-  ) {
+  async valorar(idConsulta: string, idAlumno: string, dto: ValorarConsultaDto) {
     const { valoracion, comentarioValoracion } = dto;
 
     try {

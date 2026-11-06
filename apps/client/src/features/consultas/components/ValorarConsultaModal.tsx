@@ -23,10 +23,8 @@ import {
   type ValorarConsultaFormValues,
 } from "../validations/valorarConsulta.schema";
 import type { Consulta } from "../../../types";
-
-// (Importamos el servicio)
-import { valorarConsulta } from "../../users/services/alumnos.service";
 import { enqueueSnackbar } from "notistack";
+import { valorarConsulta } from "../services/consultas.service";
 
 const valoracionFeedback: Record<
   number,

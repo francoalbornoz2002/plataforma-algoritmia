@@ -9,6 +9,7 @@ import type {
   CreateConsultaFormValues,
   UpdateConsultaFormValues,
 } from "../validations/consulta.schema";
+import type { ValorarConsultaFormValues } from "../validations/valorarConsulta.schema";
 
 /**
  * Crea una nueva consulta (Alumno)
@@ -59,6 +60,25 @@ export const deleteConsulta = async (idConsulta: string): Promise<Consulta> => {
   } catch (err: any) {
     console.error("Error deleting consult:", err.response?.data || err.message);
     throw err.response?.data || new Error("Error al borrar la consulta.");
+  }
+};
+
+/**
+ * Valora una respuesta (Alumno)
+ */
+export const valorarConsulta = async (
+  idConsulta: string,
+  data: ValorarConsultaFormValues,
+): Promise<Consulta> => {
+  try {
+    const response = await apiClient.patch(
+      `/consultas/${idConsulta}/valorar`,
+      data,
+    );
+    return response.data;
+  } catch (err: any) {
+    console.error("Error rating consult:", err.response?.data || err.message);
+    throw err.response?.data || new Error("Error al valorar la consulta.");
   }
 };
 

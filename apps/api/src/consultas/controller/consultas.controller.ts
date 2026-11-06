@@ -19,6 +19,7 @@ import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user
 import { FindConsultasDto } from '../dto/find-consultas.dto';
 import { CreateConsultaDto } from '../dto/create-consulta.dto';
 import { UpdateConsultaDto } from '../dto/update-consulta.dto';
+import { ValorarConsultaDto } from '../dto/valorar-consulta.dto';
 
 @UseGuards(RolesGuard)
 @Controller('consultas')
@@ -48,6 +49,17 @@ export class ConsultasController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.consultasService.deleteConsulta(id, req.user.userId);
+  }
+
+  @Roles(roles.Alumno)
+  @Patch(':id/valorar')
+  valorar(
+    @Req() req: AuthenticatedUserRequest,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ValorarConsultaDto,
+  ) {
+    const idAlumno = req.user.userId;
+    return this.consultasService.valorar(id, req.user.userId, dto);
   }
 
   @Roles(roles.Docente)

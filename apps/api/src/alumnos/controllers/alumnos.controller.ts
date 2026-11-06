@@ -2,41 +2,23 @@ import {
   Body,
   Controller,
   Get,
-  Delete,
   Param,
   ParseUUIDPipe,
   Patch,
-  Post,
-  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import { AlumnosService } from '../services/alumnos.service';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
-import { Public } from 'src/auth/decorators/public.decorator';
 import { roles } from '@prisma/client';
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
-import { CreateConsultaDto } from 'src/consultas/dto/create-consulta.dto';
-import { FindConsultasDto } from 'src/consultas/dto/find-consultas.dto';
 import { ValorarConsultaDto } from 'src/consultas/dto/valorar-consulta.dto';
-import { UpdateConsultaDto } from 'src/consultas/dto/update-consulta.dto';
 
 @UseGuards(RolesGuard)
 @Controller('alumnos')
 export class AlumnosController {
   constructor(private readonly alumnosService: AlumnosService) {}
-
-  @Roles(roles.Alumno)
-  @Patch('my/consults/:idConsulta/valorar')
-  valorarConsulta(
-    @Req() req: AuthenticatedUserRequest,
-    @Param('idConsulta', ParseUUIDPipe) idConsulta: string,
-    @Body() dto: ValorarConsultaDto,
-  ) {
-    const idAlumno = req.user.userId;
-    return this.alumnosService.valorarConsulta(idConsulta, idAlumno, dto);
-  }
 
   @Roles(roles.Docente)
   @Get('my/courses/:idCurso/active-alumnos')
