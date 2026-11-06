@@ -20,6 +20,7 @@ import { FindConsultasDto } from '../dto/find-consultas.dto';
 import { CreateConsultaDto } from '../dto/create-consulta.dto';
 import { UpdateConsultaDto } from '../dto/update-consulta.dto';
 import { ValorarConsultaDto } from '../dto/valorar-consulta.dto';
+import { CreateRespuestaDto } from '../dto/create-respuesta.dto';
 
 @UseGuards(RolesGuard)
 @Controller('consultas')
@@ -48,7 +49,7 @@ export class ConsultasController {
     @Req() req: AuthenticatedUserRequest,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    return this.consultasService.deleteConsulta(id, req.user.userId);
+    return this.consultasService.delete(id, req.user.userId);
   }
 
   @Roles(roles.Alumno)
@@ -60,6 +61,15 @@ export class ConsultasController {
   ) {
     const idAlumno = req.user.userId;
     return this.consultasService.valorar(id, req.user.userId, dto);
+  }
+
+  @Post(':id/responder')
+  responder(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthenticatedUserRequest,
+    @Body() dto: CreateRespuestaDto,
+  ) {
+    return this.consultasService.responder(id, req.user.userId, dto);
   }
 
   @Roles(roles.Docente)

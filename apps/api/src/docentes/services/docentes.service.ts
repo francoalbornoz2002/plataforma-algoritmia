@@ -31,28 +31,6 @@ export class DocentesService {
     private consultasService: ConsultasService,
   ) {}
 
-  async createRespuesta(
-    idConsulta: string,
-    idDocente: string,
-    dto: CreateRespuestaDto,
-  ) {
-    // 4.1. Buscamos la consulta para saber a qué curso pertenece
-    const consulta = await this.prisma.consulta.findUnique({
-      where: { id: idConsulta },
-      select: { idCurso: true },
-    });
-
-    if (!consulta) {
-      throw new NotFoundException('La consulta no existe.');
-    }
-
-    // 4.2. Validamos que el docente pertenezca a ESE curso
-    await checkDocenteAccess(this.prisma, idDocente, consulta.idCurso);
-
-    // 4.3. Si todo está bien, llamamos al servicio
-    return this.consultasService.createRespuesta(idConsulta, idDocente, dto);
-  }
-
   /**
    * Obtiene la lista de docentes activos de un curso (para los filtros)
    */

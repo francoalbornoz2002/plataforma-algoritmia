@@ -9,6 +9,7 @@ import type {
   CreateConsultaFormValues,
   UpdateConsultaFormValues,
 } from "../validations/consulta.schema";
+import type { ResponderConsultaFormValues } from "../validations/responderConsulta.schema";
 import type { ValorarConsultaFormValues } from "../validations/valorarConsulta.schema";
 
 /**
@@ -79,6 +80,28 @@ export const valorarConsulta = async (
   } catch (err: any) {
     console.error("Error rating consult:", err.response?.data || err.message);
     throw err.response?.data || new Error("Error al valorar la consulta.");
+  }
+};
+
+/**
+ * Envía una respuesta a una consulta (Docente)
+ */
+export const responderConsulta = async (
+  idConsulta: string,
+  data: ResponderConsultaFormValues,
+): Promise<Consulta> => {
+  try {
+    const response = await apiClient.post(
+      `/consultas/${idConsulta}/responder`,
+      data,
+    );
+    return response.data;
+  } catch (err: any) {
+    console.error(
+      "Error creating consult response:",
+      err.response?.data || err.message,
+    );
+    throw err.response?.data || new Error("Error al enviar la respuesta.");
   }
 };
 

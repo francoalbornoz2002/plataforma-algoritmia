@@ -20,17 +20,17 @@ import { useState } from "react";
 
 // Tipos, Schemas y Servicios
 import { type ConsultaDocente, estado_consulta } from "../../../types";
-import {
-  createRespuestaSchema,
-  type CreateRespuestaFormValues,
-} from "../validations/createRespuesta.schema";
-import { createRespuesta } from "../../users/services/docentes.service";
+import { responderConsulta } from "../../consultas/services/consultas.service";
 
 // Chips Reutilizables
 import TemaChip from "../../../components/TemaChip";
 import EstadoConsultaChip from "../../../components/EstadoConsultaChip";
 import { enqueueSnackbar } from "notistack";
 import { formatDetailedDate } from "../../../utils/dateHelpers";
+import {
+  responderConsultaSchema,
+  type ResponderConsultaFormValues,
+} from "../validations/responderConsulta.schema";
 
 interface ConsultaAccordionProps {
   consulta: ConsultaDocente;
@@ -52,18 +52,18 @@ export default function ConsultaAccordion({
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<CreateRespuestaFormValues>({
-    resolver: zodResolver(createRespuestaSchema),
+  } = useForm<ResponderConsultaFormValues>({
+    resolver: zodResolver(responderConsultaSchema),
     defaultValues: { descripcion: "" },
   });
 
   const { respuestaConsulta } = consulta;
 
   // Handler para enviar la respuesta
-  const onSubmit: SubmitHandler<CreateRespuestaFormValues> = async (data) => {
+  const onSubmit: SubmitHandler<ResponderConsultaFormValues> = async (data) => {
     setApiError(null);
     try {
-      await createRespuesta(consulta.id, data);
+      await responderConsulta(consulta.id, data);
       enqueueSnackbar("Respuesta enviada correctamente", {
         variant: "success",
       });

@@ -29,16 +29,6 @@ export class DocentesController {
     private readonly consultasService: ConsultasService,
   ) {}
 
-  @Post('my/consults/:idConsulta/respond')
-  createRespuesta(
-    @Param('idConsulta', ParseUUIDPipe) idConsulta: string,
-    @Req() req: AuthenticatedUserRequest,
-    @Body() dto: CreateRespuestaDto, // <-- 4. Usar el DTO de respuesta
-  ) {
-    const idDocente = req.user.userId;
-    return this.docentesService.createRespuesta(idConsulta, idDocente, dto);
-  }
-
   @Get('my/courses/:idCurso/active-docentes')
   getActiveDocentes(
     @Param('idCurso', ParseUUIDPipe) idCurso: string,

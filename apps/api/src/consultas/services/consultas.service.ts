@@ -209,12 +209,25 @@ export class ConsultasService {
   }
 
   // --- 2. SERVICIO DE RESPUESTA (DOCENTE) ---
-  async createRespuesta(
+  async responder(
     idConsulta: string,
     idDocente: string,
     dto: CreateRespuestaDto,
   ) {
+    const consulta = await this.prisma.consulta.findUnique({
+      where: { id: idConsulta },
+      select: { idCurso: true },
+    });
+
+    if (!consulta) {
+      throw new NotFoundException('La consulta no existe.');
+    }
+
+    // 4.2. Validamos que el docente pertenezca a ESE curso
+    await checkDocenteAccess(this.prisma, idDocente, consulta.idCurso);
+
     const { descripcion } = dto;
+
     try {
       // Usamos una transacción para asegurar que ambas cosas ocurran
       return await this.prisma.$transaction(
@@ -268,7 +281,7 @@ export class ConsultasService {
       ) {
         throw new NotFoundException('Consulta no encontrada.');
       }
-      console.error('Error en createRespuesta:', error);
+      console.error('Error en responderConsulta:', error);
       throw new InternalServerErrorException('Error al enviar la respuesta.');
     }
   }
@@ -492,7 +505,7 @@ export class ConsultasService {
   }
 
   // --- ¡MÉTODO DE BORRADO (ACTUALIZADO A SOFT DELETE)! ---
-  async deleteConsulta(idConsulta: string, idAlumno: string) {
+  async delete(idConsulta: string, idAlumno: string) {
     try {
       // 1. Validar permisos (dueño, pendiente y no borrado)
       await this.checkConsultaOwnershipAndState(idConsulta, idAlumno);

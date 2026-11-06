@@ -1,16 +1,10 @@
 import apiClient from "../../../lib/axios";
 // Usamos el tipo que ya existe
 import type {
-  Consulta,
-  DificultadAlumnoDetallada,
   DocenteBasico,
-  FindConsultasParams,
-  MisionConEstado,
   ConsultaDocente,
-  PaginatedConsultasDocenteResponse,
   CourseDashboardData,
 } from "../../../types";
-import type { CreateRespuestaFormValues } from "../../consultas/validations/createRespuesta.schema";
 
 /**
  * Obtiene las estadísticas del dashboard para un curso (Docente)
@@ -24,28 +18,6 @@ export const getCourseDashboardStats = async (
   } catch (err: any) {
     console.error("Error fetching dashboard stats:", err);
     throw err.response?.data || new Error("Error al obtener estadísticas.");
-  }
-};
-
-/**
- * Envía una respuesta a una consulta (Docente)
- */
-export const createRespuesta = async (
-  idConsulta: string,
-  data: CreateRespuestaFormValues,
-): Promise<Consulta> => {
-  try {
-    const response = await apiClient.post(
-      `/docentes/my/consults/${idConsulta}/respond`,
-      data,
-    );
-    return response.data;
-  } catch (err: any) {
-    console.error(
-      "Error creating consult response:",
-      err.response?.data || err.message,
-    );
-    throw err.response?.data || new Error("Error al enviar la respuesta.");
   }
 };
 
