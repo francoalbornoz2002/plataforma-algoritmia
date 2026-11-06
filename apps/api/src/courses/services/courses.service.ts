@@ -978,6 +978,7 @@ export class CoursesService {
             await tx.progresoAlumno.create({
               data: {
                 idInscripcion: inscripcion.id,
+                fechaRegistro: null, // Se registrará la fecha cuando el alumno complete su primera misión
               },
             });
 
