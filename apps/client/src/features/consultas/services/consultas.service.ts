@@ -1,6 +1,7 @@
 import apiClient from "../../../lib/axios";
 import type {
   Consulta,
+  ConsultaDocente,
   FindConsultasParams,
   PaginatedConsultasDocenteResponse,
   PaginatedConsultasResponse,
@@ -132,6 +133,27 @@ export const findConsultas = async (
     throw (
       err.response?.data ||
       new Error("Error al obtener las consultas del curso.")
+    );
+  }
+};
+
+/**
+ * Obtiene la lista de consultas pendientes de un curso
+ */
+export const findPendingConsultas = async (
+  idCurso: string,
+): Promise<ConsultaDocente[]> => {
+  try {
+    const response = await apiClient.get(`/consultas/${idCurso}/pendientes`);
+    return response.data;
+  } catch (err: any) {
+    console.error(
+      "Error fetching pending consultas:",
+      err.response?.data || err.message,
+    );
+    throw (
+      err.response?.data ||
+      new Error("Error al obtener las consultas pendientes.")
     );
   }
 };

@@ -21,7 +21,6 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 // 1. Hooks, Servicios y Tipos
 import { useCourseContext } from "../../../context/CourseContext";
-import { findPendingConsultas } from "../../users/services/docentes.service";
 import {
   aceptarClaseAutomatica,
   finalizarClase,
@@ -50,6 +49,7 @@ import { useAuth } from "../../authentication/context/AuthProvider";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import { findActiveDocentes } from "../../courses/services/courses.service";
+import { findPendingConsultas } from "../../consultas/services/consultas.service";
 
 // Tipos para los filtros
 type OrdenFiltro =

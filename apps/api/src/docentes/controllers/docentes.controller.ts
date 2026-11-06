@@ -24,20 +24,7 @@ import { ConsultasService } from 'src/consultas/services/consultas.service';
 @Roles(roles.Docente, roles.Alumno, roles.Administrador)
 @Controller('docentes')
 export class DocentesController {
-  constructor(
-    private readonly docentesService: DocentesService,
-    private readonly consultasService: ConsultasService,
-  ) {}
-
-  // --- ¡NUEVO ENDPOINT 2! ---
-  @Get('my/courses/:idCurso/pending-consultas')
-  getPendingConsultas(
-    @Param('idCurso', ParseUUIDPipe) idCurso: string,
-    @Req() req: AuthenticatedUserRequest,
-  ) {
-    const idDocente = req.user.userId;
-    return this.consultasService.findPendingConsultasByCurso(idCurso);
-  }
+  constructor(private readonly docentesService: DocentesService) {}
 
   @Delete('my/courses/:idCurso/students/:idAlumno')
   removeStudent(

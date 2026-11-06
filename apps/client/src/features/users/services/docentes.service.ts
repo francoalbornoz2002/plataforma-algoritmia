@@ -22,29 +22,6 @@ export const getCourseDashboardStats = async (
 };
 
 /**
- * Obtiene la lista de consultas pendientes de un curso
- */
-export const findPendingConsultas = async (
-  idCurso: string,
-): Promise<ConsultaDocente[]> => {
-  try {
-    const response = await apiClient.get(
-      `/docentes/my/courses/${idCurso}/pending-consultas`,
-    );
-    return response.data;
-  } catch (err: any) {
-    console.error(
-      "Error fetching pending consultas:",
-      err.response?.data || err.message,
-    );
-    throw (
-      err.response?.data ||
-      new Error("Error al obtener las consultas pendientes.")
-    );
-  }
-};
-
-/**
  * Da de baja a un alumno de un curso (Docente)
  */
 export const removeStudentFromCourse = async (
