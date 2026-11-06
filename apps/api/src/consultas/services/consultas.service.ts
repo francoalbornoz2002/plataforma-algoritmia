@@ -306,146 +306,57 @@ export class ConsultasService {
   async findConsultasForAlumno(
     idAlumno: string,
     idCurso: string,
-    dto: FindConsultasDto, // <-- 2. Usar el DTO
+    dto: FindConsultasDto,
   ) {
-    const {
-      page,
-      limit,
-      sort,
-      order,
-      tema,
-      estado,
-      search,
-      fechaDesde,
-      fechaHasta,
-    } = dto;
-    const skip = (page - 1) * limit;
-    const take = limit;
-
-    const where: Prisma.ConsultaWhereInput = {
+    return this.findConsultasPaginated(idCurso, dto, {
       idAlumno,
-      idCurso,
-      ...(tema && { tema: tema }),
-      ...(estado && { estado: estado }),
-      ...(search && {
-        OR: [
-          { titulo: { contains: search, mode: 'insensitive' } },
-          { descripcion: { contains: search, mode: 'insensitive' } },
-        ],
-      }),
-      ...((fechaDesde || fechaHasta) && {
-        createdAt: {
-          ...(fechaDesde && { gte: new Date(fechaDesde) }),
-          ...(fechaHasta && { lte: new Date(fechaHasta) }),
-        },
-      }),
-    };
-
-    const orderBy: Prisma.ConsultaOrderByWithRelationInput = {
-      [sort || 'createdAt']: order || 'desc',
-    };
-
-    try {
-      // 3. Usamos $transaction para paginación (igual que en UsersPage)
-      const [consultas, total] = await this.prisma.$transaction([
-        this.prisma.consulta.findMany({
-          where,
-          orderBy,
-          skip,
-          take,
-          include: {
-            respuestaConsulta: {
-              include: {
-                docente: {
-                  select: { nombre: true, apellido: true },
-                },
-              },
-            },
-          },
-        }),
-        this.prisma.consulta.count({ where }),
-      ]);
-
-      const totalPages = Math.ceil(total / limit);
-      return { data: consultas, total, page, totalPages };
-    } catch (error) {
-      console.error('Error en findConsultasForAlumno:', error);
-      throw new InternalServerErrorException('Error al obtener las consultas.');
-    }
+      filterByEstado: true,
+      excludeDeleted: false,
+      includeAlumno: false,
+      errorContext: 'Error en findConsultasForAlumno:',
+      errorMessage: 'Error al obtener las consultas.',
+    });
   }
 
   // --- 6. SERVICIO DE LECTURA (PÚBLICAS PARA ALUMNOS) ---
   async findConsultasPublicas(idCurso: string, dto: FindConsultasDto) {
-    const { page, limit, sort, order, tema, search, fechaDesde, fechaHasta } =
-      dto;
-    // Nota: Ignoramos el filtro de 'estado' intencionalmente para la vista pública general,
-    // o podríamos permitirlo si se desea. Por ahora, traemos todas las no borradas.
-
-    const skip = (page - 1) * limit;
-    const take = limit;
-
-    const where: Prisma.ConsultaWhereInput = {
-      idCurso,
-      deletedAt: null,
-      ...(tema && { tema: tema }),
-      ...(search && {
-        OR: [
-          { titulo: { contains: search, mode: 'insensitive' } },
-          { descripcion: { contains: search, mode: 'insensitive' } },
-        ],
-      }),
-      ...((fechaDesde || fechaHasta) && {
-        createdAt: {
-          ...(fechaDesde && { gte: new Date(fechaDesde) }),
-          ...(fechaHasta && { lte: new Date(fechaHasta) }),
-        },
-      }),
-    };
-
-    const orderBy: Prisma.ConsultaOrderByWithRelationInput = {
-      [sort || 'createdAt']: order || 'desc',
-    };
-
-    try {
-      const [consultas, total] = await this.prisma.$transaction([
-        this.prisma.consulta.findMany({
-          where,
-          orderBy,
-          skip,
-          take,
-          include: {
-            alumno: {
-              select: { nombre: true, apellido: true, fotoPerfilUrl: true },
-            },
-            respuestaConsulta: {
-              include: {
-                docente: {
-                  select: { nombre: true, apellido: true },
-                },
-              },
-            },
-          },
-        }),
-        this.prisma.consulta.count({ where }),
-      ]);
-
-      const totalPages = Math.ceil(total / limit);
-      return { data: consultas, total, page, totalPages };
-    } catch (error) {
-      console.error('Error en findConsultasPublicas:', error);
-      throw new InternalServerErrorException(
-        'Error al obtener las consultas públicas.',
-      );
-    }
+    return this.findConsultasPaginated(idCurso, dto, {
+      filterByEstado: false,
+      excludeDeleted: true,
+      includeAlumno: true,
+      errorContext: 'Error en findConsultasPublicas:',
+      errorMessage: 'Error al obtener las consultas públicas.',
+    });
   }
 
   // --- 5. SERVICIO DE LECTURA (DOCENTE) (Refactorizado) ---
   async findConsultasForDocente(
     idCurso: string,
     idDocente: string,
-    dto: FindConsultasDto, // <-- 2. Usar el DTO
+    dto: FindConsultasDto,
   ) {
-    await checkDocenteAccess(this.prisma, idDocente, idCurso); // 3. Validar
+    await checkDocenteAccess(this.prisma, idDocente, idCurso);
+    return this.findConsultasPaginated(idCurso, dto, {
+      filterByEstado: true,
+      excludeDeleted: true,
+      includeAlumno: true,
+      errorContext: 'Error en findConsultasForDocente:',
+      errorMessage: 'Error al obtener las consultas.',
+    });
+  }
+
+  private async findConsultasPaginated(
+    idCurso: string,
+    dto: FindConsultasDto,
+    options: {
+      idAlumno?: string;
+      filterByEstado: boolean;
+      excludeDeleted: boolean;
+      includeAlumno: boolean;
+      errorContext: string;
+      errorMessage: string;
+    },
+  ) {
     const {
       page,
       limit,
@@ -462,9 +373,10 @@ export class ConsultasService {
 
     const where: Prisma.ConsultaWhereInput = {
       idCurso,
-      deletedAt: null,
-      ...(tema && { tema: tema }),
-      ...(estado && { estado: estado }),
+      ...(options.idAlumno !== undefined && { idAlumno: options.idAlumno }),
+      ...(options.excludeDeleted && { deletedAt: null }),
+      ...(tema && { tema }),
+      ...(options.filterByEstado && estado && { estado }),
       ...(search && {
         OR: [
           { titulo: { contains: search, mode: 'insensitive' } },
@@ -483,26 +395,29 @@ export class ConsultasService {
       [sort || 'createdAt']: order || 'desc',
     };
 
+    const include: Prisma.ConsultaInclude = {
+      ...(options.includeAlumno && {
+        alumno: {
+          select: { nombre: true, apellido: true, fotoPerfilUrl: true },
+        },
+      }),
+      respuestaConsulta: {
+        include: {
+          docente: {
+            select: { nombre: true, apellido: true },
+          },
+        },
+      },
+    };
+
     try {
-      // 3. Usamos $transaction
       const [consultas, total] = await this.prisma.$transaction([
         this.prisma.consulta.findMany({
           where,
           orderBy,
           skip,
           take,
-          include: {
-            alumno: {
-              select: { nombre: true, apellido: true, fotoPerfilUrl: true },
-            },
-            respuestaConsulta: {
-              include: {
-                docente: {
-                  select: { nombre: true, apellido: true },
-                },
-              },
-            },
-          },
+          include,
         }),
         this.prisma.consulta.count({ where }),
       ]);
@@ -510,8 +425,8 @@ export class ConsultasService {
       const totalPages = Math.ceil(total / limit);
       return { data: consultas, total, page, totalPages };
     } catch (error) {
-      console.error('Error en findConsultasForDocente:', error);
-      throw new InternalServerErrorException('Error al obtener las consultas.');
+      console.error(options.errorContext, error);
+      throw new InternalServerErrorException(options.errorMessage);
     }
   }
 
