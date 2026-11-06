@@ -5,7 +5,10 @@ import type {
   PaginatedConsultasDocenteResponse,
   PaginatedConsultasResponse,
 } from "../../../types";
-import type { CreateConsultaFormValues } from "../validations/consulta.schema";
+import type {
+  CreateConsultaFormValues,
+  UpdateConsultaFormValues,
+} from "../validations/consulta.schema";
 
 /**
  * Crea una nueva consulta (Alumno)
@@ -25,6 +28,23 @@ export const createConsulta = async (
   } catch (err: any) {
     console.error("Error creating consult:", err.response?.data || err.message);
     throw err.response?.data || new Error("Error al crear la consulta.");
+  }
+};
+
+/**
+ * Edita una consulta existente (Alumno)
+ */
+export const updateConsulta = async (
+  idConsulta: string,
+  data: UpdateConsultaFormValues,
+): Promise<Consulta> => {
+  try {
+    // Apuntamos a la nueva ruta "edit"
+    const response = await apiClient.patch(`/consultas/${idConsulta}`, data);
+    return response.data;
+  } catch (err: any) {
+    console.error("Error updating consult:", err.response?.data || err.message);
+    throw err.response?.data || new Error("Error al actualizar la consulta.");
   }
 };
 

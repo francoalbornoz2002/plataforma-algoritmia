@@ -25,14 +25,6 @@ export class AlumnosService {
     private consultasService: ConsultasService,
   ) {}
 
-  async updateConsulta(
-    idConsulta: string,
-    idAlumno: string,
-    dto: UpdateConsultaDto,
-  ) {
-    return this.consultasService.updateConsulta(idConsulta, idAlumno, dto);
-  }
-
   async deleteConsulta(idConsulta: string, idAlumno: string) {
     return this.consultasService.deleteConsulta(idConsulta, idAlumno);
   }

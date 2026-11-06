@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Query,
   Req,
@@ -16,6 +17,7 @@ import { roles } from '@prisma/client';
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
 import { FindConsultasDto } from '../dto/find-consultas.dto';
 import { CreateConsultaDto } from '../dto/create-consulta.dto';
+import { UpdateConsultaDto } from '../dto/update-consulta.dto';
 
 @UseGuards(RolesGuard)
 @Controller('consultas')
@@ -25,7 +27,17 @@ export class ConsultasController {
   @Roles(roles.Alumno)
   @Post()
   create(@Req() req: AuthenticatedUserRequest, @Body() dto: CreateConsultaDto) {
-    return this.consultasService.createConsulta(req.user.userId, dto);
+    return this.consultasService.create(req.user.userId, dto);
+  }
+
+  @Roles(roles.Alumno)
+  @Patch(':id')
+  update(
+    @Req() req: AuthenticatedUserRequest,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateConsultaDto,
+  ) {
+    return this.consultasService.update(id, req.user.userId, dto);
   }
 
   @Roles(roles.Docente)

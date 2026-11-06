@@ -1,29 +1,7 @@
 import apiClient from "../../../lib/axios";
 import type { Consulta, DocenteBasico } from "../../../types";
-import type { UpdateConsultaFormValues } from "../../consultas/validations/consulta.schema";
 import type { ValorarConsultaFormValues } from "../../consultas/validations/valorarConsulta.schema";
 
-/**
- * Edita una consulta existente (Alumno)
- */
-export const updateConsulta = async (
-  idConsulta: string,
-  data: UpdateConsultaFormValues, // Usamos el DTO de Update
-): Promise<Consulta> => {
-  try {
-    // Apuntamos a la nueva ruta "edit"
-    const response = await apiClient.patch(
-      `/alumnos/my/consults/edit/${idConsulta}`,
-      data,
-    );
-    return response.data;
-  } catch (err: any) {
-    console.error("Error updating consult:", err.response?.data || err.message);
-    throw err.response?.data || new Error("Error al actualizar la consulta.");
-  }
-};
-
-// --- ¡NUEVA FUNCIÓN DE BORRADO! ---
 /**
  * Borra (soft delete) una consulta (Alumno)
  */

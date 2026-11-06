@@ -35,7 +35,7 @@ export class ConsultasService {
   ) {}
 
   // --- 1. SERVICIO DE CREACIÓN (ALUMNO) ---
-  async createConsulta(idAlumno: string, dto: CreateConsultaDto) {
+  async create(idAlumno: string, dto: CreateConsultaDto) {
     const { idCurso, titulo, descripcion, tema } = dto;
 
     // Validar que el título y la descripción no sean iguales
@@ -136,6 +136,75 @@ export class ConsultasService {
     } catch (error) {
       console.error('Error en createConsulta:', error);
       throw new InternalServerErrorException('Error al crear la consulta.');
+    }
+  }
+
+  async update(idConsulta: string, idAlumno: string, dto: UpdateConsultaDto) {
+    // Validar que el título y la descripción no sean iguales si ambos están presentes
+    if (
+      dto.titulo &&
+      dto.descripcion &&
+      dto.titulo.toLowerCase() === dto.descripcion.toLowerCase()
+    ) {
+      throw new BadRequestException(
+        'El título y la descripción no pueden ser idénticos.',
+      );
+    }
+
+    try {
+      // 1. Validar permisos (dueño, pendiente y no borrado) Y OBTENER DATOS
+      // Modificamos el helper para que nos devuelva la consulta y así saber su idCurso
+      const consultaActual = await this.checkConsultaOwnershipAndState(
+        idConsulta,
+        idAlumno,
+      );
+
+      // 2. Validar duplicados (AHORA CONTEXTUALIZADO AL CURSO)
+      const orConditions: Prisma.ConsultaWhereInput[] = [];
+      if (dto.titulo) {
+        orConditions.push({ titulo: dto.titulo });
+      }
+      if (dto.descripcion) {
+        orConditions.push({ descripcion: dto.descripcion });
+      }
+
+      if (orConditions.length > 0) {
+        const existingConsulta = await this.prisma.consulta.findFirst({
+          where: {
+            id: { not: idConsulta }, // Excluimos la consulta actual
+            idCurso: consultaActual.idCurso, // <--- IMPORTANTE: Usamos el curso de la consulta
+            OR: orConditions,
+          },
+        });
+
+        if (existingConsulta) {
+          const field =
+            dto.titulo && existingConsulta.titulo === dto.titulo
+              ? 'título'
+              : 'descripción';
+          throw new ConflictException(
+            `Ya existe otra consulta con ese ${field} en este curso.`,
+          );
+        }
+      }
+
+      // 3. Actualizar (El trigger de auditoría captura esto)
+      const consultaActualizada = await this.prisma.consulta.update({
+        where: { id: idConsulta },
+        data: dto,
+      });
+
+      return consultaActualizada;
+    } catch (error) {
+      if (
+        error instanceof ForbiddenException ||
+        error instanceof ConflictException
+      )
+        throw error;
+      console.error('Error en updateConsulta:', error);
+      throw new InternalServerErrorException(
+        'Error al actualizar la consulta.',
+      );
     }
   }
 
@@ -423,79 +492,6 @@ export class ConsultasService {
     } catch (error) {
       console.error(options.errorContext, error);
       throw new InternalServerErrorException(options.errorMessage);
-    }
-  }
-
-  async updateConsulta(
-    idConsulta: string,
-    idAlumno: string,
-    dto: UpdateConsultaDto,
-  ) {
-    // Validar que el título y la descripción no sean iguales si ambos están presentes
-    if (
-      dto.titulo &&
-      dto.descripcion &&
-      dto.titulo.toLowerCase() === dto.descripcion.toLowerCase()
-    ) {
-      throw new BadRequestException(
-        'El título y la descripción no pueden ser idénticos.',
-      );
-    }
-
-    try {
-      // 1. Validar permisos (dueño, pendiente y no borrado) Y OBTENER DATOS
-      // Modificamos el helper para que nos devuelva la consulta y así saber su idCurso
-      const consultaActual = await this.checkConsultaOwnershipAndState(
-        idConsulta,
-        idAlumno,
-      );
-
-      // 2. Validar duplicados (AHORA CONTEXTUALIZADO AL CURSO)
-      const orConditions: Prisma.ConsultaWhereInput[] = [];
-      if (dto.titulo) {
-        orConditions.push({ titulo: dto.titulo });
-      }
-      if (dto.descripcion) {
-        orConditions.push({ descripcion: dto.descripcion });
-      }
-
-      if (orConditions.length > 0) {
-        const existingConsulta = await this.prisma.consulta.findFirst({
-          where: {
-            id: { not: idConsulta }, // Excluimos la consulta actual
-            idCurso: consultaActual.idCurso, // <--- IMPORTANTE: Usamos el curso de la consulta
-            OR: orConditions,
-          },
-        });
-
-        if (existingConsulta) {
-          const field =
-            dto.titulo && existingConsulta.titulo === dto.titulo
-              ? 'título'
-              : 'descripción';
-          throw new ConflictException(
-            `Ya existe otra consulta con ese ${field} en este curso.`,
-          );
-        }
-      }
-
-      // 3. Actualizar (El trigger de auditoría captura esto)
-      const consultaActualizada = await this.prisma.consulta.update({
-        where: { id: idConsulta },
-        data: dto,
-      });
-
-      return consultaActualizada;
-    } catch (error) {
-      if (
-        error instanceof ForbiddenException ||
-        error instanceof ConflictException
-      )
-        throw error;
-      console.error('Error en updateConsulta:', error);
-      throw new InternalServerErrorException(
-        'Error al actualizar la consulta.',
-      );
     }
   }
 

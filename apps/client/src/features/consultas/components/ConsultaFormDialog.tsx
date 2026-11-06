@@ -34,10 +34,9 @@ interface ConsultaFormDialogProps {
   consultaToEdit: Consulta | null; // null si es creación
 }
 
-import { updateConsulta } from "../../users/services/alumnos.service";
 import { enqueueSnackbar } from "notistack";
 import { TemasLabels } from "../../../types/traducciones";
-import { createConsulta } from "../services/consultas.service";
+import { createConsulta, updateConsulta } from "../services/consultas.service";
 
 export default function ConsultaFormDialog({
   open,
