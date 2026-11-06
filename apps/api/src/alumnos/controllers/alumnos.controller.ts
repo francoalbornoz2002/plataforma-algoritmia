@@ -119,10 +119,4 @@ export class AlumnosController {
     const idDocente = req.user.userId;
     return this.alumnosService.findEligibleForRefuerzo(idCurso, idDocente);
   }
-
-  @Public()
-  @Get(':idAlumno/sync-difficulties')
-  syncDifficulties(@Param('idAlumno', ParseUUIDPipe) idAlumno: string) {
-    return this.alumnosService.findActiveCourseDifficulties(idAlumno);
-  }
 }

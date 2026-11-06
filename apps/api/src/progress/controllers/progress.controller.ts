@@ -29,7 +29,7 @@ export class ProgressController {
    * Endpoint para que el videojuego registre y sincronice una o más misiones completadas.
    */
   // TODO: Proteger esto con un Guardia de API Key
-  @Post('sincronizar')
+  @Post('registrar')
   @Public()
   @HttpCode(HttpStatus.OK)
   @ApiBody({ type: [SubmitMissionDto] })

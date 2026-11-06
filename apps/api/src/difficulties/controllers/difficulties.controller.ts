@@ -17,13 +17,17 @@ import { DifficultiesService } from '../services/difficulties.service';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
-import { roles } from '@prisma/client';
+import { estado_simple, roles } from '@prisma/client';
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @UseGuards(RolesGuard)
 @Controller('dificultades')
 export class DifficultiesController {
-  constructor(private readonly difficultiesService: DifficultiesService) {}
+  constructor(
+    private readonly difficultiesService: DifficultiesService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   /**
    * Endpoint para obtener la lista de dificultades para filtros.
@@ -38,11 +42,33 @@ export class DifficultiesController {
    * TODO: Proteger esto con un Guardia de API Key.
    */
   @Public()
-  @Post('sincronizar')
+  @Post('registrar')
   @HttpCode(HttpStatus.OK)
   @ApiBody({ type: [SubmitDifficultyDto] })
   async submitBatchDifficulties(@Body() dtos: SubmitDifficultyDto[]) {
     return this.difficultiesService.submitDifficulties(dtos);
+  }
+  @Public()
+  @Get(':idAlumno/sincronizar')
+  async syncDifficulties(@Param('idAlumno', ParseUUIDPipe) idAlumno: string) {
+    // 1. Buscamos si el alumno tiene una inscripción activa
+    const inscripcion = await this.prisma.inscripcionesAlumnoCurso.findFirst({
+      where: {
+        idAlumno: idAlumno,
+        estado: estado_simple.Activo,
+      },
+      select: { idCurso: true },
+    });
+
+    if (!inscripcion) {
+      return []; // No hay curso activo, devolvemos lista vacía
+    }
+
+    // 2. Reutilizamos el servicio de dificultades existente
+    return this.difficultiesService.getStudentDifficulties(
+      idAlumno,
+      inscripcion.idCurso,
+    );
   }
 
   @Roles(roles.Docente)
