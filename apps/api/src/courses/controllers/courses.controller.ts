@@ -68,6 +68,16 @@ export class CoursesController {
     return this.coursesService.remove(id);
   }
 
+  @Delete(':id/alumnos/:idAlumno/baja')
+  removeStudent(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('idAlumno', ParseUUIDPipe) idAlumno: string,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const idDocente = req.user.userId;
+    return this.coursesService.removeStudent(id, idAlumno, idDocente);
+  }
+
   @Roles(roles.Administrador)
   @Patch(':id/finalizar')
   finalize(@Param('id') id: string) {

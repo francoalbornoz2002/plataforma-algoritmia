@@ -20,10 +20,7 @@ import CourseInfoCard from "./components/CourseInfoCard";
 
 import { useCourseContext } from "../../context/CourseContext";
 
-import {
-  removeStudentFromCourse,
-  getCourseDashboardStats,
-} from "../users/services/docentes.service";
+import { getCourseDashboardStats } from "../users/services/docentes.service";
 import ConfirmationDialog from "../../components/ConfirmationDialog";
 import CourseFormDialog from "../courses/components/CourseFormDialog";
 import { enqueueSnackbar } from "notistack";
@@ -52,7 +49,10 @@ import { FormControl, Select, MenuItem } from "@mui/material";
 import { TemasLabels } from "../../types/traducciones";
 import { temas } from "../../types";
 import CardIcon from "../../components/CardIcon";
-import { findActiveAlumnos } from "../courses/services/courses.service";
+import {
+  findActiveAlumnos,
+  removeStudentFromCourse,
+} from "../courses/services/courses.service";
 
 const formatClassTime = (inicio: string, fin: string) => {
   const start = new Date(inicio);
@@ -149,9 +149,9 @@ export default function DocenteDashboardPage() {
   }, [searchTerm, students]);
 
   // --- HANDLERS ---
-  const handleRemoveClick = (student: any) => {
+  const handleRemoveClick = (student: AlumnoActivo) => {
     setStudentToDelete({
-      id: student.idAlumno,
+      id: student.id,
       nombre: `${student.nombre} ${student.apellido}`,
     });
   };

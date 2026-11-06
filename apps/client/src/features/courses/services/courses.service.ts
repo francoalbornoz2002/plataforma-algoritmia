@@ -166,6 +166,24 @@ export const deleteCourse = async (id: string): Promise<void> => {
   }
 };
 
+/**
+ * Da de baja a un alumno de un curso (Docente)
+ */
+export const removeStudentFromCourse = async (
+  idCurso: string,
+  idAlumno: string,
+): Promise<void> => {
+  try {
+    await apiClient.delete(`/cursos/${idCurso}/alumnos/${idAlumno}/baja`);
+  } catch (err: any) {
+    console.error(
+      "Error removing student from course:",
+      err.response?.data || err.message,
+    );
+    throw err.response?.data || new Error("Error al dar de baja al alumno.");
+  }
+};
+
 /* Finaliza un curso (Cierre de ciclo) */
 export const finalizeCourse = async (id: string): Promise<void> => {
   try {
