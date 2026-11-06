@@ -426,11 +426,7 @@ export class SesionesRefuerzoService {
     return sesion;
   }
 
-  async update(
-    idCurso: string,
-    idSesion: string,
-    dto: UpdateSesionesRefuerzoDto,
-  ) {
+  async update(idSesion: string, dto: UpdateSesionesRefuerzoDto) {
     const {
       fechaHoraLimite,
       tiempoLimite,
@@ -450,7 +446,6 @@ export class SesionesRefuerzoService {
       const sesion = await tx.sesionRefuerzo.findUnique({
         where: {
           id: idSesion,
-          idCurso: idCurso,
           deletedAt: null,
         },
       });
@@ -498,7 +493,11 @@ export class SesionesRefuerzoService {
             'La fecha y hora límite no puede ser posterior a 7 días desde hoy.',
           );
         }
-        await this.validarSuperposicionConClaseCurso(tx, idCurso, fechaLimite);
+        await this.validarSuperposicionConClaseCurso(
+          tx,
+          sesion.idCurso,
+          fechaLimite,
+        );
         dataToUpdate.fechaHoraLimite = fechaLimite;
       }
 

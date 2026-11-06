@@ -257,7 +257,7 @@ export default function SesionFormModal({
 
     try {
       if (isEditMode && sesionToEdit) {
-        await updateSesion(selectedCourse.id, sesionToEdit.id, data);
+        await updateSesion(sesionToEdit.id, data);
       } else {
         await createSesion(selectedCourse.id, data);
       }

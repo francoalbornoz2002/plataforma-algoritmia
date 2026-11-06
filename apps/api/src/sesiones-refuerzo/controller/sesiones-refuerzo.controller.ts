@@ -40,14 +40,10 @@ export class SesionesRefuerzoController {
     return this.sesionesRefuerzoService.findOne(id, req.user);
   }
 
-  @Patch(':idCurso/:id')
+  @Patch(':id')
   @Roles(roles.Docente)
-  update(
-    @Param('idCurso') idCurso: string,
-    @Param('id') id: string,
-    @Body() dto: UpdateSesionesRefuerzoDto,
-  ) {
-    return this.sesionesRefuerzoService.update(idCurso, id, dto);
+  update(@Param('id') id: string, @Body() dto: UpdateSesionesRefuerzoDto) {
+    return this.sesionesRefuerzoService.update(id, dto);
   }
 
   @Delete(':idCurso/:id')

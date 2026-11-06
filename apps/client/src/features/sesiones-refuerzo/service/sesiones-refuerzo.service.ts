@@ -99,7 +99,6 @@ export const createSesion = async (
  * @param data - Los datos a modificar.
  */
 export const updateSesion = async (
-  idCurso: string,
   idSesion: string,
   data: UpdateSesionRefuerzoData,
 ): Promise<SesionRefuerzoConDetalles> => {
@@ -110,7 +109,7 @@ export const updateSesion = async (
   }
 
   const response = await apiClient.patch<SesionRefuerzoConDetalles>(
-    `/sesiones-refuerzo/${idCurso}/${idSesion}`,
+    `/sesiones-refuerzo/${idSesion}`,
     payload,
   );
   return response.data;
