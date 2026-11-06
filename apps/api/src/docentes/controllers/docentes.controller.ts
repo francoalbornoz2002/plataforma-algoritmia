@@ -29,20 +29,6 @@ export class DocentesController {
     private readonly consultasService: ConsultasService,
   ) {}
 
-  @Get('my/courses/:idCurso/student/:idAlumno/missions')
-  getStudentMissions(
-    @Param('idCurso', ParseUUIDPipe) idCurso: string,
-    @Param('idAlumno', ParseUUIDPipe) idAlumno: string,
-    @Req() req: AuthenticatedUserRequest,
-  ) {
-    const idDocente = req.user.userId;
-    return this.docentesService.getStudentMissions(
-      idAlumno,
-      idCurso,
-      idDocente,
-    );
-  }
-
   @Get('my/courses/:idCurso/consults')
   findConsultas(
     @Param('idCurso', ParseUUIDPipe) idCurso: string,

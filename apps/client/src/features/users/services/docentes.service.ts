@@ -27,31 +27,6 @@ export const getCourseDashboardStats = async (
   }
 };
 
-/**
- * Obtiene el estado de todas las misiones (completadas/pendientes)
- * de UN alumno específico para el docente.
- */
-export const getStudentMissions = async (
-  idCurso: string,
-  idAlumno: string,
-): Promise<MisionConEstado[]> => {
-  try {
-    const response = await apiClient.get(
-      `/docentes/my/courses/${idCurso}/student/${idAlumno}/missions`,
-    );
-    return response.data;
-  } catch (err: any) {
-    console.error(
-      "Error fetching student missions for teacher:",
-      err.response?.data || err.message,
-    );
-    throw (
-      err.response?.data ||
-      new Error("Error al obtener las misiones del alumno.")
-    );
-  }
-};
-
 export const findConsultas = async (
   idCurso: string,
   params: FindConsultasParams,

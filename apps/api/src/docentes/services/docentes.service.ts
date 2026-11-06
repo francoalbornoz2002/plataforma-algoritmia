@@ -31,19 +31,6 @@ export class DocentesService {
     private consultasService: ConsultasService,
   ) {}
 
-  async getStudentMissions(
-    idAlumno: string,
-    idCurso: string,
-    idDocente: string,
-  ) {
-    // 1. Validamos que el docente tenga acceso a este curso
-    await checkDocenteAccess(this.prisma, idDocente, idCurso);
-    // (Aquí podríamos validar también que el alumno pertenezca al curso si quisiéramos)
-
-    // 2. Llamamos al servicio "cerebro"
-    return this.progressService.getStudentMissionStatus(idAlumno, idCurso);
-  }
-
   async findConsultas(
     idCurso: string,
     idDocente: string,
