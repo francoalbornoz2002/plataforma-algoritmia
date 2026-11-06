@@ -26,12 +26,12 @@ import { FindSystemPreguntasDto } from '../dto/find-system-preguntas.dto';
 export class PreguntasController {
   constructor(private readonly preguntasService: PreguntasService) {}
 
-  @Post('create')
+  @Post()
   create(@Req() req: AuthenticatedUserRequest, @Body() dto: CreatePreguntaDto) {
     return this.preguntasService.create(dto, req.user.userId);
   }
 
-  @Get('all')
+  @Get()
   findAll(@Query() findPreguntasDto: FindPreguntasDto) {
     return this.preguntasService.findAll(findPreguntasDto);
   }
@@ -42,16 +42,7 @@ export class PreguntasController {
   }
 
   @Roles(roles.Docente)
-  @Get('sistema/for-sesion')
-  findSystemPreguntasForSesion(@Query() dto: FindSystemPreguntasDto) {
-    return this.preguntasService.findSystemPreguntasForSesion(
-      dto.idDificultad,
-      dto.gradoDificultad,
-    );
-  }
-
-  @Roles(roles.Docente)
-  @Patch('edit/:id')
+  @Patch(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updatePreguntaDto: UpdatePreguntaDto,
@@ -61,11 +52,20 @@ export class PreguntasController {
   }
 
   @Roles(roles.Docente)
-  @Delete('delete/:id')
+  @Delete(':id')
   remove(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() req: AuthenticatedUserRequest,
   ) {
     return this.preguntasService.remove(id, req.user.userId);
+  }
+
+  @Roles(roles.Docente)
+  @Get('sistema/para-sesion')
+  findSystemPreguntasForSesion(@Query() dto: FindSystemPreguntasDto) {
+    return this.preguntasService.findSystemPreguntasForSesion(
+      dto.idDificultad,
+      dto.gradoDificultad,
+    );
   }
 }

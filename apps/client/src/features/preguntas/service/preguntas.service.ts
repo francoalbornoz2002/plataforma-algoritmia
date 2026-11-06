@@ -48,7 +48,7 @@ const create = async (
   data: CreatePreguntaData,
 ): Promise<PreguntaConDetalles> => {
   try {
-    const response = await apiClient.post("/preguntas/create", data);
+    const response = await apiClient.post("/preguntas", data);
     return response.data;
   } catch (error: any) {
     console.error(
@@ -64,7 +64,7 @@ const update = async (
   data: UpdatePreguntaData,
 ): Promise<PreguntaConDetalles> => {
   try {
-    const response = await apiClient.patch(`/preguntas/edit/${id}`, data);
+    const response = await apiClient.patch(`/preguntas/${id}`, data);
     return response.data;
   } catch (error: any) {
     console.error(
@@ -77,7 +77,7 @@ const update = async (
 
 const remove = async (id: string): Promise<PreguntaConDetalles> => {
   try {
-    const response = await apiClient.delete(`/preguntas/delete/${id}`);
+    const response = await apiClient.delete(`/preguntas/${id}`);
     return response.data;
   } catch (error: any) {
     console.error(
@@ -92,7 +92,7 @@ export const findSystemPreguntasForSesion = async (
   params: FindSystemPreguntasParams,
 ): Promise<PreguntaConDetalles[]> => {
   try {
-    const response = await apiClient.get("/preguntas/sistema/for-sesion", {
+    const response = await apiClient.get("/preguntas/sistema/para-sesion", {
       params,
     });
     return response.data;
