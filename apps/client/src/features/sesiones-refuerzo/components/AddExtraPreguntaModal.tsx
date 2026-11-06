@@ -39,7 +39,7 @@ import PreguntaAccordion from "../../preguntas/components/PreguntaAccordion";
 // Asumimos que estos componentes existen y siguen el patrón de diseño de la app
 import PreguntaFormDialog from "../../preguntas/components/PreguntaFormDialog";
 import DeletePreguntaDialog from "../../preguntas/components/DeletePreguntaDialog";
-import { getAllDifficulties } from "../../users/services/docentes.service";
+import { getAllDifficulties } from "../../difficulties/services/difficulties.service";
 
 const PAGE_SIZE = 5;
 

@@ -30,10 +30,7 @@ import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 // 1. Hooks y Servicios
 import { format } from "date-fns";
 import { useCourseContext } from "../../../context/CourseContext";
-import {
-  getMyProgress,
-  getMyMissions,
-} from "../../users/services/alumnos.service";
+import { getMyMissions } from "../../users/services/alumnos.service";
 
 // 2. Tipos
 import {
@@ -46,6 +43,7 @@ import { Assessment } from "@mui/icons-material";
 import HeaderPage from "client/src/components/HeaderPage";
 import { datePickerConfig } from "../../../config/theme.config";
 import StatCard from "../../../components/StatCard";
+import { getMyProgress } from "../services/progress.service";
 
 export default function MyProgressPage() {
   // --- 1. CONTEXTO ---

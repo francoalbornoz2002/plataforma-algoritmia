@@ -23,7 +23,7 @@ import {
   temas,
   type DificultadAlumnoDetallada,
 } from "../../../types";
-import { getStudentDifficultiesDetail } from "../../users/services/docentes.service";
+import { getStudentDifficulties } from "../../difficulties/services/difficulties.service";
 import DifficultyCard from "./DifficultyCard";
 import { TemasLabels } from "../../../types/traducciones";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
@@ -63,7 +63,7 @@ export default function StudentDifficultyDetailModal({
       setTemaFilter("");
       setGradoFilter("");
 
-      getStudentDifficultiesDetail(idCurso, idAlumno)
+      getStudentDifficulties(idCurso, idAlumno)
         .then((data) => {
           setDifficulties(data);
         })

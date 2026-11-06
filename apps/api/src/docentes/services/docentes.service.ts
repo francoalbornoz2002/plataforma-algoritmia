@@ -31,28 +31,6 @@ export class DocentesService {
     private consultasService: ConsultasService,
   ) {}
 
-  async getCourseDifficultiesOverview(idCurso: string, idDocente: string) {
-    await checkDocenteAccess(this.prisma, idDocente, idCurso);
-    return this.difficultiesService.getCourseDifficultiesOverview(idCurso);
-  }
-
-  async getStudentDifficultyList(idCurso: string, idDocente: string) {
-    await checkDocenteAccess(this.prisma, idDocente, idCurso);
-    return this.difficultiesService.getStudentDifficultyList(idCurso);
-  }
-
-  async getStudentDifficultiesDetail(
-    idAlumno: string,
-    idCurso: string,
-    idDocente: string,
-  ) {
-    await checkDocenteAccess(this.prisma, idDocente, idCurso);
-    return this.difficultiesService.getStudentDifficultiesDetail(
-      idAlumno,
-      idCurso,
-    );
-  }
-
   async getStudentMissions(
     idAlumno: string,
     idCurso: string,

@@ -2,17 +2,13 @@ import apiClient from "../../../lib/axios";
 // Usamos el tipo que ya existe
 import type {
   Consulta,
-  DificultadConTema,
   DificultadAlumnoDetallada,
-  DificultadesCurso,
   DocenteBasico,
-  AlumnoDificultadResumen,
   FindConsultasParams,
   MisionConEstado,
   ConsultaDocente,
   PaginatedConsultasDocenteResponse,
   CourseDashboardData,
-  ProgresoAlumnoDetallado,
 } from "../../../types";
 import type { CreateRespuestaFormValues } from "../../consultas/validations/createRespuesta.schema";
 
@@ -28,92 +24,6 @@ export const getCourseDashboardStats = async (
   } catch (err: any) {
     console.error("Error fetching dashboard stats:", err);
     throw err.response?.data || new Error("Error al obtener estadísticas.");
-  }
-};
-
-/**
- * Obtiene el Resumen (KPIs) de Dificultades de un curso
- */
-export const getCourseDifficultiesOverview = async (
-  idCurso: string,
-): Promise<DificultadesCurso> => {
-  try {
-    const response = await apiClient.get(
-      `/docentes/my/courses/${idCurso}/difficulties-overview`,
-    );
-    // Convertimos los Decimal a Number si es necesario
-    response.data.promDificultades = parseFloat(response.data.promDificultades);
-    return response.data;
-  } catch (err: any) {
-    console.error(
-      "Error fetching difficulties overview:",
-      err.response?.data || err.message,
-    );
-    throw (
-      err.response?.data ||
-      new Error("Error al obtener el resumen de dificultades.")
-    );
-  }
-};
-
-// Un tipo simple para la respuesta del filtro
-
-/**
- * Obtiene la lista completa de dificultades para los filtros.
- */
-export async function getAllDifficulties(): Promise<DificultadConTema[]> {
-  try {
-    // (Asegúrate de que 'apiClient' esté configurado)
-    const response = await apiClient.get("/difficulties/all");
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching all difficulties:", error);
-    throw new Error("No se pudo cargar la lista de dificultades.");
-  }
-}
-
-/**
- * Obtiene la lista paginada de alumnos para la DataGrid de Dificultades
- */
-export const getStudentDifficultyList = async (
-  idCurso: string,
-): Promise<AlumnoDificultadResumen[]> => {
-  try {
-    const response = await apiClient.get(
-      `/docentes/my/courses/${idCurso}/difficulties-list`,
-    );
-    return response.data;
-  } catch (err: any) {
-    console.error(
-      "Error fetching student difficulty list:",
-      err.response?.data || err.message,
-    );
-    throw (
-      err.response?.data || new Error("Error al obtener la lista de alumnos.")
-    );
-  }
-};
-
-/**
- * Obtiene el detalle de dificultades de UN alumno (para el modal)
- */
-export const getStudentDifficultiesDetail = async (
-  idCurso: string,
-  idAlumno: string,
-): Promise<DificultadAlumnoDetallada[]> => {
-  try {
-    const response = await apiClient.get(
-      `/docentes/my/courses/${idCurso}/student/${idAlumno}/difficulties`,
-    );
-    return response.data;
-  } catch (err: any) {
-    console.error(
-      "Error fetching student difficulties detail:",
-      err.response?.data || err.message,
-    );
-    throw (
-      err.response?.data || new Error("Error al obtener el detalle del alumno.")
-    );
   }
 };
 

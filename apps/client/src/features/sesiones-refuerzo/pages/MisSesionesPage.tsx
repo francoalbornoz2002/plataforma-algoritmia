@@ -34,14 +34,12 @@ import { EstadoSesionLabels } from "../../../types/traducciones";
 
 // Components
 import MySesionCard from "../components/MySesionCard";
-import {
-  findActiveDocentes,
-  getAllDifficulties,
-} from "../../users/services/docentes.service";
+import { findActiveDocentes } from "../../users/services/docentes.service";
 import SesionDetailModal from "../../reports/components/sesiones-refuerzo/SesionDetailModal";
 import HeaderPage from "../../../components/HeaderPage";
 import { SwitchAccessShortcutAdd } from "@mui/icons-material";
 import { datePickerConfig } from "../../../config/theme.config";
+import { getAllDifficulties } from "../../difficulties/services/difficulties.service";
 
 export default function MisSesionesPage() {
   const { selectedCourse, isReadOnly } = useCourseContext();

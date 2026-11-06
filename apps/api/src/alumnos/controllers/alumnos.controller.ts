@@ -28,16 +28,6 @@ export class AlumnosController {
   constructor(private readonly alumnosService: AlumnosService) {}
 
   @Roles(roles.Alumno)
-  @Get('my/difficulties')
-  findMyDifficulties(
-    @Req() req: AuthenticatedUserRequest,
-    @Query('idCurso', ParseUUIDPipe) idCurso: string,
-  ) {
-    const idAlumno = req.user.userId;
-    return this.alumnosService.findMyDifficulties(idAlumno, idCurso);
-  }
-
-  @Roles(roles.Alumno)
   @Get('my/missions')
   findMyMissions(
     @Req() req: AuthenticatedUserRequest,
@@ -128,15 +118,6 @@ export class AlumnosController {
   ) {
     const idDocente = req.user.userId;
     return this.alumnosService.findEligibleForRefuerzo(idCurso, idDocente);
-  }
-
-  @Roles(roles.Docente)
-  @Get(':idAlumno/difficulties')
-  getStudentDifficulties(
-    @Param('idAlumno', ParseUUIDPipe) idAlumno: string,
-    @Query('idCurso', ParseUUIDPipe) idCurso: string,
-  ) {
-    return this.alumnosService.findMyDifficulties(idAlumno, idCurso);
   }
 
   @Public()

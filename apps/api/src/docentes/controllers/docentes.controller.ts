@@ -29,41 +29,6 @@ export class DocentesController {
     private readonly consultasService: ConsultasService,
   ) {}
 
-  @Get('my/courses/:idCurso/difficulties-overview')
-  getCourseDifficultiesOverview(
-    @Param('idCurso', ParseUUIDPipe) idCurso: string,
-    @Req() req: AuthenticatedUserRequest,
-  ) {
-    const idDocente = req.user.userId;
-    return this.docentesService.getCourseDifficultiesOverview(
-      idCurso,
-      idDocente,
-    );
-  }
-
-  @Get('my/courses/:idCurso/difficulties-list')
-  getStudentDifficultyList(
-    @Param('idCurso', ParseUUIDPipe) idCurso: string,
-    @Req() req: AuthenticatedUserRequest,
-  ) {
-    const idDocente = req.user.userId;
-    return this.docentesService.getStudentDifficultyList(idCurso, idDocente);
-  }
-
-  @Get('my/courses/:idCurso/student/:idAlumno/difficulties')
-  getStudentDifficultiesDetail(
-    @Param('idCurso', ParseUUIDPipe) idCurso: string,
-    @Param('idAlumno', ParseUUIDPipe) idAlumno: string,
-    @Req() req: AuthenticatedUserRequest,
-  ) {
-    const idDocente = req.user.userId; // <-- Añadido
-    return this.docentesService.getStudentDifficultiesDetail(
-      idAlumno,
-      idCurso,
-      idDocente,
-    );
-  }
-
   @Get('my/courses/:idCurso/student/:idAlumno/missions')
   getStudentMissions(
     @Param('idCurso', ParseUUIDPipe) idCurso: string,

@@ -1,5 +1,28 @@
 import apiClient from "../../../lib/axios";
-import type { ProgresoAlumnoDetallado, ProgresoCurso } from "../../../types";
+import type {
+  ProgresoAlumno,
+  ProgresoAlumnoDetallado,
+  ProgresoCurso,
+} from "../../../types";
+
+/**
+ * Siendo alumno, obtiene mi progreso en un curso específico.
+ * @param idCurso - El ID del curso.
+ */
+export const getMyProgress = async (
+  idCurso: string,
+): Promise<ProgresoAlumno> => {
+  try {
+    const response = await apiClient.get(`/progreso/${idCurso}/mi-progreso`);
+    return response.data;
+  } catch (err: any) {
+    console.error(
+      "Error fetching student progress:",
+      err.response?.data || err.message,
+    );
+    throw err.response?.data || new Error("Error al obtener tu progreso.");
+  }
+};
 
 /**
  * Obtiene el Resumen (KPIs) de un curso específico

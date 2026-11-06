@@ -39,10 +39,7 @@ import { EstadoSesionLabels } from "../../../types/traducciones";
 // 2. Componentes Hijos
 import SesionCard from "../components/SesionCard";
 import DeleteSesionDialog from "../components/DeleteSesionDialog"; // 4. Reemplazo de Dialog
-import {
-  findActiveDocentes,
-  getAllDifficulties,
-} from "../../users/services/docentes.service";
+import { findActiveDocentes } from "../../users/services/docentes.service";
 import SesionFormModal from "../components/SesionFormModal";
 import SesionDetailModal from "../../reports/components/sesiones-refuerzo/SesionDetailModal";
 import HeaderPage from "../../../components/HeaderPage";
@@ -50,6 +47,7 @@ import { datePickerConfig } from "../../../config/theme.config";
 import { SwitchAccessShortcutAdd } from "@mui/icons-material";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import { getAllDifficulties } from "../../difficulties/services/difficulties.service";
 
 export default function SesionesRefuerzoPage() {
   const { selectedCourse, isReadOnly } = useCourseContext();

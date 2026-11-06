@@ -27,11 +27,6 @@ export class AlumnosService {
     private consultasService: ConsultasService,
   ) {}
 
-  async findMyDifficulties(idAlumno: string, idCurso: string) {
-    // 3. Llamamos al servicio experto
-    return this.difficultiesService.getStudentDifficulties(idAlumno, idCurso);
-  }
-
   async findMyMissions(idAlumno: string, idCurso: string) {
     return this.progressService.getStudentMissionStatus(idAlumno, idCurso);
   }

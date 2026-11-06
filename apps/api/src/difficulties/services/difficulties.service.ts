@@ -18,6 +18,7 @@ import {
 } from '@prisma/client';
 import { SubmitDifficultyDto } from '../dto/submit-difficulty.dto';
 import { SesionesRefuerzoService } from '../../sesiones-refuerzo/service/sesiones-refuerzo.service';
+import { checkDocenteAccess } from 'src/helpers/access.helper';
 
 @Injectable()
 export class DifficultiesService {
@@ -85,7 +86,9 @@ export class DifficultiesService {
    * MÉTODO 1: Obtener el Resumen (KPIs) del Curso
    * (Lee la tabla 'DificultadesCurso' vinculada)
    */
-  async getCourseDifficultiesOverview(idCurso: string) {
+  async getCourseDifficultiesOverview(idDocente: string, idCurso: string) {
+    await checkDocenteAccess(this.prisma, idDocente, idCurso);
+
     try {
       const curso = await this.prisma.curso.findUnique({
         where: { id: idCurso },
@@ -183,7 +186,8 @@ export class DifficultiesService {
   /**
    * MÉTODO 2: Obtener la lista de alumnos para la DataGrid (Resumen)
    */
-  async getStudentDifficultyList(idCurso: string) {
+  async getStudentDifficultyList(idDocente: string, idCurso: string) {
+    await checkDocenteAccess(this.prisma, idDocente, idCurso);
     // 0. Verificar estado del curso
     const curso = await this.prisma.curso.findUnique({
       where: { id: idCurso },
@@ -270,60 +274,6 @@ export class DifficultiesService {
       console.error('Error en getStudentDifficultyList:', error);
       throw new InternalServerErrorException(
         'Error al obtener la lista de alumnos.',
-      );
-    }
-  }
-
-  /**
-   * MÉTODO 3: Obtener el detalle de dificultades de UN alumno
-   * (Reutiliza la lógica de consulta por inscripción para el Modal del Docente)
-   */
-  async getStudentDifficultiesDetail(idAlumno: string, idCurso: string) {
-    try {
-      const inscripcion = await this.prisma.inscripcionesAlumnoCurso.findFirst({
-        where: { idAlumno, idCurso },
-      });
-
-      if (!inscripcion) {
-        throw new NotFoundException(
-          'No se encontró una inscripción para este alumno en este curso.',
-        );
-      }
-
-      const dificultadesAlumno = await this.prisma.dificultadesAlumno.findMany({
-        where: {
-          idInscripcion: inscripcion.id,
-        },
-        include: {
-          dificultad: true,
-        },
-        orderBy: {
-          fechaRegistro: 'desc',
-        },
-      });
-
-      // Deduplicar para conservar únicamente el registro más reciente de cada dificultad
-      const latestMap = new Map<string, (typeof dificultadesAlumno)[0]>();
-      for (const da of dificultadesAlumno) {
-        if (!latestMap.has(da.idDificultad)) {
-          latestMap.set(da.idDificultad, da);
-        }
-      }
-      const latestList = Array.from(latestMap.values());
-
-      // Mapeamos para el frontend
-      return latestList.map((da) => ({
-        id: da.dificultad.id,
-        nombre: da.dificultad.nombre,
-        descripcion: da.dificultad.descripcion,
-        tema: da.dificultad.tema,
-        grado: da.gradoActual,
-      }));
-    } catch (error) {
-      if (error instanceof NotFoundException) throw error;
-      console.error('Error en getStudentDifficultiesDetail:', error);
-      throw new InternalServerErrorException(
-        'Error al obtener las dificultades del alumno.',
       );
     }
   }

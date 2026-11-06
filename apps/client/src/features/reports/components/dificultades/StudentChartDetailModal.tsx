@@ -10,9 +10,9 @@ import {
   DialogActions,
   Button,
 } from "@mui/material";
-import { getStudentDifficultiesDetail } from "../../../users/services/docentes.service";
 import DifficultyCard from "../../../difficulties/components/DifficultyCard";
 import type { DificultadAlumnoDetallada } from "../../../../types";
+import { getStudentDifficulties } from "../../../difficulties/services/difficulties.service";
 
 interface Props {
   open: boolean;
@@ -43,7 +43,7 @@ export default function StudentChartDetailModal({
     if (open) {
       setLoading(true);
       setError(null);
-      getStudentDifficultiesDetail(idCurso, idAlumno)
+      getStudentDifficulties(idCurso, idAlumno)
         .then(setDifficulties)
         .catch((err) =>
           setError(err.message || "Error al cargar las dificultades."),

@@ -40,7 +40,7 @@ import {
   type PreguntaFormValues,
 } from "../validations/pregunta.schema";
 import { preguntasService } from "../service/preguntas.service";
-import { getAllDifficulties } from "../../users/services/docentes.service";
+import { getAllDifficulties } from "../../difficulties/services/difficulties.service";
 import { TemasLabels } from "../../../types/traducciones";
 
 interface PreguntaFormDialogProps {

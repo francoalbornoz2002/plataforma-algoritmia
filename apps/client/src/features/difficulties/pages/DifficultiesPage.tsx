@@ -23,11 +23,7 @@ import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
 // 1. Hooks y Servicios
 import { useCourseContext } from "../../../context/CourseContext";
-import {
-  getAllDifficulties,
-  getCourseDifficultiesOverview,
-  getStudentDifficultyList,
-} from "../../users/services/docentes.service";
+import { getStudentDifficultyList } from "../../difficulties/services/difficulties.service";
 
 // 2. Tipos
 import type {
@@ -47,6 +43,10 @@ import SchoolIcon from "@mui/icons-material/School";
 import DifficultiesItem from "../components/DifficultiesItem";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import {
+  getAllDifficulties,
+  getCourseDifficultiesOverview,
+} from "../services/difficulties.service";
 
 // Tipo para la fila de la DataGrid
 type StudentRow = AlumnoDificultadResumen;

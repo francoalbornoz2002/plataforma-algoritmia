@@ -1,54 +1,17 @@
 import apiClient from "../../../lib/axios";
-// Usamos el tipo que ya existe
 import type {
   Consulta,
-  DificultadAlumnoDetallada,
   DocenteBasico,
   FindConsultasParams,
   MisionConEstado,
   PaginatedConsultasResponse,
-  PaginatedConsultasDocenteResponse, // Usamos este tipo porque incluye datos del alumno autor
-  ProgresoAlumno,
+  PaginatedConsultasDocenteResponse,
 } from "../../../types";
 import type {
   CreateConsultaFormValues,
   UpdateConsultaFormValues,
 } from "../../consultas/validations/consulta.schema";
 import type { ValorarConsultaFormValues } from "../../consultas/validations/valorarConsulta.schema";
-
-export const getMyProgress = async (
-  idCurso: string,
-): Promise<ProgresoAlumno> => {
-  try {
-    const response = await apiClient.get(`/progreso/${idCurso}/mi-progreso`, {
-      params: { idCurso }, // Envía ?idCurso=...
-    });
-    return response.data;
-  } catch (err: any) {
-    console.error(
-      "Error fetching student progress:",
-      err.response?.data || err.message,
-    );
-    throw err.response?.data || new Error("Error al obtener tu progreso.");
-  }
-};
-
-export const getMyDifficulties = async (
-  idCurso: string,
-): Promise<DificultadAlumnoDetallada[]> => {
-  try {
-    const response = await apiClient.get("/alumnos/my/difficulties", {
-      params: { idCurso }, // Envía ?idCurso=...
-    });
-    return response.data;
-  } catch (err: any) {
-    console.error(
-      "Error fetching student difficulties:",
-      err.response?.data || err.message,
-    );
-    throw err.response?.data || new Error("Error al obtener tus dificultades.");
-  }
-};
 
 /**
  * Obtiene el estado de todas las misiones (completadas/pendientes)
@@ -281,20 +244,4 @@ export const findEligibleAlumnos = async (
       new Error("Error al obtener la lista de alumnos elegibles.")
     );
   }
-};
-
-/**
- * Obtiene las dificultades detalladas para un alumno específico en un curso.
- * @param idCurso - El ID del curso.
- * @param idAlumno - El ID del alumno.
- */
-export const getStudentDifficulties = async (
-  idCurso: string,
-  idAlumno: string,
-): Promise<DificultadAlumnoDetallada[]> => {
-  // Reutiliza el endpoint existente `getMyDifficulties` pero para un alumno específico
-  const response = await apiClient.get(`/alumnos/${idAlumno}/difficulties`, {
-    params: { idCurso },
-  });
-  return response.data;
 };

@@ -20,11 +20,11 @@ import {
   temas,
   type DificultadAlumnoDetallada,
 } from "../../../types";
-import { getMyDifficulties } from "../../users/services/alumnos.service";
 import DifficultyCard from "../components/DifficultyCard";
 import { TemasLabels } from "../../../types/traducciones";
 import HeaderPage from "../../../components/HeaderPage";
 import { AssignmentLate } from "@mui/icons-material";
+import { getMyDifficulties } from "../services/difficulties.service";
 
 export default function MyDifficultiesPage() {
   const { selectedCourse } = useCourseContext();
