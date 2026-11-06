@@ -35,10 +35,10 @@ import DeletePreguntaDialog from "../components/DeletePreguntaDialog";
 
 const PAGE_SIZE = 5;
 
-import { getAllDifficulties } from "../../users/services/docentes.service";
 import { TemasLabels } from "../../../types/traducciones";
 import HeaderPage from "../../../components/HeaderPage";
 import { Quiz } from "@mui/icons-material";
+import { getAllDifficulties } from "../../difficulties/services/difficulties.service";
 export default function PreguntasPage() {
   // Estados de la lista
   const [preguntas, setPreguntas] = useState<PreguntaConDetalles[]>([]);

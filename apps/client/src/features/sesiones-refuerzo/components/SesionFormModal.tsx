@@ -35,7 +35,6 @@ import {
   type SesionRefuerzoResumen,
   grado_dificultad,
 } from "../../../types";
-import { getStudentDifficulties } from "../../users/services/alumnos.service";
 import { findSystemPreguntasForSesion } from "../../preguntas/service/preguntas.service";
 import AddExtraPreguntaModal from "./AddExtraPreguntaModal";
 import {
@@ -46,6 +45,7 @@ import {
 import PreguntaSesionAccordion from "./PreguntaSesionAccordion";
 import SelectStudentModal from "./SelectStudentModal";
 import { datePickerConfig } from "../../../config/theme.config";
+import { getStudentDifficulties } from "../../difficulties/services/difficulties.service";
 
 interface SesionFormModalProps {
   open: boolean;
