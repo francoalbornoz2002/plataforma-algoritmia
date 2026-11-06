@@ -28,7 +28,10 @@ import { MailService } from 'src/mail/services/mail.service';
 import { JoinCourseDto } from '../dto/join-course-dto';
 import { ProgressService } from 'src/progress/services/progress.service';
 import { DifficultiesService } from 'src/difficulties/services/difficulties.service';
-import { checkDocenteAccess } from 'src/helpers/access.helper';
+import {
+  checkAlumnoAccess,
+  checkDocenteAccess,
+} from 'src/helpers/access.helper';
 
 @Injectable()
 export class CoursesService {
@@ -327,6 +330,42 @@ export class CoursesService {
       ...i.alumno,
       fechaInscripcion: i.fechaInscripcion,
     }));
+  }
+
+  /**
+   * Obtiene la lista de docentes activos de un curso (para los filtros)
+   */
+  async findActiveDocentesByCurso(
+    idCurso: string,
+    idUsuarioSolicitante: string,
+    rol: roles,
+  ) {
+    // 1. Validamos acceso según el rol del solicitante
+    if (rol === roles.Alumno) {
+      await checkAlumnoAccess(this.prisma, idUsuarioSolicitante, idCurso);
+    } else {
+      await checkDocenteAccess(this.prisma, idUsuarioSolicitante, idCurso);
+    }
+
+    // 2. Buscamos los docentes activos
+    const asignaciones = await this.prisma.asignacionesDocenteCurso.findMany({
+      where: {
+        idCurso: idCurso,
+        estado: estado_simple.Activo,
+      },
+      include: {
+        docente: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+          },
+        },
+      },
+    });
+
+    // 3. Mapeamos la respuesta
+    return asignaciones.map((a) => a.docente);
   }
 
   async findEligibleForRefuerzo(idCurso: string, idDocente: string) {

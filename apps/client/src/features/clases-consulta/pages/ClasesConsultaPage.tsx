@@ -21,10 +21,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 // 1. Hooks, Servicios y Tipos
 import { useCourseContext } from "../../../context/CourseContext";
-import {
-  findActiveDocentes,
-  findPendingConsultas,
-} from "../../users/services/docentes.service";
+import { findPendingConsultas } from "../../users/services/docentes.service";
 import {
   aceptarClaseAutomatica,
   finalizarClase,
@@ -52,6 +49,7 @@ import { datePickerConfig } from "../../../config/theme.config";
 import { useAuth } from "../../authentication/context/AuthProvider";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import { findActiveDocentes } from "../../courses/services/courses.service";
 
 // Tipos para los filtros
 type OrdenFiltro =
@@ -84,8 +82,7 @@ export default function ClasesConsultaPage() {
   const [hasSelectedSortOption, setHasSelectedSortOption] = useState(true);
 
   const sortDirectionIcon = (field: OrdenCampo) => {
-    if (orden === `${field}-asc`)
-      return <ArrowUpwardIcon fontSize="small" />;
+    if (orden === `${field}-asc`) return <ArrowUpwardIcon fontSize="small" />;
     if (orden === `${field}-desc`)
       return <ArrowDownwardIcon fontSize="small" />;
     return null;

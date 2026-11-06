@@ -11,6 +11,7 @@ import type {
   UpdateCourseData,
   AlumnoActivo,
   AlumnoElegible,
+  DocenteBasico,
 } from "../../../types";
 
 // Interfaz para los parámetros de búsqueda
@@ -223,7 +224,6 @@ export const findActiveAlumnos = async (
   idCurso: string,
 ): Promise<AlumnoActivo[]> => {
   try {
-    // Asumimos que existe un endpoint para esto, similar a active-docentes.
     const response = await apiClient.get(`/cursos/${idCurso}/alumnos-activos`);
     return response.data;
   } catch (err: any) {
@@ -235,6 +235,24 @@ export const findActiveAlumnos = async (
       err.response?.data ||
       new Error("Error al obtener la lista de alumnos activos.")
     );
+  }
+};
+
+/**
+ * Obtiene la lista de docentes activos de un curso (para filtros)
+ */
+export const findActiveDocentes = async (
+  idCurso: string,
+): Promise<DocenteBasico[]> => {
+  try {
+    const response = await apiClient.get(`/cursos/${idCurso}/docentes-activos`);
+    return response.data;
+  } catch (err: any) {
+    console.error(
+      "Error fetching active docentes:",
+      err.response?.data || err.message,
+    );
+    throw err.response?.data || new Error("Error al obtener los docentes.");
   }
 };
 

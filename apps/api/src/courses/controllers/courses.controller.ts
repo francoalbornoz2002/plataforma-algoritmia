@@ -94,6 +94,18 @@ export class CoursesController {
     return this.coursesService.findActiveAlumnosByCurso(id, idDocente);
   }
 
+  @Get(':id/docentes-activos')
+  getActiveDocentes(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    return this.coursesService.findActiveDocentesByCurso(
+      id,
+      req.user.userId,
+      req.user.rol,
+    );
+  }
+
   @Roles(roles.Docente)
   @Get(':id/alumnos-aptos-refuerzo')
   findEligibleForRefuerzo(

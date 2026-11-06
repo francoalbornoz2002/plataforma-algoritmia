@@ -32,42 +32,6 @@ export class DocentesService {
   ) {}
 
   /**
-   * Obtiene la lista de docentes activos de un curso (para los filtros)
-   */
-  async findActiveDocentesByCurso(
-    idCurso: string,
-    idUsuarioSolicitante: string,
-    rol: roles,
-  ) {
-    // 1. Validamos acceso según el rol del solicitante
-    if (rol === roles.Alumno) {
-      await checkAlumnoAccess(this.prisma, idUsuarioSolicitante, idCurso);
-    } else {
-      await checkDocenteAccess(this.prisma, idUsuarioSolicitante, idCurso);
-    }
-
-    // 2. Buscamos los docentes activos
-    const asignaciones = await this.prisma.asignacionesDocenteCurso.findMany({
-      where: {
-        idCurso: idCurso,
-        estado: estado_simple.Activo,
-      },
-      include: {
-        docente: {
-          select: {
-            id: true,
-            nombre: true,
-            apellido: true,
-          },
-        },
-      },
-    });
-
-    // 3. Mapeamos la respuesta
-    return asignaciones.map((a) => a.docente);
-  }
-
-  /**
    * Da de baja a un alumno de un curso específico.
    * (Soft delete de la inscripción y cierre de pendientes)
    */

@@ -29,15 +29,6 @@ export class DocentesController {
     private readonly consultasService: ConsultasService,
   ) {}
 
-  @Get('my/courses/:idCurso/active-docentes')
-  getActiveDocentes(
-    @Param('idCurso', ParseUUIDPipe) idCurso: string,
-    @Req() req: AuthenticatedUserRequest,
-  ) {
-    const { userId, rol } = req.user;
-    return this.docentesService.findActiveDocentesByCurso(idCurso, userId, rol);
-  }
-
   // --- ¡NUEVO ENDPOINT 2! ---
   @Get('my/courses/:idCurso/pending-consultas')
   getPendingConsultas(

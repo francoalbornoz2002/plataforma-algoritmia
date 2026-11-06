@@ -25,7 +25,10 @@ import AutoAwesome from "@mui/icons-material/AutoAwesome";
 // 1. Hooks, Servicios y Tipos
 import { useCourseContext } from "../../../context/CourseContext";
 import { findAllSesiones } from "../service/sesiones-refuerzo.service";
-import { findActiveAlumnos } from "../../courses/services/courses.service";
+import {
+  findActiveAlumnos,
+  findActiveDocentes,
+} from "../../courses/services/courses.service";
 
 import {
   type SesionRefuerzoResumen,
@@ -38,8 +41,7 @@ import { EstadoSesionLabels } from "../../../types/traducciones";
 
 // 2. Componentes Hijos
 import SesionCard from "../components/SesionCard";
-import DeleteSesionDialog from "../components/DeleteSesionDialog"; // 4. Reemplazo de Dialog
-import { findActiveDocentes } from "../../users/services/docentes.service";
+import DeleteSesionDialog from "../components/DeleteSesionDialog";
 import SesionFormModal from "../components/SesionFormModal";
 import SesionDetailModal from "../../reports/components/sesiones-refuerzo/SesionDetailModal";
 import HeaderPage from "../../../components/HeaderPage";
