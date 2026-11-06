@@ -27,10 +27,6 @@ export class AlumnosService {
     private consultasService: ConsultasService,
   ) {}
 
-  async findMyMissions(idAlumno: string, idCurso: string) {
-    return this.progressService.getStudentMissionStatus(idAlumno, idCurso);
-  }
-
   async findMyConsultas(
     idAlumno: string,
     idCurso: string,

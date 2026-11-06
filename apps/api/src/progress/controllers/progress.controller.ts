@@ -64,4 +64,14 @@ export class ProgressController {
   ) {
     return this.progressService.getStudentProgress(req.user.userId, idCurso);
   }
+
+  @Roles(roles.Alumno)
+  @Get(':idCurso/mis-misiones')
+  findMyMissions(
+    @Req() req: AuthenticatedUserRequest,
+    @Query('idCurso', ParseUUIDPipe) idCurso: string,
+  ) {
+    const idAlumno = req.user.userId;
+    return this.progressService.getStudentMissionStatus(idAlumno, idCurso);
+  }
 }

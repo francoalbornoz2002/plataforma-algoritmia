@@ -1,5 +1,6 @@
 import apiClient from "../../../lib/axios";
 import type {
+  MisionConEstado,
   ProgresoAlumno,
   ProgresoAlumnoDetallado,
   ProgresoCurso,
@@ -21,6 +22,25 @@ export const getMyProgress = async (
       err.response?.data || err.message,
     );
     throw err.response?.data || new Error("Error al obtener tu progreso.");
+  }
+};
+
+/**
+ * Obtiene el estado de todas las misiones (completadas/pendientes)
+ * para el alumno actual en el curso seleccionado.
+ */
+export const getMyMissions = async (
+  idCurso: string,
+): Promise<MisionConEstado[]> => {
+  try {
+    const response = await apiClient.get(`/progreso/${idCurso}/mis-misiones`);
+    return response.data;
+  } catch (err: any) {
+    console.error(
+      "Error fetching student missions:",
+      err.response?.data || err.message,
+    );
+    throw err.response?.data || new Error("Error al obtener tus misiones.");
   }
 };
 

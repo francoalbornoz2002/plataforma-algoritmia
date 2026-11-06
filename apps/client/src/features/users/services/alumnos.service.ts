@@ -3,7 +3,6 @@ import type {
   Consulta,
   DocenteBasico,
   FindConsultasParams,
-  MisionConEstado,
   PaginatedConsultasResponse,
   PaginatedConsultasDocenteResponse,
 } from "../../../types";
@@ -12,27 +11,6 @@ import type {
   UpdateConsultaFormValues,
 } from "../../consultas/validations/consulta.schema";
 import type { ValorarConsultaFormValues } from "../../consultas/validations/valorarConsulta.schema";
-
-/**
- * Obtiene el estado de todas las misiones (completadas/pendientes)
- * para el alumno actual en el curso seleccionado.
- */
-export const getMyMissions = async (
-  idCurso: string,
-): Promise<MisionConEstado[]> => {
-  try {
-    const response = await apiClient.get("/alumnos/my/missions", {
-      params: { idCurso },
-    });
-    return response.data;
-  } catch (err: any) {
-    console.error(
-      "Error fetching student missions:",
-      err.response?.data || err.message,
-    );
-    throw err.response?.data || new Error("Error al obtener tus misiones.");
-  }
-};
 
 /**
  * Obtiene la lista paginada y filtrada de consultas del alumno
