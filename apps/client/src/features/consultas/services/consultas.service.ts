@@ -138,13 +138,15 @@ export const findConsultasForCurso = async (
 };
 
 /**
- * Obtiene la lista de consultas pendientes de un curso
+ * Obtiene las consultas pendientes de un curso.
  */
 export const findPendingConsultas = async (
   idCurso: string,
 ): Promise<ConsultaDocente[]> => {
   try {
-    const response = await apiClient.get(`/consultas/${idCurso}/pendientes`);
+    const response = await apiClient.get(
+      `/cursos/${idCurso}/consultas/pendientes`,
+    );
     return response.data;
   } catch (err: any) {
     console.error(

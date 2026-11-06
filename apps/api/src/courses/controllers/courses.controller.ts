@@ -148,6 +148,11 @@ export class CoursesController {
     );
   }
 
+  @Get(':id/consultas/pendientes')
+  getPendingConsultas(@Param('id', ParseUUIDPipe) id: string) {
+    return this.consultasService.findPendingConsultasByCurso(id);
+  }
+
   @Roles(roles.Alumno)
   @Get(':id/alumnos/:idAlumno/consultas')
   findAllConsultasForAlumno(

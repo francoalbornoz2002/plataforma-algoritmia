@@ -70,8 +70,4 @@ export class ConsultasController {
     return this.consultasService.responder(id, req.user.userId, dto);
   }
 
-  @Get(':idCurso/pendientes')
-  getPendingConsultas(@Param('idCurso', ParseUUIDPipe) idCurso: string) {
-    return this.consultasService.findPendingConsultasByCurso(idCurso);
-  }
 }
