@@ -20,7 +20,6 @@ import CourseInfoCard from "./components/CourseInfoCard";
 
 import { useCourseContext } from "../../context/CourseContext";
 
-import { getCourseDashboardStats } from "../users/services/docentes.service";
 import ConfirmationDialog from "../../components/ConfirmationDialog";
 import CourseFormDialog from "../courses/components/CourseFormDialog";
 import { enqueueSnackbar } from "notistack";
@@ -51,6 +50,7 @@ import { temas } from "../../types";
 import CardIcon from "../../components/CardIcon";
 import {
   findActiveAlumnos,
+  getCourseDashboardStats,
   removeStudentFromCourse,
 } from "../courses/services/courses.service";
 
@@ -80,7 +80,6 @@ export default function DocenteDashboardPage() {
   const baseUrl = import.meta.env.VITE_API_URL_WITHOUT_PREFIX;
 
   // Estados de Datos
-  const [loadingStudents, setLoadingStudents] = useState(false);
   const [students, setStudents] = useState<any[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<any[]>([]);
   const [stats, setStats] = useState<CourseDashboardData | null>(null);
@@ -104,7 +103,6 @@ export default function DocenteDashboardPage() {
   // --- CARGA DE DATOS ---
   const fetchAllData = async () => {
     if (!selectedCourse) return;
-    setLoadingStudents(true);
     setError(null);
     try {
       // 1. Cargar lista de alumnos activos
@@ -123,7 +121,6 @@ export default function DocenteDashboardPage() {
       console.error(err);
       setError("Error al cargar datos del dashboard.");
     } finally {
-      setLoadingStudents(false);
     }
   };
 

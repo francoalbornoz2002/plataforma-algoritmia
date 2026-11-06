@@ -77,16 +77,6 @@ export class CoursesController {
     return this.coursesService.remove(id);
   }
 
-  @Delete(':id/alumnos/:idAlumno/baja')
-  removeStudent(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Param('idAlumno', ParseUUIDPipe) idAlumno: string,
-    @Req() req: AuthenticatedUserRequest,
-  ) {
-    const idDocente = req.user.userId;
-    return this.coursesService.removeStudent(id, idAlumno, idDocente);
-  }
-
   @Roles(roles.Administrador)
   @Patch(':id/finalizar')
   finalize(@Param('id') id: string) {
@@ -155,16 +145,6 @@ export class CoursesController {
     return this.consultasService.findPendingConsultasByCurso(id);
   }
 
-  @Roles(roles.Alumno)
-  @Get(':id/alumnos/:idAlumno/consultas')
-  findAllConsultasForAlumno(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Param('idAlumno', ParseUUIDPipe) idAlumno: string,
-    @Query() dto: FindConsultasDto,
-  ) {
-    return this.consultasService.findConsultasForAlumno(idAlumno, id, dto);
-  }
-
   @Get(':id/clases-consulta')
   @Roles(roles.Alumno, roles.Docente)
   findAllClasesConsulta(
@@ -184,17 +164,37 @@ export class CoursesController {
   }
 
   @Roles(roles.Docente, roles.Administrador)
-  @Get(':id/dashboard-stats')
+  @Get(':id/dashboard')
   getDashboardStats(@Param('id', ParseUUIDPipe) id: string) {
     return this.coursesService.getDashboardStats(id);
   }
 
-  @Roles(roles.Alumno)
-  @Get(':id/student-dashboard')
-  getStudentDashboardStats(
+  @Delete(':id/alumnos/:idAlumno/baja')
+  removeStudent(
     @Param('id', ParseUUIDPipe) id: string,
+    @Param('idAlumno', ParseUUIDPipe) idAlumno: string,
     @Req() req: AuthenticatedUserRequest,
   ) {
-    return this.coursesService.getStudentDashboardStats(id, req.user.userId);
+    const idDocente = req.user.userId;
+    return this.coursesService.removeStudent(id, idAlumno, idDocente);
+  }
+
+  @Roles(roles.Alumno)
+  @Get(':id/alumnos/:idAlumno/consultas')
+  findAllConsultasForAlumno(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('idAlumno', ParseUUIDPipe) idAlumno: string,
+    @Query() dto: FindConsultasDto,
+  ) {
+    return this.consultasService.findConsultasForAlumno(idAlumno, id, dto);
+  }
+
+  @Roles(roles.Alumno)
+  @Get(':id/alumnos/:idAlumno/dashboard')
+  getStudentDashboardStats(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('idAlumno', ParseUUIDPipe) idAlumno: string,
+  ) {
+    return this.coursesService.getStudentDashboardStats(id, idAlumno);
   }
 }

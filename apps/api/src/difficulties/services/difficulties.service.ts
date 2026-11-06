@@ -350,7 +350,6 @@ export class DifficultiesService {
               try {
                 // Usamos el servicio de sesiones para cancelar, pasando la transacción actual
                 await this.sesionesRefuerzoService.remove(
-                  idCurso,
                   sesionPendiente.id,
                   tx,
                 );

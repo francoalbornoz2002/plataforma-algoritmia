@@ -178,7 +178,10 @@ export default function AlumnoDashboardPage() {
       if (!selectedCourse) return;
       setLoading(true);
       try {
-        const data = await getStudentDashboardStats(selectedCourse.id);
+        const data = await getStudentDashboardStats(
+          selectedCourse.id,
+          profile?.id || "",
+        );
         setStats(data);
       } catch (err: any) {
         console.error(err);

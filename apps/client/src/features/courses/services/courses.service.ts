@@ -12,6 +12,7 @@ import type {
   AlumnoActivo,
   AlumnoElegible,
   DocenteBasico,
+  CourseDashboardData,
 } from "../../../types";
 
 // Interfaz para los parámetros de búsqueda
@@ -219,10 +220,13 @@ export const joinCourse = async (
 };
 
 // --- Función para obtener estadísticas del dashboard de ALUMNO ---
-export const getStudentDashboardStats = async (idCurso: string) => {
+export const getStudentDashboardStats = async (
+  idCurso: string,
+  idAlumno: string,
+) => {
   try {
     const response = await apiClient.get(
-      `/cursos/${idCurso}/student-dashboard`,
+      `/cursos/${idCurso}/alumnos/${idAlumno}/dashboard`,
     );
     return response.data;
   } catch (err: any) {
@@ -231,6 +235,21 @@ export const getStudentDashboardStats = async (idCurso: string) => {
       err.response?.data ||
       new Error("Error al obtener estadísticas del alumno.")
     );
+  }
+};
+
+/**
+ * Obtiene las estadísticas del dashboard para un curso (Docente)
+ */
+export const getCourseDashboardStats = async (
+  idCurso: string,
+): Promise<CourseDashboardData> => {
+  try {
+    const response = await apiClient.get(`/cursos/${idCurso}/dashboard`);
+    return response.data;
+  } catch (err: any) {
+    console.error("Error fetching dashboard stats:", err);
+    throw err.response?.data || new Error("Error al obtener estadísticas.");
   }
 };
 
