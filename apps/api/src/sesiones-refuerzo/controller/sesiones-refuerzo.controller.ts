@@ -34,14 +34,10 @@ export class SesionesRefuerzoController {
     return this.sesionesRefuerzoService.create(dto, req.user.userId);
   }
 
-  @Get(':idCurso/:id')
+  @Get(':id')
   @Roles(roles.Docente, roles.Alumno)
-  findOne(
-    @Param('idCurso') idCurso: string,
-    @Param('id') id: string,
-    @Req() req: AuthenticatedUserRequest,
-  ) {
-    return this.sesionesRefuerzoService.findOne(idCurso, id, req.user);
+  findOne(@Param('id') id: string, @Req() req: AuthenticatedUserRequest) {
+    return this.sesionesRefuerzoService.findOne(id, req.user);
   }
 
   @Patch(':idCurso/:id')

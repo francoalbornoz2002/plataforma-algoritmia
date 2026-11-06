@@ -181,7 +181,7 @@ export default function SesionFormModal({
     if (open) {
       if (isEditMode && sesionToEdit && selectedCourse) {
         setLoadingDetails(true);
-        findSesionById(selectedCourse.id, sesionToEdit.id)
+        findSesionById(sesionToEdit.id)
           .then((fullSesion) => {
             // 1. Populate form fields with data from the full session object
             reset({

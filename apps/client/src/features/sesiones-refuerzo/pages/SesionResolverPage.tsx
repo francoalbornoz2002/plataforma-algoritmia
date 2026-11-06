@@ -77,7 +77,7 @@ export default function SesionResolverPage() {
   useEffect(() => {
     if (selectedCourse && id) {
       setLoading(true);
-      findSesionById(selectedCourse.id, id)
+      findSesionById(id)
         .then((data) => {
           setSesion(data);
 
@@ -156,7 +156,7 @@ export default function SesionResolverPage() {
       );
 
       // Volvemos a buscar la sesión para obtener los resultados completos
-      const updatedSesion = await findSesionById(selectedCourse.id, sesion.id);
+      const updatedSesion = await findSesionById(sesion.id);
 
       // Actualizamos el estado final en un solo paso para evitar race conditions
       setFinalResultData({

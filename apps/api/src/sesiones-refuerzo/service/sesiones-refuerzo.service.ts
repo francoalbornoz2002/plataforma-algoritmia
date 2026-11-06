@@ -354,19 +354,11 @@ export class SesionesRefuerzoService {
     return sesiones;
   }
 
-  async findOne(idCurso: string, idSesion: string, user: UserPayload) {
-    // 1. Validar acceso al curso
-    if (user.rol === roles.Docente) {
-      await checkDocenteAccess(this.prisma, user.userId, idCurso);
-    } else {
-      await checkAlumnoAccess(this.prisma, user.userId, idCurso);
-    }
-
+  async findOne(idSesion: string, user: UserPayload) {
     // 2. Buscar la sesión con sus relaciones
     const sesion = await this.prisma.sesionRefuerzo.findUnique({
       where: {
         id: idSesion,
-        idCurso,
       },
       include: {
         preguntas: {
@@ -397,6 +389,15 @@ export class SesionesRefuerzoService {
         },
       },
     });
+
+    if (sesion) {
+      // 1. Validar acceso al curso
+      if (user.rol === roles.Docente) {
+        await checkDocenteAccess(this.prisma, user.userId, sesion.idCurso);
+      } else {
+        await checkAlumnoAccess(this.prisma, user.userId, sesion.idCurso);
+      }
+    }
 
     // 3. Validar si la sesión existe y si el usuario tiene permiso para verla
     if (!sesion) {

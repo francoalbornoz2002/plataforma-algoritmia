@@ -57,15 +57,13 @@ export const resolverSesion = async (
 
 /**
  * Busca y devuelve los detalles completos de una sesión de refuerzo específica.
- * @param idCurso - El ID del curso.
  * @param idSesion - El ID de la sesión de refuerzo.
  */
 export const findSesionById = async (
-  idCurso: string,
   idSesion: string,
 ): Promise<SesionRefuerzoConDetalles> => {
   const response = await apiClient.get<SesionRefuerzoConDetalles>(
-    `/sesiones-refuerzo/${idCurso}/${idSesion}`,
+    `/sesiones-refuerzo/${idSesion}`,
   );
   return response.data;
 };

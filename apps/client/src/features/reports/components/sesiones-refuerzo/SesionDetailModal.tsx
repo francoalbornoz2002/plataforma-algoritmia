@@ -42,9 +42,7 @@ export default function SesionDetailModal({
     if (open && sesion) {
       setLoading(true);
       setError(null);
-      // Usamos el courseId explícito si se pasa, si no, el del objeto sesión.
-      const idCurso = courseId || sesion.idCurso;
-      findSesionById(idCurso, sesion.id)
+      findSesionById(sesion.id)
         .then((data) => setFullSesion(data))
         .catch(() => setError("No se pudo cargar el detalle de la sesión."))
         .finally(() => setLoading(false));
