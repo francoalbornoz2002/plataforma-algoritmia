@@ -121,11 +121,10 @@ export const updateSesion = async (
  * @param idSesion - El ID de la sesión a cancelar.
  */
 export const deleteSesion = async (
-  idCurso: string,
   idSesion: string,
 ): Promise<SesionRefuerzoResumen> => {
   const response = await apiClient.delete<SesionRefuerzoResumen>(
-    `/sesiones-refuerzo/${idCurso}/${idSesion}`,
+    `/sesiones-refuerzo/${idSesion}`,
   );
   return response.data;
 };

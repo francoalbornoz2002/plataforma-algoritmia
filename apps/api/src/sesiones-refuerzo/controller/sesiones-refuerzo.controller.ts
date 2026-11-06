@@ -46,10 +46,10 @@ export class SesionesRefuerzoController {
     return this.sesionesRefuerzoService.update(id, dto);
   }
 
-  @Delete(':idCurso/:id')
+  @Delete(':id')
   @Roles(roles.Docente)
-  remove(@Param('idCurso') idCurso: string, @Param('id') id: string) {
-    return this.sesionesRefuerzoService.remove(idCurso, id);
+  remove(@Param('id') id: string) {
+    return this.sesionesRefuerzoService.remove(id);
   }
 
   @Post(':idCurso/:id/iniciar')

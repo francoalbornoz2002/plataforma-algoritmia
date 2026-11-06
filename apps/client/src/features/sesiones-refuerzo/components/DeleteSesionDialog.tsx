@@ -36,7 +36,7 @@ export default function DeleteSesionDialog({
     }
     setIsDeleting(true);
     try {
-      await deleteSesion(selectedCourse.id, sesionToDelete.id);
+      await deleteSesion(sesionToDelete.id);
       enqueueSnackbar("Sesión cancelada correctamente", { variant: "success" });
       onDeleteSuccess();
       onClose();

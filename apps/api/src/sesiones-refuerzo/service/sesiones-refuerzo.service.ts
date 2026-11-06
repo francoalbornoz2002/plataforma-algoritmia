@@ -630,18 +630,13 @@ export class SesionesRefuerzoService {
     });
   }
 
-  async remove(
-    idCurso: string,
-    idSesion: string,
-    externalTx?: Prisma.TransactionClient,
-  ) {
+  async remove(idSesion: string, externalTx?: Prisma.TransactionClient) {
     // Función auxiliar con la lógica de negocio
     const execute = async (tx: Prisma.TransactionClient) => {
       // 1. Obtener la sesión
       const sesion = await tx.sesionRefuerzo.findUnique({
         where: {
           id: idSesion,
-          idCurso: idCurso,
           deletedAt: null,
         },
       });
