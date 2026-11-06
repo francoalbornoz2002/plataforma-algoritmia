@@ -25,23 +25,13 @@ export class SesionesRefuerzoController {
     private readonly sesionesRefuerzoService: SesionesRefuerzoService,
   ) {}
 
-  @Post(':idCurso')
+  @Post()
   @Roles(roles.Docente)
   create(
-    @Param('idCurso') idCurso: string,
     @Body() dto: CreateSesionesRefuerzoDto,
     @Req() req: AuthenticatedUserRequest,
   ) {
-    return this.sesionesRefuerzoService.create(idCurso, dto, req.user.userId);
-  }
-
-  @Get(':idCurso')
-  @Roles(roles.Docente, roles.Alumno)
-  findAll(
-    @Param('idCurso') idCurso: string,
-    @Req() req: AuthenticatedUserRequest,
-  ) {
-    return this.sesionesRefuerzoService.findAll(idCurso, req.user);
+    return this.sesionesRefuerzoService.create(dto, req.user.userId);
   }
 
   @Get(':idCurso/:id')

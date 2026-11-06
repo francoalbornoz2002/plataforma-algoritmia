@@ -12,6 +12,9 @@ import { Transform, Type } from 'class-transformer';
 
 export class CreateSesionesRefuerzoDto {
   @IsUUID()
+  idCurso: string;
+
+  @IsUUID()
   idAlumno: string;
 
   @IsString()

@@ -11,6 +11,8 @@ import { ProgressModule } from 'src/progress/progress.module';
 import { DifficultiesModule } from 'src/difficulties/difficulties.module';
 import { ClasesConsultaService } from 'src/clases-consulta/services/clases-consulta.service';
 import { ConsultasService } from 'src/consultas/services/consultas.service';
+import { SesionesRefuerzoService } from 'src/sesiones-refuerzo/service/sesiones-refuerzo.service';
+import { PreguntasService } from 'src/preguntas/services/preguntas.service';
 
 const UPLOADS_PATH = join(process.cwd(), 'uploads');
 
@@ -43,6 +45,8 @@ const UPLOADS_PATH = join(process.cwd(), 'uploads');
     PrismaService,
     ConsultasService,
     ClasesConsultaService,
+    SesionesRefuerzoService,
+    PreguntasService,
   ],
 })
 export class CoursesModule {}

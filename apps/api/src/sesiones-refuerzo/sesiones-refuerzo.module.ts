@@ -8,6 +8,7 @@ import { DifficultiesService } from 'src/difficulties/services/difficulties.serv
 
 @Module({
   controllers: [SesionesRefuerzoController],
+  exports: [SesionesRefuerzoService, PreguntasService],
   providers: [
     SesionesRefuerzoService,
     PrismaService,

@@ -16,7 +16,7 @@ export const findAllSesiones = async (
   idCurso: string,
 ): Promise<SesionRefuerzoResumen[]> => {
   const response = await apiClient.get<SesionRefuerzoResumen[]>(
-    `/sesiones-refuerzo/${idCurso}`,
+    `/cursos/${idCurso}/sesiones-refuerzo`,
   );
   return response.data;
 };
@@ -83,11 +83,12 @@ export const createSesion = async (
   // Convertimos la fecha a un string ISO, que es el formato estándar para JSON.
   const payload = {
     ...data,
+    idCurso: idCurso,
     fechaHoraLimite: new Date(data.fechaHoraLimite).toISOString(),
   };
 
   const response = await apiClient.post<SesionRefuerzoConDetalles>(
-    `/sesiones-refuerzo/${idCurso}`,
+    `/sesiones-refuerzo`,
     payload, // Enviamos el objeto JS directamente. Axios lo convierte a JSON.
   );
   return response.data;

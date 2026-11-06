@@ -40,12 +40,9 @@ export class SesionesRefuerzoService {
     private readonly difficultiesService: DifficultiesService,
   ) {}
 
-  async create(
-    idCurso: string,
-    dto: CreateSesionesRefuerzoDto,
-    idDocente: string,
-  ) {
+  async create(dto: CreateSesionesRefuerzoDto, idDocente: string) {
     const {
+      idCurso,
       idAlumno,
       idDificultad,
       gradoSesion,

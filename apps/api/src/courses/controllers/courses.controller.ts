@@ -27,14 +27,16 @@ import { JoinCourseDto } from 'src/courses/dto/join-course-dto';
 import { ClasesConsultaService } from 'src/clases-consulta/services/clases-consulta.service';
 import { FindConsultasDto } from 'src/consultas/dto/find-consultas.dto';
 import { ConsultasService } from 'src/consultas/services/consultas.service';
+import { SesionesRefuerzoService } from 'src/sesiones-refuerzo/service/sesiones-refuerzo.service';
 
 @UseGuards(RolesGuard)
 @Controller('cursos')
 export class CoursesController {
   constructor(
     private readonly coursesService: CoursesService,
-    private readonly clasesConsultaService: ClasesConsultaService,
     private readonly consultasService: ConsultasService,
+    private readonly clasesConsultaService: ClasesConsultaService,
+    private readonly sesionesRefuerzoService: SesionesRefuerzoService,
   ) {}
 
   @Roles(roles.Administrador)
@@ -166,10 +168,19 @@ export class CoursesController {
   @Get(':id/clases-consulta')
   @Roles(roles.Alumno, roles.Docente)
   findAllClasesConsulta(
-    @Param('idCurso') idCurso: string,
+    @Param('id') id: string,
     @Req() req: AuthenticatedUserRequest,
   ) {
-    return this.clasesConsultaService.findAll(idCurso, req.user);
+    return this.clasesConsultaService.findAll(id, req.user);
+  }
+
+  @Get(':id/sesiones-refuerzo')
+  @Roles(roles.Docente, roles.Alumno)
+  findAllSesionesRefuerzo(
+    @Param('id') id: string,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    return this.sesionesRefuerzoService.findAll(id, req.user);
   }
 
   @Roles(roles.Docente, roles.Administrador)
