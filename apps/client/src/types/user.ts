@@ -40,3 +40,12 @@ export interface DocenteParaFiltro {
   apellido: string;
   fotoPerfilUrl?: string | null;
 }
+
+export interface AlumnoActivo {
+  id: string;
+  nombre: string;
+  apellido: string;
+  dni: string;
+  fotoPerfilUrl?: string | null;
+  fechaInscripcion: string | Date;
+}

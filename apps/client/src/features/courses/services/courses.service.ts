@@ -9,7 +9,7 @@ import type {
   CursoParaEditar,
   CreateCourseData,
   UpdateCourseData,
-  DocenteBasico,
+  AlumnoActivo,
 } from "../../../types";
 
 // Interfaz para los parámetros de búsqueda
@@ -220,7 +220,7 @@ export const getStudentDashboardStats = async (idCurso: string) => {
  */
 export const findActiveAlumnos = async (
   idCurso: string,
-): Promise<DocenteBasico[]> => {
+): Promise<AlumnoActivo[]> => {
   try {
     // Asumimos que existe un endpoint para esto, similar a active-docentes.
     const response = await apiClient.get(`/cursos/${idCurso}/alumnos-activos`);

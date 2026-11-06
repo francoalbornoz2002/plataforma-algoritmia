@@ -322,8 +322,11 @@ export class CoursesService {
       },
     });
 
-    // 3. Mapeamos la respuesta
-    return inscripciones.map((i) => i.alumno);
+    // 3. Mapeamos la respuesta con los datos del alumno y su fecha de inscripción
+    return inscripciones.map((i) => ({
+      ...i.alumno,
+      fechaInscripcion: i.fechaInscripcion,
+    }));
   }
 
   /**

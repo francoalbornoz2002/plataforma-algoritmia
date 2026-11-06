@@ -27,7 +27,7 @@ import {
 import ConfirmationDialog from "../../components/ConfirmationDialog";
 import CourseFormDialog from "../courses/components/CourseFormDialog";
 import { enqueueSnackbar } from "notistack";
-import { type CourseDashboardData } from "../../types";
+import { type AlumnoActivo, type CourseDashboardData } from "../../types";
 import { useAuth } from "../authentication/context/AuthProvider";
 import {
   Delete,
@@ -52,7 +52,7 @@ import { FormControl, Select, MenuItem } from "@mui/material";
 import { TemasLabels } from "../../types/traducciones";
 import { temas } from "../../types";
 import CardIcon from "../../components/CardIcon";
-import { getStudentProgressList } from "../progress/services/progress.service";
+import { findActiveAlumnos } from "../courses/services/courses.service";
 
 const formatClassTime = (inicio: string, fin: string) => {
   const start = new Date(inicio);
@@ -107,8 +107,8 @@ export default function DocenteDashboardPage() {
     setLoadingStudents(true);
     setError(null);
     try {
-      // 1. Cargar Alumnos (Traemos todos para filtrar en cliente en el sidebar)
-      const studentsData = await getStudentProgressList(selectedCourse.id);
+      // 1. Cargar lista de alumnos activos
+      const studentsData = await findActiveAlumnos(selectedCourse.id);
       // Ordenamos alfabéticamente por apellido
       const sortedStudents = studentsData.sort((a, b) =>
         a.apellido.localeCompare(b.apellido),
@@ -347,9 +347,9 @@ export default function DocenteDashboardPage() {
             </Box>
             <List sx={{ flexGrow: 1, overflowY: "auto", p: 0 }}>
               {filteredStudents.length > 0 ? (
-                filteredStudents.map((student) => (
+                filteredStudents.map((student: AlumnoActivo) => (
                   <ListItem
-                    key={student.idAlumno}
+                    key={student.id}
                     divider
                     secondaryAction={
                       <Stack direction="row" spacing={0.5}>

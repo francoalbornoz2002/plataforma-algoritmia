@@ -42,7 +42,6 @@ import {
   getCourseConsultationsHistory,
   type CourseConsultationsHistoryFilters,
 } from "../../service/reports.service";
-import { getStudentProgressList } from "../../../progress/services/progress.service";
 import { temas, estado_consulta } from "../../../../types";
 import { TemasLabels } from "../../../../types/traducciones";
 import QuickDateFilter from "../../../../components/QuickDateFilter";
@@ -50,6 +49,7 @@ import StatCard from "../../../../components/StatCard";
 import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
 import { History } from "@mui/icons-material";
+import { findActiveAlumnos } from "../../../courses/services/courses.service";
 
 interface Props {
   courseId: string;
@@ -95,10 +95,10 @@ export default function CourseConsultationsHistory({ courseId }: Props) {
 
   // --- Carga de Alumnos ---
   useEffect(() => {
-    getStudentProgressList(courseId).then((res) => {
+    findActiveAlumnos(courseId).then((res) => {
       setStudentOptions(
         res.map((s) => ({
-          id: s.idAlumno,
+          id: s.id,
           nombre: `${s.nombre} ${s.apellido}`,
         })),
       );

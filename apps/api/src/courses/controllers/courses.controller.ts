@@ -87,11 +87,11 @@ export class CoursesController {
   @Roles(roles.Docente)
   @Get(':id/alumnos-activos')
   getActiveAlumnos(
-    @Param('idCurso', ParseUUIDPipe) idCurso: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Req() req: AuthenticatedUserRequest,
   ) {
     const idDocente = req.user.userId;
-    return this.coursesService.findActiveAlumnosByCurso(idCurso, idDocente);
+    return this.coursesService.findActiveAlumnosByCurso(id, idDocente);
   }
 
   @Roles(roles.Docente, roles.Administrador)

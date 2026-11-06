@@ -40,7 +40,6 @@ import {
   getCourseDifficultiesReport,
   type StudentDifficultiesReportFilters,
 } from "../../service/reports.service";
-import { getStudentProgressList } from "../../../progress/services/progress.service";
 import {
   temas,
   fuente_cambio_dificultad,
@@ -51,6 +50,7 @@ import QuickDateFilter from "../../../../components/QuickDateFilter";
 import StudentChartDetailModal from "./StudentChartDetailModal";
 import { datePickerConfig } from "../../../../config/theme.config";
 import HeaderReportPage from "../../../../components/HeaderReportPage";
+import { findActiveAlumnos } from "../../../courses/services/courses.service";
 
 interface Props {
   courseId: string;
@@ -127,12 +127,12 @@ export default function StudentDifficultiesReport({ courseId }: Props) {
     });
   }, [courseId]);
 
-  // --- Carga de Alumnos (con búsqueda) ---
+  // --- Carga de Alumnos ---
   useEffect(() => {
-    getStudentProgressList(courseId).then((res) => {
+    findActiveAlumnos(courseId).then((res) => {
       setStudents(
         res.map((s) => ({
-          id: s.idAlumno,
+          id: s.id,
           nombre: `${s.nombre} ${s.apellido}`,
         })),
       );
