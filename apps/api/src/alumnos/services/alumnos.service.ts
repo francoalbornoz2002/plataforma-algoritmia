@@ -25,10 +25,6 @@ export class AlumnosService {
     private consultasService: ConsultasService,
   ) {}
 
-  async deleteConsulta(idConsulta: string, idAlumno: string) {
-    return this.consultasService.deleteConsulta(idConsulta, idAlumno);
-  }
-
   async valorarConsulta(
     idConsulta: string,
     idAlumno: string,

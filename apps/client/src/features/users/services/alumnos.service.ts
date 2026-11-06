@@ -3,22 +3,6 @@ import type { Consulta, DocenteBasico } from "../../../types";
 import type { ValorarConsultaFormValues } from "../../consultas/validations/valorarConsulta.schema";
 
 /**
- * Borra (soft delete) una consulta (Alumno)
- */
-export const deleteConsulta = async (idConsulta: string): Promise<Consulta> => {
-  try {
-    // Apuntamos a la nueva ruta "delete"
-    const response = await apiClient.delete(
-      `/alumnos/my/consults/delete/${idConsulta}`,
-    );
-    return response.data;
-  } catch (err: any) {
-    console.error("Error deleting consult:", err.response?.data || err.message);
-    throw err.response?.data || new Error("Error al borrar la consulta.");
-  }
-};
-
-/**
  * Valora una respuesta (Alumno)
  */
 export const valorarConsulta = async (

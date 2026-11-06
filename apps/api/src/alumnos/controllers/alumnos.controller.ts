@@ -26,15 +26,6 @@ import { UpdateConsultaDto } from 'src/consultas/dto/update-consulta.dto';
 @Controller('alumnos')
 export class AlumnosController {
   constructor(private readonly alumnosService: AlumnosService) {}
-  @Roles(roles.Alumno)
-  @Delete('my/consults/delete/:idConsulta')
-  deleteConsulta(
-    @Req() req: AuthenticatedUserRequest,
-    @Param('idConsulta', ParseUUIDPipe) idConsulta: string,
-  ) {
-    const idAlumno = req.user.userId;
-    return this.alumnosService.deleteConsulta(idConsulta, idAlumno);
-  }
 
   @Roles(roles.Alumno)
   @Patch('my/consults/:idConsulta/valorar')

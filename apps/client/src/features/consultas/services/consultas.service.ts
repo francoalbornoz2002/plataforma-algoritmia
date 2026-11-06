@@ -48,6 +48,20 @@ export const updateConsulta = async (
   }
 };
 
+/**
+ * Borra (soft delete) una consulta (Alumno)
+ */
+export const deleteConsulta = async (idConsulta: string): Promise<Consulta> => {
+  try {
+    // Apuntamos a la nueva ruta "delete"
+    const response = await apiClient.delete(`/consultas/${idConsulta}`);
+    return response.data;
+  } catch (err: any) {
+    console.error("Error deleting consult:", err.response?.data || err.message);
+    throw err.response?.data || new Error("Error al borrar la consulta.");
+  }
+};
+
 export const findConsultas = async (
   idCurso: string,
   params: FindConsultasParams,

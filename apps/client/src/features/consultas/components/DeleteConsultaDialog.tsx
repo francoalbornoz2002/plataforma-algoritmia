@@ -1,8 +1,8 @@
 import { useState } from "react";
 import type { Consulta } from "../../../types";
-import { deleteConsulta } from "../../users/services/alumnos.service";
 import { enqueueSnackbar } from "notistack";
 import ConfirmationDialog from "../../../components/ConfirmationDialog";
+import { deleteConsulta } from "../services/consultas.service";
 
 interface DeleteConsultaDialogProps {
   open: boolean;

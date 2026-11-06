@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -38,6 +39,15 @@ export class ConsultasController {
     @Body() dto: UpdateConsultaDto,
   ) {
     return this.consultasService.update(id, req.user.userId, dto);
+  }
+
+  @Roles(roles.Alumno)
+  @Delete(':id')
+  delete(
+    @Req() req: AuthenticatedUserRequest,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.consultasService.deleteConsulta(id, req.user.userId);
   }
 
   @Roles(roles.Docente)
