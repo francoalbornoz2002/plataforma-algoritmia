@@ -6,7 +6,6 @@ import { ConfigModule } from '@nestjs/config';
 import { CoursesModule } from './courses/courses.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-import { AlumnosModule } from './alumnos/alumnos.module';
 import { DocentesModule } from './docentes/docentes.module';
 import { ProgressModule } from './progress/progress.module';
 import { DifficultiesModule } from './difficulties/difficulties.module';
@@ -44,7 +43,6 @@ const UPLOADS_PATH = join(process.cwd(), 'uploads');
     UsersModule,
     AuthModule,
     CoursesModule,
-    AlumnosModule,
     DocentesModule,
     ProgressModule,
     DifficultiesModule,
