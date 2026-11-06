@@ -28,11 +28,10 @@ export const findAllSesiones = async (
  * @param idSesion - El ID de la sesión.
  */
 export const iniciarSesion = async (
-  idCurso: string,
   idSesion: string,
 ): Promise<SesionRefuerzoConDetalles> => {
   const response = await apiClient.post<SesionRefuerzoConDetalles>(
-    `/sesiones-refuerzo/${idCurso}/${idSesion}/iniciar`,
+    `/sesiones-refuerzo/${idSesion}/iniciar`,
   );
   return response.data;
 };
@@ -44,12 +43,11 @@ export const iniciarSesion = async (
  * @param data - Las respuestas del alumno.
  */
 export const resolverSesion = async (
-  idCurso: string,
   idSesion: string,
   data: ResolverSesionPayload,
 ): Promise<ResolverSesionResponse> => {
   const response = await apiClient.post<ResolverSesionResponse>(
-    `/sesiones-refuerzo/${idCurso}/${idSesion}/resolver`,
+    `/sesiones-refuerzo/${idSesion}/resolver`,
     data,
   );
   return response.data;

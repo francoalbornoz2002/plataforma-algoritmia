@@ -695,9 +695,9 @@ export class SesionesRefuerzoService {
     return sesionCancelada;
   }
 
-  async iniciarSesion(idCurso: string, idSesion: string, idAlumno: string) {
+  async iniciarSesion(idSesion: string, idAlumno: string) {
     const sesion = await this.prisma.sesionRefuerzo.findUnique({
-      where: { id: idSesion, idCurso },
+      where: { id: idSesion },
     });
 
     if (!sesion) {
@@ -729,7 +729,6 @@ export class SesionesRefuerzoService {
   }
 
   async resolverSesion(
-    idCurso: string,
     idSesion: string,
     idAlumno: string,
     dto: ResolverSesionDto,
@@ -737,7 +736,7 @@ export class SesionesRefuerzoService {
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // 1. Obtener la sesión con sus preguntas y opciones correctas
       const sesion = await tx.sesionRefuerzo.findUnique({
-        where: { id: idSesion, idCurso },
+        where: { id: idSesion },
         include: {
           preguntas: {
             include: {
@@ -820,7 +819,7 @@ export class SesionesRefuerzoService {
 
       // 3.1. Buscar la inscripción del alumno para obtener el idInscripcion
       const inscripcion = await tx.inscripcionesAlumnoCurso.findFirst({
-        where: { idAlumno, idCurso },
+        where: { idAlumno, idCurso: sesion.idCurso },
       });
 
       if (!inscripcion) {
@@ -858,7 +857,7 @@ export class SesionesRefuerzoService {
         // 3.3. Recalcular KPIs del curso (Solo si hubo cambios)
         await this.difficultiesService.recalculateCourseDifficulties(
           tx,
-          idCurso,
+          sesion.idCurso,
         );
       }
 

@@ -149,11 +149,7 @@ export default function SesionResolverPage() {
     };
 
     try {
-      const resultResponse = await resolverSesion(
-        selectedCourse.id,
-        sesion.id,
-        payload,
-      );
+      const resultResponse = await resolverSesion(sesion.id, payload);
 
       // Volvemos a buscar la sesión para obtener los resultados completos
       const updatedSesion = await findSesionById(sesion.id);
@@ -294,7 +290,7 @@ export default function SesionResolverPage() {
     if (!sesion || !selectedCourse) return;
     try {
       // Llamada al backend para marcar el inicio real
-      await iniciarSesion(selectedCourse.id, sesion.id);
+      await iniciarSesion(sesion.id);
       // Iniciamos el timer localmente
       setTimeLeft(sesion.tiempoLimite * 60);
     } catch (error) {

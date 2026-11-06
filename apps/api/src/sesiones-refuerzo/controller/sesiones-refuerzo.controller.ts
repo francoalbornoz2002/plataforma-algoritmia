@@ -52,30 +52,20 @@ export class SesionesRefuerzoController {
     return this.sesionesRefuerzoService.remove(id);
   }
 
-  @Post(':idCurso/:id/iniciar')
+  @Post(':id/iniciar')
   @Roles(roles.Alumno)
-  iniciarSesion(
-    @Param('idCurso') idCurso: string,
-    @Param('id') id: string,
-    @Req() req: AuthenticatedUserRequest,
-  ) {
-    return this.sesionesRefuerzoService.iniciarSesion(
-      idCurso,
-      id,
-      req.user.userId,
-    );
+  iniciarSesion(@Param('id') id: string, @Req() req: AuthenticatedUserRequest) {
+    return this.sesionesRefuerzoService.iniciarSesion(id, req.user.userId);
   }
 
-  @Post(':idCurso/:id/resolver')
+  @Post(':id/resolver')
   @Roles(roles.Alumno)
   resolverSesion(
-    @Param('idCurso') idCurso: string,
     @Param('id') id: string,
     @Body() dto: ResolverSesionDto,
     @Req() req: AuthenticatedUserRequest,
   ) {
     return this.sesionesRefuerzoService.resolverSesion(
-      idCurso,
       id,
       req.user.userId,
       dto,
