@@ -29,16 +29,6 @@ export class DocentesController {
     private readonly consultasService: ConsultasService,
   ) {}
 
-  @Get('my/courses/:idCurso/consults')
-  findConsultas(
-    @Param('idCurso', ParseUUIDPipe) idCurso: string,
-    @Req() req: AuthenticatedUserRequest,
-    @Query() dto: FindConsultasDto, // <-- 3. Usar el DTO de filtros
-  ) {
-    const idDocente = req.user.userId;
-    return this.docentesService.findConsultas(idCurso, idDocente, dto);
-  }
-
   @Post('my/consults/:idConsulta/respond')
   createRespuesta(
     @Param('idConsulta', ParseUUIDPipe) idConsulta: string,

@@ -31,15 +31,6 @@ export class DocentesService {
     private consultasService: ConsultasService,
   ) {}
 
-  async findConsultas(
-    idCurso: string,
-    idDocente: string,
-    dto: FindConsultasDto,
-  ) {
-    await checkDocenteAccess(this.prisma, idDocente, idCurso); // 3. Validar
-    return this.consultasService.findConsultasForDocente(idCurso, dto);
-  }
-
   async createRespuesta(
     idConsulta: string,
     idDocente: string,

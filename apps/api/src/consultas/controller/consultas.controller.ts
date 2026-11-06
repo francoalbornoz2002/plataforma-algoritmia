@@ -19,6 +19,21 @@ import { FindConsultasDto } from '../dto/find-consultas.dto';
 export class ConsultasController {
   constructor(private readonly consultasService: ConsultasService) {}
 
+  @Roles(roles.Docente)
+  @Get(':idCurso')
+  findConsultas(
+    @Param('idCurso', ParseUUIDPipe) idCurso: string,
+    @Req() req: AuthenticatedUserRequest,
+    @Query() dto: FindConsultasDto,
+  ) {
+    const idDocente = req.user.userId;
+    return this.consultasService.findConsultasForDocente(
+      idCurso,
+      idDocente,
+      dto,
+    );
+  }
+
   @Roles(roles.Alumno)
   @Get(':idCurso/mis-consultas')
   findMyConsultas(

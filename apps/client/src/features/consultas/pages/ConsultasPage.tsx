@@ -18,7 +18,6 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
 import { useCourseContext } from "../../../context/CourseContext";
 import { useDebounce } from "../../../hooks/useDebounce";
-import { findConsultas } from "../../users/services/docentes.service"; // <-- Servicio del Docente
 import {
   temas,
   estado_consulta,
@@ -34,6 +33,7 @@ import { FilterAltOff, MarkUnreadChatAlt } from "@mui/icons-material";
 import { datePickerConfig } from "../../../config/theme.config";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
+import { findConsultas } from "../services/consultas.service";
 
 // Constante para la paginación
 const PAGE_SIZE = 10;

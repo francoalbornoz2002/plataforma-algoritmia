@@ -24,6 +24,7 @@ import { FindConsultasDto } from '../dto/find-consultas.dto';
 import { UpdateConsultaDto } from '../dto/update-consulta.dto';
 import { calcularFechaProximaClase } from 'src/helpers';
 import { MailService } from 'src/mail/services/mail.service';
+import { checkDocenteAccess } from 'src/helpers/access.helper';
 
 @Injectable()
 export class ConsultasService {
@@ -441,8 +442,10 @@ export class ConsultasService {
   // --- 5. SERVICIO DE LECTURA (DOCENTE) (Refactorizado) ---
   async findConsultasForDocente(
     idCurso: string,
+    idDocente: string,
     dto: FindConsultasDto, // <-- 2. Usar el DTO
   ) {
+    await checkDocenteAccess(this.prisma, idDocente, idCurso); // 3. Validar
     const {
       page,
       limit,

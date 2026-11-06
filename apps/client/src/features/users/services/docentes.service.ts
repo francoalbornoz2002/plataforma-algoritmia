@@ -27,40 +27,6 @@ export const getCourseDashboardStats = async (
   }
 };
 
-export const findConsultas = async (
-  idCurso: string,
-  params: FindConsultasParams,
-): Promise<PaginatedConsultasDocenteResponse> => {
-  try {
-    // Limpiamos params (para filtros vacíos)
-    const cleanedParams: Partial<FindConsultasParams> = { ...params };
-    (Object.keys(cleanedParams) as Array<keyof FindConsultasParams>).forEach(
-      (key) => {
-        if (cleanedParams[key] === "") {
-          delete cleanedParams[key];
-        }
-      },
-    );
-
-    const response = await apiClient.get(
-      `/docentes/my/courses/${idCurso}/consults`, // <-- Usamos tu ruta 'my'
-      {
-        params: cleanedParams,
-      },
-    );
-    return response.data;
-  } catch (err: any) {
-    console.error(
-      "Error fetching course consults:",
-      err.response?.data || err.message,
-    );
-    throw (
-      err.response?.data ||
-      new Error("Error al obtener las consultas del curso.")
-    );
-  }
-};
-
 /**
  * Envía una respuesta a una consulta (Docente)
  */
