@@ -106,7 +106,7 @@ export const responderConsulta = async (
   }
 };
 
-export const findConsultas = async (
+export const findConsultasForCurso = async (
   idCurso: string,
   params: FindConsultasParams,
 ): Promise<PaginatedConsultasDocenteResponse> => {
@@ -161,7 +161,7 @@ export const findPendingConsultas = async (
 /**
  * Obtiene la lista paginada y filtrada de consultas del alumno
  */
-export const findAllConsultasForAlumno = async (
+export const findConsultasForAlumno = async (
   idCurso: string,
   idAlumno: string | undefined,
   params: FindConsultasParams,
@@ -190,40 +190,5 @@ export const findAllConsultasForAlumno = async (
       err.response?.data || err.message,
     );
     throw err.response?.data || new Error("Error al obtener tus consultas.");
-  }
-};
-
-/**
- * Obtiene la lista paginada de consultas PÚBLICAS del curso
- */
-export const getPublicConsultas = async (
-  idCurso: string,
-  params: FindConsultasParams,
-): Promise<PaginatedConsultasDocenteResponse> => {
-  try {
-    const cleanedParams: Partial<FindConsultasParams> = { ...params };
-    (Object.keys(cleanedParams) as Array<keyof FindConsultasParams>).forEach(
-      (key) => {
-        if (cleanedParams[key] === "") {
-          delete cleanedParams[key];
-        }
-      },
-    );
-
-    const response = await apiClient.get(
-      `/consultas/${idCurso}/consultas-publicas`,
-      {
-        params: cleanedParams,
-      },
-    );
-    return response.data;
-  } catch (err: any) {
-    console.error(
-      "Error fetching public consults:",
-      err.response?.data || err.message,
-    );
-    throw (
-      err.response?.data || new Error("Error al obtener consultas públicas.")
-    );
   }
 };

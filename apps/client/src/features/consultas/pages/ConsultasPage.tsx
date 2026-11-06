@@ -33,7 +33,7 @@ import { FilterAltOff, MarkUnreadChatAlt } from "@mui/icons-material";
 import { datePickerConfig } from "../../../config/theme.config";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-import { findConsultas } from "../services/consultas.service";
+import { findConsultasForCurso } from "../services/consultas.service";
 
 // Constante para la paginación
 const PAGE_SIZE = 10;
@@ -115,7 +115,7 @@ export default function ConsultasPage() {
         : undefined,
     };
 
-    findConsultas(selectedCourse.id, params)
+    findConsultasForCurso(selectedCourse.id, params)
       .then((response) => {
         setConsultas(response.data);
         setTotalPages(response.totalPages);

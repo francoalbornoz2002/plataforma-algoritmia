@@ -13,6 +13,7 @@ import {
   estado_clase_consulta,
   estado_consulta,
   estado_simple,
+  roles,
   temas,
 } from '@prisma/client';
 
@@ -392,29 +393,26 @@ export class ConsultasService {
     });
   }
 
-  // --- 6. SERVICIO DE LECTURA (PÚBLICAS PARA ALUMNOS) ---
-  async findConsultasPublicas(idCurso: string, dto: FindConsultasDto) {
-    return this.findConsultasPaginated(idCurso, dto, {
-      filterByEstado: false,
-      excludeDeleted: true,
-      includeAlumno: true,
-      errorContext: 'Error en findConsultasPublicas:',
-      errorMessage: 'Error al obtener las consultas públicas.',
-    });
-  }
-
-  // --- 5. SERVICIO DE LECTURA (DOCENTE) (Refactorizado) ---
-  async findConsultasForDocente(
+  // --- SERVICIO DE LECTURA DEL CURSO ---
+  async findConsultasForCurso(
     idCurso: string,
-    idDocente: string,
+    idUsuario: string,
+    rol: roles,
     dto: FindConsultasDto,
   ) {
-    await checkDocenteAccess(this.prisma, idDocente, idCurso);
+    if (rol === roles.Docente) {
+      await checkDocenteAccess(this.prisma, idUsuario, idCurso);
+    } else if (rol !== roles.Alumno) {
+      throw new ForbiddenException(
+        'No tienes permiso para consultar las consultas del curso.',
+      );
+    }
+
     return this.findConsultasPaginated(idCurso, dto, {
-      filterByEstado: true,
+      filterByEstado: rol === roles.Docente,
       excludeDeleted: true,
       includeAlumno: true,
-      errorContext: 'Error en findConsultasForDocente:',
+      errorContext: 'Error en findConsultasForCurso:',
       errorMessage: 'Error al obtener las consultas.',
     });
   }

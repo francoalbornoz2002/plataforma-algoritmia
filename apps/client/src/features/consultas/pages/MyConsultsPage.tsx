@@ -41,8 +41,8 @@ import HeaderPage from "../../../components/HeaderPage";
 import { MarkUnreadChatAlt } from "@mui/icons-material";
 import { datePickerConfig } from "../../../config/theme.config";
 import {
-  findAllConsultasForAlumno,
-  getPublicConsultas,
+  findConsultasForAlumno,
+  findConsultasForCurso,
 } from "../services/consultas.service";
 import { useAuth } from "../../authentication/context/AuthProvider";
 
@@ -136,7 +136,7 @@ export default function MyConsultsPage() {
     };
 
     if (filters.scope === "mine") {
-      findAllConsultasForAlumno(selectedCourse.id, userId, params)
+      findConsultasForAlumno(selectedCourse.id, userId, params)
         .then((response) => {
           setConsultas(response.data);
           setTotalPages(response.totalPages);
@@ -144,8 +144,7 @@ export default function MyConsultsPage() {
         .catch((err) => setError(err.message))
         .finally(() => setLoading(false));
     } else {
-      // Consultas Públicas
-      getPublicConsultas(selectedCourse.id, params)
+      findConsultasForCurso(selectedCourse.id, params)
         .then((response) => {
           setConsultas(response.data);
           setTotalPages(response.totalPages);

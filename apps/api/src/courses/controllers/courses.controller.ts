@@ -133,16 +133,17 @@ export class CoursesController {
     return this.coursesService.findEligibleForRefuerzo(id, idDocente);
   }
 
-  @Roles(roles.Docente)
+  @Roles(roles.Docente, roles.Alumno)
   @Get(':id/consultas')
   findAllConsultas(
     @Param('id', ParseUUIDPipe) id: string,
     @Req() req: AuthenticatedUserRequest,
     @Query() dto: FindConsultasDto,
   ) {
-    return this.consultasService.findConsultasForDocente(
+    return this.consultasService.findConsultasForCurso(
       id,
       req.user.userId,
+      req.user.rol,
       dto,
     );
   }

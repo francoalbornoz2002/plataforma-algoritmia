@@ -7,7 +7,6 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
-  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -16,7 +15,6 @@ import { ConsultasService } from '../services/consultas.service';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { roles } from '@prisma/client';
 import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user.interface';
-import { FindConsultasDto } from '../dto/find-consultas.dto';
 import { CreateConsultaDto } from '../dto/create-consulta.dto';
 import { UpdateConsultaDto } from '../dto/update-consulta.dto';
 import { ValorarConsultaDto } from '../dto/valorar-consulta.dto';
@@ -75,14 +73,5 @@ export class ConsultasController {
   @Get(':idCurso/pendientes')
   getPendingConsultas(@Param('idCurso', ParseUUIDPipe) idCurso: string) {
     return this.consultasService.findPendingConsultasByCurso(idCurso);
-  }
-
-  @Roles(roles.Alumno)
-  @Get(':idCurso/consultas-publicas')
-  findPublicConsultas(
-    @Param('idCurso', ParseUUIDPipe) idCurso: string,
-    @Query() dto: FindConsultasDto,
-  ) {
-    return this.consultasService.findConsultasPublicas(idCurso, dto);
   }
 }
