@@ -44,4 +44,13 @@ export class ConsultasController {
     const idAlumno = req.user.userId;
     return this.consultasService.findConsultasForAlumno(idAlumno, idCurso, dto);
   }
+
+  @Roles(roles.Alumno)
+  @Get(':idCurso/consultas-publicas')
+  findPublicConsultas(
+    @Param('idCurso', ParseUUIDPipe) idCurso: string,
+    @Query() dto: FindConsultasDto,
+  ) {
+    return this.consultasService.findConsultasPublicas(idCurso, dto);
+  }
 }

@@ -69,3 +69,38 @@ export const getMyConsultas = async (
     throw err.response?.data || new Error("Error al obtener tus consultas.");
   }
 };
+
+/**
+ * Obtiene la lista paginada de consultas PÚBLICAS del curso
+ */
+export const getPublicConsultas = async (
+  idCurso: string,
+  params: FindConsultasParams,
+): Promise<PaginatedConsultasDocenteResponse> => {
+  try {
+    const cleanedParams: Partial<FindConsultasParams> = { ...params };
+    (Object.keys(cleanedParams) as Array<keyof FindConsultasParams>).forEach(
+      (key) => {
+        if (cleanedParams[key] === "") {
+          delete cleanedParams[key];
+        }
+      },
+    );
+
+    const response = await apiClient.get(
+      `/consultas/${idCurso}/consultas-publicas`,
+      {
+        params: cleanedParams,
+      },
+    );
+    return response.data;
+  } catch (err: any) {
+    console.error(
+      "Error fetching public consults:",
+      err.response?.data || err.message,
+    );
+    throw (
+      err.response?.data || new Error("Error al obtener consultas públicas.")
+    );
+  }
+};

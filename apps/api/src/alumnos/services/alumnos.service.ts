@@ -22,14 +22,8 @@ import { checkDocenteAccess } from 'src/helpers/access.helper';
 export class AlumnosService {
   constructor(
     private prisma: PrismaService,
-    private progressService: ProgressService,
-    private difficultiesService: DifficultiesService,
     private consultasService: ConsultasService,
   ) {}
-
-  async findPublicConsultas(idCurso: string, dto: FindConsultasDto) {
-    return this.consultasService.findConsultasPublicas(idCurso, dto);
-  }
 
   async createConsulta(
     idAlumno: string,
