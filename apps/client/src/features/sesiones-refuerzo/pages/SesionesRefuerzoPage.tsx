@@ -25,7 +25,7 @@ import AutoAwesome from "@mui/icons-material/AutoAwesome";
 // 1. Hooks, Servicios y Tipos
 import { useCourseContext } from "../../../context/CourseContext";
 import { findAllSesiones } from "../service/sesiones-refuerzo.service";
-import { findActiveAlumnos } from "../../users/services/alumnos.service";
+import { findActiveAlumnos } from "../../courses/services/courses.service";
 
 import {
   type SesionRefuerzoResumen,

@@ -84,6 +84,16 @@ export class CoursesController {
     return this.coursesService.joinCourse(req.user.userId, idCurso, dto);
   }
 
+  @Roles(roles.Docente)
+  @Get(':id/alumnos-activos')
+  getActiveAlumnos(
+    @Param('idCurso', ParseUUIDPipe) idCurso: string,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const idDocente = req.user.userId;
+    return this.coursesService.findActiveAlumnosByCurso(idCurso, idDocente);
+  }
+
   @Roles(roles.Docente, roles.Administrador)
   @Get(':id/dashboard-stats')
   getDashboardStats(@Param('id', ParseUUIDPipe) id: string) {

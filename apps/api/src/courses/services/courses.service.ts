@@ -28,6 +28,7 @@ import { MailService } from 'src/mail/services/mail.service';
 import { JoinCourseDto } from '../dto/join-course-dto';
 import { ProgressService } from 'src/progress/services/progress.service';
 import { DifficultiesService } from 'src/difficulties/services/difficulties.service';
+import { checkDocenteAccess } from 'src/helpers/access.helper';
 
 @Injectable()
 export class CoursesService {
@@ -296,6 +297,33 @@ export class CoursesService {
       }
       throw new InternalServerErrorException('Error al buscar el curso.');
     }
+  }
+
+  async findActiveAlumnosByCurso(idCurso: string, idDocente: string) {
+    // 1. Validamos que el docente que pide tenga acceso
+    await checkDocenteAccess(this.prisma, idDocente, idCurso);
+
+    // 2. Buscamos los alumnos activos
+    const inscripciones = await this.prisma.inscripcionesAlumnoCurso.findMany({
+      where: {
+        idCurso: idCurso,
+        estado: estado_simple.Activo,
+      },
+      include: {
+        alumno: {
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            dni: true,
+            fotoPerfilUrl: true,
+          },
+        },
+      },
+    });
+
+    // 3. Mapeamos la respuesta
+    return inscripciones.map((i) => i.alumno);
   }
 
   /**

@@ -21,16 +21,6 @@ export class AlumnosController {
   constructor(private readonly alumnosService: AlumnosService) {}
 
   @Roles(roles.Docente)
-  @Get('my/courses/:idCurso/active-alumnos')
-  getActiveAlumnos(
-    @Param('idCurso', ParseUUIDPipe) idCurso: string,
-    @Req() req: AuthenticatedUserRequest,
-  ) {
-    const idDocente = req.user.userId;
-    return this.alumnosService.findActiveAlumnosByCurso(idCurso, idDocente);
-  }
-
-  @Roles(roles.Docente)
   @Get('courses/:idCurso/elegibles-refuerzo')
   findEligibleForRefuerzo(
     @Param('idCurso', ParseUUIDPipe) idCurso: string,

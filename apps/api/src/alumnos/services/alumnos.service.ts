@@ -20,36 +20,7 @@ import { checkDocenteAccess } from 'src/helpers/access.helper';
 
 @Injectable()
 export class AlumnosService {
-  constructor(
-    private prisma: PrismaService,
-    private consultasService: ConsultasService,
-  ) {}
-
-  async findActiveAlumnosByCurso(idCurso: string, idDocente: string) {
-    // 1. Validamos que el docente que pide tenga acceso
-    await checkDocenteAccess(this.prisma, idDocente, idCurso);
-
-    // 2. Buscamos los alumnos activos
-    const inscripciones = await this.prisma.inscripcionesAlumnoCurso.findMany({
-      where: {
-        idCurso: idCurso,
-        estado: estado_simple.Activo,
-      },
-      include: {
-        alumno: {
-          select: {
-            id: true,
-            nombre: true,
-            apellido: true,
-            fotoPerfilUrl: true,
-          },
-        },
-      },
-    });
-
-    // 3. Mapeamos la respuesta
-    return inscripciones.map((i) => i.alumno);
-  }
+  constructor(private prisma: PrismaService) {}
 
   async findEligibleForRefuerzo(idCurso: string, idDocente: string) {
     // 1. Validamos que el docente que pide tenga acceso
