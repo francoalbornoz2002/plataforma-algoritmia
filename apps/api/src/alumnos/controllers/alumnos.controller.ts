@@ -28,17 +28,6 @@ export class AlumnosController {
   constructor(private readonly alumnosService: AlumnosService) {}
 
   @Roles(roles.Alumno)
-  @Get('my/courses/:idCurso/consults')
-  findMyConsultas(
-    @Req() req: AuthenticatedUserRequest,
-    @Param('idCurso', ParseUUIDPipe) idCurso: string,
-    @Query() dto: FindConsultasDto,
-  ) {
-    const idAlumno = req.user.userId;
-    return this.alumnosService.findMyConsultas(idAlumno, idCurso, dto);
-  }
-
-  @Roles(roles.Alumno)
   @Get('course/:idCurso/consultas-publicas')
   findPublicConsultas(
     @Param('idCurso', ParseUUIDPipe) idCurso: string,

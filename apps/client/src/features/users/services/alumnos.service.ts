@@ -13,40 +13,6 @@ import type {
 import type { ValorarConsultaFormValues } from "../../consultas/validations/valorarConsulta.schema";
 
 /**
- * Obtiene la lista paginada y filtrada de consultas del alumno
- */
-export const getMyConsultas = async (
-  idCurso: string,
-  params: FindConsultasParams,
-): Promise<PaginatedConsultasResponse> => {
-  try {
-    // Limpiamos los params (filtros vacíos)
-    const cleanedParams: Partial<FindConsultasParams> = { ...params };
-    (Object.keys(cleanedParams) as Array<keyof FindConsultasParams>).forEach(
-      (key) => {
-        if (cleanedParams[key] === "") {
-          delete cleanedParams[key];
-        }
-      },
-    );
-
-    const response = await apiClient.get(
-      `/alumnos/my/courses/${idCurso}/consults`,
-      {
-        params: cleanedParams,
-      },
-    );
-    return response.data;
-  } catch (err: any) {
-    console.error(
-      "Error fetching student consults:",
-      err.response?.data || err.message,
-    );
-    throw err.response?.data || new Error("Error al obtener tus consultas.");
-  }
-};
-
-/**
  * Obtiene la lista paginada de consultas PÚBLICAS del curso
  */
 export const getPublicConsultas = async (

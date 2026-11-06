@@ -32,10 +32,7 @@ import {
 import ConsultaFormDialog from "../components/ConsultaFormDialog";
 import { useCourseContext } from "../../../context/CourseContext";
 import { useDebounce } from "../../../hooks/useDebounce";
-import {
-  getMyConsultas,
-  getPublicConsultas,
-} from "../../users/services/alumnos.service";
+import { getPublicConsultas } from "../../users/services/alumnos.service";
 import ValorarConsultaModal from "../components/ValorarConsultaModal"; // <-- Nuevo
 import DeleteConsultaDialog from "../components/DeleteConsultaDialog";
 import ConsultaAccordionAlumno from "../components/ConsultaAccordionAlumno";
@@ -44,6 +41,7 @@ import { EstadoConsultaLabels, TemasLabels } from "../../../types/traducciones";
 import HeaderPage from "../../../components/HeaderPage";
 import { MarkUnreadChatAlt } from "@mui/icons-material";
 import { datePickerConfig } from "../../../config/theme.config";
+import { getMyConsultas } from "../services/consultas.service";
 
 const PAGE_SIZE = 5;
 
