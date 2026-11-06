@@ -19,21 +19,12 @@ import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user
 import { FinalizarClaseDto } from '../dto/finalizar-clase.dto';
 import { CancelarClaseDto } from '../dto/cancelar-clase.dto';
 
-@UseGuards(RolesGuard) // JwtGuard se aplica globalmente.
+@UseGuards(RolesGuard)
 @Controller('clases-consulta')
 export class ClasesConsultaController {
   constructor(private readonly clasesConsultaService: ClasesConsultaService) {}
 
-  @Get('all/:idCurso')
-  @Roles(roles.Alumno, roles.Docente)
-  findAllForCurso(
-    @Param('idCurso') idCurso: string,
-    @Req() req: AuthenticatedUserRequest,
-  ) {
-    return this.clasesConsultaService.findAll(idCurso, req.user);
-  }
-
-  @Post('create')
+  @Post()
   @Roles(roles.Docente)
   create(
     @Body() dto: CreateClasesConsultaDto,
@@ -42,7 +33,7 @@ export class ClasesConsultaController {
     return this.clasesConsultaService.create(dto, req.user);
   }
 
-  @Patch('edit/:id')
+  @Patch(':id')
   @Roles(roles.Docente)
   update(
     @Param('id') id: string,

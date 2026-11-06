@@ -72,35 +72,9 @@ export class ConsultasController {
     return this.consultasService.responder(id, req.user.userId, dto);
   }
 
-  @Roles(roles.Docente)
-  @Get(':idCurso')
-  findConsultas(
-    @Param('idCurso', ParseUUIDPipe) idCurso: string,
-    @Req() req: AuthenticatedUserRequest,
-    @Query() dto: FindConsultasDto,
-  ) {
-    const idDocente = req.user.userId;
-    return this.consultasService.findConsultasForDocente(
-      idCurso,
-      idDocente,
-      dto,
-    );
-  }
-
   @Get(':idCurso/pendientes')
   getPendingConsultas(@Param('idCurso', ParseUUIDPipe) idCurso: string) {
     return this.consultasService.findPendingConsultasByCurso(idCurso);
-  }
-
-  @Roles(roles.Alumno)
-  @Get(':idCurso/mis-consultas')
-  findMyConsultas(
-    @Req() req: AuthenticatedUserRequest,
-    @Param('idCurso', ParseUUIDPipe) idCurso: string,
-    @Query() dto: FindConsultasDto,
-  ) {
-    const idAlumno = req.user.userId;
-    return this.consultasService.findConsultasForAlumno(idAlumno, idCurso, dto);
   }
 
   @Roles(roles.Alumno)

@@ -69,7 +69,7 @@ export class ProgressController {
   @Get(':idCurso/mis-misiones')
   findMyMissions(
     @Req() req: AuthenticatedUserRequest,
-    @Query('idCurso', ParseUUIDPipe) idCurso: string,
+    @Param('idCurso', ParseUUIDPipe) idCurso: string,
   ) {
     const idAlumno = req.user.userId;
     return this.progressService.getStudentMissionStatus(idAlumno, idCurso);

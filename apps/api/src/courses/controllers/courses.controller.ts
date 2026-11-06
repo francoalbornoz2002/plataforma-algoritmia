@@ -24,11 +24,18 @@ import type { AuthenticatedUserRequest } from 'src/interfaces/authenticated-user
 import { FindAllCoursesDto } from '../dto/find-all-courses.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JoinCourseDto } from 'src/courses/dto/join-course-dto';
+import { ClasesConsultaService } from 'src/clases-consulta/services/clases-consulta.service';
+import { FindConsultasDto } from 'src/consultas/dto/find-consultas.dto';
+import { ConsultasService } from 'src/consultas/services/consultas.service';
 
 @UseGuards(RolesGuard)
 @Controller('cursos')
 export class CoursesController {
-  constructor(private readonly coursesService: CoursesService) {}
+  constructor(
+    private readonly coursesService: CoursesService,
+    private readonly clasesConsultaService: ClasesConsultaService,
+    private readonly consultasService: ConsultasService,
+  ) {}
 
   @Roles(roles.Administrador)
   @Post()
@@ -124,6 +131,39 @@ export class CoursesController {
   ) {
     const idDocente = req.user.userId;
     return this.coursesService.findEligibleForRefuerzo(id, idDocente);
+  }
+
+  @Roles(roles.Docente)
+  @Get(':id/consultas')
+  findAllConsultas(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthenticatedUserRequest,
+    @Query() dto: FindConsultasDto,
+  ) {
+    return this.consultasService.findConsultasForDocente(
+      id,
+      req.user.userId,
+      dto,
+    );
+  }
+
+  @Roles(roles.Alumno)
+  @Get(':id/alumnos/:idAlumno/consultas')
+  findAllConsultasForAlumno(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('idAlumno', ParseUUIDPipe) idAlumno: string,
+    @Query() dto: FindConsultasDto,
+  ) {
+    return this.consultasService.findConsultasForAlumno(idAlumno, id, dto);
+  }
+
+  @Get(':id/clases-consulta')
+  @Roles(roles.Alumno, roles.Docente)
+  findAllClasesConsulta(
+    @Param('idCurso') idCurso: string,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    return this.clasesConsultaService.findAll(idCurso, req.user);
   }
 
   @Roles(roles.Docente, roles.Administrador)

@@ -9,6 +9,8 @@ import { diskStorage } from 'multer';
 import { existsSync, mkdirSync } from 'fs';
 import { ProgressModule } from 'src/progress/progress.module';
 import { DifficultiesModule } from 'src/difficulties/difficulties.module';
+import { ClasesConsultaService } from 'src/clases-consulta/services/clases-consulta.service';
+import { ConsultasService } from 'src/consultas/services/consultas.service';
 
 const UPLOADS_PATH = join(process.cwd(), 'uploads');
 
@@ -36,6 +38,11 @@ const UPLOADS_PATH = join(process.cwd(), 'uploads');
     DifficultiesModule,
   ],
   controllers: [CoursesController],
-  providers: [CoursesService, PrismaService],
+  providers: [
+    CoursesService,
+    PrismaService,
+    ConsultasService,
+    ClasesConsultaService,
+  ],
 })
 export class CoursesModule {}

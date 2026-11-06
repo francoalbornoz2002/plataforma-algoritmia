@@ -41,14 +41,16 @@ import HeaderPage from "../../../components/HeaderPage";
 import { MarkUnreadChatAlt } from "@mui/icons-material";
 import { datePickerConfig } from "../../../config/theme.config";
 import {
-  getMyConsultas,
+  findAllConsultasForAlumno,
   getPublicConsultas,
 } from "../services/consultas.service";
+import { useAuth } from "../../authentication/context/AuthProvider";
 
 const PAGE_SIZE = 5;
 
 export default function MyConsultsPage() {
   const { selectedCourse, isReadOnly } = useCourseContext();
+  const { user } = useAuth();
 
   // Estados de la lista
   const [consultas, setConsultas] = useState<(Consulta | ConsultaDocente)[]>(
@@ -89,6 +91,14 @@ export default function MyConsultsPage() {
   const fetchConsultas = (currentPage: number) => {
     if (!selectedCourse) return;
 
+    const userId = user?.userId;
+    if (filters.scope === "mine" && !userId) {
+      setConsultas([]);
+      setTotalPages(1);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -126,7 +136,7 @@ export default function MyConsultsPage() {
     };
 
     if (filters.scope === "mine") {
-      getMyConsultas(selectedCourse.id, params)
+      findAllConsultasForAlumno(selectedCourse.id, userId, params)
         .then((response) => {
           setConsultas(response.data);
           setTotalPages(response.totalPages);

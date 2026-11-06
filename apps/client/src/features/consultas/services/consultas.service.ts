@@ -121,7 +121,7 @@ export const findConsultas = async (
       },
     );
 
-    const response = await apiClient.get(`/consultas/${idCurso}`, {
+    const response = await apiClient.get(`/cursos/${idCurso}/consultas`, {
       params: cleanedParams,
     });
     return response.data;
@@ -161,8 +161,9 @@ export const findPendingConsultas = async (
 /**
  * Obtiene la lista paginada y filtrada de consultas del alumno
  */
-export const getMyConsultas = async (
+export const findAllConsultasForAlumno = async (
   idCurso: string,
+  idAlumno: string | undefined,
   params: FindConsultasParams,
 ): Promise<PaginatedConsultasResponse> => {
   try {
@@ -177,7 +178,7 @@ export const getMyConsultas = async (
     );
 
     const response = await apiClient.get(
-      `/consultas/${idCurso}/mis-consultas`,
+      `/cursos/${idCurso}/alumnos/${idAlumno}/consultas`,
       {
         params: cleanedParams,
       },

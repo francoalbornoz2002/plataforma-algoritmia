@@ -14,10 +14,7 @@ export const findAllClasesByCurso = async (
   idCurso: string,
 ): Promise<ClaseConsulta[]> => {
   try {
-    const response = await apiClient.get(
-      // Usamos la ruta que definimos en el controller
-      `/clases-consulta/all/${idCurso}`,
-    );
+    const response = await apiClient.get(`/cursos/${idCurso}/clases-consulta`);
     return response.data;
   } catch (err: any) {
     console.error(
@@ -44,7 +41,7 @@ export const createClaseConsulta = async (
       idCurso: idCurso, // Añadimos el idCurso del contexto
     };
 
-    const response = await apiClient.post(`/clases-consulta/create`, payload);
+    const response = await apiClient.post(`/clases-consulta`, payload);
     return response.data;
   } catch (err: any) {
     console.error(
@@ -63,10 +60,7 @@ export const updateClaseConsulta = async (
   data: UpdateClaseConsultaPayload,
 ): Promise<ClaseConsulta> => {
   try {
-    const response = await apiClient.patch(
-      `/clases-consulta/edit/${idClase}`,
-      data,
-    );
+    const response = await apiClient.patch(`/clases-consulta/${idClase}`, data);
     return response.data;
   } catch (err: any) {
     console.error(
