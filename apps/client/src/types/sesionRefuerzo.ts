@@ -1,6 +1,17 @@
 import { grado_dificultad, estado_sesion, temas } from "./enums";
 import type { PreguntaConDetalles } from "./pregunta";
 
+export interface AlumnoElegible {
+  id: string;
+  nombre: string;
+  apellido: string;
+  fotoPerfilUrl: string | null;
+  totalDificultades: number;
+  gradoAlto: number;
+  gradoMedio: number;
+  gradoBajo: number;
+}
+
 // 1. Resultado de una sesión (básico)
 export interface ResultadoSesion {
   id: string;

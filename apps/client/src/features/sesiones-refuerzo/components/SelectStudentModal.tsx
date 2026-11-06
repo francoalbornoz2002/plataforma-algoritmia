@@ -21,12 +21,10 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import {
-  findEligibleAlumnos,
-  type AlumnoElegible,
-} from "../../users/services/alumnos.service";
 import { useCourseContext } from "../../../context/CourseContext";
 import StudentDifficultyDetailModal from "../../difficulties/components/StudentDifficultyDetailModal";
+import type { AlumnoElegible } from "../../../types";
+import { findEligibleAlumnos } from "../../courses/services/courses.service";
 
 interface SelectStudentModalProps {
   open: boolean;

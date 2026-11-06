@@ -94,6 +94,16 @@ export class CoursesController {
     return this.coursesService.findActiveAlumnosByCurso(id, idDocente);
   }
 
+  @Roles(roles.Docente)
+  @Get(':id/alumnos-aptos-refuerzo')
+  findEligibleForRefuerzo(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthenticatedUserRequest,
+  ) {
+    const idDocente = req.user.userId;
+    return this.coursesService.findEligibleForRefuerzo(id, idDocente);
+  }
+
   @Roles(roles.Docente, roles.Administrador)
   @Get(':id/dashboard-stats')
   getDashboardStats(@Param('id', ParseUUIDPipe) id: string) {

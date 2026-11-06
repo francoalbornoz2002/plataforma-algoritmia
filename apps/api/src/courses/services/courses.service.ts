@@ -329,6 +329,71 @@ export class CoursesService {
     }));
   }
 
+  async findEligibleForRefuerzo(idCurso: string, idDocente: string) {
+    // 1. Validamos que el docente que pide tenga acceso
+    await checkDocenteAccess(this.prisma, idDocente, idCurso);
+
+    // 2. Buscamos las inscripciones activas del curso que tengan dificultades registradas no superadas
+    const inscripcionesConDificultades =
+      await this.prisma.inscripcionesAlumnoCurso.findMany({
+        where: {
+          idCurso: idCurso,
+          estado: estado_simple.Activo,
+          dificultadesAlumnos: {
+            some: {
+              gradoActual: { not: 'Ninguno' },
+            },
+          },
+        },
+        include: {
+          alumno: {
+            select: {
+              id: true,
+              nombre: true,
+              apellido: true,
+              fotoPerfilUrl: true,
+            },
+          },
+          dificultadesAlumnos: {
+            where: {
+              gradoActual: { not: 'Ninguno' },
+            },
+            select: {
+              gradoActual: true,
+            },
+          },
+        },
+        orderBy: [
+          { alumno: { apellido: 'asc' } },
+          { alumno: { nombre: 'asc' } },
+        ],
+      });
+
+    return inscripcionesConDificultades.map((inscripcion) => {
+      const { alumno, dificultadesAlumnos } = inscripcion;
+      const alto = dificultadesAlumnos.filter(
+        (d) => d.gradoActual === 'Alto',
+      ).length;
+      const medio = dificultadesAlumnos.filter(
+        (d) => d.gradoActual === 'Medio',
+      ).length;
+      const bajo = dificultadesAlumnos.filter(
+        (d) => d.gradoActual === 'Bajo',
+      ).length;
+
+      return {
+        id: alumno.id,
+        nombre: alumno.nombre,
+        apellido: alumno.apellido,
+        fotoPerfilUrl: alumno.fotoPerfilUrl,
+        totalDificultades: dificultadesAlumnos.length,
+        gradoAlto: alto,
+        gradoMedio: medio,
+        gradoBajo: bajo,
+      };
+    });
+  }
+
   /**
    * Actualiza un curso, aplicando lógica de permisos según el rol.
    */

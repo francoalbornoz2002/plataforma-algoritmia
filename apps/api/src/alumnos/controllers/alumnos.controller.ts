@@ -19,14 +19,4 @@ import { ValorarConsultaDto } from 'src/consultas/dto/valorar-consulta.dto';
 @Controller('alumnos')
 export class AlumnosController {
   constructor(private readonly alumnosService: AlumnosService) {}
-
-  @Roles(roles.Docente)
-  @Get('courses/:idCurso/elegibles-refuerzo')
-  findEligibleForRefuerzo(
-    @Param('idCurso', ParseUUIDPipe) idCurso: string,
-    @Req() req: AuthenticatedUserRequest,
-  ) {
-    const idDocente = req.user.userId;
-    return this.alumnosService.findEligibleForRefuerzo(idCurso, idDocente);
-  }
 }

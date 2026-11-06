@@ -10,6 +10,7 @@ import type {
   CreateCourseData,
   UpdateCourseData,
   AlumnoActivo,
+  AlumnoElegible,
 } from "../../../types";
 
 // Interfaz para los parámetros de búsqueda
@@ -233,6 +234,32 @@ export const findActiveAlumnos = async (
     throw (
       err.response?.data ||
       new Error("Error al obtener la lista de alumnos activos.")
+    );
+  }
+};
+
+/**
+ * Obtiene la lista de alumnos de un curso que son elegibles para una sesión de refuerzo
+ * (es decir, que tienen al menos una dificultad registrada).
+ * @param idCurso - El ID del curso.
+ */
+export const findEligibleAlumnos = async (
+  idCurso: string,
+): Promise<AlumnoElegible[]> => {
+  try {
+    // NOTA: Asumimos que este endpoint existe para optimizar la carga.
+    const response = await apiClient.get(
+      `/cursos/${idCurso}/alumnos-aptos-refuerzo`,
+    );
+    return response.data;
+  } catch (err: any) {
+    console.error(
+      "Error fetching eligible alumnos:",
+      err.response?.data || err.message,
+    );
+    throw (
+      err.response?.data ||
+      new Error("Error al obtener la lista de alumnos elegibles.")
     );
   }
 };
